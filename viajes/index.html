@@ -1,1 +1,404 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mis viajes</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#eef1f4" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12161b" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Viajes">
+<link rel="stylesheet" href="style.css"></head><body>
+<header><select id="sel" onchange="S.cur=this.value;save(2);render()"></select><span id="mode"></span><button id="em" onclick="toggleEM()"></button></header>
+<main id="main"></main>
+<nav><button data-t="it" onclick="go('it')">Itinerario</button><button data-t="gs" onclick="go('gs')">Gastos</button><button data-t="id" onclick="go('id')">Ideas</button><button data-t="li" onclick="go('li')">Listas</button><button data-t="en" onclick="go('en')">Notas y enlaces</button><button data-t="pr" onclick="go('pr')">Prompts</button><button data-t="da" onclick="go('da')">Datos</button></nav>
+<dialog id="dlg"><input id="f_t" placeholder="Hora (ej. 09:30)"><select id="f_ty"></select><input id="f_ti" placeholder="Qué es"><select id="f_st" onchange="cfv()"></select><div id="f_cf"><div class="m">Confirmar antes de</div><div class="dr"><input id="f_due" type="date" oninput="xr('f_rb',this)"><button type="button" onclick="clr('f_due')" aria-label="Quitar fecha">✕</button></div><input id="f_rb" type="number" min="0" placeholder="o X días antes de la salida" oninput="xr('f_due',this)"></div><input id="f_pl" placeholder="Dirección o lugar (genera enlace de Maps)"><input id="f_u" placeholder="Enlace web"><textarea id="f_n" placeholder="Notas"></textarea><select id="f_d"></select>
+<div class="r"><button class="p" onclick="sv()">Guardar</button><button onclick="dlg.close()">Cancelar</button><button id="del" onclick="rm()">Borrar</button></div></dialog>
+<dialog id="dg"></dialog><div id="rp" hidden></div>
+<script>
+const $=s=>document.querySelector(s),uid=()=>Math.random().toString(36).slice(2,9);
+const TY={transporte:'🚆',alojamiento:'🏨',comida:'🍽️',visita:'🏛️',paseo:'🚶',otro:'📌'},ST={ok:'Confirmado',pend:'Pendiente',opc:'Opcional'};
+const KEY='viajes_v2',esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mapU=p=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p),dirU=p=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p);
+let S,tab='it',ed_={},AVO=false;
+const cfv=()=>f_cf.style.display=f_st.value=='pend'?'':'none';
+const nu=u=>{u=String(u||'').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,'');if(!u)return'';while(/^https?:\/\/https?:\/\//i.test(u))u=u.replace(/^https?:\/\//i,'');return/^(https?:\/\/|mailto:|tel:)/i.test(u)?u:'https://'+u.replace(/^\/+/,'')};
+const dt=(o,t)=>{if(o.due)return o.due;const d0=t.days[0]&&t.days[0].date;if(o.rb!==''&&o.rb!=null&&d0){const d=new Date(d0+'T12:00');d.setDate(d.getDate()-o.rb);return d.toLocaleDateString('sv')}return''};
+const dtx=(o,t)=>{const d=dt(o,t);return d?' · 📅 '+d.split('-').reverse().join('/'):(o.rb!==''&&o.rb!=null?' · ⚠️ falta fecha de salida':'')};
+function avItems(){const td=new Date().toLocaleDateString('sv'),a=[];S.trips.forEach(t=>{if(t.mode=='view')return;const l=t.days[t.days.length-1];if(l&&l.date&&l.date<td)return;
+ const add=(o,k,ti,p,j)=>{const d=dt(o,t);if(d)a.push({d,k,ti,tr:t.name,tid:t.id,p,i:j,id:o.id,n:Math.round((new Date(d+'T12:00')-new Date(td+'T12:00'))/864e5)})};
+ t.lists.t.forEach(x=>S.local[x.id]||add(x,'☐',x.ti,'li'));
+ t.days.forEach((d,j)=>d.it.forEach(i=>i.st=='pend'&&add(i,'⏳ Confirmar:',i.ti,'it',j)));
+ t.gs.forEach(e=>e.st=='pend'&&e.due&&add({id:e.id,due:e.due},'💶 Pagar:',e.ti,'gs'))});return a.sort((x,y)=>x.d<y.d?-1:1)}
+function av(){const a=avItems(),g=[a.filter(x=>x.n<0),a.filter(x=>x.n>=0&&x.n<=7),a.filter(x=>x.n>7&&x.n<=21)];if(!g.some(x=>x.length))return'';const HH=['Vencido','Esta semana','Próximas dos semanas'],m=S.trips.length>1;
+ return`<details class="card pend" ${AVO?'open':''} ontoggle="AVO=this.open"><summary>🔔 ${g.map((x,k)=>x.length?x.length+' '+['vencidos','esta semana','próximas'][k]:'').filter(Boolean).join(' · ')}</summary>${g.map((x,k)=>x.length?`<h2>${HH[k]}</h2>`+x.map(y=>`<div class="r"><span class="m">${y.d.split('-').reverse().slice(0,2).join('/')}</span><a href="#" onclick="avGo('${y.tid}','${y.p}',${y.i??'null'});return false">${y.k} ${esc(y.ti)}</a>${m?`<span class="m">${esc(y.tr)}</span>`:''}</div>`).join(''):'').join('')}</details>`}
+function avGo(id,p,k){S.cur=id;save(2);tab=p;render();if(k!=null){vw=k;render()}scrollTo(0,0)}
+function ics(){const a=avItems().filter(x=>x.n>=0);if(!a.length)return toast('No hay recordatorios con fecha');const e=s=>String(s).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n'),z=new Date().toISOString().replace(/[-:]|\.\d+/g,''),L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mis viajes//ES','CALSCALE:GREGORIAN'];
+ a.forEach(x=>{const d=x.d.replace(/-/g,'');L.push('BEGIN:VEVENT','UID:'+x.id+'@viajes','DTSTAMP:'+z,'DTSTART:'+d+'T090000','DTEND:'+d+'T091500','SUMMARY:'+e(x.k+' '+x.ti),'DESCRIPTION:'+e(x.tr),'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+e(x.ti),'END:VALARM','END:VEVENT')});L.push('END:VCALENDAR');
+ sendF(new File([L.join('\r\n')],'recordatorios_viajes.ics',{type:'text/calendar'}),'Recordatorios')}
+f_ty.innerHTML=Object.keys(TY).map(k=>`<option value="${k}">${TY[k]} ${k}</option>`).join('');
+f_st.innerHTML=Object.keys(ST).map(k=>`<option value="${k}">${ST[k]}</option>`).join('');
+const APP_V=7;
+let BKM=[],SUG=[],IP=null,LSMODE=false,DB=null,LOADED=false,svT=null,MIGMSG='';
+/* ---------- Almacenamiento: IndexedDB (con localStorage solo como último recurso) ---------- */
+const LSK={state:KEY,bk:'viajes_bk',sug:'viajes_sug'};
+const lsGet=k=>{try{const r=localStorage.getItem(LSK[k]);return r==null?undefined:JSON.parse(r)}catch(e){return undefined}};
+const lsSet=(k,v)=>{try{localStorage.setItem(LSK[k],JSON.stringify(v));return Promise.resolve()}catch(e){return Promise.reject(e)}};
+function dbOpen(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('sin IndexedDB'));let r;try{r=indexedDB.open('gestor_viajes',1)}catch(e){return rej(e)}r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('bloqueada'))})}
+const dbGet=k=>LSMODE?Promise.resolve(lsGet(k)):new Promise((res,rej)=>{const q=DB.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+const dbSet=(k,v)=>LSMODE?lsSet(k,v):new Promise((res,rej)=>{try{const tx=DB.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>rej(tx.error||new Error('abortada'))}catch(e){rej(e)}});
+const dbClear=()=>LSMODE?(()=>{try{Object.values(LSK).forEach(k=>localStorage.removeItem(k))}catch(e){}return Promise.resolve()})():new Promise((res,rej)=>{const tx=DB.transaction('kv','readwrite');tx.objectStore('kv').clear();tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>rej(tx.error||new Error('abortada'))});
+function sched(){clearTimeout(svT);svT=setTimeout(flush,200)}
+function flush(){clearTimeout(svT);svT=null;if(!LOADED)return;dbSet('state',S).catch(()=>toast('⚠️ No se pudo guardar (almacenamiento lleno). Exporta una copia.'))}
+async function boot(){
+ $('#main').innerHTML='<p class="m">Cargando…</p>';
+ try{DB=await dbOpen();DB.onversionchange=()=>{try{DB.close()}catch(e){}}}catch(e){LSMODE=true}
+ let st,b0,sg;
+ try{st=await dbGet('state');b0=await dbGet('bk');sg=await dbGet('sug')}catch(e){LSMODE=true;st=lsGet('state');b0=lsGet('bk');sg=lsGet('sug')}
+ if(!LSMODE&&st==null){
+  /* Migración única desde la versión anterior (localStorage -> IndexedDB) */
+  let raw=null,rb=null,o=null,b=null;try{raw=localStorage.getItem(KEY);rb=localStorage.getItem('viajes_bk')}catch(e){}
+  try{o=raw?JSON.parse(raw):null}catch(e){}try{b=rb?JSON.parse(rb):null}catch(e){}
+  if(o&&o.trips){
+   try{
+    await dbSet('state',o);if(Array.isArray(b))await dbSet('bk',b);
+    const c1=await dbGet('state'),c2=Array.isArray(b)?await dbGet('bk'):null;
+    const ok=JSON.stringify(c1)===JSON.stringify(o)&&(!Array.isArray(b)||JSON.stringify(c2)===JSON.stringify(b));
+    st=o;if(Array.isArray(b))b0=b;
+    if(ok){try{localStorage.removeItem(KEY);localStorage.removeItem('viajes_bk')}catch(e){}MIGMSG='Datos pasados a IndexedDB y liberados de localStorage.'}
+    else MIGMSG='Datos copiados a IndexedDB, pero no se pudo verificar la copia: se conservan también los antiguos.'
+   }catch(e){LSMODE=true;st=o;b0=b;MIGMSG='No se pudo usar IndexedDB: la aplicación sigue con localStorage.'}
+  }
+ }
+ if(LSMODE&&!MIGMSG)MIGMSG='IndexedDB no disponible: se usa localStorage.';
+ BKM=Array.isArray(b0)?b0:[];SUG=Array.isArray(sg)?sg:[];
+ if(!st||!st.trips)st={trips:[],local:{}};
+ load(st);LOADED=true;
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+ render();if(MIGMSG)toast(MIGMSG)
+}
+/* ---------- Sugerencias para mejorar la aplicación ---------- */
+const sgSave=()=>dbSet('sug',SUG).catch(()=>toast('⚠️ No se pudo guardar la sugerencia.'));
+function sgUI(){const sc=dg.scrollTop,pe=SUG.filter(x=>!x.done),ho=SUG.filter(x=>x.done),it=x=>`<div class="card ${x.done?'':'pend'}"><textarea id="sg_${x.id}" class="${x.done?'done':''}" onchange="sgEd('${x.id}',this.value)">${esc(x.tx)}</textarea><div class="r"><label><input type="checkbox" ${x.done?'checked':''} onchange="sgDone('${x.id}',this.checked)">Implementada</label><button onclick="sgCopy('${x.id}',this)">Copiar</button><button onclick="sgDel('${x.id}')">Borrar</button></div></div>`;
+ dg.innerHTML=`<h2 style="margin-top:0">Sugerencias para mejorar la aplicación</h2><p class="m">Anótalas, cópialas para pegarlas en la IA y márcalas como implementadas cuando estén hechas.</p><textarea id="sg_new" placeholder="Nueva sugerencia (admite saltos de línea)"></textarea><div class="r"><button class="p" onclick="sgAdd()">Añadir</button><button onclick="dg.close()">Cerrar</button></div>${pe.length?`<h2>Pendientes (${pe.length})</h2>`+pe.map(it).join(''):''}${ho.length?`<h2>Implementadas (${ho.length})</h2>`+ho.map(it).join(''):''}${SUG.length?'':'<p class="m">Aún no hay sugerencias.</p>'}`;if(!dg.open)dg.showModal();dg.scrollTop=sc}
+function sgAdd(){const e=$('#sg_new'),v=e.value.trim();if(!v)return e.focus();SUG.unshift({id:uid(),tx:v,at:new Date().toISOString(),done:false});sgSave();sgUI()}
+function sgEd(id,v){const x=SUG.find(y=>y.id==id);if(!x)return;v=v.trim();if(!v)return sgUI();x.tx=v;sgSave()}
+function sgDone(id,v){const x=SUG.find(y=>y.id==id);if(!x)return;const e=$('#sg_'+id);if(e&&e.value.trim())x.tx=e.value.trim();x.done=!!v;if(v)x.dn=new Date().toISOString();else delete x.dn;sgSave();sgUI()}
+function sgDel(id){if(!confirm('¿Borrar esta sugerencia?'))return;SUG=SUG.filter(y=>y.id!=id);sgSave();sgUI()}
+function sgCopy(id,b){const e=$('#sg_'+id);if(!e)return;copyTx('Sugerencia para mejorar la aplicación «Gestor de viajes V'+APP_V+'»:\n\n'+e.value.trim(),b)}
+/* ---------- Borrado de datos (solo de esta app) ---------- */
+const delUI=()=>`<h2>Borrar datos</h2><p class="m">Solo afecta a los datos de esta aplicación; no toca otras apps.</p><div class="r"><button onclick="delT()">Borrar este viaje</button><button onclick="delAll()">Borrar todos los viajes</button><button onclick="resetApp()">Restablecer la app</button></div>`;
+function pendTx(){const p=S.trips.filter(t=>t.mode!='view'&&(t.ch||0)>0);return p.length?'\n\nTienen cambios sin exportar: '+p.map(t=>t.name+' ('+t.ch+')').join(', ')+'.\nSi quieres conservarlos, cancela y expórtalos antes (Datos → Exportar completo, viaje a viaje).':''}
+function delAll(){const n=S.trips.length;if(!n)return toast('No hay viajes que borrar');if(!confirm('¿Borrar los '+n+(n>1?' viajes':' viaje')+' de la aplicación?'+pendTx()+'\n\nNo se podrá deshacer.'))return;if(prompt('Para confirmar, escribe BORRAR')!=='BORRAR')return toast('Cancelado: no se ha borrado nada');
+ S.trips=[];S.cur=undefined;S.local={};BKM=[];H.clear();EM=false;tab='it';vw=undefined;lc=undefined;dbSet('bk',BKM).catch(()=>{});save(2);render();toast('Todos los viajes se han borrado')}
+async function resetApp(){if(!confirm('¿Restablecer la aplicación por completo?\n\nSe borrarán todos los viajes, las copias automáticas, las sugerencias y las marcas de las listas de ESTA app. Las demás aplicaciones no se tocan.'+pendTx()+'\n\nNo se podrá deshacer.'))return;if(prompt('Para confirmar, escribe BORRAR')!=='BORRAR')return toast('Cancelado: no se ha borrado nada');
+ clearTimeout(svT);svT=null;try{await dbClear()}catch(e){return toast('⚠️ No se pudo borrar el almacenamiento')}
+ try{[KEY,'viajes_bk','viajes_sug'].forEach(k=>localStorage.removeItem(k))}catch(e){}
+ S={trips:[],local:{}};BKM=[];SUG=[];H.clear();UD=null;EM=false;tab='it';vw=undefined;lc=undefined;render();toast('Aplicación restablecida')}
+/* ---------- Instalación como app (PWA) ---------- */
+const instUI=()=>{if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)return'';return`<h2>Instalar en el móvil</h2>${IP?'<div class="r"><button class="p" onclick="inst()">Instalar como app</button></div>':''}<p class="m">iPhone (Safari): Compartir → Añadir a pantalla de inicio. Android (Chrome): menú ⋮ → Instalar aplicación.</p>`};
+async function inst(){if(!IP)return;IP.prompt();try{await IP.userChoice}catch(e){}IP=null;render()}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();IP=e});
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&svT)flush()});addEventListener('pagehide',()=>{if(svT)flush()});
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+function load(st){S=st;
+ if(!S||!S.trips)S={trips:[],local:{}};S.local=S.local||{};S.trips.forEach(t=>{mig(t);stamp(t,1)});S.cur=S.cur||(S.trips[0]||{}).id}
+function save(z){try{const t=T();if(t&&z!==2){t.ch=z===0?0:(t.ch||0)+1;stamp(t);bk(t)}sched()}catch(e){toast('⚠️ No se pudo guardar (almacenamiento lleno). Exporta una copia.')}}
+const T=()=>S.trips.find(t=>t.id==S.cur)||S.trips[0],ro=()=>T().mode=='view';
+function go(t){tab=t;render();scrollTo(0,0)}
+function render(){if(!S.trips.length)return empty();const t=T();S.cur=t.id;if(lc!==t.id){lc=t.id;vw=undefined}if(ro()&&(tab=='gs'||tab=='li'||tab=='pr'))tab='it';
+ $('#sel').innerHTML=S.trips.map(x=>`<option value="${x.id}" ${x.id==t.id?'selected':''}>${esc(x.name)}</option>`).join('');
+ $('#mode').textContent=ro()?'Solo consulta':'';em.hidden=ro();em.textContent=EM?'✏️ Edición':'🔒 Consulta';document.body.classList.toggle('edit',ce());
+ $('#main').innerHTML=bn(t)+(tab=='it'?av():'')+{it:vIt,gs:vGs,id:vId,li:vLi,en:vEn,pr:vPr,da:vDa}[tab](t);
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));document.querySelector('[data-t=gs]').hidden=ro();document.querySelector('[data-t=li]').hidden=ro();document.querySelector('[data-t=pr]').hidden=ro();const nb=document.querySelector('nav button.on');if(nb){const nv=nb.parentNode;nv.scrollLeft=nb.offsetLeft-(nv.clientWidth-nb.offsetWidth)/2}}
+function find(id){for(const d of T().days){const k=d.it.findIndex(i=>i.id==id);if(k>=0)return{d,k,i:d.it[k]}}}
+function vDays(t,days){return days.map(d=>`<h2>${esc(dl(d))}</h2>${d.it.map(i=>`<div class="card ${i.st}"><div class="r"><b>${esc(i.t)||'sin hora'}</b> ${TY[i.ty]||''} <span class="tag ${i.st}">${ST[i.st]}</span></div><div>${esc(i.ti)}</div>${nt(i)}<div class="r">${i.pl?`<a href="${mapU(i.pl)}" target="_blank" rel="noopener">Mapa</a><a href="${dirU(i.pl)}" target="_blank" rel="noopener">Cómo llegar</a>`:''}${i.u?`<a href="${esc(nu(i.u))}" target="_blank" rel="noopener">Enlace</a>`:''}</div>${!ce()?'':`<div class="r"><button onclick="mv('${i.id}',-1)" aria-label="Subir">↑</button><button onclick="mv('${i.id}',1)" aria-label="Bajar">↓</button><button onclick="ed('${d.id}','${i.id}')">Editar</button><select onchange="toDay('${i.id}',this.value)"><option value="">Mover a…</option>${t.days.map(x=>`<option value="${x.id}">${esc(dl(x))}</option>`).join('')}<option value="ideas">Bolsa de ideas</option></select></div>`}</div>`).join('')}${!ce()?'':`<button onclick="ed('${d.id}')">Añadir actividad</button>`}`).join('')}
+function mv(id,s){const f=find(id),j=f.k+s;if(j<0||j>=f.d.it.length)return;[f.d.it[f.k],f.d.it[j]]=[f.d.it[j],f.d.it[f.k]];save();render()}
+function toDay(id,to){if(!to)return;const f=find(id);f.d.it.splice(f.k,1);if(to=='ideas')T().ideas.push(f.i);else T().days.find(d=>d.id==to).it.push(f.i);save();render()}
+function ed(did,iid){const i=iid?(find(iid)||{i:T().ideas.find(x=>x.id==iid)}).i:{t:'',ty:'visita',ti:'',st:'ok',pl:'',u:'',n:'',c:''};ed_={did,iid};
+ f_t.value=i.t||'';f_ty.value=i.ty||'visita';f_ti.value=i.ti;f_st.value=i.st||'opc';f_pl.value=i.pl||'';f_u.value=i.u||'';f_n.value=i.n||'';f_due.value=i.due||'';f_rb.value=i.due?'':(i.rb??'');cfv();f_d.innerHTML=T().days.map(x=>`<option value="${x.id}">${esc(dl(x))}</option>`).join('')+'<option value="ideas">Bolsa de ideas</option>';f_d.value=did;del.style.display=iid?'':'none';dlg.showModal()}
+function sv(){if(!f_ti.value.trim())return f_ti.focus();const t=T(),pd=f_st.value=='pend',o={t:f_t.value.trim(),ty:f_ty.value,ti:f_ti.value.trim(),st:f_st.value,pl:f_pl.value.trim(),u:nu(f_u.value),n:f_n.value.trim(),due:pd?f_due.value:'',rb:pd&&!f_due.value&&f_rb.value!==''?+f_rb.value:''},to=f_d.value,dd=t.days.find(d=>d.id==to),f=ed_.iid?find(ed_.iid):null,x=ed_.iid&&!f?t.ideas.find(y=>y.id==ed_.iid):null;
+ let it=f?f.i:x;if(it)Object.assign(it,o);else it={id:uid(),...o};
+ const same=(f&&f.d===dd)||(x&&to=='ideas');if(f&&!same)f.d.it.splice(f.k,1);if(x&&!same)t.ideas.splice(t.ideas.indexOf(x),1);
+ if(!same)to=='ideas'?t.ideas.push(it):dd.it.push(it);
+ if(dd&&vw!=='all')vw=t.days.indexOf(dd);dlg.close();save();render()}
+function rm(){if(!confirm('¿Borrar esta actividad?'))return;U('Actividad borrada');const f=find(ed_.iid);f.d.it.splice(f.k,1);dlg.close();save();render()}
+function vId(t){return`<h2>Bolsa de ideas</h2><p class="m">Cosas sin día asignado, para cuando sobre tiempo o cambie el plan.</p>${t.ideas.map(x=>`<div class="card opc"><div>${esc(x.ti)}</div>${nt(x)}<div class="r">${x.pl?`<a href="${mapU(x.pl)}" target="_blank" rel="noopener">Mapa</a>`:''}${x.u?`<a href="${esc(nu(x.u))}" target="_blank" rel="noopener">Enlace</a>`:''}</div>${!ce()?'':`<div class="r"><select onchange="ideaTo('${x.id}',this.value)"><option value="">Pasar al día…</option>${t.days.map(d=>`<option value="${d.id}">${esc(dl(d))}</option>`).join('')}</select><button onclick="ed('ideas','${x.id}')">Editar</button><button onclick="ideaDel('${x.id}')">Quitar</button></div>`}</div>`).join('')||'<p class="m">Vacía.</p>'}${!ce()?'':'<button onclick="ideaAdd()">Añadir idea</button>'}`}
+function ideaAdd(){const ti=prompt('Idea');if(!ti)return;T().ideas.push({id:uid(),ti,n:prompt('Nota (opcional)')||''});save();render()}
+function ideaDel(id){U('Idea quitada');T().ideas=T().ideas.filter(x=>x.id!=id);save();render()}
+function ideaTo(id,to){if(!to)return;const x=T().ideas.find(y=>y.id==id);T().days.find(d=>d.id==to).it.push({t:'',ty:'visita',st:'opc',pl:'',u:'',...x});T().ideas=T().ideas.filter(y=>y.id!=id);save();render()}
+function chk(l,k){return l.map(x=>`<label><input type="checkbox" ${S.local[x.id]?'checked':''} onchange="S.local['${x.id}']=this.checked;save(2);render()"><span class="${S.local[x.id]?'done':''}">${esc(x.ti)}</span><span class="m">${dtx(x,T())}</span>${!ce()?'':`<button onclick="listAdd('${k}','${x.id}')" aria-label="Editar">✎</button><button onclick="listDel('${x.id}')" aria-label="Quitar">×</button>`}</label>`).join('')||'<p class="m">Vacía.</p>'}
+function vLi(t){const p=[];t.days.forEach(d=>d.it.filter(i=>i.st=='pend').forEach(i=>p.push(`<div class="card pend"><b>${esc(i.ti)}</b><div class="m">${esc(dl(d))}${i.n?' · '+esc(i.n):''}</div></div>`)));
+ return`<h2>Por confirmar (${p.length})</h2>${p.join('')||'<p class="m">Nada pendiente.</p>'}<h2>Lista del viaje</h2>${chk(t.lists.t,'t')}${!ce()?'':'<button onclick="listAdd(\'t\')">Añadir</button>'}<h2>Lista genérica</h2>${chk(t.lists.g,'g')}${!ce()?'':'<button onclick="listAdd(\'g\')">Añadir</button> <button onclick="listCopy()">Copiar genérica al viaje</button>'}`}
+function listAdd(k,id){const t=T(),x=id?t.lists[k].find(y=>y.id==id):{};dg.innerHTML=`<input id="l_ti" placeholder="Elemento" value="${esc(x.ti||'')}">${k=='t'?`<div class="m">Fecha límite</div><div class="dr"><input id="l_due" type="date" value="${x.due||''}" oninput="xr('l_rb',this)"><button type="button" onclick="clr('l_due')" aria-label="Quitar fecha">✕</button></div>`:''}<input id="l_rb" type="number" min="0" placeholder="o X días antes de la salida" value="${x.due?'':(x.rb??'')}" ${k=='t'?`oninput="xr('l_due',this)"`:''}><div class="r"><button class="p" onclick="listSv('${k}','${id||''}')">Guardar</button><button onclick="dg.close()">Cancelar</button></div>`;dg.showModal()}
+function listSv(k,id){const ti=l_ti.value.trim();if(!ti)return l_ti.focus();const L=T().lists[k],du=(k=='t'&&l_due.value)||'',o={ti,due:du,rb:du||l_rb.value===''?'':+l_rb.value};if(id)Object.assign(L.find(y=>y.id==id),o);else L.push({id:uid(),...o});dg.close();save();render()}
+function listDel(id){U('Elemento quitado');const l=T().lists;l.g=l.g.filter(x=>x.id!=id);l.t=l.t.filter(x=>x.id!=id);save();render()}
+function listCopy(){const l=T().lists;l.g.forEach(x=>l.t.push({id:uid(),ti:x.ti,rb:x.rb}));save();render()}
+function vEn(t){const a=[],E=ce();t.days.forEach(d=>d.it.forEach(i=>{if(i.u)a.push(`<a href="${esc(nu(i.u))}" target="_blank" rel="noopener">${esc(i.ti)}</a>`);if(i.pl)a.push(`<a href="${mapU(i.pl)}" target="_blank" rel="noopener">Mapa: ${esc(i.ti)}</a>`)}));
+ const lk=(x,b)=>`<div class="r"><a href="${esc(nu(x.u))}" target="_blank" rel="noopener">${esc(x.l)}</a>${E?b:''}</div>`;
+ return`<h2>Notas del viaje</h2>${t.notes.map(n=>`<div class="card"><b>${esc(n.ti)}</b>${n.pv?' 🔒':''}${nt(n)}${E?`<div class="r"><button class="mini" onclick="noteE('${n.id}')">Editar</button></div>`:''}</div>`).join('')||'<p class="m">Sin notas.</p>'}${E?'<button onclick="noteE()">Añadir nota</button>':''}
+<h2>Enlaces del viaje</h2>${t.links.map((x,k)=>lk(x,`<button onclick="lnDel(${k})" aria-label="Quitar">×</button>`)).join('')}${E?'<button onclick="lnAdd()">Añadir enlace</button>':''}
+${ro()?'':`<h2>Enlaces genéricos</h2>${t.glinks.map((x,k)=>lk(x,`<button class="mini" onclick="glTo(${k})">Pasar al viaje</button><button onclick="glDel(${k})" aria-label="Quitar">×</button>`)).join('')||'<p class="m">Vacío.</p>'}${E?'<button onclick="glAdd()">Añadir enlace genérico</button>':''}`}
+<h2>Del itinerario</h2>${a.map(x=>`<div>${x}</div>`).join('')||'<p class="m">Ninguno.</p>'}`}
+function lnAdd(){const u=nu(prompt('URL'));if(!u)return;T().links.push({id:uid(),l:prompt('Nombre')||u,u});save();render()}
+function glAdd(){const u=nu(prompt('URL'));if(!u)return;T().glinks.push({id:uid(),l:prompt('Nombre')||u,u});save();render()}
+function glTo(k){const x=T().glinks[k];T().links.push({id:uid(),l:x.l,u:x.u});save();render();toast('Añadido a los enlaces del viaje')}
+function glDel(k){U('Enlace quitado');T().glinks.splice(k,1);save();render()}
+function noteE(id){const x=id?T().notes.find(y=>y.id==id):{ti:'',n:'',pv:0};dg.innerHTML=`<input id="n_ti" placeholder="Título" value="${esc(x.ti)}"><textarea id="n_n" placeholder="Texto (los enlaces se pueden pulsar)" style="min-height:260px">${esc(x.n)}</textarea><label><input type="checkbox" id="n_pv" ${x.pv?'checked':''}>Privada (no va en el archivo de acompañantes)</label><div class="r"><button class="p" onclick="noteS('${id||''}')">Guardar</button><button onclick="dg.close()">Cancelar</button>${id?`<button onclick="noteD('${id}')">Borrar</button>`:''}</div>`;dg.showModal()}
+function noteS(id){const ti=n_ti.value.trim();if(!ti)return n_ti.focus();const o={ti,n:n_n.value.trim(),pv:n_pv.checked?1:0};if(id)Object.assign(T().notes.find(y=>y.id==id),o);else T().notes.push({id:uid(),...o});dg.close();save();render()}
+function noteD(id){if(!confirm('¿Borrar esta nota?'))return;U('Nota borrada');T().notes=T().notes.filter(y=>y.id!=id);dg.close();save();render()}
+function lnDel(k){U('Enlace quitado');T().links.splice(k,1);save();render()}
+function vDa(t){return`<p class="m"><b>Gestor de viajes V${APP_V}</b> · almacenamiento: ${LSMODE?'localStorage (IndexedDB no disponible)':'IndexedDB'}</p><p><a href="#" onclick="sgUI();return false">Sugerencias para mejorar la aplicación</a></p>
+<h2>${esc(t.name)}</h2><p class="m">Versión del viaje ${t.v||1}${t.xt?' · exportada '+new Date(t.xt).toLocaleString('es'):''}</p>
+<div class="r"><button class="p" onclick="repUI()">Crear informe (PDF o texto)</button><button onclick="ics()">Recordatorios al calendario (.ics)</button></div>
+${ro()?'<p class="m">Este viaje es de solo consulta. Para actualizarlo, importa el archivo nuevo que te envíen.</p>':`<div class="r"><button class="p" onclick="ex(0)">Exportar completo</button><button class="p" onclick="ex(1)">Exportar para acompañantes (.txt)</button></div><p class="m">El archivo de acompañantes (.txt) no incluye costes, gastos ni listas y se abre en modo consulta.</p>`}
+${ce()?bkUI(t):''}${ce()||ro()?IMP:''}
+${!ce()?'':'<h2>Viajes</h2><div class="r"><button onclick="nw()">Nuevo viaje</button><button onclick="dup()">Duplicar</button><button onclick="rn()">Renombrar</button><button onclick="go(\'pr\')">Crear con IA</button></div><p class="m">Duplicar crea una alternativa independiente del viaje actual (con sus propios gastos y grupos). Puedes exportarla, cambiarla o borrarla sin afectar al original.</p>'}${ce()||ro()?delUI():''}${instUI()}`}
+function pack(sh){const t=JSON.parse(JSON.stringify(T()));t.xt=new Date().toISOString();if(sh){t.mode='view';['gs','pays','groups','meth','me','bud','lists','glinks','pg','pt','via'].forEach(k=>delete t[k]);t.notes=t.notes.filter(n=>!n.pv);t.days.forEach(d=>d.it.forEach(i=>{delete i.c;delete i.due;delete i.rb}));t.ideas.forEach(i=>{delete i.due;delete i.rb})}return JSON.stringify({app:'viajes',fmt:2,trip:t})}
+async function ex(sh){const t=T();t.v=(t.v||1)+1;t.xt=new Date().toISOString();save(0);render();const s=pack(sh),n=t.name.replace(/\W+/g,'_')+(sh?'_acompanantes':'')+'_v'+t.v+(sh?'.txt':'.json'),f=new File([s],n,{type:sh?'text/plain':'application/json'});
+ await sendF(f,t.name)}
+function imF(f){if(f)f.text().then(im)}
+function im(s){
+ const jp=jparse(s);if(jp.e)return showErr('El texto no es un JSON válido',jp.e);
+ const v=vtrip(jp.o);if(v.E.length)return showErr('El JSON se ha leído, pero no se puede importar ('+v.E.length+(v.E.length>1?' errores':' error')+')',v.E);
+ const t=v.t,fresh=!t.xt&&!t.exp,fx=[...jp.fx,...v.fx];
+ if(fresh){t.mode='plan';t.v=1;if(S.trips.length){const c=T();if(!t.lists.g.length)t.lists.g=(c.lists.g||[]).map(x=>({id:uid(),ti:x.ti,rb:x.rb}));if(!(t.glinks||[]).length)t.glinks=(c.glinks||[]).map(x=>({id:uid(),l:x.l,u:x.u}));if(!Array.isArray(t.pg))t.pg=(c.pg||[]).map(x=>({id:uid(),ti:x.ti,tx:x.tx}))}}
+ mig(t);const old=S.trips.find(x=>x.id==t.id),ids=x=>new Set(x.days.flatMap(d=>d.it.map(i=>i.id))),n=ids(t),pr=old?ids(old):new Set();
+ const add=[...n].filter(x=>!pr.has(x)).length,del=[...pr].filter(x=>!n.has(x)).length;
+ if(old&&old.mode!='view'&&t.mode=='view'&&!confirm('Este archivo es de solo consulta y borraría los gastos y datos económicos de este viaje. ¿Continuar?'))return;
+ const nt=(fx.length?'\n\nAjustes automáticos: '+fx.join('; ')+'.':'')+(v.W.length?'\n\nAvisos (no impiden importar):\n- '+v.W.join('\n- '):'');
+ if(!confirm((old?`Reemplazar "${t.name}" (versión ${old.v||1} → ${t.v||1}).\nActividades nuevas: ${add}. Eliminadas: ${del}.`:`Añadir el viaje "${t.name}": ${t.days.length} días y ${n.size} actividades.`)+nt))return;
+ t.ch=0;old?S.trips[S.trips.indexOf(old)]=t:S.trips.push(t);S.cur=t.id;stamp(t,1);save(2);tab='it';render()}
 
+//#VAL-START
+const DT=/^\d{4}-\d{2}-\d{2}$/,okD=s=>typeof s=='string'&&DT.test(s)&&new Date(s+'T12:00').toLocaleDateString('sv')==s,SN={confirmado:'ok',pendiente:'pend',opcional:'opc'},hop=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+function synErr(s,e){const r=[],m=/position (\d+)/.exec(e.message),m2=/line (\d+) column (\d+)/.exec(e.message);let ln,col;
+ if(m){const p=+m[1],pre=s.slice(0,p);ln=pre.split('\n').length;col=p-pre.lastIndexOf('\n')}else if(m2){ln=+m2[1];col=+m2[2]}
+ if(ln){const L=s.split('\n')[ln-1]||'',a=Math.max(0,col-35);r.push('JSON mal formado en la línea '+ln+', columna '+col+' (contando desde la primera «{»).');r.push('Cerca de: «'+(a?'…':'')+L.slice(a,col+25).trim()+'»')}else r.push('JSON mal formado ('+e.message+').');
+ if(/[“”‘’]/.test(s))r.push('Pista: hay comillas tipográficas (“ ” ‘ ’). El JSON solo admite comillas dobles rectas (").');
+ if(/'[^'\n]*'\s*:/.test(s))r.push('Pista: hay claves con comillas simples. Deben ir con comillas dobles.');
+ if(/[{,]\s*[A-Za-z_]\w*\s*:/.test(s))r.push('Pista: hay claves sin comillas. Todas las claves deben ir entre comillas dobles.');
+ if(/(^|[^:"\w])\/\/|\/\*/.test(s))r.push('Pista: hay comentarios (// o /* */). El JSON no los admite.');
+ if(/end of json|unexpected end|unterminated/i.test(e.message))r.push('Pista: el JSON parece cortado: faltan cierres de llave o corchete (la IA pudo quedarse sin espacio). Pídele que continúe o que lo genere por partes.');
+ if(/Expected ','|after property value|after array element/i.test(e.message))r.push('Pista: suele faltar una coma al final de la línea anterior (o hay un cierre de llave/corchete de más o de menos).');
+ if(/control character/i.test(e.message))r.push('Pista: hay un salto de línea real dentro de un texto. Debe escribirse como \\n.');
+ return r}
+function jparse(s){s=String(s||'').replace(/^\uFEFF/,'').trim();const fx=[];
+ if(!s)return{e:['No hay nada que importar: el texto está vacío.']};
+ const m=/```(?:json)?\s*([\s\S]*?)```/i.exec(s);if(m){s=m[1].trim();fx.push('se quitó el bloque ```')}
+ const a=s.indexOf('{'),b=s.lastIndexOf('}');
+ if(a<0)return{e:['No encuentro ningún JSON: debe empezar por { y acabar por }.']};
+ if(b<a)return{e:['El JSON parece cortado: empieza con { pero no hay ninguna llave de cierre }. Pídele a la IA que lo continúe o que lo genere por partes.']};
+ if(a>0||b<s.length-1){s=s.slice(a,b+1);fx.push('se ignoró el texto que había antes o después del JSON')}
+ try{return{o:JSON.parse(s),fx}}catch(e0){const c=s.replace(/,(\s*[}\]])/g,'$1');if(c!==s)try{const o=JSON.parse(c);fx.push('se quitaron comas sobrantes');return{o,fx}}catch(_){}return{e:synErr(s,e0)}}}
+function vtrip(o){
+ const E=[],W=[],fx=[],own=x=>!!x&&typeof x=='object'&&!Array.isArray(x),show=v=>{const q=typeof v=='string'?'«'+v+'»':JSON.stringify(v);return q.length>40?q.slice(0,40)+'…':q},nm=x=>own(x)&&typeof x.ti=='string'&&x.ti?' «'+x.ti+'»':'';
+ let t=o&&o.trip;if(!t&&own(o)&&Array.isArray(o.days)){t=o;fx.push('el viaje venía sin la envoltura «trip»')}
+ if(!own(t))return{E:['Falta el objeto «trip». El JSON debe tener la forma {"app":"viajes","fmt":2,"trip":{…}}.'],W,fx};
+ const FRESH=!t.xt&&!t.exp,seen=new Set(),gid=x=>{if(FRESH||!x.id||seen.has(x.id))x.id=uid();seen.add(x.id)},
+ tx=(x,k,l)=>{const v=x[k];if(v==null){x[k]='';return}if(typeof v=='number'||typeof v=='boolean'){x[k]=String(v);return}if(typeof v!='string')E.push(l+': «'+k+'» debe ser texto y es '+(Array.isArray(v)?'una lista':'un objeto')+'.')},
+ dv=(x,k,l)=>{const v=x[k];if(v==null||v===''){x[k]='';return}if(!okD(v))E.push(l+': «'+k+'» = '+show(v)+' no es una fecha válida. Formato AAAA-MM-DD (ej. 2026-12-13).')},
+ rv=(x,k,l)=>{let v=x[k];if(v==null||v===''){x[k]='';return}if(typeof v=='string'&&/^\d+$/.test(v.trim()))v=x[k]=+v;if(!Number.isInteger(v)||v<0)E.push(l+': «'+k+'» = '+show(v)+' debe ser un número entero de días (0 o más), sin texto.')},
+ need=(x,k,l,w)=>{if(typeof x[k]=='string'&&x[k].trim())return true;E.push(l+': '+(x[k]==null||x[k]===''?'falta «'+k+'» ('+w+').':'«'+k+'» debe ser texto.'));return false},
+ arr=(x,k,l,f)=>{const v=x[k];if(v==null)return x[k]=[];if(!Array.isArray(v)){E.push(l+' debe ser una lista [ … ], no '+(own(v)?'un objeto':'un valor suelto')+'.');return x[k]=[]}return x[k]=v.map(f||(e=>typeof e=='string'?{ti:e}:e))};
+ let cty=0,cst=0;
+ if(typeof t.name!='string'||!t.name.trim())E.push('«trip.name»: falta el nombre del viaje (texto).');
+ tx(t,'dest','«trip.dest»');tx(t,'via','«trip.via»');
+ if(!Array.isArray(t.days))E.push('«trip.days» debe ser una lista de días [ … ].');else if(!t.days.length)E.push('«trip.days» está vacío: hace falta al menos un día.');
+ const dts={};
+ (Array.isArray(t.days)?t.days:[]).forEach((d,n)=>{
+  if(!own(d)){E.push('Día '+(n+1)+': debe ser un objeto {"date":…,"ti":…,"it":[…]}.');return}
+  const L='Día '+(n+1)+(typeof d.date=='string'&&d.date?' ('+d.date+')':'')+(typeof d.ti=='string'&&d.ti?' «'+d.ti+'»':'');
+  if(d.date===undefined){if(FRESH)E.push(L+': falta «date» (AAAA-MM-DD).')}else dv(d,'date',L);
+  if(okD(d.date))(dts[d.date]=dts[d.date]||[]).push(n+1);
+  tx(d,'ti',L);gid(d);
+  if(!Array.isArray(d.it)){E.push(L+': falta «it» (la lista de actividades; puede ser []).');d.it=[]}
+  d.it.forEach((i,m)=>{
+   const IL=L+', actividad '+(m+1)+nm(i);
+   if(!own(i)){E.push(IL+': debe ser un objeto {"t":…,"ty":…,"ti":…,"st":…}.');return}
+   need(i,'ti',IL,'el nombre de la actividad');['t','pl','u','n'].forEach(k=>tx(i,k,IL));gid(i);
+   if(FRESH&&typeof i.t=='string'&&i.t&&!/^\d{1,2}:\d{2}$/.test(i.t.trim())&&W.length<8)W.push(IL+': «t» = «'+i.t+'» no parece una hora HH:MM (se importa tal cual).');
+   if(i.ty==null||i.ty===''){i.ty='visita';cty++}else{const k=String(i.ty).trim().toLowerCase();if(hop(TY,k))i.ty=k;else E.push(IL+': «ty» = '+show(i.ty)+' no es válido. Valores permitidos: '+Object.keys(TY).join(', ')+'.')}
+   if(i.st==null||i.st===''){i.st='ok';cst++}else{const k=String(i.st).trim().toLowerCase(),w=hop(ST,k)?k:SN[k];if(w)i.st=w;else E.push(IL+': «st» = '+show(i.st)+' no es válido. Valores permitidos: ok (confirmado), pend (pendiente), opc (opcional).')}
+   if(i.st=='pend'){dv(i,'due',IL);rv(i,'rb',IL);if(i.due)i.rb=''}else{i.due='';i.rb=''}
+  })});
+ Object.keys(dts).forEach(k=>dts[k].length>1&&W.push('Los días '+dts[k].join(' y ')+' tienen la misma fecha ('+k+').'));
+ if(FRESH&&cty)W.push(cty+' actividad(es) sin «ty»: se marcaron como «visita».');if(FRESH&&cst)W.push(cst+' actividad(es) sin «st»: se marcaron como confirmadas (ok).');
+ arr(t,'ideas','«trip.ideas»').forEach((x,n)=>{const L='Idea '+(n+1)+nm(x);if(!own(x)){E.push(L+': debe ser un objeto {"ti":…}.');return}need(x,'ti',L,'el nombre de la idea');['n','pl','u'].forEach(k=>tx(x,k,L));gid(x)});
+ if(t.lists==null)t.lists={g:[],t:[]};else if(!own(t.lists)){E.push('«trip.lists» debe ser un objeto {"g":[…],"t":[…]}.');t.lists={g:[],t:[]}}
+ [['t','Lista del viaje'],['g','Lista genérica']].forEach(([k,h])=>arr(t.lists,k,'«trip.lists.'+k+'»').forEach((x,n)=>{const L=h+', elemento '+(n+1)+nm(x);if(!own(x)){E.push(L+': debe ser un objeto {"ti":…}.');return}need(x,'ti',L,'el texto del elemento');if(k=='t'){dv(x,'due',L);rv(x,'rb',L);if(x.due)x.rb=''}else{x.due='';rv(x,'rb',L)}gid(x)}));
+ arr(t,'links','«trip.links»',e=>typeof e=='string'?{l:e,u:e}:e).forEach((x,n)=>{const L='Enlace '+(n+1)+(own(x)&&typeof x.l=='string'&&x.l?' «'+x.l+'»':'');if(!own(x)){E.push(L+': debe ser un objeto {"l":…,"u":…}.');return}if(need(x,'u',L,'la URL')&&!x.l)x.l=x.u;tx(x,'l',L);gid(x)});
+ arr(t,'notes','«trip.notes»').forEach((x,n)=>{const L='Nota '+(n+1)+nm(x);if(!own(x)){E.push(L+': debe ser un objeto {"ti":…,"n":…}.');return}need(x,'ti',L,'el título de la nota');tx(x,'n',L);x.pv=(x.pv===1||x.pv===true||x.pv==='1'||x.pv==='true')?1:0;gid(x)});
+ ['pg','pt'].forEach(k=>{if(t[k]==null)return;arr(t,k,'«trip.'+k+'»').forEach((x,n)=>{const L='Plantilla '+(n+1)+nm(x);if(!own(x)){E.push(L+': debe ser un objeto {"ti":…,"tx":…}.');return}need(x,'ti',L,'el título');need(x,'tx',L,'el texto del prompt');gid(x)})});
+ if(FRESH||!t.id)t.id=uid();
+ return{t,E,W,fx}}
+//#VAL-END
+
+let ERR='',PE={},PVW='';
+function showErr(h,l){ERR=l;const x=l.slice(0,25),more=l.length-x.length;
+ dg.innerHTML=`<h2 style="margin-top:0">❌ ${esc(h)}</h2><ul style="padding-left:18px;margin:6px 0">${x.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>${more>0?`<p class="m">…y ${more} más.</p>`:''}<p class="m">No se ha importado ni cambiado nada. Corrige el JSON (o pídele a la IA que lo arregle con el botón de abajo) y vuelve a importar.</p><div class="r"><button class="p" onclick="copyTx(errTx(),this)">Copiar errores para la IA</button><button onclick="dg.close()">Cerrar</button></div>`;if(!dg.open)dg.showModal()}
+const errTx=()=>'El JSON que me has dado no se puede importar en mi app. Corrígelo y devuélveme el JSON completo (solo el JSON, sin explicaciones). Errores:\n'+ERR.map(e=>'- '+e).join('\n');
+async function copyTx(s,b){let ok=false;try{await navigator.clipboard.writeText(s);ok=true}catch(e){try{const a=document.createElement('textarea');a.value=s;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();ok=document.execCommand('copy');a.remove()}catch(_){}}
+ if(!ok){dg.innerHTML='<h2 style="margin-top:0">Copiar a mano</h2><p class="m">Tu navegador no deja copiar automáticamente. Selecciona todo el texto y cópialo.</p><textarea id="cp" readonly style="min-height:240px"></textarea><div class="r"><button onclick="dg.close()">Cerrar</button></div>';cp.value=s;if(!dg.open)dg.showModal();cp.select();return}
+ if(b){const o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,1800)}if(!document.querySelector('dialog[open]'))toast('Copiado al portapapeles')}
+function xr(o,i){if(i.value)$('#'+o).value=''}
+function clr(i){$('#'+i).value=''}
+
+// ===== Prompts =====
+const PV={destino:'',fechas:'',viajeros:'',dias:'',nombre:'',itinerario:''};
+const PG0=()=>[
+{ti:'Revisar mi itinerario',tx:'Voy a viajar a {destino} {fechas} ({viajeros}). Este es mi itinerario día a día:\n\n{itinerario}\n\nRevísalo y dime:\n1) Si es coherente en tiempos y distancias entre una actividad y la siguiente.\n2) Si los horarios de transporte público y de apertura de los sitios encajan (indica qué debo comprobar).\n3) Qué cambiarías para que no esté tan apretado.\nNo inventes horarios: si no estás seguro, dime que hay que verificarlo en la web oficial.'},
+{ti:'Qué ver y hacer',tx:'Quiero ideas de qué ver y hacer en {destino} {fechas}, viajando con {viajeros}. Para cada idea indícame por qué merece la pena, el tiempo necesario, el precio aproximado y si hay que reservar. Agrúpalas por zonas para no hacer idas y venidas.'},
+{ti:'Dónde comer',tx:'Recomiéndame sitios para comer en {destino} para {viajeros}: cocina local, buena relación calidad-precio y sin trampas para turistas. Para cada uno: tipo de cocina, rango de precio, zona y si conviene reservar.'},
+{ti:'Del aeropuerto al hotel',tx:'Explícame cómo ir del aeropuerto al centro de {destino} y volver, para {viajeros}: opciones de transporte público (frecuencia, duración, precio y dónde comprar el billete) y precio aproximado de taxi o VTC. Dime qué debo verificar antes del viaje.'},
+{ti:'Maleta y documentación',tx:'Prepárame una lista de equipaje y documentación para {destino} {fechas} ({dias} días), para {viajeros}. Ten en cuenta el clima habitual de esas fechas y los requisitos de entrada, seguros o adaptadores que puedan hacer falta.'},
+{ti:'Lista de lugares para Google Maps',tx:'De este itinerario de {destino}:\n\n{itinerario}\n\nDame una lista con el nombre exacto de cada sitio tal como aparece en Google Maps y su dirección, agrupada por día, para guardarlos en una lista de Maps.'}
+].map(x=>({id:uid(),...x}));
+const itin=t=>t.days.map(d=>dl(d)+'\n'+(d.it.map(i=>'- '+(i.t||'--:--')+' '+i.ti+(i.pl?' ('+i.pl+')':'')+(i.st&&i.st!='ok'&&ST[i.st]?' ['+ST[i.st].toLowerCase()+']':'')).join('\n')||'- (sin actividades)')).join('\n\n');
+function pvals(t){const D=t.days.map(d=>d.date).filter(Boolean).sort(),f=s=>new Date(s+'T12:00'),O={day:'numeric',month:'long',year:'numeric'};let fe='(sin fechas)';
+ if(D.length){const a=f(D[0]),b=f(D[D.length-1]);fe=D[0]==D[D.length-1]?'el '+a.toLocaleDateString('es',O):a.getMonth()==b.getMonth()&&a.getFullYear()==b.getFullYear()?'del '+a.getDate()+' al '+b.toLocaleDateString('es',O):'del '+a.toLocaleDateString('es',O)+' al '+b.toLocaleDateString('es',O)}
+ const gs=t.groups||[],vi=t.via||(gs.length>1?gs.map(g=>g.name+(g.w>1?' ('+g.w+' pers.)':'')).join(', '):'');
+ return{destino:t.dest||t.name,fechas:fe,viajeros:vi||'viajeros sin indicar',dias:String(t.days.length),nombre:t.name,itinerario:itin(t),miss:!vi}}
+const fill=(x,t)=>{const V=pvals(t);return x.replace(/\{([a-zñáéíóúü_]+)\}/gi,(m,k)=>{k=k.toLowerCase();return hop(PV,k)?V[k]:m})};
+const pf=(k,id)=>(T()['p'+k]||[]).find(x=>x.id==id);
+function vPr(t){const E=ce(),V=pvals(t),card=(p,k)=>{const un=[...new Set([...p.tx.matchAll(/\{([a-zñáéíóúü_]+)\}/gi)].map(m=>m[1].toLowerCase()))].filter(x=>!hop(PV,x));
+  return`<div class="card"><b>${esc(p.ti)}</b><div class="nt cl">${esc(p.tx)}</div>${un.length?`<div class="m">⚠️ Variable sin reconocer: ${esc(un.map(x=>'{'+x+'}').join(' '))}</div>`:''}${V.miss&&/\{viajeros\}/i.test(p.tx)?'<div class="m">⚠️ Falta indicar los viajeros.</div>':''}<div class="r"><button class="p" onclick="pCopy('${k}','${p.id}',this)">Copiar</button><button onclick="pView('${k}','${p.id}')">Ver</button>${E?`<button onclick="pEd('${k}','${p.id}')">Editar</button><button onclick="pTo('${k}','${p.id}')">${k=='g'?'Copiar al viaje':'Copiar a genéricas'}</button>`:''}</div></div>`};
+ return`<h2>Crear un viaje con IA</h2><div class="card"><div>Genera el archivo de un viaje nuevo a partir de tu documento de planificación.</div><ol class="m" style="padding-left:18px;margin:6px 0"><li>Copia el prompt.</li><li>Pégalo en tu IA y añade o adjunta tu documento de planificación.</li><li>Guarda la respuesta como archivo .json (o cópiala) e impórtala en Datos → Importar.</li></ol><div class="r"><button class="p" onclick="copyTx(jsonPrompt(),this)">Copiar prompt</button><button onclick="pShow('Prompt para crear un viaje',jsonPrompt())">Ver prompt</button>${E?`<button onclick="go('da')">Ir a importar</button>`:''}</div></div>
+<h2>Datos para las plantillas</h2><div class="card"><div class="r"><span class="m">{destino}</span> ${esc(V.destino)}</div><div class="r"><span class="m">{fechas}</span> ${esc(V.fechas)}</div><div class="r"><span class="m">{viajeros}</span> ${esc(V.viajeros)}</div><div class="m">También puedes usar {dias}, {nombre} y {itinerario} (el itinerario completo en texto). Las fechas salen de los días del itinerario.</div>${E?'<div class="r"><button onclick="pData()">Editar destino y viajeros</button></div>':''}</div>
+<h2>Plantillas del viaje</h2>${t.pt.map(p=>card(p,'t')).join('')||'<p class="m">Ninguna todavía. Copia una genérica al viaje o crea una.</p>'}${E?`<button onclick="pEd('t')">Añadir plantilla</button>`:''}
+<h2>Plantillas genéricas</h2>${t.pg.map(p=>card(p,'g')).join('')||'<p class="m">Ninguna.</p>'}${E?`<button onclick="pEd('g')">Añadir plantilla</button>`:''}`}
+function pCopy(k,id,b){copyTx(fill(pf(k,id).tx,T()),b)}
+function pView(k,id){const p=pf(k,id);pShow(p.ti,fill(p.tx,T()))}
+function pShow(h,x){PVW=x;dg.innerHTML=`<h2 style="margin-top:0">${esc(h)}</h2><div style="white-space:pre-wrap;word-break:break-word;font-size:13px;max-height:60vh;overflow:auto">${esc(x)}</div><div class="r"><button class="p" onclick="copyTx(PVW,this)">Copiar</button><button onclick="dg.close()">Cerrar</button></div>`;dg.showModal()}
+function pData(){const t=T();dg.innerHTML=`<h2 style="margin-top:0">Datos para las plantillas</h2><div class="m">Destino</div><input id="p_d" placeholder="${esc(t.name)}" value="${esc(t.dest)}"><div class="m">Viajeros</div><input id="p_v" placeholder="ej. mi mujer y yo" value="${esc(t.via)}"><div class="r"><button class="p" onclick="pDataS()">Guardar</button><button onclick="dg.close()">Cancelar</button></div>`;dg.showModal()}
+function pDataS(){const t=T();t.dest=p_d.value.trim();t.via=p_v.value.trim();dg.close();save();render()}
+function pEd(k,id){const p=id?pf(k,id):{ti:'',tx:''};PE={k,id};dg.innerHTML=`<h2 style="margin-top:0">${id?'Editar':'Nueva'} plantilla (${k=='g'?'genérica':'del viaje'})</h2><input id="p_ti" placeholder="Título" value="${esc(p.ti)}"><textarea id="p_tx" placeholder="Texto del prompt" style="min-height:240px">${esc(p.tx)}</textarea><div class="m">Variables (toca para insertar):</div><div class="r">${Object.keys(PV).map(v=>`<button type="button" class="mini" onclick="pIns('{${v}}')">{${v}}</button>`).join('')}</div><div class="r"><button class="p" onclick="pSv()">Guardar</button><button onclick="dg.close()">Cancelar</button>${id?'<button onclick="pDel()">Borrar</button>':''}</div>`;dg.showModal()}
+function pIns(v){const e=p_tx;e.setRangeText(v,e.selectionStart,e.selectionEnd,'end');e.focus()}
+function pSv(){const ti=p_ti.value.trim(),x=p_tx.value.trim();if(!ti)return p_ti.focus();if(!x)return p_tx.focus();const L=T()['p'+PE.k];if(PE.id)Object.assign(L.find(y=>y.id==PE.id),{ti,tx:x});else L.push({id:uid(),ti,tx:x});dg.close();save();render()}
+function pDel(){if(!confirm('¿Borrar esta plantilla?'))return;U('Plantilla borrada');const t=T(),k='p'+PE.k;t[k]=t[k].filter(x=>x.id!=PE.id);dg.close();save();render()}
+function pTo(k,id){const t=T(),p=pf(k,id);t[k=='g'?'pt':'pg'].push({id:uid(),ti:p.ti,tx:p.tx});save();render();toast(k=='g'?'Copiada a las plantillas del viaje':'Copiada a las genéricas')}
+function jsonPrompt(){const ty=Object.keys(TY).join(' | '),ej={app:'viajes',fmt:2,trip:{name:'Lisboa en tres días',dest:'Lisboa',via:'mi mujer y yo',mode:'plan',days:[{date:'2027-03-12',ti:'Llegada y Alfama',it:[{t:'10:45',ty:'transporte',ti:'Llegada al aeropuerto de Lisboa',st:'ok',pl:'Aeropuerto de Lisboa',u:'',n:'Equipaje facturado.'},{t:'20:30',ty:'comida',ti:'Cena en Alfama',st:'pend',pl:'Alfama, Lisboa',u:'https://ejemplo.com',n:'Falta reservar mesa.',due:'2027-03-05'}]},{date:'2027-03-13',ti:'Belém',it:[{t:'',ty:'visita',ti:'Torre de Belém',st:'opc',pl:'Torre de Belém, Lisboa',u:'',n:''}]}],ideas:[{ti:'Paseo en el tranvía 28',n:'Si sobra tiempo',pl:'',u:''}],lists:{g:[],t:[{ti:'Reservar el vuelo',rb:60},{ti:'Contratar el seguro de viaje',due:'2027-02-20'}]},links:[{l:'Metro de Lisboa',u:'https://www.metrolisboa.pt'}],notes:[{ti:'Qué ver en Belém',n:'Texto largo.\nCon saltos de línea.',pv:0}]}};
+ return`Actúa como un asistente que convierte mi documento de planificación de un viaje en un archivo JSON que importaré en mi app de gestión de viajes. El documento está al final de este mensaje (o adjunto).
+
+REGLAS
+1. Responde SOLO con el JSON: sin explicaciones, sin texto antes ni después y, si puedes, sin bloque de código.
+2. JSON válido: comillas dobles rectas ("), sin comas finales, sin comentarios y sin saltos de línea reales dentro de los textos (usa \\n).
+3. No inventes datos. Si algo no aparece en el documento, deja el campo como "" (o [] en las listas). No añadas campos que no estén en este formato y no incluyas campos "id": la app los crea sola.
+4. Si no puedes deducir el año o alguna fecha, dímelo antes de generar el JSON.
+5. Cada día del documento es un objeto en "days", en orden cronológico. Cada actividad de ese día es un objeto en "it", en el orden en que se hacen.
+6. Pon en "n" (notas) la información útil del documento sobre esa actividad (horarios, precios, reservas, cómo llegar). Los textos largos que no sean de una actividad concreta van en "notes".
+
+FORMATO EXACTO
+${JSON.stringify(ej,null,1)}
+
+(El ejemplo solo enseña el formato; no copies su contenido.)
+
+CAMPOS
+- app y fmt: siempre "viajes" y 2. trip.mode: siempre "plan".
+- trip.name: nombre del viaje (texto, obligatorio). trip.dest: destino principal. trip.via: quién viaja (por ejemplo "mi mujer y yo").
+- days[].date: fecha AAAA-MM-DD (obligatorio, por ejemplo 2027-03-12). days[].ti: título del día, sin la fecha. days[].it: lista de actividades (puede ser []).
+- it[].t: hora "HH:MM" en formato 24 h, o "" si no tiene hora.
+- it[].ty: UNO de estos valores exactos: ${ty}.
+- it[].ti: nombre de la actividad (obligatorio).
+- it[].st: UNO de estos valores exactos: ok (confirmada o reservada), pend (pendiente de confirmar o reservar), opc (opcional, si da tiempo).
+- it[].pl: lugar tal como se buscaría en Google Maps (nombre y ciudad), o "".
+- it[].u: URL oficial completa, o "".
+- it[].n: notas en texto plano.
+- it[].due y it[].rb: SOLO si st es "pend" y hay un plazo para confirmarla. due = fecha límite AAAA-MM-DD; rb = alternativa: número entero de días antes de la salida. Usa uno de los dos, nunca ambos. Si no hay plazo, no pongas ninguno.
+- ideas[]: cosas sin día asignado: {ti, n, pl, u}.
+- lists.t[]: tareas pendientes del viaje (reservar, comprar entradas, documentación...): {ti} y, si hay plazo, due (AAAA-MM-DD) o rb (entero), nunca ambos. lists.g: déjala siempre [].
+- links[]: enlaces útiles del viaje: {l: nombre, u: URL}.
+- notes[]: notas largas: {ti, n, pv}. pv es 0 (normal) o 1 (privada).
+
+ANTES DE RESPONDER, COMPRUEBA: que el JSON es válido, que todas las fechas son AAAA-MM-DD, que ty y st usan solo los valores permitidos y que due/rb solo aparecen en actividades "pend".
+
+DOCUMENTO DE PLANIFICACIÓN:
+(pega o adjunta aquí tu documento)`}
+
+function nw(){const name=prompt('Nombre del viaje');if(!name)return;const date=prompt('Fecha del primer día (AAAA-MM-DD)',new Date().toLocaleDateString('sv'))||'';const t={id:uid(),name,mode:'plan',v:1,days:[{id:uid(),date,ti:'',it:[]}],ideas:[],lists:{g:(S.trips.length?T().lists.g:[]).map(x=>({id:uid(),ti:x.ti,rb:x.rb})),t:[]},links:[],notes:[],glinks:(S.trips.length?T().glinks||[]:[]).map(x=>({id:uid(),l:x.l,u:x.u})),pg:S.trips.length?(T().pg||[]).map(x=>({id:uid(),ti:x.ti,tx:x.tx})):undefined};mig(t);S.trips.push(t);S.cur=t.id;EM=true;save();render()}
+function dup(){const t=JSON.parse(JSON.stringify(T())),r=o=>{if(o&&typeof o=='object'){if(o.id)o.id=uid();Object.entries(o).forEach(([k,v])=>['groups','gs','pays'].includes(k)||r(v))}};const nn=prompt('Nombre de la copia (alternativa del viaje)',t.name+' (copia)');if(nn===null)return;r(t);t.name=nn.trim()||t.name+' (copia)';t.v=1;S.trips.push(t);S.cur=t.id;save();render()}
+function rn(){const n=prompt('Nuevo nombre',T().name);if(n){T().name=n;save();render()}}
+function delT(){const t0=T();if(!t0)return;if((t0.ch||0)>0&&confirm('Este viaje tiene '+t0.ch+' cambios sin exportar.\n\nAceptar = exportar una copia completa ahora (después podrás borrar).\nCancelar = seguir sin copia.')){ex(0);return}if(!confirm('¿Borrar "'+t0.name+'"?'+(S.trips.length<2?'\n\nEs el último viaje: la aplicación quedará vacía.':'')))return;U('Viaje borrado');const ids=[...(t0.lists.g||[]),...(t0.lists.t||[])].map(x=>x.id),loc={};ids.forEach(i=>{if(i in S.local){loc[i]=S.local[i];delete S.local[i]}});const bks=BKM.filter(x=>x.id==t0.id);BKM=BKM.filter(x=>x.id!=t0.id);if(bks.length)dbSet('bk',BKM).catch(()=>{});UD.bk=bks;UD.loc=loc;S.trips=S.trips.filter(x=>x.id!=t0.id);S.cur=(S.trips[0]||{}).id;save();render()}
+
+const IMP=`<h2>Importar</h2><input type="file" accept=".json,.txt,application/json,text/plain" onchange="imF(this.files[0]);this.value=''"><textarea id="pas" placeholder="O pega aquí el contenido del archivo" style="width:100%;margin-top:6px"></textarea><button onclick="im(pas.value)">Importar y reemplazar</button>`,MS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],CT=['vuelos','transporte','alojamiento','comida','visitas','compras','parking','otros','fondo común'];
+const eur=c=>(c/100).toLocaleString('es',{style:'currency',currency:'EUR'}),gn=(t,id)=>(t.groups.find(g=>g.id==id)||{name:'—'}).name,sd=t=>t.days.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+const dl=d=>[d.date&&new Date(d.date+'T12:00').toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'}),d.ti].filter(Boolean).join(' · ');
+let vw,lc,ge;
+function empty(){em.hidden=true;document.body.classList.remove('edit');$('#sel').innerHTML='';$('#mode').textContent='';$('#main').innerHTML='<p class="m"><b>Gestor de viajes V'+APP_V+'</b></p><p><a href="#" onclick="sgUI();return false">Sugerencias para mejorar la aplicación</a></p><h2>Mis viajes</h2><p class="m">Aún no hay viajes. Importa tu archivo (.json o .txt) o crea uno nuevo.</p>'+IMP+'<div class="r"><button onclick="nw()">Crear viaje nuevo</button><button onclick="copyTx(jsonPrompt(),this)">Copiar prompt para crear un viaje con IA</button></div>';document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'))}
+function mig(t){if(typeof t.exp=='string'){t.xt=t.exp;delete t.exp}let y=0;
+ t.days.forEach(d=>{if(d.date!=null)return;const m=/(\d{1,2})\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/i.exec(d.ti);d.date='';if(m){y=y||+prompt('¿De qué año es el viaje "'+t.name+'"?',new Date().getFullYear());if(y){d.date=y+'-'+String(MS.indexOf(m[2].toLowerCase())+1).padStart(2,'0')+'-'+m[1].padStart(2,'0');d.ti=d.ti.replace(/^.*?·\s*/,'')}}});
+ sd(t);t.ideas=t.ideas||[];t.links=t.links||[];t.notes=t.notes||[];t.glinks=t.glinks||[];t.glinks.forEach(l=>l.id=l.id||uid());t.lists=t.lists||{g:[],t:[]};if(!t.groups||!t.groups.length)t.groups=[{id:uid(),name:'Nosotros',w:1}];t.me=t.me||t.groups[0].id;t.gs=t.gs||[];t.pays=t.pays||[];t.meth=t.meth||['Efectivo','Tarjeta 1','Tarjeta 2'];t.bud=t.bud||0;t.ch=t.ch||0;t.links.forEach(l=>l.id=l.id||uid());t.dest=t.dest||'';t.via=t.via||'';if(!Array.isArray(t.pg))t.pg=PG0();if(!Array.isArray(t.pt))t.pt=[];t.pg.concat(t.pt).forEach(p=>p.id=p.id||uid())}
+function vIt(t){const n=t.days.length;if(vw===undefined||(vw!=='all'&&vw>=n)){const k=t.days.findIndex(d=>d.date==new Date().toLocaleDateString('sv'));vw=k<0?0:k}
+ const a=vw==='all',nav=`<div class="r"><button onclick="dgo(-1)" ${a||vw<1?'disabled':''} aria-label="Día anterior">‹</button><select style="flex:1" onchange="vw=this.value=='all'?'all':+this.value;render()"><option value="all" ${a?'selected':''}>Todo el viaje</option>${t.days.map((d,k)=>`<option value="${k}" ${k===vw?'selected':''}>${esc(dl(d))}</option>`).join('')}</select><button onclick="dgo(1)" ${a||vw>n-2?'disabled':''} aria-label="Día siguiente">›</button></div>`;
+ const tb=!ce()?'':`<div class="r"><button onclick="dAdd()">+ Día</button>${a||!n?'':'<button onclick="dEd()">Editar día</button><button onclick="dDel()">Borrar día</button>'}</div>`;
+ return nav+tb+(n?vDays(t,a?t.days:[t.days[vw]]):'<p class="m">Sin días. Añade el primero.</p>')}
+function dgo(s){vw+=s;render();scrollTo(0,0)}
+function dAdd(){const t=T(),l=t.days[t.days.length-1],d0=l&&l.date?new Date(l.date+'T12:00'):new Date();if(l&&l.date)d0.setDate(d0.getDate()+1);const date=prompt('Fecha (AAAA-MM-DD)',d0.toLocaleDateString('sv'));if(date===null)return;const d={id:uid(),date,ti:prompt('Título del día (opcional)')||'',it:[]};t.days.push(d);sd(t);vw=t.days.indexOf(d);save();render()}
+function dEd(){const t=T(),d=t.days[vw],date=prompt('Fecha (AAAA-MM-DD)',d.date||'');if(date===null)return;d.date=date;const ti=prompt('Título del día',d.ti);if(ti!==null)d.ti=ti;sd(t);vw=t.days.indexOf(d);save();render()}
+function dDel(){const t=T(),d=t.days[vw];if(!confirm('¿Borrar "'+dl(d)+'"'+(d.it.length?' y sus '+d.it.length+' actividades?':'?')))return;U('Día borrado');t.days.splice(vw,1);save();render()}
+function shares(t,e){const inc=t.groups.filter(g=>!e.inc||e.inc.includes(g.id)),r={},A=Math.round(e.amt*100);
+ if(e.sp=='c'){inc.forEach(g=>r[g.id]=Math.round(((e.sh||{})[g.id]||0)*100));return r}
+ const w=inc.map(g=>e.sp=='w'?g.w||1:1),W=w.reduce((a,b)=>a+b,0);let rest=A;inc.forEach((g,k)=>{r[g.id]=Math.floor(A*w[k]/W);rest-=r[g.id]});if(inc.length)r[inc[0].id]+=rest;return r}
+function calc(t){const sp={},net={},cat={},met={};let tot=0,pend=0,mePend=0;t.groups.forEach(g=>{sp[g.id]=0;net[g.id]=0});
+ t.gs.forEach(e=>{const s=shares(t,e),A=Math.round(e.amt*100),m=s[t.me]||0;tot+=A;for(const g in s)sp[g]=(sp[g]||0)+s[g];cat[e.cat]=(cat[e.cat]||0)+m;
+  if(e.st=='pend'){pend+=A;mePend+=m}else{net[e.pay]=(net[e.pay]||0)+A;for(const g in s)net[g]=(net[g]||0)-s[g];if(e.pay==t.me)met[e.met]=(met[e.met]||0)+A}});
+ t.pays.forEach(p=>{net[p.f]+=Math.round(p.a*100);net[p.t]-=Math.round(p.a*100)});return{sp,net,cat,met,tot,pend,mePend}}
+function settle(net){const d=[],c=[];for(const g in net){const v=net[g];if(v<-1)d.push([g,-v]);else if(v>1)c.push([g,v])}d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const o=[];
+ while(d.length&&c.length){const m=Math.min(d[0][1],c[0][1]);o.push([d[0][0],c[0][0],m]);d[0][1]-=m;c[0][1]-=m;if(d[0][1]<2)d.shift();if(c[0][1]<2)c.shift()}return o}
+function vGs(t){const k=calc(t),mu=t.groups.length>1,mine=k.sp[t.me]||0,row=(a,b)=>`<div class="r"><span>${esc(a)}</span><b style="margin-left:auto">${b}</b></div>`,L=o=>Object.entries(o).map(([a,b])=>row(a,eur(b))).join('')||'<span class="m">—</span>';
+ return`<h2>Resumen</h2><div class="card">${row('Total del viaje',eur(k.tot))}${mu?row('Tu parte',eur(mine)):''}${row('Pendiente de pagar'+(mu?' (tu parte)':''),eur(mu?k.mePend:k.pend))}${t.bud?row('Presupuesto restante',eur(t.bud*100-mine)):''}</div>
+<h2>Por categoría${mu?' (tu parte)':''}</h2><div class="card">${L(k.cat)}</div><h2>Pagado${mu?' por ti':''}, por método</h2><div class="card">${L(k.met)}</div>
+${mu?`<h2>Cuentas entre grupos</h2><div class="card">${settle(k.net).map(([a,b,m])=>`<div class="r">${esc(gn(t,a))} debe ${eur(m)} a ${esc(gn(t,b))}<button style="margin-left:auto" onclick="pay('${a}','${b}',${m/100})">Saldar</button></div>`).join('')||'<span class="m">Todo saldado.</span>'}${t.pays.map(p=>`<div class="m">${p.d}: ${esc(gn(t,p.f))} pagó ${p.a.toFixed(2)} € a ${esc(gn(t,p.t))} ${ce()?`<button onclick="payDel('${p.id}')" aria-label="Quitar">×</button>`:''}</div>`).join('')}</div>`:''}
+<h2>Gastos</h2>${t.gs.map(e=>{const s=shares(t,e)[t.me]||0,p=e.st=='pend';return`<div class="card ${p?'pend':''}"><div class="r"><b>${esc(e.ti)}</b><b style="margin-left:auto">${eur(Math.round(e.amt*100))}</b></div><div class="m">${e.cat}${e.amt<0?' (devolución)':''} · ${mu?'paga '+esc(gn(t,e.pay))+' · ':''}${esc(e.met||'')}${p?' · pendiente'+(e.due?' hasta '+e.due:''):''}${mu?' · tu parte '+eur(s):''}</div><div class="r">${ce()?`<button onclick="gEd('${e.id}')">Editar</button>`:''}${p?`<button onclick="gPaid('${e.id}')">Marcar pagado</button>`:''}</div></div>`}).join('')||'<p class="m">Sin gastos.</p>'}<button class="p" onclick="gEd()">Añadir gasto</button>
+${ce()?`<h2>Ajustes</h2><div class="r"><button onclick="gBud()">Presupuesto: ${t.bud?t.bud+' €':'sin definir'}</button><button onclick="gM()">Métodos de pago</button></div><h2>Grupos</h2>${t.groups.map(g=>`<div class="r">${esc(g.name)} · ${g.w} pers.<button onclick="gEdG('${g.id}')">Editar</button></div>`).join('')}<div class="r"><button onclick="gAddG()">Añadir grupo</button>${mu?`<select onchange="T().me=this.value;save();render()">${t.groups.map(g=>`<option value="${g.id}" ${g.id==t.me?'selected':''}>Tu grupo: ${esc(g.name)}</option>`).join('')}</select>`:''}</div>`:''}`}
+function gBud(){const v=prompt('Presupuesto total de tu grupo en € (0 = sin presupuesto)',T().bud||0);if(v!==null){T().bud=+v||0;save();render()}}
+function gM(){const t=T(),v=prompt('Métodos de pago separados por comas',t.meth.join(', '));if(v){t.meth=v.split(',').map(x=>x.trim()).filter(Boolean);save();render()}}
+function gAddG(){const n=prompt('Nombre del grupo (ej. Pareja 2)');if(!n)return;T().groups.push({id:uid(),name:n,w:+prompt('Número de personas',2)||1});save();render()}
+function gEdG(id){const t=T(),g=t.groups.find(x=>x.id==id),n=prompt('Nombre (vacío = borrar grupo)',g.name);if(n===null)return;
+ if(!n.trim()){if(t.groups.length<2||t.gs.some(e=>e.pay==id||(e.inc||[]).includes(id))||t.pays.some(p=>p.f==id||p.t==id))return alert('No se puede borrar: es el único grupo o tiene gastos.');t.groups=t.groups.filter(x=>x.id!=id);if(t.me==id)t.me=t.groups[0].id}else{g.name=n.trim();g.w=+prompt('Número de personas',g.w)||g.w}save();render()}
+function pay(a,b,m){const t=T();if(!confirm(`¿Registrar que ${gn(t,a)} paga ${m.toFixed(2)} € a ${gn(t,b)}?`))return;t.pays.push({id:uid(),f:a,t:b,a:m,d:new Date().toLocaleDateString('sv')});save();render()}
+function payDel(id){U('Pago quitado');T().pays=T().pays.filter(p=>p.id!=id);save();render()}
+function gPaid(id){T().gs.find(x=>x.id==id).st='paid';save();render()}
+function gRm(){if(!confirm('¿Borrar este gasto?'))return;U('Gasto borrado');T().gs=T().gs.filter(x=>x.id!=ge.id);dg.close();save();render()}
+function gEd(id){const t=T(),mu=t.groups.length>1;ge=id?JSON.parse(JSON.stringify(t.gs.find(x=>x.id==id))):{id:uid(),ti:'',amt:'',cat:'comida',pay:t.me,met:t.meth[0]||'',st:'paid',due:'',sp:'eq',inc:t.groups.map(g=>g.id),sh:{}};
+ const o=(a,v)=>a.map(x=>`<option ${x==v?'selected':''}>${esc(x)}</option>`).join('');
+ dg.innerHTML=`<input id="g_ti" placeholder="Concepto" value="${esc(ge.ti)}"><input id="g_amt" type="number" step="0.01" placeholder="Importe total €" value="${Math.abs(ge.amt)||''}"><select id="g_cat" onchange="gFc()">${o(CT,ge.cat)}</select><select id="g_fd"><option value="1">Aportación al fondo</option><option value="-1" ${ge.amt<0?'selected':''}>Devolución del fondo</option></select><select id="g_met">${o(t.meth,ge.met)}</select><select id="g_st"><option value="paid" ${ge.st=='paid'?'selected':''}>Pagado</option><option value="pend" ${ge.st=='pend'?'selected':''}>Pendiente de pagar</option></select><div class="dr"><input id="g_due" type="date" value="${ge.due||''}" title="Fecha límite (si está pendiente)"><button type="button" onclick="clr('g_due')" aria-label="Quitar fecha">✕</button></div>${mu?`<select id="g_pay">${t.groups.map(g=>`<option value="${g.id}" ${g.id==ge.pay?'selected':''}>Paga: ${esc(g.name)}</option>`).join('')}</select><select id="g_sp" class="rep" onchange="gSp()"><option value="eq">Reparto a partes iguales</option><option value="w">Reparto por personas</option><option value="c">Importes concretos</option></select><div class="rep">${t.groups.map(g=>`<label><input type="checkbox" data-g="${g.id}" ${ge.inc.includes(g.id)?'checked':''}>${esc(g.name)}<input type="number" step="0.01" data-c="${g.id}" value="${ge.sh[g.id]||''}" placeholder="€" style="width:90px;margin-left:auto"></label>`).join('')}</div>`:''}<div class="r"><button class="p" onclick="gSv()">Guardar</button><button onclick="dg.close()">Cancelar</button>${id?'<button onclick="gRm()">Borrar</button>':''}</div>`;
+ if(mu){g_sp.value=ge.sp;gSp()}gFc();dg.showModal()}
+function gFc(){const f=g_cat.value=='fondo común';g_fd.style.display=f?'':'none';document.querySelectorAll('.rep').forEach(e=>e.style.display=f?'none':'');if(!f&&window.g_sp)gSp()}
+function gSp(){document.querySelectorAll('[data-c]').forEach(i=>i.style.display=g_sp.value=='c'?'':'none')}
+function gSv(){const t=T(),e=ge;e.ti=g_ti.value.trim();const fc=g_cat.value=='fondo común',v=+g_amt.value;e.amt=fc?Math.abs(v)*(g_fd.value=='-1'?-1:1):v;if(!e.ti||!v||(!fc&&v<0))return g_ti.focus();e.cat=g_cat.value;e.met=g_met.value;e.st=g_st.value;e.due=g_due.value;
+ if(t.groups.length>1&&fc){e.pay=g_pay.value;e.sp='eq';e.inc=[e.pay];e.sh={}}else if(t.groups.length>1){e.pay=g_pay.value;e.sp=g_sp.value;e.inc=[...document.querySelectorAll('[data-g]:checked')].map(i=>i.dataset.g);e.sh={};document.querySelectorAll('[data-c]').forEach(i=>e.sh[i.dataset.c]=+i.value||0);
+  if(!e.inc.length)return alert('Elige entre quién se reparte.');if(e.sp=='c'&&Math.abs(e.inc.reduce((a,g)=>a+e.sh[g],0)-e.amt)>0.01)return alert('Los importes deben sumar '+e.amt+' €.')}
+ const k=t.gs.findIndex(x=>x.id==e.id);k<0?t.gs.push(e):t.gs[k]=e;dg.close();save();render()}
+
+let EM=false,tmr,UD,utm;const H=new Map(),BK='viajes_bk',ce=()=>!ro()&&EM;
+const al=s=>esc(s).replace(/(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?)]/g,u=>`<a href="${/^www\./.test(u)?'https://'+u:u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?|^www\./,'').split('/')[0]}</a>`);
+const nt=i=>{if(!i.n)return'';const lg=i.n.length>180||i.n.split('\n').length>3;return`<div class="nt ${lg?'cl':''}">${al(i.n)}</div>${lg?`<button class="mini" onclick="noteV('${i.id}')">Ver todo</button>`:''}`};
+function noteV(id){const i=(find(id)||{}).i||T().ideas.find(x=>x.id==id)||T().notes.find(x=>x.id==id);dg.innerHTML=`<h2 style="margin-top:0">${esc(i.ti)}</h2><div style="white-space:pre-wrap;max-height:65vh;overflow:auto">${al(i.n)}</div><div class="r"><button onclick="dg.close()">Cerrar</button></div>`;dg.showModal()}
+function toggleEM(){EM=!EM;rst();render()}
+function rst(){clearTimeout(tmr);if(EM)tmr=setTimeout(()=>{if(document.querySelector('dialog[open]'))return rst();EM=false;render()},3e5)}
+['pointerdown','keydown'].forEach(e=>addEventListener(e,()=>{if(EM)rst()}));
+function stamp(t,init){const f=(o,x)=>{if(!o||!o.id)return;const s=JSON.stringify(x||o,(k,v)=>k=='mt'?undefined:v);if(H.get(o.id)!==s){H.set(o.id,s);if(!init)o.mt=new Date().toISOString()}};
+ t.days.forEach(d=>{f(d,{...d,it:0});d.it.forEach(i=>f(i))});[...t.ideas,...t.links,...t.gs,...t.pays,...t.groups,...t.lists.g,...t.lists.t,...t.notes,...t.glinks,...(t.pg||[]),...(t.pt||[])].forEach(o=>f(o))}
+function bk(t){try{const l=BKM.filter(x=>x.id==t.id).pop();if(l&&Date.now()-new Date(l.at)<6e5)return;BKM.push({id:t.id,at:new Date().toISOString(),j:JSON.stringify(t)});const m=BKM.filter(x=>x.id==t.id);while(m.length>8)BKM.splice(BKM.indexOf(m.shift()),1);dbSet('bk',BKM).catch(()=>{if(LSMODE){try{localStorage.removeItem(BK)}catch(_){}BKM=[]}})}catch(e){}}
+function bkUI(t){const a=BKM.filter(x=>x.id==t.id).reverse();return`<h2>Copias automáticas</h2><p class="m">Cambios sin exportar: ${t.ch||0}. El navegador guarda aquí hasta 8 versiones recientes de este viaje.</p>${a.map(x=>`<div class="r">${new Date(x.at).toLocaleString('es')}<button onclick="bkRes('${x.at}')">Restaurar</button></div>`).join('')||'<p class="m">Aún no hay copias.</p>'}`}
+function bkRes(at){const x=BKM.find(y=>y.id==S.cur&&y.at==at);if(!x||!confirm('¿Restaurar la copia del '+new Date(at).toLocaleString('es')+'? Sustituye el estado actual (podrás deshacer unos segundos).'))return;U('Copia restaurada');const t=JSON.parse(x.j);S.trips[S.trips.findIndex(y=>y.id==t.id)]=t;stamp(t,1);save();render()}
+const bn=t=>!ro()&&(t.ch||0)>=25?`<div class="card pend">⚠️ ${t.ch} cambios sin exportar. <button class="mini" onclick="go('da')">Ir a Datos</button></div>`:'';
+function U(m){const t=T();UD={j:JSON.stringify(t)};toast(m,1)}
+function toast(m,u){let e=$('#ts');if(!e){e=document.createElement('div');e.id='ts';document.body.appendChild(e)}e.innerHTML='<span>'+esc(m)+'</span>'+(u?'<button onclick="undo()">Deshacer</button>':'');e.style.display='flex';clearTimeout(utm);utm=setTimeout(()=>e.style.display='none',9000)}
+function undo(){if(!UD)return;const t=JSON.parse(UD.j),k=S.trips.findIndex(x=>x.id==t.id);k<0?S.trips.push(t):S.trips[k]=t;S.cur=t.id;stamp(t,1);if(UD.bk&&UD.bk.length){BKM.push(...UD.bk);dbSet('bk',BKM).catch(()=>{})}if(UD.loc)Object.assign(S.local,UD.loc);UD=null;$('#ts').style.display='none';save();render()}
+
+async function sendF(f,ti){if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:ti});return}catch(e){if(e.name=='AbortError')return}}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()}
+function repUI(){const t=T(),r=ro(),ck=(i,l,v)=>`<label><input type="checkbox" id="${i}" ${v?'checked':''}>${l}</label>`;
+ dg.innerHTML=`<h2 style="margin-top:0">Crear informe</h2>${ck('r_it','Itinerario',1)}<select id="r_day"><option value="all">Todo el viaje</option>${t.days.map(d=>`<option value="${d.id}">${esc(dl(d))}</option>`).join('')}</select>${ck('r_en','Enlaces',1)}${ck('r_nt','Notas del viaje',1)}${r?'':ck('r_li','Pendientes y listas',1)+ck('r_gs','Cuentas')}${ck('r_n','Incluir notas',1)}${ck('r_u','Incluir enlaces web completos',1)}${ck('r_pk','Formato de bolsillo (solo horas y lugares, letra grande)')}<div class="r"><button class="p" onclick="repGo(0)">Ver / PDF</button><button onclick="repGo(1)">Texto (.txt)</button><button onclick="dg.close()">Cancelar</button></div>`;dg.showModal()}
+function repGo(m){const g=i=>!!$('#'+i)&&$('#'+i).checked,o={it:g('r_it'),day:$('#r_day').value,en:g('r_en'),li:g('r_li'),gs:g('r_gs'),n:g('r_n'),u:g('r_u'),pk:g('r_pk'),nt:g('r_nt')},B=repB(o);dg.close();
+ if(m)return sendF(new File([repT(B)],T().name.replace(/\W+/g,'_')+'_informe.txt',{type:'text/plain'}),T().name);
+ rp.className=o.pk?'big':'';rp.innerHTML='<div class="tb"><button onclick="print()">Imprimir / Guardar PDF</button><button onclick="rp.hidden=true">Cerrar</button></div>'+repH(B);rp.hidden=false;rp.scrollTop=0}
+function repB(o){const t=T(),B=[],n=o.n&&!o.pk,u=o.u&&!o.pk;B.push({k:'h1',t:t.name},{k:'p',t:'Informe del '+new Date().toLocaleDateString('es')+' · versión '+(t.v||1)});
+ if(o.it){(o.day=='all'?t.days:t.days.filter(d=>d.id==o.day)).forEach(d=>{B.push({k:'h2',t:dl(d),pg:1});d.it.forEach(i=>{const s=[];if(i.pl)s.push('Lugar: '+i.pl);if(n&&i.n)s.push(i.n);if(u&&i.u)s.push('Web: '+i.u);B.push({k:'li',t:(i.t||'--:--')+'  '+i.ti+(i.st!='ok'?' ('+ST[i.st].toLowerCase()+')':''),s:s.join('\n')})})});
+  if(o.day=='all'&&t.ideas.length){B.push({k:'h2',t:'Bolsa de ideas',pg:1});t.ideas.forEach(x=>B.push({k:'li',t:x.ti,s:n?x.n:''}))}}
+ if(o.en){B.push({k:'h2',t:'Enlaces',pg:1});t.links.forEach(x=>B.push({k:'li',t:x.l,s:x.u}));const a=[];t.days.forEach(d=>d.it.forEach(i=>{const s=[];if(i.u)s.push(i.u);if(i.pl)s.push('Lugar: '+i.pl);if(s.length)a.push({k:'li',t:i.ti+' ('+dl(d)+')',s:s.join('\n')})}));if(a.length)B.push({k:'h3',t:'Del itinerario'},...a)}
+ if(o.nt&&t.notes.length){B.push({k:'h2',t:'Notas',pg:1});t.notes.forEach(x=>B.push({k:'li',t:x.ti,s:x.n}))}
+ if(o.li&&!ro()){B.push({k:'h2',t:'Pendientes y listas',pg:1});const p=[];t.days.forEach(d=>d.it.filter(i=>i.st=='pend').forEach(i=>p.push({k:'li',t:i.ti,s:dl(d)})));B.push({k:'h3',t:'Por confirmar ('+p.length+')'},...p);[['Lista del viaje',t.lists.t],['Lista genérica',t.lists.g]].forEach(([h,l])=>B.push({k:'h3',t:h},...l.map(x=>({k:'li',t:(S.local[x.id]?'[x] ':'[ ] ')+x.ti}))))}
+ if(o.gs&&!ro()){const k=calc(t),mu=t.groups.length>1,me=k.sp[t.me]||0,P=(a,b)=>B.push({k:'li',t:a+': '+eur(b)});B.push({k:'h2',t:'Cuentas',pg:1},{k:'h3',t:'Resumen'});P('Total del viaje',k.tot);if(mu)P('Tu parte',me);P('Pendiente de pagar',mu?k.mePend:k.pend);if(t.bud)P('Presupuesto restante',t.bud*100-me);
+  B.push({k:'h3',t:'Por categoría'});Object.entries(k.cat).forEach(([c,v])=>P(c,v));
+  if(mu){B.push({k:'h3',t:'Cuentas entre grupos'});const st=settle(k.net);if(!st.length)B.push({k:'p',t:'Todo saldado.'});st.forEach(([a,b,m])=>B.push({k:'li',t:gn(t,a)+' debe '+eur(m)+' a '+gn(t,b)}))}
+  B.push({k:'h3',t:'Gastos'});t.gs.forEach(e=>B.push({k:'li',t:e.ti+' — '+eur(Math.round(e.amt*100)),s:[e.cat,mu?'paga '+gn(t,e.pay):'',e.met,e.st=='pend'?'pendiente'+(e.due?' hasta '+e.due:''):''].filter(Boolean).join(' · ')}))}
+ return B}
+const repT=B=>B.map(b=>b.k=='h1'?b.t.toUpperCase()+'\n':b.k=='h2'?'\n=== '+b.t+' ===':b.k=='h3'?'\n-- '+b.t:b.k=='p'?b.t:'- '+b.t+(b.s?'\n'+b.s.split('\n').map(x=>'    '+x).join('\n'):'')).join('\n');
+function repH(B){let c=0;return B.map(b=>{const t=esc(b.t).replace(/^\[x\] /,'☑ ').replace(/^\[ \] /,'☐ ');return b.k=='h1'?`<h1>${t}</h1>`:b.k=='h2'?`<h2 class="${c++&&b.pg?'pg':''}">${t}</h2>`:b.k=='h3'?`<h3>${t}</h3>`:b.k=='p'?`<p>${t}</p>`:`<div class="li"><b>${t}</b>${b.s?`<div class="s">${esc(b.s).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g,u=>`<a href="${u}">${u}</a>`)}</div>`:''}</div>`}).join('')}
+boot();
+</script></body></html>
