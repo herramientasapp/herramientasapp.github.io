@@ -18,3 +18,6 @@ dialog{max-height:90vh;overflow:auto;width:min(92vw,460px);border:1px solid var(
 dialog input,dialog select,dialog textarea{width:100%;margin:3px 0}textarea{min-height:60px}
 .done{text-decoration:line-through;color:var(--m)}
 :focus-visible{outline:2px solid var(--a);outline-offset:1px}
+
+.bar{display:flex;height:10px;border-radius:5px;background:var(--b);overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--ok)}.bar i.b{background:var(--op)}.bar.x i{background:var(--pe)}
+details summary{cursor:pointer;margin:18px 0 6px}

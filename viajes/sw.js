@@ -1,5 +1,5 @@
-/* Service worker de "Gestor de viajes". Al subir una versión nueva, cambia CACHE (p. ej. v8). */
-const CACHE='gestor-viajes-v7';
+/* Service worker de "Gestor de viajes". Al subir una versión nueva, cambia CACHE (p. ej. v9). */
+const CACHE='gestor-viajes-v8';
 const FILES=['./','index.html','style.css','manifest.json','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(FILES.map(f=>c.add(new Request(f,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()));
