@@ -1,1 +1,83 @@
-
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f5240">
+<title>Almacenamiento</title>
+<style>
+:root{--bg:#f3f6f2;--card:#fff;--ink:#223229;--mut:#66776c;--sage:#6f9a7f;--deep:#2f5240;--onp:#fff;--soft:#e3ece5;--line:#d5e0d8;--warn:#b5642f;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#141b17;--card:#1d2722;--ink:#e6efe8;--mut:#9bb0a2;--sage:#86b295;--deep:#a9d1b7;--onp:#10201a;--soft:#26342c;--line:#2f4036;--warn:#e0905a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 30px}
+header{background:var(--deep);color:var(--onp);padding:14px 18px}
+header h1{margin:0;font:600 22px Georgia,serif}
+main{max-width:680px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.mut{color:var(--mut)}.s{font-size:13px}
+b.t{font:600 18px Georgia,serif}
+.btn{padding:10px 16px;border:0;border-radius:10px;background:var(--deep);color:var(--onp);font-size:15px;font-weight:600;cursor:pointer;margin:6px 6px 0 0}
+.btn.alt{background:var(--soft);color:var(--ink)}
+.bar{height:12px;background:var(--soft);border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--sage)}
+.bar.hi i{background:var(--warn)}
+.big{font:600 26px Georgia,serif}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+td.r,th.r{text-align:right;white-space:nowrap}
+.scroll{overflow-x:auto}
+select{max-width:100%;padding:5px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:13px}
+details summary{cursor:pointer;font-weight:600;margin-top:6px}
+code{font-size:13px;word-break:break-all}
+</style></head><body>
+<header><h1>Almacenamiento</h1></header>
+<main id="m"></main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* [carpeta, nombre, palabras que suelen aparecer en sus claves o bases de datos] */
+const APPS=[['afinador','Afinador',['afina','tuner']],['amigos','Amigos',['amigo']],['devoluciones','Devoluciones',['devol']],['enlaces','Enlaces',['enlace','link']],['garajes','Garajes',['garaj']],['limpieza','Limpieza',['limpi','tarea','hogar']],['loop','Loop (bucles)',['loop','bucle']],['metronomo','Metrónomo',['metron']],['practica','Práctica de guitarra',['practic','caged','cuaderno']],['salud','Mi salud',['salud']],['supermercado','Supermercado',['compra','mercadona','lidl','ticket','super']],['teoria','Teoría',['teor']],['viajes','Viajes',['viaj','trip']],['portal','Portal (raíz)',['portal']],['medidor','Este medidor',['medidor']]];
+let cfg={map:{},limit:0};try{Object.assign(cfg,JSON.parse(localStorage.getItem('medidor_cfg')||'{}'))}catch(e){}
+cfg.map=cfg.map||{};
+const saveCfg=()=>{try{localStorage.setItem('medidor_cfg',JSON.stringify(cfg))}catch(e){}};
+const LIM=()=>cfg.limit||5242880;
+const nf=(n,d=1)=>n.toLocaleString('es-ES',{maximumFractionDigits:d});
+const fb=b=>b<1024?nf(b,0)+' B':b<1048576?nf(b/1024)+' KB':b<1073741824?nf(b/1048576)+' MB':nf(b/1073741824,2)+' GB';
+const guess=n=>{n=n.toLowerCase();for(const a of APPS)if(a[2].some(h=>n.includes(h)))return a[0];return'-'};
+const appOf=k=>cfg.map[k]||guess(k.replace(/^(ls|db):/,''));
+const appName=id=>(APPS.find(a=>a[0]==id)||[0,'Sin asignar'])[1];
+let ls=[],idb=null,est=null;
+const opts=cur=>[['-','Sin asignar']].concat(APPS.map(a=>[a[0],a[1]])).map(o=>`<option value="${o[0]}"${o[0]==cur?' selected':''}>${esc(o[1])}</option>`).join('');
+function assign(k,v){cfg.map[k]=v;saveCfg();render()}
+function readLS(){ls=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),v=localStorage.getItem(k)||'';ls.push({k,n:k.length+v.length})}}catch(e){}ls.sort((a,b)=>b.n-a.n)}
+function sz(v,d,seen){if(v==null)return 0;const t=typeof v;if(t=='string')return v.length;if(t!='object')return 8;
+if(v instanceof Blob)return v.size;if(v instanceof ArrayBuffer||ArrayBuffer.isView(v))return v.byteLength;if(d>6)return 0;seen=seen||new WeakSet();if(seen.has(v))return 0;seen.add(v);
+let n=0;if(Array.isArray(v)){for(const x of v)n+=sz(x,d+1,seen)}else for(const k in v)n+=k.length+sz(v[k],d+1,seen);return n}
+async function loadEst(){try{est=await navigator.storage.estimate();est.p=navigator.storage.persisted?await navigator.storage.persisted():null}catch(e){est=false}render()}
+function measure(){if(!confirm('Se rellenará un dato temporal hasta llegar al límite y luego se borrará. Durante unos segundos, otras pestañas abiertas de este sitio podrían fallar al guardar. ¿Continuar?'))return;
+$('#bm').textContent='Midiendo…';setTimeout(()=>{const T='__medidor_tmp__';try{localStorage.removeItem(T)}catch(e){}readLS();let used=0;ls.forEach(x=>used+=x.n);
+let lo=0,hi=12e6;while(lo<hi){const m=Math.ceil((lo+hi)/2);let ok=true;try{localStorage.setItem(T,'a'.repeat(m))}catch(e){ok=false}if(ok)lo=m;else hi=m-1}
+try{localStorage.removeItem(T)}catch(e){}cfg.limit=used+T.length+lo;saveCfg();render()},60)}
+async function calcIDB(){if(!indexedDB.databases){idb=false;render();return}
+$('#bi').textContent='Calculando…';let dbs=[];try{dbs=await indexedDB.databases()}catch(e){}idb=[];
+for(const d of dbs){const r={name:d.name,n:0,sz:0,err:''};try{const db=await new Promise((ok,ko)=>{const q=indexedDB.open(d.name);q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)});
+const st=[...db.objectStoreNames];if(st.length){const tx=db.transaction(st,'readonly');const arr=await Promise.all(st.map(s=>new Promise(ok=>{const a=tx.objectStore(s).getAll();a.onsuccess=()=>ok(a.result);a.onerror=()=>ok([])})));arr.forEach(x=>{r.n+=x.length;x.forEach(v=>r.sz+=sz(v,0))})}
+db.close()}catch(e){r.err='No se pudo leer'}idb.push(r)}
+idb.sort((a,b)=>b.sz-a.sz);render()}
+function groups(){const g={};const G=id=>g[id]=g[id]||{ls:0,k:0,db:0,d:0};ls.forEach(x=>{const o=G(appOf('ls:'+x.k));o.ls+=x.n;o.k++});(idb||[]).forEach(x=>{const o=G(appOf('db:'+x.name));o.db+=x.sz;o.d++});return g}
+function report(){const u=ls.reduce((a,x)=>a+x.n,0),g=groups();let t='Almacenamiento de '+location.origin+' ('+new Date().toLocaleDateString('es-ES')+')\n';
+t+='localStorage: '+fb(u)+' de '+fb(LIM())+(cfg.limit?' (medido)':' (estimado)')+' = '+nf(u/LIM()*100)+' %\n';
+Object.keys(g).sort((a,b)=>g[b].ls-g[a].ls).forEach(id=>{t+='- '+appName(id)+': '+fb(g[id].ls)+' ('+nf(g[id].ls/LIM()*100)+' %)'+(idb?'; IndexedDB '+fb(g[id].db):'')+'\n'});
+if(est)t+='IndexedDB y resto: '+fb(est.usage)+' de '+fb(est.quota)+' ('+nf(est.usage/est.quota*100,2)+' %)\n';return t}
+function copyRep(){const t=report();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>alert('Informe copiado.')).catch(()=>prompt('Copia este texto:',t))}
+function render(){readLS();const u=ls.reduce((a,x)=>a+x.n,0),p=u/LIM()*100,g=groups(),ids=Object.keys(g).sort((a,b)=>(g[b].ls+g[b].db)-(g[a].ls+g[a].db));
+$('#m').innerHTML=`<div class="card"><b class="t">Este sitio</b><p style="margin:6px 0 0"><code>${esc(location.origin)}</code></p><p class="mut s" style="margin:6px 0 0">Todas las aplicaciones de esta dirección comparten el mismo almacenamiento. Solo se ve lo de este navegador y este dispositivo. No se borra nada.</p></div>
+<div class="card"><b class="t">localStorage</b><div class="big">${nf(p)} %</div><div class="bar${p>80?' hi':''}"><i style="width:${Math.min(100,p)}%"></i></div>
+<div class="mut s">${fb(u)} usados de ${fb(LIM())} (${cfg.limit?'límite medido en este navegador':'límite habitual estimado'}) · quedan ${fb(Math.max(0,LIM()-u))}</div>
+<button class="btn alt" id="bm" onclick="measure()">Medir el límite real</button><button class="btn alt" onclick="render()">Actualizar</button></div>
+<div class="card"><b class="t">IndexedDB y resto</b>${est?`<div class="big">${nf(est.usage/est.quota*100,2)} %</div><div class="bar"><i style="width:${Math.max(.5,Math.min(100,est.usage/est.quota*100))}%"></i></div><div class="mut s">${fb(est.usage)} usados de una cuota de ${fb(est.quota)}. Cifra orientativa de todo el sitio (puede incluir localStorage y cachés).${est.p==null?'':est.p?' Almacenamiento persistente: sí.':' Almacenamiento persistente: no (el navegador podría limpiarlo si falta espacio).'}</div>`:est===false?'<p class="mut s">Este navegador no ofrece la estimación.</p>':'<p class="mut s">Calculando…</p>'}
+<button class="btn alt" id="bi" onclick="calcIDB()">Calcular por aplicación</button><p class="mut s" style="margin:6px 0 0">Lee las bases de datos para estimar su tamaño; si hay muchas fotos o datos, puede tardar.</p>
+${idb===false?'<p class="mut s">Este navegador no permite listar las bases de datos.</p>':idb?(idb.length?`<div class="scroll"><table><tr><th>Base de datos</th><th>App</th><th class="r">Registros</th><th class="r">Tamaño</th></tr>${idb.map(x=>`<tr><td>${esc(x.name)}${x.err?'<br><span class="mut s">'+x.err+'</span>':''}</td><td><select onchange="assign('db:'+${esc(JSON.stringify(x.name)).replace(/'/g,'&#39;')},this.value)">${opts(appOf('db:'+x.name))}</select></td><td class="r">${x.n}</td><td class="r">${fb(x.sz)}</td></tr>`).join('')}</table></div>`:'<p class="mut s">No hay bases de datos en este sitio.</p>'):''}</div>
+<div class="card"><b class="t">Por aplicación</b><div class="scroll"><table><tr><th>App</th><th class="r">localStorage</th><th class="r">% del límite</th><th class="r">IndexedDB</th></tr>${ids.map(id=>`<tr><td>${esc(appName(id))}<br><span class="mut s">${g[id].k} claves${idb?', '+g[id].d+' bases':''}</span></td><td class="r">${fb(g[id].ls)}</td><td class="r">${nf(g[id].ls/LIM()*100,2)} %</td><td class="r">${idb?fb(g[id].db):'—'}</td></tr>`).join('')}<tr><td><b>Total</b></td><td class="r"><b>${fb(u)}</b></td><td class="r"><b>${nf(p,2)} %</b></td><td class="r"><b>${idb?fb(idb.reduce((a,x)=>a+x.sz,0)):'—'}</b></td></tr></table></div>
+<p class="mut s">El reparto por aplicación se deduce del nombre de cada clave o base de datos. Si alguna está mal asignada, corrígela abajo.</p><button class="btn" onclick="copyRep()">Copiar informe</button></div>
+<details class="card"><summary>Claves de localStorage (${ls.length})</summary><div class="scroll"><table><tr><th>Clave</th><th>App</th><th class="r">Tamaño</th></tr>${ls.map((x,i)=>`<tr><td><code>${esc(x.k)}</code></td><td><select onchange="assign('ls:'+ls[${i}].k,this.value)">${opts(appOf('ls:'+x.k))}</select></td><td class="r">${fb(x.n)}</td></tr>`).join('')}</table></div></details>`}
+render();loadEst();
+</script></body></html>
