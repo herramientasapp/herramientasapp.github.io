@@ -1,771 +1,112 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Archivo y Gestor Personal</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col text-sm">
-
-    <!-- Header -->
-    <header class="bg-indigo-600 text-white shadow-sm">
-        <div class="max-w-6xl mx-auto px-3 py-3 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <h1 class="font-bold flex items-center gap-1.5 text-base">
-                📦 Mi Archivo Personal
-            </h1>
-            <!-- Buscador global -->
-            <div class="w-full sm:w-72">
-                <input type="text" id="globalSearch" oninput="handleGlobalSearch(this.value)" placeholder="Buscar en todo..." 
-                    class="w-full px-2.5 py-1 rounded bg-indigo-700 text-white placeholder-indigo-300 focus:outline-none focus:ring-1 focus:ring-white text-xs">
-            </div>
-        </div>
-        <!-- Pestañas de Navegación sin scroll horizontal -->
-        <nav class="bg-indigo-700 border-t border-indigo-500">
-            <div class="max-w-6xl mx-auto flex flex-wrap justify-center sm:justify-start">
-                <button onclick="switchTab('tab-dashboard')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-white text-white">Resumen</button>
-                <button onclick="switchTab('tab-locations')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-indigo-200 hover:text-white">Ubicaciones</button>
-                <button onclick="switchTab('tab-items')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-indigo-200 hover:text-white">Inventario</button>
-                <button onclick="switchTab('tab-digital')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-indigo-200 hover:text-white">Soportes Digitales</button>
-                <button onclick="switchTab('tab-docs')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-indigo-200 hover:text-white">Documentos Clave</button>
-                <button onclick="switchTab('tab-settings')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-indigo-200 hover:text-white">Backup</button>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Contenido Principal -->
-    <main class="max-w-6xl mx-auto px-3 py-4 flex-grow w-full space-y-4">
-
-        <!-- 1. DASHBOARD -->
-        <section id="tab-dashboard" class="tab-content space-y-4">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
-                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Ubicaciones</p>
-                    <p id="stat-locations" class="text-xl font-bold text-indigo-600 mt-0.5">0</p>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
-                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Elementos</p>
-                    <p id="stat-items" class="text-xl font-bold text-indigo-600 mt-0.5">0</p>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
-                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Soportes Digitales</p>
-                    <p id="stat-digital" class="text-xl font-bold text-indigo-600 mt-0.5">0</p>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
-                    <p class="text-[10px] text-slate-500 uppercase font-semibold">Documentos Clave</p>
-                    <p id="stat-docs" class="text-xl font-bold text-indigo-600 mt-0.5">0</p>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded shadow-sm border border-slate-200 space-y-2">
-                <h2 class="font-semibold text-slate-700">Panel de Control Ágil</h2>
-                <p class="text-xs text-slate-600 leading-relaxed">
-                    Usa las pestañas superiores para navegar. Todo el diseño es compacto para permitirte consultar y registrar información rápidamente. Recuerda realizar copias de seguridad periódicas desde la pestaña Backup.
-                </p>
-            </div>
-        </section>
-
-        <!-- 2. UBICACIONES -->
-        <section id="tab-locations" class="tab-content hidden space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-slate-700">Ubicaciones y Contenedores</h2>
-                <button onclick="openModal('locationModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded shadow-sm transition">
-                    + Nueva Ubicación
-                </button>
-            </div>
-            <div id="locations-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
-        </section>
-
-        <!-- 3. INVENTARIO -->
-        <section id="tab-items" class="tab-content hidden space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-slate-700">Inventario (Objetos, Libros, etc.)</h2>
-                <button onclick="openModal('itemModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded shadow-sm transition">
-                    + Nuevo Elemento
-                </button>
-            </div>
-            <div class="bg-white rounded shadow-sm border border-slate-200 overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-100 border-b border-slate-200 text-slate-600">
-                        <tr>
-                            <th class="p-2">Nombre</th>
-                            <th class="p-2">Categoría</th>
-                            <th class="p-2">Ubicación</th>
-                            <th class="p-2">Etiquetas</th>
-                            <th class="p-2">Notas</th>
-                            <th class="p-2 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="items-table-body" class="divide-y divide-slate-100"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- 4. SOPORTES DIGITALES -->
-        <section id="tab-digital" class="tab-content hidden space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-slate-700">Discos Duros, Pendrives y Tarjetas</h2>
-                <button onclick="openModal('digitalModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded shadow-sm transition">
-                    + Registrar Soporte
-                </button>
-            </div>
-            <div id="digital-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
-        </section>
-
-        <!-- 5. DOCUMENTOS -->
-        <section id="tab-docs" class="tab-content hidden space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-slate-700">Archivo Documental Clave</h2>
-                <button onclick="openModal('docModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded shadow-sm transition">
-                    + Nuevo Documento
-                </button>
-            </div>
-            <div id="docs-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
-        </section>
-
-        <!-- 6. BACKUP -->
-        <section id="tab-settings" class="tab-content hidden space-y-3">
-            <h2 class="font-semibold text-slate-700">Copias de Seguridad (JSON)</h2>
-            <div class="bg-white p-4 rounded shadow-sm border border-slate-200 space-y-3">
-                <p class="text-xs text-slate-600">Exporta tus datos en formato JSON para guardarlos con total seguridad.</p>
-                <div class="flex gap-3">
-                    <button onclick="exportBackup()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded shadow-sm">
-                        📥 Descargar Backup
-                    </button>
-                    <label class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded shadow-sm cursor-pointer">
-                        📤 Restaurar Backup
-                        <input type="file" id="importFile" accept=".json" onchange="importBackup(event)" class="hidden">
-                    </label>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODALES -->
-
-    <!-- Modal Ubicación -->
-    <div id="locationModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
-        <div class="bg-white rounded max-w-sm w-full p-4 space-y-3 shadow-lg">
-            <h3 id="locationModalTitle" class="font-semibold text-slate-700 text-sm">Nueva Ubicación</h3>
-            <form id="locationForm" onsubmit="saveLocation(event)" class="space-y-2.5">
-                <input type="hidden" id="locId">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Nombre</label>
-                    <input type="text" id="locName" required class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Casa A, Trastero 1, Caja 4">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Tipo</label>
-                    <select id="locType" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="Casa">Casa / Inmueble</option>
-                        <option value="Trastero">Trastero</option>
-                        <option value="Habitación">Habitación / Zona</option>
-                        <option value="Armario">Armario / Estantería</option>
-                        <option value="Caja">Caja / Contenedor</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Ubicación Padre (Opcional)</label>
-                    <select id="locParent" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="">-- Ninguna (Principal) --</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeModal('locationModal')" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                    <button type="submit" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Elemento -->
-    <div id="itemModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
-        <div class="bg-white rounded max-w-sm w-full p-4 space-y-3 shadow-lg">
-            <h3 id="itemModalTitle" class="font-semibold text-slate-700 text-sm">Nuevo Elemento</h3>
-            <form id="itemForm" onsubmit="saveItem(event)" class="space-y-2.5">
-                <input type="hidden" id="itemId">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Nombre</label>
-                    <input type="text" id="itemName" required class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Taladro, Libro, etc.">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Categoría</label>
-                    <input type="text" id="itemCategory" list="categoryOptions" required class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Libro, Herramienta, Documento...">
-                    <datalist id="categoryOptions">
-                        <option value="Objeto / Aparato">
-                        <option value="Libro / Revista">
-                        <option value="Documento Físico">
-                        <option value="Herramienta">
-                        <option value="Mueble">
-                        <option value="Varios">
-                    </datalist>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Ubicación / Contenedor</label>
-                    <select id="itemLocation" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="">-- Sin asignar --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Etiquetas (coma)</label>
-                    <input type="text" id="itemTags" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="garantia, urgente">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Notas</label>
-                    <textarea id="itemNotes" rows="2" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Detalles..."></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeModal('itemModal')" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                    <button type="submit" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Soporte Digital -->
-    <div id="digitalModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
-        <div class="bg-white rounded max-w-sm w-full p-4 space-y-3 shadow-lg">
-            <h3 id="digitalModalTitle" class="font-semibold text-slate-700 text-sm">Soporte Digital</h3>
-            <form id="digitalForm" onsubmit="saveDigital(event)" class="space-y-2.5">
-                <input type="hidden" id="digitalId">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Identificador</label>
-                    <input type="text" id="digitalName" required class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Pendrive Kingston 32GB">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Tipo</label>
-                    <select id="digitalType" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="Disco Duro Externo">Disco Duro Externo</option>
-                        <option value="Pendrive USB">Pendrive USB</option>
-                        <option value="Tarjeta SD">Tarjeta SD / MicroSD</option>
-                        <option value="CD / DVD">CD / DVD</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Ubicación / Contenedor Físico</label>
-                    <select id="digitalLocation" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="">-- Sin asignar --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Contenido / Índice</label>
-                    <textarea id="digitalContent" rows="2" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Fotos 2015, copias seguridad..."></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeModal('digitalModal')" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                    <button type="submit" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Documento Clave -->
-    <div id="docModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
-        <div class="bg-white rounded max-w-sm w-full p-4 space-y-3 shadow-lg">
-            <h3 id="docModalTitle" class="font-semibold text-slate-700 text-sm">Documento Clave</h3>
-            <form id="docForm" onsubmit="saveDoc(event)" class="space-y-2.5">
-                <input type="hidden" id="docId">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Título</label>
-                    <input type="text" id="docTitle" required class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Seguro Coche">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Categoría</label>
-                    <select id="docCategory" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                        <option value="Escrituras / Inmobiliario">Escrituras / Inmobiliario</option>
-                        <option value="Seguros">Seguros</option>
-                        <option value="Vehículos">Vehículos</option>
-                        <option value="Fiscal / Legal">Fiscal / Legal</option>
-                        <option value="Salud">Salud</option>
-                        <option value="Otros">Otros</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Notas</label>
-                    <textarea id="docNotes" rows="2" class="w-full px-2.5 py-1.5 border rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" placeholder="Nº póliza, compañía..."></textarea>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Archivo Adjunto (Opcional)</label>
-                    <input type="file" id="docFile" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeModal('docModal')" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                    <button type="submit" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Visualizador de Documento Maximizado -->
-    <div id="viewerModal" class="fixed inset-0 bg-black/80 hidden flex flex-col items-center justify-center p-3 z-50">
-        <div class="max-w-4xl w-full bg-white rounded shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-indigo-600 text-white px-4 py-2 flex justify-between items-center text-xs">
-                <span id="viewerTitle" class="font-bold"></span>
-                <button onclick="closeViewer()" class="text-white hover:text-slate-200 font-bold text-base">✕</button>
-            </div>
-            <div class="p-4 flex-grow overflow-auto flex items-center justify-center bg-slate-900">
-                <div id="viewerContent" class="text-center"></div>
-            </div>
-            <div class="bg-slate-100 p-2.5 flex justify-between items-center border-t border-slate-200 text-xs">
-                <span id="viewerMeta" class="text-slate-500"></span>
-                <a id="viewerDownload" href="#" download class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-medium">📥 Descargar Archivo</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Lógica JavaScript -->
-    <script>
-        const DB_NAME = 'MiArchivoPersonalDB';
-        const DB_VERSION = 3;
-        let db = null;
-        let cachedItems = [];
-
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    loadAllData();
-                    resolve(db);
-                };
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains('locations')) database.createObjectStore('locations', { keyPath: 'id', autoIncrement: true });
-                    if (!database.objectStoreNames.contains('items')) database.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
-                    if (!database.objectStoreNames.contains('digital')) database.createObjectStore('digital', { keyPath: 'id', autoIncrement: true });
-                    if (!database.objectStoreNames.contains('documents')) database.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
-                };
-            });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('border-white', 'text-white');
-                el.classList.add('border-transparent', 'text-indigo-200');
-            });
-            document.getElementById(tabId).classList.remove('hidden');
-            event.currentTarget.classList.add('border-white', 'text-white');
-            event.currentTarget.classList.remove('border-transparent', 'text-indigo-200');
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-            if (modalId === 'locationModal') {
-                document.getElementById('locationForm').reset();
-                document.getElementById('locId').value = '';
-                document.getElementById('locationModalTitle').innerText = 'Nueva Ubicación';
-                populateLocationParents();
-            } else if (modalId === 'itemModal') {
-                document.getElementById('itemForm').reset();
-                document.getElementById('itemId').value = '';
-                document.getElementById('itemModalTitle').innerText = 'Nuevo Elemento';
-                populateLocationSelects('itemLocation');
-            } else if (modalId === 'digitalModal') {
-                document.getElementById('digitalForm').reset();
-                document.getElementById('digitalId').value = '';
-                document.getElementById('digitalModalTitle').innerText = 'Soporte Digital';
-                populateLocationSelects('digitalLocation');
-            } else if (modalId === 'docModal') {
-                document.getElementById('docForm').reset();
-                document.getElementById('docId').value = '';
-                document.getElementById('docModalTitle').innerText = 'Documento Clave';
-            }
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        function dbTransaction(storeName, mode, callback) {
-            const transaction = db.transaction(storeName, mode);
-            const store = transaction.objectStore(storeName);
-            return callback(store, transaction);
-        }
-
-        function getAll(storeName) {
-            return new Promise((resolve, reject) => {
-                dbTransaction(storeName, 'readonly', (store) => {
-                    const request = store.getAll();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        function saveRecord(storeName, data) {
-            return new Promise((resolve, reject) => {
-                dbTransaction(storeName, 'readwrite', (store) => {
-                    const request = data.id ? store.put(data) : store.add(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        function deleteRecord(storeName, id) {
-            return new Promise((resolve, reject) => {
-                dbTransaction(storeName, 'readwrite', (store) => {
-                    const request = store.delete(Number(id));
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        async function loadAllData() {
-            const locations = await getAll('locations');
-            const items = await getAll('items');
-            cachedItems = items;
-            const digital = await getAll('digital');
-            const docs = await getAll('documents');
-
-            document.getElementById('stat-locations').innerText = locations.length;
-            document.getElementById('stat-items').innerText = items.length;
-            document.getElementById('stat-digital').innerText = digital.length;
-            document.getElementById('stat-docs').innerText = docs.length;
-
-            renderLocations(locations);
-            renderItems(items);
-            renderDigital(digital);
-            renderDocs(docs);
-        }
-
-        // Render Ubicaciones (Compactas)
-        function renderLocations(locations) {
-            const container = document.getElementById('locations-list');
-            container.innerHTML = locations.length === 0 ? '<p class="text-xs text-slate-500 col-span-full">No hay ubicaciones registradas.</p>' : '';
-            locations.forEach(loc => {
-                const parent = locations.find(l => l.id == loc.parent);
-                const parentText = parent ? `En: ${parent.name}` : 'Principal';
-                container.innerHTML += `
-                    <div class="bg-white p-3 rounded shadow-sm border border-slate-200 flex flex-col justify-between text-xs">
-                        <div>
-                            <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded">${loc.type}</span>
-                            <h3 class="font-bold text-slate-700 mt-1">${loc.name}</h3>
-                            <p class="text-[11px] text-slate-500 mt-0.5">${parentText}</p>
-                        </div>
-                        <div class="flex justify-end gap-2 mt-2 pt-1 border-t border-slate-100">
-                            <button onclick="editLocation(${loc.id})" class="text-[11px] text-indigo-600 hover:underline">Editar</button>
-                            <button onclick="removeItemOrLoc('locations', ${loc.id})" class="text-[11px] text-red-600 hover:underline">Eliminar</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        async function populateLocationParents() {
-            const locations = await getAll('locations');
-            const select = document.getElementById('locParent');
-            select.innerHTML = '<option value="">-- Ninguna (Principal) --</option>';
-            locations.forEach(l => select.innerHTML += `<option value="${l.id}">${l.name} (${l.type})</option>`);
-        }
-
-        async function populateLocationSelects(elementId) {
-            const locations = await getAll('locations');
-            const select = document.getElementById(elementId);
-            select.innerHTML = '<option value="">-- Sin asignar --</option>';
-            locations.forEach(l => select.innerHTML += `<option value="${l.name}">${l.name} (${l.type})</option>`);
-        }
-
-        async function saveLocation(e) {
-            e.preventDefault();
-            const idVal = document.getElementById('locId').value;
-            const data = {
-                name: document.getElementById('locName').value,
-                type: document.getElementById('locType').value,
-                parent: document.getElementById('locParent').value || null
-            };
-            if (idVal) data.id = Number(idVal);
-            await saveRecord('locations', data);
-            closeModal('locationModal');
-            loadAllData();
-        }
-
-        async function editLocation(id) {
-            const locations = await getAll('locations');
-            const loc = locations.find(l => l.id === id);
-            if (!loc) return;
-            await populateLocationParents();
-            document.getElementById('locId').value = loc.id;
-            document.getElementById('locName').value = loc.name;
-            document.getElementById('locType').value = loc.type;
-            document.getElementById('locParent').value = loc.parent || '';
-            document.getElementById('locationModalTitle').innerText = 'Editar Ubicación';
-            document.getElementById('locationModal').classList.remove('hidden');
-        }
-
-        // Render Elementos
-        function renderItems(items) {
-            const tbody = document.getElementById('items-table-body');
-            tbody.innerHTML = items.length === 0 ? '<tr><td colspan="6" class="p-3 text-xs text-slate-500 text-center">No hay elementos registrados.</td></tr>' : '';
-            items.forEach(item => {
-                const tagsHtml = item.tags ? item.tags.split(',').map(t => `<span class="bg-slate-100 text-slate-600 px-1 py-0.5 rounded text-[10px] mr-0.5">#${t.trim()}</span>`).join('') : '';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-2 font-medium text-slate-700">${item.name}</td>
-                        <td class="p-2"><span class="bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-medium">${item.category || 'General'}</span></td>
-                        <td class="p-2 text-slate-600 text-[11px]">${item.location || '-'}</td>
-                        <td class="p-2">${tagsHtml}</td>
-                        <td class="p-2 text-slate-500 text-[11px]">${item.notes || '-'}</td>
-                        <td class="p-2 text-right space-x-1.5">
-                            <button onclick="editItem(${item.id})" class="text-[11px] text-indigo-600 hover:underline">Editar</button>
-                            <button onclick="removeItemOrLoc('items', ${item.id})" class="text-[11px] text-red-600 hover:underline">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        async function saveItem(e) {
-            e.preventDefault();
-            const idVal = document.getElementById('itemId').value;
-            const data = {
-                name: document.getElementById('itemName').value,
-                category: document.getElementById('itemCategory').value,
-                location: document.getElementById('itemLocation').value,
-                tags: document.getElementById('itemTags').value,
-                notes: document.getElementById('itemNotes').value
-            };
-            if (idVal) data.id = Number(idVal);
-            await saveRecord('items', data);
-            closeModal('itemModal');
-            loadAllData();
-        }
-
-        async function editItem(id) {
-            const items = await getAll('items');
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-            await populateLocationSelects('itemLocation');
-            document.getElementById('itemId').value = item.id;
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemCategory').value = item.category || '';
-            document.getElementById('itemLocation').value = item.location || '';
-            document.getElementById('itemTags').value = item.tags || '';
-            document.getElementById('itemNotes').value = item.notes || '';
-            document.getElementById('itemModalTitle').innerText = 'Editar Elemento';
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
-
-        function handleGlobalSearch(query) {
-            const q = query.toLowerCase();
-            if (!q) {
-                renderItems(cachedItems);
-                return;
-            }
-            const filtered = cachedItems.filter(item => 
-                item.name.toLowerCase().includes(q) ||
-                (item.category && item.category.toLowerCase().includes(q)) ||
-                (item.location && item.location.toLowerCase().includes(q)) ||
-                (item.tags && item.tags.toLowerCase().includes(q)) ||
-                (item.notes && item.notes.toLowerCase().includes(q))
-            );
-            renderItems(filtered);
-        }
-
-        // Render Soportes Digitales (Compactos)
-        function renderDigital(digitalList) {
-            const container = document.getElementById('digital-list');
-            container.innerHTML = digitalList.length === 0 ? '<p class="text-xs text-slate-500 col-span-full">No hay soportes digitales registrados.</p>' : '';
-            digitalList.forEach(dig => {
-                container.innerHTML += `
-                    <div class="bg-white p-3 rounded shadow-sm border border-slate-200 flex flex-col justify-between text-xs">
-                        <div>
-                            <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded">${dig.type}</span>
-                            <h3 class="font-bold text-slate-700 mt-1">${dig.name}</h3>
-                            <p class="text-[11px] text-slate-600 mt-1 bg-slate-50 p-1.5 rounded border border-slate-100"><strong>Contenido:</strong> ${dig.content || 'Sin especificar'}</p>
-                            <p class="text-[11px] text-slate-500 mt-1">📍 ${dig.location || 'Sin asignar'}</p>
-                        </div>
-                        <div class="flex justify-end gap-2 mt-2 pt-1 border-t border-slate-100">
-                            <button onclick="editDigital(${dig.id})" class="text-[11px] text-indigo-600 hover:underline">Editar</button>
-                            <button onclick="removeItemOrLoc('digital', ${dig.id})" class="text-[11px] text-red-600 hover:underline">Eliminar</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        async function saveDigital(e) {
-            e.preventDefault();
-            const idVal = document.getElementById('digitalId').value;
-            const data = {
-                name: document.getElementById('digitalName').value,
-                type: document.getElementById('digitalType').value,
-                location: document.getElementById('digitalLocation').value,
-                content: document.getElementById('digitalContent').value
-            };
-            if (idVal) data.id = Number(idVal);
-            await saveRecord('digital', data);
-            closeModal('digitalModal');
-            loadAllData();
-        }
-
-        async function editDigital(id) {
-            const list = await getAll('digital');
-            const dig = list.find(d => d.id === id);
-            if (!dig) return;
-            await populateLocationSelects('digitalLocation');
-            document.getElementById('digitalId').value = dig.id;
-            document.getElementById('digitalName').value = dig.name;
-            document.getElementById('digitalType').value = dig.type;
-            document.getElementById('digitalLocation').value = dig.location || '';
-            document.getElementById('digitalContent').value = dig.content || '';
-            document.getElementById('digitalModalTitle').innerText = 'Editar Soporte Digital';
-            document.getElementById('digitalModal').classList.remove('hidden');
-        }
-
-        // Render Documentos Clave (Con visor y miniatura)
-        function renderDocs(docs) {
-            const container = document.getElementById('docs-list');
-            container.innerHTML = docs.length === 0 ? '<p class="text-xs text-slate-500 col-span-full">No hay documentos registrados.</p>' : '';
-            docs.forEach(doc => {
-                let previewHtml = '<div class="h-20 bg-slate-100 rounded flex items-center justify-center text-slate-400 text-[11px]">📄 Solo metadatos</div>';
-                if (doc.hasFile && doc.fileData) {
-                    if (doc.fileData.startsWith('data:image/')) {
-                        previewHtml = `<div class="h-20 bg-slate-900 rounded overflow-hidden flex items-center justify-center cursor-pointer" onclick="viewDoc(${doc.id})"><img src="${doc.fileData}" class="h-full object-cover"></div>`;
-                    } else {
-                        previewHtml = `<div class="h-20 bg-indigo-50 rounded flex items-center justify-center text-indigo-600 text-[11px] font-semibold cursor-pointer" onclick="viewDoc(${doc.id})">📎 Ver Archivo Adjunto</div>`;
-                    }
-                }
-
-                container.innerHTML += `
-                    <div class="bg-white p-3 rounded shadow-sm border border-slate-200 flex flex-col justify-between text-xs space-y-2">
-                        <div>
-                            <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">${doc.category}</span>
-                            <h3 class="font-bold text-slate-700 mt-1">${doc.title}</h3>
-                            <p class="text-[11px] text-slate-600 mt-0.5">${doc.notes || ''}</p>
-                        </div>
-                        ${previewHtml}
-                        <div class="flex justify-between items-center pt-1 border-t border-slate-100">
-                            ${doc.hasFile ? `<button onclick="viewDoc(${doc.id})" class="text-[11px] text-indigo-600 font-semibold hover:underline">🔍 Maximizar</button>` : '<span></span>'}
-                            <button onclick="removeItemOrLoc('documents', ${doc.id})" class="text-[11px] text-red-600 hover:underline">Eliminar</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        async function viewDoc(id) {
-            const docs = await getAll('documents');
-            const doc = docs.find(d => d.id === id);
-            if (!doc || !doc.fileData) return;
-
-            document.getElementById('viewerTitle').innerText = doc.title;
-            document.getElementById('viewerMeta').innerText = `${doc.category} - ${doc.fileName || 'Archivo'}`;
-            
-            const contentDiv = document.getElementById('viewerContent');
-            if (doc.fileData.startsWith('data:image/')) {
-                contentDiv.innerHTML = `<img src="${doc.fileData}" class="max-h-[70vh] max-w-full rounded shadow">`;
-            } else if (doc.fileData.startsWith('data:application/pdf')) {
-                contentDiv.innerHTML = `<iframe src="${doc.fileData}" class="w-full h-[70vh] rounded"></iframe>`;
-            } else {
-                contentDiv.innerHTML = `<p class="text-white text-xs">Archivo adjunto listo para descargar.</p>`;
-            }
-
-            const downloadBtn = document.getElementById('viewerDownload');
-            downloadBtn.href = doc.fileData;
-            downloadBtn.download = doc.fileName || 'documento';
-
-            document.getElementById('viewerModal').classList.remove('hidden');
-        }
-
-        function closeViewer() {
-            document.getElementById('viewerModal').classList.add('hidden');
-        }
-
-        async function saveDoc(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('docFile');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = async function(event) {
-                    await finalizeDocSave({
-                        title: document.getElementById('docTitle').value,
-                        category: document.getElementById('docCategory').value,
-                        notes: document.getElementById('docNotes').value,
-                        hasFile: true,
-                        fileName: file.name,
-                        fileData: event.target.result
-                    });
-                };
-                reader.readAsDataURL(file);
-            } else {
-                await finalizeDocSave({
-                    title: document.getElementById('docTitle').value,
-                    category: document.getElementById('docCategory').value,
-                    notes: document.getElementById('docNotes').value,
-                    hasFile: false
-                });
-            }
-        }
-
-        async function finalizeDocSave(data) {
-            const idVal = document.getElementById('docId').value;
-            if (idVal) data.id = Number(idVal);
-            await saveRecord('documents', data);
-            closeModal('docModal');
-            loadAllData();
-        }
-
-        async function removeItemOrLoc(storeName, id) {
-            if (confirm('¿Estás seguro de eliminar este elemento?')) {
-                await deleteRecord(storeName, id);
-                loadAllData();
-            }
-        }
-
-        async function exportBackup() {
-            const backup = {
-                locations: await getAll('locations'),
-                items: await getAll('items'),
-                digital: await getAll('digital'),
-                documents: await getAll('documents'),
-                version: 3,
-                date: new Date().toISOString()
-            };
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup_archivo_personal_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-        }
-
-        async function importBackup(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(event) {
-                try {
-                    const backup = JSON.parse(event.target.result);
-                    if (confirm('Restaurar copia sobrescribirá los datos actuales. ¿Continuar?')) {
-                        for (let storeName of ['locations', 'items', 'digital', 'documents']) {
-                            const records = await getAll(storeName);
-                            for (let r of records) await deleteRecord(storeName, r.id);
-                            if (backup[storeName]) {
-                                for (let r of backup[storeName]) {
-                                    delete r.id;
-                                    await saveRecord(storeName, r);
-                                }
-                            }
-                        }
-                        alert('¡Copia restaurada con éxito!');
-                        loadAllData();
-                    }
-                } catch (err) {
-                    alert('Error al leer el archivo JSON.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        initDB().catch(console.error);
-    </script>
-</body>
-</html>
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0f766e"><title>Mi Archivo</title>
+<style>
+:root{--bg:#eef1f0;--c:#fff;--t:#14201f;--m:#5f6f6d;--p:#0f766e;--b:#d5dcda}
+@media(prefers-color-scheme:dark){:root{--bg:#101716;--c:#1a2423;--t:#e8efee;--m:#93a4a1;--p:#14a094;--b:#2c3a38}}
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif;background:var(--bg);color:var(--t);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--p);padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+header input{border:0;background:#fff3;color:#fff}header input::placeholder{color:#ffffffbb}
+main{padding:12px}h3{margin:0 0 4px}h4{margin:16px 0 6px;font-size:15px;color:var(--m)}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit;margin-top:4px}
+label{display:block;margin:10px 0;font-size:13px;color:var(--m)}
+button{padding:11px 14px;border:0;border-radius:8px;background:var(--p);color:#fff;font:inherit;font-weight:600}
+button.g{background:none;color:var(--p);border:1px solid var(--p)}button.d{background:#b42318}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.c{display:flex;align-items:center;gap:10px;background:var(--c);border:1px solid var(--b);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.g1{flex:1;min-width:0}.g1 b{overflow-wrap:anywhere}small,.m{display:block;color:var(--m);font-size:13px}
+.th{width:44px;height:44px;object-fit:cover;border-radius:6px}.pv{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:6px}
+.b,.ch{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--b);white-space:nowrap}
+.e1{background:#dbeafe;color:#1e40af}.e2{background:#d1fae5;color:#065f46}.e3{background:#fee2e2;color:#991b1b}.e4{background:#fef3c7;color:#92400e}.w{background:#fef3c7;color:#92400e}.x{background:#fee2e2;color:#991b1b}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.ch{padding:6px 12px;font-size:13px;border:1px solid var(--b);background:var(--c)}.ch.on{background:var(--p);color:#fff;border-color:var(--p)}
+.k{font-family:ui-monospace,monospace;font-weight:700;color:var(--p)}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.st div{background:var(--c);border:1px solid var(--b);border-radius:8px;padding:10px;text-align:center}.st b{font-size:26px;display:block}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--c);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;color:var(--m);font-size:12px;border-radius:0;padding:9px 0}nav button.on{color:var(--p)}
+#fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:50%;font-size:28px;padding:0;box-shadow:0 3px 10px #0004}
+#ov{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;z-index:9}[hidden]{display:none!important}
+#sh{background:var(--c);width:100%;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px calc(16px) calc(16px + env(safe-area-inset-bottom))}
+i{font-style:normal;color:#b42318;padding:4px 8px}#fl a{color:var(--p)}
+</style></head><body>
+<header><input id="q" type="search" placeholder="Buscar cosas, lugares, documentos…" oninput="render()"></header>
+<main id="v"></main><button id="fab" onclick="sheet(tab)">+</button>
+<nav><button data-t="home" onclick="go('home')">🏠<br>Inicio</button><button data-t="loc" onclick="go('loc')">📍<br>Lugares</button><button data-t="item" onclick="go('item')">📦<br>Cosas</button><button data-t="doc" onclick="go('doc')">📄<br>Docs</button><button data-t="more" onclick="go('more')">⚙️<br>Más</button></nav>
+<div id="ov" hidden><div id="sh"></div></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),nz=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const ST=['Guardar','Regalar','Vender','Tirar','Prestado'],LT=['Casa','Trastero','Zona','Armario','Caja','Otro'],DC=['Escrituras','Contratos','Seguros','Suministros','Banca','Vehículos','Fiscal / Legal','Familia','Salud','Garantías','Otros'],OR=['Original localizado','Solo copia','Original por localizar'];
+const F={loc:[['name','Nombre','text'],['type','Tipo','sel',LT],['parent','Dentro de','loc'],['code','Código de etiqueta (ej. T2-C07)','text'],['notes','Contenido resumido','area'],['photo','Foto','photo']],
+item:[['name','Nombre','text'],['loc','Dónde está','loc'],['state','Estado','sel',ST],['qty','Cantidad','num'],['tags','Etiquetas','text'],['value','Valor €','num'],['notes','Notas (si está prestado, a quién)','area'],['photo','Foto','photo']],
+doc:[['title','Título','text'],['cat','Categoría','sel',DC],['prop','Inmueble','loc'],['orig','Original','sel',OR],['loc','Dónde está el original','loc'],['sign','Fecha de firma','date'],['due','Vence o se renueva','date'],['ref','Nº de referencia','text'],['parts','Partes implicadas','text'],['notes','Notas','area'],['files','Archivos','files']]};
+const DF={loc:{type:'Caja'},item:{qty:1,state:'Guardar'},doc:{cat:'Escrituras',orig:'Original localizado'}};
+let DB,D={loc:[],item:[],doc:[]},tab='home',FL={item:'',doc:''},cur,EX=[],un=false;
+const opn=()=>new Promise((o,k)=>{const r=indexedDB.open('ArchivoV2',1);r.onupgradeneeded=()=>r.result.createObjectStore('d',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>{DB=r.result;o()};r.onerror=k});
+const tx=(m,f)=>new Promise((o,k)=>{const q=f(DB.transaction('d',m).objectStore('d'));q.onsuccess=()=>o(q.result);q.onerror=()=>k(q.error)});
+const put=r=>tx('readwrite',s=>s.put(r)),del=id=>tx('readwrite',s=>s.delete(id));
+async function load(){const a=await tx('readonly',s=>s.getAll());D={loc:[],item:[],doc:[]};a.forEach(r=>D[r.t]?.push(r));render()}
+const L=id=>D.loc.find(l=>l.id==id),kids=id=>D.loc.filter(l=>(l.parent||0)==(id||0)),ids=id=>[id,...kids(id).flatMap(k=>ids(k.id))];
+const path=id=>{let a=[],l=L(id);while(l){a.unshift(l.name);l=L(l.parent)}return a.join(' › ')||'Sin lugar'};
+const cnt=id=>{const s=ids(id);return D.item.filter(i=>s.includes(i.loc)).length};
+const pin=()=>localStorage.getItem('pin'),DOCS=()=>pin()&&!un?[]:D.doc,dd=d=>d.due?Math.round((new Date(d.due)-new Date())/864e5):null;
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const bd=s=>`<span class="b e${ST.indexOf(s)}">${s}</span>`;
+const itemRow=i=>`<div class=c onclick="sheet('item',${i.id})">${i.photo?`<img class=th src="${i.photo}">`:''}<div class=g1><b>${esc(i.name)}</b>${i.qty>1?' ×'+i.qty:''}<small>${esc(path(i.loc))}</small></div>${i.state!='Guardar'?bd(i.state):''}</div>`;
+const docRow=d=>{const n=dd(d);return `<div class=c onclick="sheet('doc',${d.id})"><div class=g1><b>${esc(d.title)}</b><small>${esc(d.cat)}${d.prop&&L(d.prop)?' · '+esc(L(d.prop).name):''}</small></div>${n!=null&&n<=60?`<span class="b ${n<0?'x':'w'}">${n<0?'Vencido':n+' días'}</span>`:''}${d.orig=='Original por localizar'?'<span class="b x">¿Dónde está?</span>':''}${d.files?.length?'📎':''}</div>`};
+const locRow=(l,d=0)=>`<div class=c style="margin-left:${d*14}px" onclick="det(${l.id})">${l.photo?`<img class=th src="${l.photo}">`:''}<div class=g1><b>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</b><small>${l.type} · ${cnt(l.id)} cosas</small></div></div>`;
+const tree=(p=0,d=0)=>kids(p).map(l=>locRow(l,d)+tree(l.id,d+1)).join('');
+const chips=(a,c,t)=>`<div class=chips>${a.map(x=>`<span class="ch ${x==c?'on':''}" onclick="go('${t}','${x}')">${x}</span>`).join('')}</div>`;
+function home(){const due=DOCS().filter(d=>{const n=dd(d);return n!=null&&n<=60}).sort((a,b)=>a.due.localeCompare(b.due)),lost=DOCS().filter(d=>d.orig=='Original por localizar'),nl=D.item.filter(i=>!i.loc).length;
+return `<div class=st><div><b>${D.loc.length}</b>lugares</div><div><b>${D.item.length}</b>cosas</div><div><b>${D.doc.length}</b>docs</div></div>
+<h4>Pendiente de decidir</h4><div class=chips>${ST.slice(1).map(s=>`<span class="b e${ST.indexOf(s)}" onclick="go('item','${s}')">${s} ${D.item.filter(i=>i.state==s).length}</span>`).join('')}</div>
+${nl?`<div class=c onclick="go('item','Sin lugar')">⚠️ ${nl} cosas sin lugar asignado</div>`:''}
+${due.length?'<h4>Vencimientos</h4>'+due.map(docRow).join(''):''}${lost.length?'<h4>Originales por localizar</h4>'+lost.map(docRow).join(''):''}
+${D.loc.length?'':'<div class=c style="display:block"><b>Empieza por los lugares</b><small>Crea Casa A, Casa B y los 3 trasteros, y luego añade cajas dentro.</small><div class=row><button onclick="seed()">Crear estructura base</button></div></div>'}`}
+function items(){const f=FL.item||'Todos',a=D.item.filter(i=>f=='Todos'||(f=='Sin lugar'?!i.loc:i.state==f)).sort((a,b)=>a.name.localeCompare(b.name));return chips(['Todos',...ST,'Sin lugar'],f,'item')+(a.map(itemRow).join('')||'<p class=m>No hay nada aquí.</p>')}
+function docs(){if(pin()&&!un)return '<div class=c style="display:block"><b>🔒 Documentos protegidos</b><input id=pn type=password inputmode=numeric placeholder="PIN"><div class=row><button onclick="unlock()">Entrar</button></div></div>';
+const f=FL.doc||'Todos',a=D.doc.filter(d=>f=='Todos'||d.cat==f).sort((a,b)=>a.title.localeCompare(b.title));return chips(['Todos',...DC],f,'doc')+(a.map(docRow).join('')||'<p class=m>No hay documentos.</p>')}
+const more=()=>`<h4>Copia de seguridad</h4><div class=c style="display:block"><small>Completa: con fotos y archivos, sirve para restaurar. Ligera: solo datos, para consultar.</small><div class=row><button onclick="exp(1)">Descargar completa</button><button class=g onclick="exp(0)">Descargar ligera</button></div><label>Restaurar (copia de esta versión o de la anterior)<input type=file accept=.json onchange="imp(event)"></label></div>
+<h4>Seguridad</h4><div class=c style="display:block"><small>El PIN solo oculta la pestaña Documentos en pantalla. No cifra los datos ni las copias de seguridad.</small><div class=row><button onclick="setPin()">${pin()?'Cambiar o quitar PIN':'Poner PIN'}</button></div></div>`;
+function search(q){q=nz(q);const m=r=>nz([r.name,r.title,r.tags,r.notes,r.code,r.cat,r.ref,r.parts,r.state,(r.loc||r.parent)?path(r.loc||r.parent):''].join(' ')).includes(q);return D.loc.filter(m).map(l=>locRow(l)).join('')+D.item.filter(m).map(itemRow).join('')+DOCS().filter(m).map(docRow).join('')||'<p class=m>Sin resultados.</p>'}
+function render(){const q=$('#q').value;$('#v').innerHTML=q?search(q):({home,loc:()=>tree()||'<p class=m>Aún no hay lugares.</p>',item:items,doc:docs,more})[tab]();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));$('#fab').hidden=!!q||!['loc','item','doc'].includes(tab)}
+function go(t,f){tab=t;if(f!==undefined)FL[t]=f;$('#q').value='';render();scrollTo(0,0)}
+const show=h=>{$('#sh').innerHTML=h;$('#ov').hidden=false},closeSh=()=>$('#ov').hidden=true;
+function det(id){const l=L(id);show(`<h3>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</h3><small>${esc(path(id))} · ${l.type}</small>${l.photo?`<img class=pv src="${l.photo}">`:''}${l.notes?`<p>${esc(l.notes)}</p>`:''}
+<div class=row><button onclick="sheet('item',0,{loc:${id}})">+ Cosa</button><button onclick="sheet('loc',0,{parent:${id}})">+ Sublugar</button><button class=g onclick="prt(${id})">Imprimir etiqueta</button><button class=g onclick="sheet('loc',${id})">Editar</button></div>
+${kids(id).map(k=>locRow(k)).join('')}${D.item.filter(i=>i.loc==id).map(itemRow).join('')}${DOCS().filter(d=>d.loc==id).map(docRow).join('')}`)}
+function field([k,lb,ty,o],v){let h;const lo=()=>D.loc.filter(l=>!EX.includes(l.id)).map(l=>[l.id,path(l.id)]).sort((a,b)=>a[1].localeCompare(b[1]));
+if(ty=='sel')h=`<select name=${k}>${o.map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select>`;
+else if(ty=='loc')h=`<select name=${k}><option value="">— ninguno —</option>${lo().map(([i,p])=>`<option value=${i} ${i==v?'selected':''}>${esc(p)}</option>`).join('')}</select>`;
+else if(ty=='area')h=`<textarea name=${k} rows=2>${esc(v)}</textarea>`;
+else if(ty=='photo')h=`<input type=file accept="image/*" data-k=${k}><img class=pv src="${v||''}" ${v?'':'hidden'}>`;
+else if(ty=='files')h=`<input type=file multiple data-k=${k}><div id=fl></div>`;
+else h=`<input name=${k} type=${ty=='num'?'number':ty} step=any value="${esc(v)}" ${k=='name'||k=='title'?'required':''}>`;return `<label>${lb}${h}</label>`}
+const fl=()=>{const e=$('#fl');if(e)e.innerHTML=(cur.files||[]).map((f,i)=>`<div><a href="${f.data}" download="${esc(f.name)}" target=_blank>${esc(f.name)}</a><i data-x=${i}>✕</i></div>`).join('')};
+function sheet(t,id,pre={}){cur=id?{...D[t].find(r=>r.id==id)}:{t,...DF[t],...pre};EX=t=='loc'&&id?ids(id):[];
+show(`<form id=f><h3>${id?'Editar':'Nuevo'}</h3>${F[t].map(f=>field(f,cur[f[0]])).join('')}<div class=row><button>Guardar</button>${!id&&t=='item'?'<button type=button class=g onclick="saveF(1)">Guardar y otra</button>':''}<button type=button class=g onclick="closeSh()">Cancelar</button>${id?`<button type=button class=d onclick="rm('${t}',${id})">Borrar</button>`:''}</div></form>`);
+$('#f').onsubmit=e=>{e.preventDefault();saveF()};fl()}
+async function saveF(again){const f=$('#f');if(!f.reportValidity())return;const fd=new FormData(f);
+F[cur.t].forEach(([k,,ty])=>{if(!fd.has(k))return;const v=fd.get(k);cur[k]=ty=='loc'?+v||0:ty=='num'?(v===''?'':+v):v});
+await put(cur);const t=cur.t,s={loc:cur.loc,state:cur.state};await load();again?sheet(t,0,s):closeSh()}
+async function rm(t,id){if(!confirm('¿Borrar? No se puede deshacer.'))return;
+if(t=='loc'){const p=L(id).parent||0;for(const r of [...D.loc.filter(l=>l.parent==id).map(l=>({...l,parent:p})),...D.item.filter(i=>i.loc==id).map(i=>({...i,loc:0})),...D.doc.filter(d=>d.loc==id||d.prop==id).map(d=>({...d,loc:d.loc==id?0:d.loc,prop:d.prop==id?0:d.prop}))])await put(r)}
+await del(id);closeSh();await load()}
+const img=(f,mx)=>new Promise(o=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,mx/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);o(c.toDataURL('image/jpeg',.75))};i.src=r.result};r.readAsDataURL(f)});
+const rd=f=>new Promise(o=>{const r=new FileReader();r.onload=()=>o({name:f.name,data:r.result});r.readAsDataURL(f)});
+document.addEventListener('change',async e=>{const k=e.target.dataset?.k;if(!k||!e.target.files.length)return;const fs=[...e.target.files];
+if(k=='photo'){cur.photo=await img(fs[0],900);const p=e.target.nextElementSibling;p.src=cur.photo;p.hidden=false}
+else{cur.files=[...(cur.files||[]),...await Promise.all(fs.map(f=>f.type.startsWith('image/')?img(f,1600).then(d=>({name:f.name,data:d})):rd(f)))];fl()}});
+document.addEventListener('click',e=>{if(e.target.tagName=='I'&&e.target.dataset.x!==undefined){cur.files.splice(+e.target.dataset.x,1);fl()}if(e.target.id=='ov')closeSh()});
+function prt(id){const l=L(id),w=window.open('','_blank'),li=ids(id).flatMap(i=>D.item.filter(x=>x.loc==i)).map(x=>`<li>${esc(x.name)}${x.qty>1?' ×'+x.qty:''}</li>`).join('');
+w.document.write(`<title>${esc(l.name)}</title><body style="font-family:sans-serif"><h1 style="font-size:72px;margin:0">${esc(l.code||l.name)}</h1><h2>${esc(path(id))}</h2><p>${esc(l.notes||'')}</p><ul>${li}</ul>`);w.document.close();w.print()}
+async function seed(){for(const [n,t,c] of [['Casa A','Casa',''],['Casa B','Casa',''],['Trastero 1','Trastero','T1'],['Trastero 2','Trastero','T2'],['Trastero 3','Trastero','T3']])await put({t:'loc',name:n,type:t,parent:0,code:c});await load()}
+async function unlock(){if(await sha($('#pn').value)==pin()){un=true;render()}else alert('PIN incorrecto.')}
+async function setPin(){const p=prompt('Nuevo PIN (déjalo vacío para quitarlo)');if(p===null)return;p?localStorage.setItem('pin',await sha(p)):localStorage.removeItem('pin');un=true;render()}
+function exp(full){const rs=[...D.loc,...D.item,...D.doc].map(r=>{if(full)return r;const {photo,files,...x}=r;return x}),a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,full:!!full,date:new Date().toISOString(),r:rs})],{type:'application/json'}));a.download=`archivo_${full?'completo':'ligero'}_${new Date().toISOString().slice(0,10)}.json`;a.click()}
+async function imp(e){const f=e.target.files[0];if(!f)return;let b,rs;try{b=JSON.parse(await f.text())}catch{return alert('El archivo no es un JSON válido.')}
+if(!confirm('Esto reemplaza todos los datos actuales. ¿Seguir?'))return;
+if(b.v==2)rs=b.r;else{let n=0;const M={},N={},lc=(b.locations||[]).map(l=>{M[l.id]=++n;N[l.name]=n;return{id:n,t:'loc',name:l.name,type:l.type,parent:l.parent}});lc.forEach(l=>l.parent=M[l.parent]||0);
+rs=[...lc,...(b.items||[]).map(i=>({id:++n,t:'item',name:i.name,loc:N[i.location]||0,state:'Guardar',qty:1,tags:i.tags,notes:[i.category,i.notes].filter(Boolean).join(' · ')})),
+...(b.digital||[]).map(d=>({id:++n,t:'item',name:d.name,loc:N[d.location]||0,state:'Guardar',qty:1,tags:'soporte digital',notes:[d.type,d.content].filter(Boolean).join(' · ')})),
+...(b.documents||[]).map(d=>({id:++n,t:'doc',title:d.title,cat:DC.includes(d.category)?d.category:/escritura/i.test(d.category)?'Escrituras':'Otros',orig:'Solo copia',notes:d.notes,files:d.fileData?[{name:d.fileName||'archivo',data:d.fileData}]:[]}))]}
+await tx('readwrite',s=>s.clear());for(const r of rs)await put(r);await load();alert('Copia restaurada.')}
+(async()=>{await opn();navigator.storage?.persist?.();await load()})();
+</script></body></html>
