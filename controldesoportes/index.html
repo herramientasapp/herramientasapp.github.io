@@ -1,1 +1,94 @@
-
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control de soportes</title>
+<style>
+:root{--bg:#f5f6f8;--c:#fff;--t:#1d232b;--m:#667;--b:#dde1e7;--p:#1f4e78;--pt:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#14181d;--c:#1e242b;--t:#e8ecf0;--m:#97a1ad;--b:#323b45;--p:#5b9bd5;--pt:#0d1218}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+header{padding:14px 16px 6px}h1{margin:0;font-size:20px}
+.w{max-width:900px;margin:auto;padding:0 12px 80px}
+.st{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.st button{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:8px 4px;color:var(--t);cursor:pointer}
+.st b{display:block;font-size:20px}.st small{color:var(--m)}.st .on{outline:2px solid var(--p)}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--b);border-radius:8px;background:var(--c);color:var(--t);font:inherit}
+.bar{display:flex;gap:8px;margin:8px 0}.bar select{width:auto}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:12px;margin:8px 0}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--b);color:var(--m)}
+.Pendiente{background:#fde8d7;color:#8a3b00}.Volcado{background:#dcebfb;color:#0b3f73}.Ordenado{background:#e0f3dc;color:#1d5c14}.Reutilizable{background:#e6e0f5;color:#40286e}
+.m{color:var(--m);font-size:13px;margin-top:4px}
+.btn{background:var(--p);color:var(--pt);border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}
+.btn.s{background:transparent;color:var(--t);border:1px solid var(--b)}
+.fab{position:fixed;right:16px;bottom:16px;border-radius:99px;padding:14px 20px;box-shadow:0 2px 8px #0004}
+dialog{border:1px solid var(--b);border-radius:14px;background:var(--c);color:var(--t);width:min(520px,94vw);padding:16px}
+dialog::backdrop{background:#0007}
+label{display:block;font-size:13px;color:var(--m);margin:8px 0 3px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style></head><body>
+<header><h1>🗄️ Control de soportes</h1><div class="m">CDs, USB, discos, nube y ordenadores: qué hay, dónde está y si ya está volcado</div></header>
+<div class="w">
+<div class="st" id="st"></div>
+<div class="bar"><input id="q" placeholder="Buscar etiqueta, contenido, ubicación…"><select id="ft"></select></div>
+<div id="list"></div>
+<div class="row"><button class="btn s" onclick="expJ()">⬇ Copia (JSON)</button><button class="btn s" onclick="expC()">⬇ Excel (CSV)</button><button class="btn s" onclick="document.getElementById('imp').click()">⬆ Importar</button><input id="imp" type="file" accept=".json,.csv" hidden></div>
+<p class="m" id="msg"></p>
+</div>
+<button class="btn fab" onclick="ed()">＋ Añadir</button>
+<dialog id="dlg"><form method="dialog" id="f" onsubmit="return false">
+<h3 id="dt" style="margin:0 0 4px">Soporte</h3>
+<label>Etiqueta (ej. USB07)</label><input id="et">
+<div class="g"><div><label>Tipo</label><select id="tp"></select></div><div><label>Estado</label><select id="es"></select></div></div>
+<label>Contenido aproximado</label><input id="co">
+<div class="g"><div><label>Tamaño (GB)</label><input id="ta" type="number" step="any" inputmode="decimal"></div><div><label>Nº de archivos</label><input id="na" type="number" inputmode="numeric"></div></div>
+<div class="g"><div><label>Fecha de volcado</label><input id="fe" type="date"></div><div><label>Verificado (tamaño coincide)</label><select id="ve"><option>No</option><option>Sí</option></select></div></div>
+<label>Carpeta destino en A</label><input id="de" placeholder="00_ENTRADA_SIN_ORDENAR/USB07">
+<label>Incidencias</label><input id="in">
+<label>Ubicación física</label><input id="ub" placeholder="Cajón escritorio, casa 1">
+<div class="row"><button class="btn" onclick="sv()">Guardar</button><button class="btn s" onclick="dlg.close()">Cancelar</button><button class="btn s" id="del" onclick="rm()" style="margin-left:auto">Eliminar</button></div>
+</form></dialog>
+<script>
+const TP=["CD","DVD","USB","Disco duro","Nube","Ordenador","Correo","Otro"],ES=["Pendiente","Volcado","Ordenado","Reutilizable"];
+const K="control_soportes_v1";let D=[],cur=null,flt="";let mem=null;
+const $=i=>document.getElementById(i);
+function load(){try{D=JSON.parse(localStorage.getItem(K)||"[]")}catch(e){D=mem||[]}}
+function save(){try{localStorage.setItem(K,JSON.stringify(D))}catch(e){mem=D;$("msg").textContent="Aviso: este navegador no permite guardar aquí; exporta una copia JSON para no perder datos."}}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fill(sel,a,all){sel.innerHTML=(all?`<option value="">Todos los tipos</option>`:"")+a.map(x=>`<option>${x}</option>`).join("")}
+function render(){
+ $("st").innerHTML=ES.map(e=>{const n=D.filter(x=>x.es===e).length;return `<button class="${flt===e?"on":""}" onclick="flt=flt==='${e}'?'':'${e}';render()"><b>${n}</b><small>${e}</small></button>`}).join("");
+ const q=$("q").value.toLowerCase(),t=$("ft").value;
+ const L=D.filter(x=>(!flt||x.es===flt)&&(!t||x.tp===t)&&(!q||[x.et,x.co,x.ub,x.in,x.de].join(" ").toLowerCase().includes(q)));
+ $("list").innerHTML=L.length?L.map(x=>`<div class="card" onclick="ed('${x.id}')"><div class="top"><b>${esc(x.et)} <span class="m">· ${esc(x.tp)}</span></b><span class="tag ${x.es}">${x.es}</span></div>
+ <div>${esc(x.co)}</div><div class="m">${x.ta?esc(x.ta)+" GB · ":""}${x.na?esc(x.na)+" archivos · ":""}${x.ve==="Sí"?"✔ verificado":"sin verificar"}${x.fe?" · "+esc(x.fe):""}</div>
+ ${x.ub?`<div class="m">📍 ${esc(x.ub)}</div>`:""}${x.in?`<div class="m">⚠ ${esc(x.in)}</div>`:""}</div>`).join(""):`<p class="m" style="text-align:center;margin:30px 0">${D.length?"Nada coincide con el filtro.":"Aún no hay soportes. Pulsa «＋ Añadir» para empezar."}</p>`}
+function ed(id){cur=id||null;const x=D.find(y=>y.id===id)||{tp:"USB",es:"Pendiente",ve:"No"};
+ $("dt").textContent=id?"Editar soporte":"Nuevo soporte";$("del").style.display=id?"":"none";
+ const m={et:"et",tp:"tp",es:"es",co:"co",ta:"ta",na:"na",fe:"fe",ve:"ve",de:"de",in:"in",ub:"ub"};
+ for(const k in m)$(k).value=x[k]??"";$("dlg").showModal()}
+function sv(){const o={id:cur||String(Date.now())};["et","tp","es","co","ta","na","fe","ve","de","in","ub"].forEach(k=>o[k]=$(k).value.trim());
+ if(!o.et){$("et").focus();return}
+ if(o.es==="Volcado"&&!o.fe)o.fe=new Date().toISOString().slice(0,10);
+ if(!o.de&&o.et)o.de="00_ENTRADA_SIN_ORDENAR/"+o.et;
+ const i=D.findIndex(y=>y.id===o.id);i<0?D.push(o):D[i]=o;save();$("dlg").close();render()}
+function rm(){if(confirm("¿Eliminar este soporte?")){D=D.filter(y=>y.id!==cur);save();$("dlg").close();render()}}
+function dl(n,t,m){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()}
+function expJ(){dl("control_soportes_"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(D,null,1),"application/json")}
+const H=["Etiqueta","Tipo","Contenido aproximado","Tamaño (GB)","Nº archivos","Fecha de volcado","Carpeta destino en A","Verificado","Incidencias","Estado","Ubicación física"],KS=["et","tp","co","ta","na","fe","de","ve","in","es","ub"];
+function expC(){const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ dl("Control_soportes.csv","\ufeff"+[H.map(q).join(";"),...D.map(x=>KS.map(k=>q(x[k])).join(";"))].join("\r\n"),"text/csv")}
+function parseCSV(t){t=t.replace(/^\ufeff/,"");const sep=(t.split("\n")[0].match(/;/g)||[]).length>=(t.split("\n")[0].match(/,/g)||[]).length?";":",";
+ const R=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const h=t[i];
+  if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=h}
+  else if(h=='"')q=true;else if(h===sep){r.push(c);c=""}else if(h=="\n"){r.push(c.replace(/\r$/,""));R.push(r);r=[];c=""}else c+=h}
+ if(c||r.length){r.push(c);R.push(r)}return R}
+$("imp").onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=await f.text();let n=[];
+ try{if(f.name.endsWith(".json"))n=JSON.parse(t);else{parseCSV(t).slice(1).forEach(r=>{if(!r[0])return;const o={id:String(Date.now()+n.length)};KS.forEach((k,i)=>o[k]=(r[i]||"").trim());n.push(o)})}}catch(x){alert("No se pudo leer el archivo");return}
+ if(!Array.isArray(n)||!n.length){alert("El archivo no contiene soportes");return}
+ if(!confirm(`Se importarán ${n.length} soportes. Si coincide la etiqueta, se actualiza. ¿Continuar?`))return;
+ n.forEach(o=>{const i=D.findIndex(y=>y.et===o.et);if(i>=0)D[i]={...o,id:D[i].id};else D.push({...o,id:o.id||String(Date.now()+Math.random())})});
+ save();render();e.target.value=""};
+fill($("tp"),TP);fill($("es"),ES);fill($("ft"),TP,true);
+$("q").oninput=render;$("ft").onchange=render;load();render();
+</script></body></html>
