@@ -13,7 +13,7 @@ button.g{background:none;color:var(--p);border:1px solid var(--p)}button.d{backg
 .row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .c{display:flex;align-items:center;gap:10px;background:var(--c);border:1px solid var(--b);border-radius:8px;padding:10px 12px;margin-bottom:6px}
 .g1{flex:1;min-width:0}.g1 b{overflow-wrap:anywhere}small,.m{display:block;color:var(--m);font-size:13px}
-.th{width:44px;height:44px;object-fit:cover;border-radius:6px}.pv{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:6px}
+.th{width:44px;height:44px;object-fit:cover;border-radius:6px}
 .b,.ch{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--b);white-space:nowrap}
 .e1{background:#dbeafe;color:#1e40af}.e2{background:#d1fae5;color:#065f46}.e3{background:#fee2e2;color:#991b1b}.e4{background:#fef3c7;color:#92400e}.w{background:#fef3c7;color:#92400e}.x{background:#fee2e2;color:#991b1b}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.ch{padding:6px 12px;font-size:13px;border:1px solid var(--b);background:var(--c)}.ch.on{background:var(--p);color:#fff;border-color:var(--p)}
@@ -25,88 +25,192 @@ nav button{flex:1;background:none;color:var(--m);font-size:12px;border-radius:0;
 #ov{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;z-index:9}[hidden]{display:none!important}
 #sh{background:var(--c);width:100%;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px calc(16px) calc(16px + env(safe-area-inset-bottom))}
 i{font-style:normal;color:#b42318;padding:4px 8px}#fl a{color:var(--p)}
+/* fotos */
+.pg{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.pt{position:relative}.pt img{width:84px;height:84px;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--b)}
+.pt i{position:absolute;top:-8px;right:-8px;background:#fff;border:1px solid var(--b);border-radius:50%;width:26px;height:26px;padding:0;text-align:center;line-height:24px}
+.hid{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+#vw{position:fixed;inset:0;background:#000e;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
+#vw img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:6px}
+a.bt{display:inline-block;padding:11px 14px;border-radius:8px;background:var(--p);color:#fff;font-weight:600;text-decoration:none}
+#ts{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#14201f;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;z-index:40;max-width:90vw;text-align:center}
+/* informe */
+#rp{position:fixed;inset:0;z-index:20;background:#fff;color:#111;overflow:auto;padding:0 12px 20px;font-size:14px}
+#rp .tb{position:sticky;top:0;background:#fff;padding:calc(8px + env(safe-area-inset-top)) 0 8px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ccc}
+#rp small{color:#666}
+.ri{display:flex;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #ccc;break-inside:avoid;page-break-inside:avoid}
+.rf{display:flex;flex-wrap:wrap;gap:6px;max-width:340px}.rf img,.rn{width:150px;height:150px;object-fit:cover;border-radius:4px;border:1px solid #ccc}
+.rn{display:flex;align-items:center;justify-content:center;color:#888;font-size:12px}.rt{flex:1;min-width:180px;line-height:1.45}.rt p{margin:4px 0 0;white-space:pre-wrap;color:#444}
+@page{margin:12mm}
+@media print{header,main,nav,#fab,#ov,#vw,#ts,.np{display:none!important}body{background:#fff;padding:0}#rp{position:static;overflow:visible;padding:0}.rf img,.rn{width:42mm;height:42mm}.rf{max-width:90mm}}
 </style></head><body>
 <header><input id="q" type="search" placeholder="Buscar cosas, lugares, documentos…" oninput="render()"></header>
-<main id="v"></main><button id="fab" onclick="sheet(tab)">+</button>
+<main id="v"></main><button id="fab" onclick="fab()">+</button>
 <nav><button data-t="home" onclick="go('home')">🏠<br>Inicio</button><button data-t="loc" onclick="go('loc')">📍<br>Lugares</button><button data-t="item" onclick="go('item')">📦<br>Cosas</button><button data-t="doc" onclick="go('doc')">📄<br>Docs</button><button data-t="more" onclick="go('more')">⚙️<br>Más</button></nav>
 <div id="ov" hidden><div id="sh"></div></div>
+<div id="vw" hidden><img id="vi" alt=""><div class="row"><a id="vd" class="bt">⬇ Descargar</a><button class="g" style="background:#fff" onclick="closeV()">Cerrar</button></div></div>
+<div id="rp" hidden></div>
+<div id="ts" hidden></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),nz=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const ST=['Guardar','Regalar','Vender','Tirar','Prestado'],LT=['Casa','Trastero','Zona','Armario','Caja','Otro'],DC=['Escrituras','Contratos','Seguros','Suministros','Banca','Vehículos','Fiscal / Legal','Familia','Salud','Garantías','Otros'],OR=['Original localizado','Solo copia','Original por localizar'];
-const F={loc:[['name','Nombre','text'],['type','Tipo','sel',LT],['parent','Dentro de','loc'],['code','Código de etiqueta (ej. T2-C07)','text'],['notes','Contenido resumido','area'],['photo','Foto','photo']],
-item:[['name','Nombre','text'],['loc','Dónde está','loc'],['state','Estado','sel',ST],['qty','Cantidad','num'],['tags','Etiquetas','text'],['value','Valor €','num'],['notes','Notas (si está prestado, a quién)','area'],['photo','Foto','photo']],
+const ST=['Guardar','Regalar','Vender','Tirar','Prestado'],LT=['Casa','Trastero','Zona','Armario','Caja','Otro'],DC=['Escrituras','Contratos','Seguros','Suministros','Banca','Vehículos','Fiscal / Legal','Familia','Salud','Garantías','Otros'],OR=['Original localizado','Solo copia','Original por localizar'],DEFC=['Antigüedades','Joyas','Herramientas','Ropa','Libros','Otros'];
+const F={loc:[['name','Nombre','text'],['type','Tipo','sel',LT],['parent','Dentro de','loc'],['code','Código de etiqueta (ej. T2-C07)','text'],['notes','Contenido resumido','area'],['photos','Fotos','photos',2]],
+item:[['name','Nombre','text'],['cat','Categoría','cat'],['loc','Dónde está','loc'],['state','Estado','sel',ST],['qty','Cantidad','num'],['value','Valor estimado € por unidad (opcional)','num'],['tags','Etiquetas','text'],['notes','Notas (si está prestado, a quién)','area'],['photos','Fotos','photos',4]],
 doc:[['title','Título','text'],['cat','Categoría','sel',DC],['prop','Inmueble','loc'],['orig','Original','sel',OR],['loc','Dónde está el original','loc'],['sign','Fecha de firma','date'],['due','Vence o se renueva','date'],['ref','Nº de referencia','text'],['parts','Partes implicadas','text'],['notes','Notas','area'],['files','Archivos','files']]};
-const DF={loc:{type:'Caja'},item:{qty:1,state:'Guardar'},doc:{cat:'Escrituras',orig:'Original localizado'}};
-let DB,D={loc:[],item:[],doc:[]},tab='home',FL={item:'',doc:''},cur,EX=[],un=false;
-const opn=()=>new Promise((o,k)=>{const r=indexedDB.open('ArchivoV2',1);r.onupgradeneeded=()=>r.result.createObjectStore('d',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>{DB=r.result;o()};r.onerror=k});
+const DF={loc:{type:'Caja'},item:{qty:1,state:'Guardar',cat:''},doc:{cat:'Escrituras',orig:'Original localizado'}};
+let DB,D={loc:[],item:[],doc:[],sug:[]},CFG={},tab='home',FL={item:'',doc:'',sug:'',cat:''},cur,EX=[],un=false,SG='',RS={cat:'all',loc:'',st:'all',all:false},RU=[],VU=null,TT;
+const opn=()=>new Promise((o,k)=>{const r=indexedDB.open('ArchivoV2',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('d'))r.result.createObjectStore('d',{keyPath:'id',autoIncrement:true})};r.onsuccess=()=>{DB=r.result;o()};r.onerror=k});
 const tx=(m,f)=>new Promise((o,k)=>{const q=f(DB.transaction('d',m).objectStore('d'));q.onsuccess=()=>o(q.result);q.onerror=()=>k(q.error)});
 const put=r=>tx('readwrite',s=>s.put(r)),del=id=>tx('readwrite',s=>s.delete(id));
-async function load(){const a=await tx('readonly',s=>s.getAll());D={loc:[],item:[],doc:[]};a.forEach(r=>D[r.t]?.push(r));render()}
+async function load(){const a=await tx('readonly',s=>s.getAll());D={loc:[],item:[],doc:[],sug:[]};CFG={};a.forEach(r=>{if(r.t=='cfg')CFG=r;else D[r.t]?.push(r)});render()}
+const toast=m=>{const e=$('#ts');e.textContent=m;e.hidden=false;clearTimeout(TT);TT=setTimeout(()=>e.hidden=true,1800)};
+const cats=()=>CFG.cats||DEFC,eur=n=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(n),hasV=i=>i.value!==''&&i.value!=null,th0=r=>r.photos?.[0]?.thumb||(typeof r.photo=='string'?r.photo:'');
 const L=id=>D.loc.find(l=>l.id==id),kids=id=>D.loc.filter(l=>(l.parent||0)==(id||0)),ids=id=>[id,...kids(id).flatMap(k=>ids(k.id))];
 const path=id=>{let a=[],l=L(id);while(l){a.unshift(l.name);l=L(l.parent)}return a.join(' › ')||'Sin lugar'};
 const cnt=id=>{const s=ids(id);return D.item.filter(i=>s.includes(i.loc)).length};
 const pin=()=>localStorage.getItem('pin'),DOCS=()=>pin()&&!un?[]:D.doc,dd=d=>d.due?Math.round((new Date(d.due)-new Date())/864e5):null;
 const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
 const bd=s=>`<span class="b e${ST.indexOf(s)}">${s}</span>`;
-const itemRow=i=>`<div class=c onclick="sheet('item',${i.id})">${i.photo?`<img class=th src="${i.photo}">`:''}<div class=g1><b>${esc(i.name)}</b>${i.qty>1?' ×'+i.qty:''}<small>${esc(path(i.loc))}</small></div>${i.state!='Guardar'?bd(i.state):''}</div>`;
+const itemRow=i=>`<div class=c onclick="sheet('item',${i.id})">${th0(i)?`<img class=th src="${th0(i)}">`:''}<div class=g1><b>${esc(i.name)}</b>${i.qty>1?' ×'+i.qty:''}<small>${esc(path(i.loc))}${i.cat?' · '+esc(i.cat):''}${hasV(i)?' · '+eur(i.value):''}</small></div>${i.photos?.length>1?'<small>📷'+i.photos.length+'</small>':''}${i.state!='Guardar'?bd(i.state):''}</div>`;
 const docRow=d=>{const n=dd(d);return `<div class=c onclick="sheet('doc',${d.id})"><div class=g1><b>${esc(d.title)}</b><small>${esc(d.cat)}${d.prop&&L(d.prop)?' · '+esc(L(d.prop).name):''}</small></div>${n!=null&&n<=60?`<span class="b ${n<0?'x':'w'}">${n<0?'Vencido':n+' días'}</span>`:''}${d.orig=='Original por localizar'?'<span class="b x">¿Dónde está?</span>':''}${d.files?.length?'📎':''}</div>`};
-const locRow=(l,d=0)=>`<div class=c style="margin-left:${d*14}px" onclick="det(${l.id})">${l.photo?`<img class=th src="${l.photo}">`:''}<div class=g1><b>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</b><small>${l.type} · ${cnt(l.id)} cosas</small></div></div>`;
+const locRow=(l,d=0)=>`<div class=c style="margin-left:${d*14}px" onclick="det(${l.id})">${th0(l)?`<img class=th src="${th0(l)}">`:''}<div class=g1><b>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</b><small>${l.type} · ${cnt(l.id)} cosas</small></div></div>`;
 const tree=(p=0,d=0)=>kids(p).map(l=>locRow(l,d)+tree(l.id,d+1)).join('');
 const chips=(a,c,t)=>`<div class=chips>${a.map(x=>`<span class="ch ${x==c?'on':''}" onclick="go('${t}','${x}')">${x}</span>`).join('')}</div>`;
+const gal=(t,r)=>r.photos?.length?`<div class=pg>${r.photos.map((p,i)=>`<div class=pt><img src="${p.thumb}" onclick="viewR('${t}',${r.id},${i})"></div>`).join('')}</div>`:'';
+const viewR=(t,id,i)=>{const r=D[t].find(x=>x.id==id);view(r?.photos?.[i],r?.name)};
 function home(){const due=DOCS().filter(d=>{const n=dd(d);return n!=null&&n<=60}).sort((a,b)=>a.due.localeCompare(b.due)),lost=DOCS().filter(d=>d.orig=='Original por localizar'),nl=D.item.filter(i=>!i.loc).length;
 return `<div class=st><div><b>${D.loc.length}</b>lugares</div><div><b>${D.item.length}</b>cosas</div><div><b>${D.doc.length}</b>docs</div></div>
 <h4>Pendiente de decidir</h4><div class=chips>${ST.slice(1).map(s=>`<span class="b e${ST.indexOf(s)}" onclick="go('item','${s}')">${s} ${D.item.filter(i=>i.state==s).length}</span>`).join('')}</div>
 ${nl?`<div class=c onclick="go('item','Sin lugar')">⚠️ ${nl} cosas sin lugar asignado</div>`:''}
 ${due.length?'<h4>Vencimientos</h4>'+due.map(docRow).join(''):''}${lost.length?'<h4>Originales por localizar</h4>'+lost.map(docRow).join(''):''}
 ${D.loc.length?'':'<div class=c style="display:block"><b>Empieza por los lugares</b><small>Crea Casa A, Casa B y los 3 trasteros, y luego añade cajas dentro.</small><div class=row><button onclick="seed()">Crear estructura base</button></div></div>'}`}
-function items(){const f=FL.item||'Todos',a=D.item.filter(i=>f=='Todos'||(f=='Sin lugar'?!i.loc:i.state==f)).sort((a,b)=>a.name.localeCompare(b.name));return chips(['Todos',...ST,'Sin lugar'],f,'item')+(a.map(itemRow).join('')||'<p class=m>No hay nada aquí.</p>')}
+const CL=()=>['Todas',...cats(),'Sin categoría'],setC=i=>{FL.cat=CL()[i];render()};
+function items(){const f=FL.item||'Todos',c=FL.cat||'Todas',a=D.item.filter(i=>(f=='Todos'||(f=='Sin lugar'?!i.loc:i.state==f))&&(c=='Todas'||(c=='Sin categoría'?!i.cat:i.cat==c))).sort((a,b)=>a.name.localeCompare(b.name)),tot=a.reduce((s,i)=>s+(hasV(i)?+i.value*(+i.qty||1):0),0);
+return chips(['Todos',...ST,'Sin lugar'],f,'item')+`<div class=chips>${CL().map((x,i)=>`<span class="ch ${x==c?'on':''}" onclick="setC(${i})">${esc(x)}</span>`).join('')}</div>`+(tot?`<small style="margin-bottom:8px">Valor estimado de esta lista: <b>${eur(tot)}</b></small>`:'')+(a.map(itemRow).join('')||'<p class=m>No hay nada aquí.</p>')}
 function docs(){if(pin()&&!un)return '<div class=c style="display:block"><b>🔒 Documentos protegidos</b><input id=pn type=password inputmode=numeric placeholder="PIN"><div class=row><button onclick="unlock()">Entrar</button></div></div>';
 const f=FL.doc||'Todos',a=D.doc.filter(d=>f=='Todos'||d.cat==f).sort((a,b)=>a.title.localeCompare(b.title));return chips(['Todos',...DC],f,'doc')+(a.map(docRow).join('')||'<p class=m>No hay documentos.</p>')}
-const more=()=>`<h4>Copia de seguridad</h4><div class=c style="display:block"><small>Completa: con fotos y archivos, sirve para restaurar. Ligera: solo datos, para consultar.</small><div class=row><button onclick="exp(1)">Descargar completa</button><button class=g onclick="exp(0)">Descargar ligera</button></div><label>Restaurar (copia de esta versión o de la anterior)<input type=file accept=.json onchange="imp(event)"></label></div>
-<h4>Seguridad</h4><div class=c style="display:block"><small>El PIN solo oculta la pestaña Documentos en pantalla. No cifra los datos ni las copias de seguridad.</small><div class=row><button onclick="setPin()">${pin()?'Cambiar o quitar PIN':'Poner PIN'}</button></div></div>`;
+/* tamaño estimado */
+const mb=n=>(n/1048576).toFixed(1)+' MB';
+function est(){let n=0,c=0;for(const r of [...D.loc,...D.item])for(const p of r.photos||[]){c++;n+=(p.blob?.size||0)+(p.thumb?.length||0)}for(const d of D.doc)for(const f of d.files||[])n+=f.data?.length||0;return[c,n]}
+const more=()=>{const[c,n]=est();return `<h4>Herramientas</h4><div class=c onclick="go('rep')"><div class=g1><b>📊 Informes</b><small>Objetos por categoría y ubicación, con fotos y PDF</small></div>›</div>
+<div class=c onclick="go('sug')"><div class=g1><b>💡 Sugerencia para mejora de la aplicación</b><small>${D.sug.filter(s=>!s.done).length} pendientes</small></div>›</div>
+<h4>Categorías de objetos</h4><div class=c style="display:block"><small>Toca una para renombrarla o borrarla.</small><div class=chips style="margin-top:8px">${cats().map((x,i)=>`<span class=ch onclick="catEd(${i})">${esc(x)}</span>`).join('')}</div><div class=row style="margin:0"><button class=g onclick="catAdd()">+ Añadir categoría</button></div></div>
+<h4>Copia de seguridad</h4><div class=c style="display:block"><small>Completa: con fotos y archivos, sirve para restaurar (unos ${mb(n*1.34)}). Ligera: solo datos, para consultar.</small><div class=row><button onclick="exp(1)">Descargar completa</button><button class=g onclick="exp(0)">Descargar ligera</button></div><label>Restaurar (copia de esta versión o de las anteriores)<input type=file accept=.json onchange="imp(event)"></label></div>
+<h4>Almacenamiento</h4><div class=c style="display:block"><small id=sto>${c} fotos de objetos y lugares · ${mb(n)} en la app</small></div>
+<h4>Seguridad</h4><div class=c style="display:block"><small>El PIN solo oculta la pestaña Documentos en pantalla. No cifra los datos ni las copias de seguridad.</small><div class=row><button onclick="setPin()">${pin()?'Cambiar o quitar PIN':'Poner PIN'}</button></div></div>`};
+async function sto(){const e=$('#sto');if(!e||!navigator.storage?.estimate)return;try{const s=await navigator.storage.estimate(),[c,n]=est(),x=$('#sto');if(x)x.textContent=`${c} fotos de objetos y lugares · ${mb(n)} en la app · el navegador usa ${mb(s.usage)} de ${mb(s.quota)}`}catch{}}
+/* categorías */
+async function saveCats(a){CFG={id:'cfg',t:'cfg',cats:a};await put(CFG);render()}
+async function catAdd(){const n=(prompt('Nueva categoría')||'').trim();if(!n||cats().some(c=>nz(c)==nz(n)))return;await saveCats([...cats(),n])}
+async function catEd(i){const o=cats()[i],n=prompt('Nuevo nombre (vacío para borrarla)',o);if(n===null)return;const t=n.trim();
+if(!t){if(!confirm('¿Borrar "'+o+'"? Los objetos quedarán sin categoría.'))return;for(const r of D.item.filter(x=>x.cat==o))await put({...r,cat:''});await saveCats(cats().filter((_,j)=>j!=i));await load();return}
+if(t==o)return;if(cats().some((c,j)=>j!=i&&nz(c)==nz(t)))return alert('Ya existe esa categoría.');
+for(const r of D.item.filter(x=>x.cat==o))await put({...r,cat:t});await saveCats(cats().map((c,j)=>j==i?t:c));await load()}
+/* sugerencias */
+function sugs(){const f=FL.sug||'Pendientes',a=D.sug.filter(s=>f=='Todas'||(f=='Pendientes'?!s.done:s.done)).sort((x,y)=>y.date.localeCompare(x.date)),n=D.sug.filter(s=>!s.done).length;
+return `<button class=g onclick="go('more')">← Más</button><h3 style="margin-top:10px">Sugerencias de mejora</h3><label>Nueva sugerencia<textarea id=sg rows=5 oninput="SG=this.value" placeholder="Escribe aquí la mejora. Puedes usar saltos de línea.">${esc(SG)}</textarea></label>
+<div class=row><button onclick="addSug()">Añadir</button><button class=g onclick="copyPend()">Copiar pendientes (${n})</button></div>${chips(['Pendientes','Implementadas','Todas'],f,'sug')}
+${a.map(s=>`<div class=c style="display:block"><div style="white-space:pre-wrap;overflow-wrap:anywhere;${s.done?'text-decoration:line-through;opacity:.6':''}">${esc(s.text)}</div><small>${new Date(s.date).toLocaleDateString('es-ES')}</small><div class=row style="margin-bottom:0"><label style="display:flex;align-items:center;gap:6px;margin:0;color:var(--t);font-size:14px"><input type=checkbox style="width:auto;margin:0" ${s.done?'checked':''} onchange="togSug(${s.id})">Implementada</label><button class=g onclick="cpSug(${s.id})">Copiar</button><button class=g onclick="edSug(${s.id})">Editar</button><button class=d onclick="delSug(${s.id})">Borrar</button></div></div>`).join('')||'<p class=m>No hay sugerencias aquí.</p>'}`}
+async function copy(t){try{await navigator.clipboard.writeText(t)}catch{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Copiado')}
+async function addSug(){const t=SG.trim();if(!t)return toast('Escribe algo primero');await put({t:'sug',text:t,done:0,date:new Date().toISOString()});SG='';await load()}
+async function togSug(id){const s=D.sug.find(x=>x.id==id);await put({...s,done:s.done?0:1});await load()}
+const cpSug=id=>copy(D.sug.find(x=>x.id==id).text);
+function copyPend(){const p=D.sug.filter(s=>!s.done).sort((a,b)=>a.date.localeCompare(b.date));if(!p.length)return toast('No hay pendientes');copy('Mejoras pendientes para mi aplicación "Mi Archivo Personal" (index.html):\n\n'+p.map((s,i)=>(i+1)+'. '+s.text).join('\n\n'))}
+function edSug(id){const s=D.sug.find(x=>x.id==id);show(`<h3>Editar sugerencia</h3><textarea id=se rows=7>${esc(s.text)}</textarea><div class=row><button onclick="saveSug(${id})">Guardar</button><button class=g onclick="closeSh()">Cancelar</button></div>`)}
+async function saveSug(id){const t=$('#se').value.trim();if(!t)return;await put({...D.sug.find(x=>x.id==id),text:t});closeSh();await load()}
+async function delSug(id){if(!confirm('¿Borrar esta sugerencia?'))return;await del(id);await load()}
+/* informes */
+function repItems(){return D.item.filter(i=>(RS.cat=='all'||(RS.cat=='none'?!i.cat:i.cat==RS.cat))&&(!RS.loc||ids(+RS.loc).includes(i.loc))&&(RS.st=='all'||i.state==RS.st)).sort((a,b)=>path(a.loc).localeCompare(path(b.loc))||a.name.localeCompare(b.name))}
+const tot=a=>a.reduce((s,i)=>s+(hasV(i)?+i.value*(+i.qty||1):0),0);
+function repv(){const a=repItems(),lo=D.loc.map(l=>[l.id,path(l.id)]).sort((x,y)=>x[1].localeCompare(y[1]));
+return `<button class=g onclick="go('more')">← Más</button><h3 style="margin-top:10px">Informes de objetos</h3><small>Si eliges una ubicación, se incluyen también sus sublugares.</small>
+<label>Categoría<select id=rc onchange="repSet()"><option value=all ${RS.cat=='all'?'selected':''}>Todas</option><option value=none ${RS.cat=='none'?'selected':''}>Sin categoría</option>${cats().map(c=>`<option ${RS.cat==c?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+<label>Ubicación<select id=rl onchange="repSet()"><option value="">Todas</option>${lo.map(([i,p])=>`<option value=${i} ${RS.loc==i?'selected':''}>${esc(p)}</option>`).join('')}</select></label>
+<label>Estado<select id=rs onchange="repSet()"><option value=all>Cualquiera</option>${ST.map(s=>`<option ${RS.st==s?'selected':''}>${s}</option>`).join('')}</select></label>
+<label style="display:flex;align-items:center;gap:8px;color:var(--t)"><input id=ra type=checkbox style="width:auto;margin:0" ${RS.all?'checked':''} onchange="repSet()">Incluir todas las fotos de cada objeto (si no, solo la primera)</label>
+<div class=c style="display:block"><b>${a.length} objetos</b><small>Valor total estimado: ${eur(tot(a))}</small></div>
+<div class=row><button onclick="rep()">Generar informe / PDF</button></div>${a.map(itemRow).join('')||'<p class=m>Ningún objeto con estos filtros.</p>'}`}
+function repSet(){RS={cat:$('#rc').value,loc:$('#rl').value,st:$('#rs').value,all:$('#ra').checked};render()}
+function closeRp(){$('#rp').hidden=true;$('#rp').innerHTML='';RU.forEach(u=>URL.revokeObjectURL(u));RU=[]}
+function rep(){const a=repItems();if(!a.length)return toast('No hay objetos con ese filtro');closeRp();
+const u=p=>{if(p.blob instanceof Blob){const x=URL.createObjectURL(p.blob);RU.push(x);return x}return p.thumb};
+const rows=a.map(i=>{const ps=(i.photos||[]).slice(0,RS.all?4:1);return `<div class=ri><div class=rf>${ps.map(p=>`<img src="${u(p)}">`).join('')||'<div class=rn>sin foto</div>'}</div><div class=rt><b style="font-size:16px">${esc(i.name)}</b>${i.qty>1?' ×'+i.qty:''}<br>${esc(i.cat||'Sin categoría')} · ${esc(i.state)}<br>📍 ${esc(path(i.loc))}<br>${hasV(i)?'Valor estimado: <b>'+eur(i.value)+'</b>'+(i.qty>1?' por unidad':''):''}${i.notes?'<p>'+esc(i.notes)+'</p>':''}</div></div>`}).join('');
+const f=[RS.cat=='all'?'Todas las categorías':RS.cat=='none'?'Sin categoría':RS.cat,RS.loc?path(+RS.loc):'Todas las ubicaciones',RS.st=='all'?'Cualquier estado':RS.st].join(' · ');
+$('#rp').innerHTML=`<div class="tb np"><button onclick="window.print()">🖨️ Imprimir / guardar PDF</button><button class=g onclick="closeRp()">Cerrar</button></div><h1 style="margin:12px 0 2px;font-size:22px">Informe de objetos</h1><p style="margin:0 0 8px;color:#555">${esc(f)}<br>${new Date().toLocaleDateString('es-ES')}</p>${rows}<p style="font-size:16px;margin-top:12px"><b>${a.length} objetos</b> · Valor total estimado: <b>${eur(tot(a))}</b></p><small>Valor por cantidad; los objetos sin valor no suman.</small>`;
+$('#rp').hidden=false;$('#rp').scrollTop=0}
+/* navegación */
 function search(q){q=nz(q);const m=r=>nz([r.name,r.title,r.tags,r.notes,r.code,r.cat,r.ref,r.parts,r.state,(r.loc||r.parent)?path(r.loc||r.parent):''].join(' ')).includes(q);return D.loc.filter(m).map(l=>locRow(l)).join('')+D.item.filter(m).map(itemRow).join('')+DOCS().filter(m).map(docRow).join('')||'<p class=m>Sin resultados.</p>'}
-function render(){const q=$('#q').value;$('#v').innerHTML=q?search(q):({home,loc:()=>tree()||'<p class=m>Aún no hay lugares.</p>',item:items,doc:docs,more})[tab]();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));$('#fab').hidden=!!q||!['loc','item','doc'].includes(tab)}
+function render(){const q=$('#q').value;$('#v').innerHTML=q?search(q):({home,loc:()=>tree()||'<p class=m>Aún no hay lugares.</p>',item:items,doc:docs,more,rep:repv,sug:sugs})[tab]();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==(['rep','sug'].includes(tab)?'more':tab)));$('#fab').hidden=!!q||!['loc','item','doc'].includes(tab);if(tab=='more'&&!q)sto()}
 function go(t,f){tab=t;if(f!==undefined)FL[t]=f;$('#q').value='';render();scrollTo(0,0)}
+function fab(){const pre={};if(tab=='item'&&cats().includes(FL.cat))pre.cat=FL.cat;sheet(tab,0,pre)}
 const show=h=>{$('#sh').innerHTML=h;$('#ov').hidden=false},closeSh=()=>$('#ov').hidden=true;
-function det(id){const l=L(id);show(`<h3>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</h3><small>${esc(path(id))} · ${l.type}</small>${l.photo?`<img class=pv src="${l.photo}">`:''}${l.notes?`<p>${esc(l.notes)}</p>`:''}
+function det(id){const l=L(id);show(`<h3>${l.code?`<span class=k>${esc(l.code)}</span> `:''}${esc(l.name)}</h3><small>${esc(path(id))} · ${l.type}</small>${gal('loc',l)}${l.notes?`<p>${esc(l.notes)}</p>`:''}
 <div class=row><button onclick="sheet('item',0,{loc:${id}})">+ Cosa</button><button onclick="sheet('loc',0,{parent:${id}})">+ Sublugar</button><button class=g onclick="prt(${id})">Imprimir etiqueta</button><button class=g onclick="sheet('loc',${id})">Editar</button></div>
 ${kids(id).map(k=>locRow(k)).join('')}${D.item.filter(i=>i.loc==id).map(itemRow).join('')}${DOCS().filter(d=>d.loc==id).map(docRow).join('')}`)}
+/* formularios */
 function field([k,lb,ty,o],v){let h;const lo=()=>D.loc.filter(l=>!EX.includes(l.id)).map(l=>[l.id,path(l.id)]).sort((a,b)=>a[1].localeCompare(b[1]));
+if(ty=='photos')return `<div style="margin:10px 0;font-size:13px;color:var(--m)">${lb} (máx. ${o})<div class=pg id=pg></div><div class=row style="margin:8px 0 2px"><button type=button onclick="pick(1)">📷 Hacer foto</button><button type=button class=g onclick="pick(0)">🖼️ Galería</button></div><small id=pm></small><input id=cam class=hid type=file accept="image/*" capture=environment><input id=gal class=hid type=file accept="image/*" multiple></div>`;
 if(ty=='sel')h=`<select name=${k}>${o.map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select>`;
+else if(ty=='cat'){const a=v&&!cats().includes(v)?[...cats(),v]:cats();h=`<select name=${k}><option value="">— sin categoría —</option>${a.map(x=>`<option ${x==v?'selected':''}>${esc(x)}</option>`).join('')}</select>`}
 else if(ty=='loc')h=`<select name=${k}><option value="">— ninguno —</option>${lo().map(([i,p])=>`<option value=${i} ${i==v?'selected':''}>${esc(p)}</option>`).join('')}</select>`;
 else if(ty=='area')h=`<textarea name=${k} rows=2>${esc(v)}</textarea>`;
-else if(ty=='photo')h=`<input type=file accept="image/*" data-k=${k}><img class=pv src="${v||''}" ${v?'':'hidden'}>`;
 else if(ty=='files')h=`<input type=file multiple data-k=${k}><div id=fl></div>`;
-else h=`<input name=${k} type=${ty=='num'?'number':ty} step=any value="${esc(v)}" ${k=='name'||k=='title'?'required':''}>`;return `<label>${lb}${h}</label>`}
+else h=`<input name=${k} type=${ty=='num'?'number':ty} step=any ${ty=='num'?'inputmode=decimal':''} value="${esc(v)}" ${k=='name'||k=='title'?'required':''}>`;return `<label>${lb}${h}</label>`}
 const fl=()=>{const e=$('#fl');if(e)e.innerHTML=(cur.files||[]).map((f,i)=>`<div><a href="${f.data}" download="${esc(f.name)}" target=_blank>${esc(f.name)}</a><i data-x=${i}>✕</i></div>`).join('')};
-function sheet(t,id,pre={}){cur=id?{...D[t].find(r=>r.id==id)}:{t,...DF[t],...pre};EX=t=='loc'&&id?ids(id):[];
+const PM=()=>F[cur.t].find(f=>f[2]=='photos')[3];
+const pg=()=>{const e=$('#pg');if(e)e.innerHTML=(cur.photos||[]).map((p,i)=>`<div class=pt><img src="${p.thumb}" data-v=${i}><i data-px=${i}>✕</i></div>`).join('')};
+function sheet(t,id,pre={}){cur=id?{...D[t].find(r=>r.id==id)}:{t,...DF[t],...pre};if(F[t].some(f=>f[2]=='photos'))cur.photos=[...(cur.photos||[])];if(t=='doc')cur.files=[...(cur.files||[])];EX=t=='loc'&&id?ids(id):[];
 show(`<form id=f><h3>${id?'Editar':'Nuevo'}</h3>${F[t].map(f=>field(f,cur[f[0]])).join('')}<div class=row><button>Guardar</button>${!id&&t=='item'?'<button type=button class=g onclick="saveF(1)">Guardar y otra</button>':''}<button type=button class=g onclick="closeSh()">Cancelar</button>${id?`<button type=button class=d onclick="rm('${t}',${id})">Borrar</button>`:''}</div></form>`);
-$('#f').onsubmit=e=>{e.preventDefault();saveF()};fl()}
+$('#f').onsubmit=e=>{e.preventDefault();saveF()};fl();pg()}
 async function saveF(again){const f=$('#f');if(!f.reportValidity())return;const fd=new FormData(f);
 F[cur.t].forEach(([k,,ty])=>{if(!fd.has(k))return;const v=fd.get(k);cur[k]=ty=='loc'?+v||0:ty=='num'?(v===''?'':+v):v});
-await put(cur);const t=cur.t,s={loc:cur.loc,state:cur.state};await load();again?sheet(t,0,s):closeSh()}
+await put(cur);const t=cur.t,s={loc:cur.loc,state:cur.state,cat:cur.cat};await load();again?sheet(t,0,s):closeSh()}
 async function rm(t,id){if(!confirm('¿Borrar? No se puede deshacer.'))return;
 if(t=='loc'){const p=L(id).parent||0;for(const r of [...D.loc.filter(l=>l.parent==id).map(l=>({...l,parent:p})),...D.item.filter(i=>i.loc==id).map(i=>({...i,loc:0})),...D.doc.filter(d=>d.loc==id||d.prop==id).map(d=>({...d,loc:d.loc==id?0:d.loc,prop:d.prop==id?0:d.prop}))])await put(r)}
 await del(id);closeSh();await load()}
+/* imágenes: se reducen y comprimen antes de guardar */
+const dec=async f=>{if(self.createImageBitmap)try{return await createImageBitmap(f,{imageOrientation:'from-image'})}catch{}
+return new Promise((o,k)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);o(i)};i.onerror=()=>{URL.revokeObjectURL(u);k()};i.src=u})};
+const jpg=(im,mx,q,blob)=>{const w=im.width,h=im.height,s=Math.min(1,mx/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*s));c.height=Math.max(1,Math.round(h*s));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+if(!blob){const u=c.toDataURL('image/jpeg',q);c.width=0;return u}
+return new Promise(o=>c.toBlob(b=>{c.width=0;o(b)},'image/jpeg',q))};
+const prep=async f=>{const im=await dec(f);try{const blob=await jpg(im,1280,.72,1);if(!blob)throw 0;return{blob,thumb:jpg(im,200,.6)}}finally{im.close?.()}};
 const img=(f,mx)=>new Promise(o=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,mx/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);o(c.toDataURL('image/jpeg',.75))};i.src=r.result};r.readAsDataURL(f)});
 const rd=f=>new Promise(o=>{const r=new FileReader();r.onload=()=>o({name:f.name,data:r.result});r.readAsDataURL(f)});
-document.addEventListener('change',async e=>{const k=e.target.dataset?.k;if(!k||!e.target.files.length)return;const fs=[...e.target.files];
-if(k=='photo'){cur.photo=await img(fs[0],900);const p=e.target.nextElementSibling;p.src=cur.photo;p.hidden=false}
-else{cur.files=[...(cur.files||[]),...await Promise.all(fs.map(f=>f.type.startsWith('image/')?img(f,1600).then(d=>({name:f.name,data:d})):rd(f)))];fl()}});
-document.addEventListener('click',e=>{if(e.target.tagName=='I'&&e.target.dataset.x!==undefined){cur.files.splice(+e.target.dataset.x,1);fl()}if(e.target.id=='ov')closeSh()});
+const b2u=b=>new Promise(o=>{const r=new FileReader();r.onload=()=>o(r.result);r.readAsDataURL(b)});
+function pick(cam){if(cur.photos.length>=PM())return toast('Máximo '+PM()+' fotos');$(cam?'#cam':'#gal').click()}
+async function addPh(fs){const m=()=>$('#pm'),mx=PM();if(m())m().textContent='Reduciendo y guardando la foto…';
+for(const f of fs){if(cur.photos.length>=mx){toast('Máximo '+mx+' fotos');break}try{cur.photos.push(await prep(f))}catch{toast('No se pudo leer una foto')}}
+if(m())m().textContent='';pg()}
+function view(p,name){if(!p)return;closeV();VU=p.blob instanceof Blob?URL.createObjectURL(p.blob):(p.data||p.thumb);$('#vi').src=VU;const a=$('#vd');a.href=VU;a.download=((name||'foto').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g,'').trim()||'foto')+'.jpg';$('#vw').hidden=false}
+function closeV(){$('#vw').hidden=true;if(VU&&VU.startsWith('blob:'))URL.revokeObjectURL(VU);VU=null;$('#vi').removeAttribute('src')}
+document.addEventListener('change',async e=>{const t=e.target;
+if(t.id=='cam'||t.id=='gal'){const fs=[...t.files];t.value='';if(fs.length)await addPh(fs);return}
+const k=t.dataset?.k;if(k!='files'||!t.files.length)return;const fs=[...t.files];
+cur.files=[...(cur.files||[]),...await Promise.all(fs.map(f=>f.type.startsWith('image/')?img(f,1600).then(d=>({name:f.name,data:d})):rd(f)))];fl()});
+document.addEventListener('click',e=>{const d=e.target.dataset||{};
+if(d.px!==undefined){cur.photos.splice(+d.px,1);pg();return}
+if(d.v!==undefined){view(cur.photos[+d.v],cur.name);return}
+if(e.target.tagName=='I'&&d.x!==undefined){cur.files.splice(+d.x,1);fl()}
+if(e.target.id=='ov')closeSh()});
 function prt(id){const l=L(id),w=window.open('','_blank'),li=ids(id).flatMap(i=>D.item.filter(x=>x.loc==i)).map(x=>`<li>${esc(x.name)}${x.qty>1?' ×'+x.qty:''}</li>`).join('');
 w.document.write(`<title>${esc(l.name)}</title><body style="font-family:sans-serif"><h1 style="font-size:72px;margin:0">${esc(l.code||l.name)}</h1><h2>${esc(path(id))}</h2><p>${esc(l.notes||'')}</p><ul>${li}</ul>`);w.document.close();w.print()}
 async function seed(){for(const [n,t,c] of [['Casa A','Casa',''],['Casa B','Casa',''],['Trastero 1','Trastero','T1'],['Trastero 2','Trastero','T2'],['Trastero 3','Trastero','T3']])await put({t:'loc',name:n,type:t,parent:0,code:c});await load()}
 async function unlock(){if(await sha($('#pn').value)==pin()){un=true;render()}else alert('PIN incorrecto.')}
 async function setPin(){const p=prompt('Nuevo PIN (déjalo vacío para quitarlo)');if(p===null)return;p?localStorage.setItem('pin',await sha(p)):localStorage.removeItem('pin');un=true;render()}
-function exp(full){const rs=[...D.loc,...D.item,...D.doc].map(r=>{if(full)return r;const {photo,files,...x}=r;return x}),a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,full:!!full,date:new Date().toISOString(),r:rs})],{type:'application/json'}));a.download=`archivo_${full?'completo':'ligero'}_${new Date().toISOString().slice(0,10)}.json`;a.click()}
-async function imp(e){const f=e.target.files[0];if(!f)return;let b,rs;try{b=JSON.parse(await f.text())}catch{return alert('El archivo no es un JSON válido.')}
+/* copias de seguridad */
+async function exp(full){toast('Preparando copia…');const all=[...D.loc,...D.item,...D.doc,...D.sug,CFG].filter(r=>r&&r.id!=null),rs=[];
+for(const r of all){const{photos,photo,...x}=r;if(!full)delete x.files;else if(photos?.length)x.photos=await Promise.all(photos.map(async p=>({thumb:p.thumb,data:p.blob instanceof Blob?await b2u(p.blob):p.thumb})));rs.push(x)}
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({v:3,full:!!full,date:new Date().toISOString(),r:rs})],{type:'application/json'}));a.download=`archivo_${full?'completo':'ligero'}_${new Date().toISOString().slice(0,10)}.json`;a.click()}
+async function imp(e){const f=e.target.files[0];e.target.value='';if(!f)return;let b,rs;try{b=JSON.parse(await f.text())}catch{return alert('El archivo no es un JSON válido.')}
 if(!confirm('Esto reemplaza todos los datos actuales. ¿Seguir?'))return;
-if(b.v==2)rs=b.r;else{let n=0;const M={},N={},lc=(b.locations||[]).map(l=>{M[l.id]=++n;N[l.name]=n;return{id:n,t:'loc',name:l.name,type:l.type,parent:l.parent}});lc.forEach(l=>l.parent=M[l.parent]||0);
+if(b.v>=2){rs=b.r;if(!b.full&&!confirm('Esta copia es ligera: no incluye fotos ni archivos y los actuales se perderán. ¿Seguir?'))return;
+for(const r of rs)if(r.photos)r.photos=await Promise.all(r.photos.map(async p=>p.data?{thumb:p.thumb,blob:await (await fetch(p.data)).blob()}:p))}
+else{let n=0;const M={},N={},lc=(b.locations||[]).map(l=>{M[l.id]=++n;N[l.name]=n;return{id:n,t:'loc',name:l.name,type:l.type,parent:l.parent}});lc.forEach(l=>l.parent=M[l.parent]||0);
 rs=[...lc,...(b.items||[]).map(i=>({id:++n,t:'item',name:i.name,loc:N[i.location]||0,state:'Guardar',qty:1,tags:i.tags,notes:[i.category,i.notes].filter(Boolean).join(' · ')})),
 ...(b.digital||[]).map(d=>({id:++n,t:'item',name:d.name,loc:N[d.location]||0,state:'Guardar',qty:1,tags:'soporte digital',notes:[d.type,d.content].filter(Boolean).join(' · ')})),
 ...(b.documents||[]).map(d=>({id:++n,t:'doc',title:d.title,cat:DC.includes(d.category)?d.category:/escritura/i.test(d.category)?'Escrituras':'Otros',orig:'Solo copia',notes:d.notes,files:d.fileData?[{name:d.fileName||'archivo',data:d.fileData}]:[]}))]}
-await tx('readwrite',s=>s.clear());for(const r of rs)await put(r);await load();alert('Copia restaurada.')}
-(async()=>{await opn();navigator.storage?.persist?.();await load()})();
+await tx('readwrite',s=>s.clear());for(const r of rs)await put(r);await load();if(await migrate())await load();alert('Copia restaurada.')}
+/* migración: fotos antiguas (texto base64) -> miniatura + imagen comprimida */
+async function migrate(){let ch=0;for(const r of [...D.item,...D.loc]){if(typeof r.photo=='string'&&r.photo){try{const b=await (await fetch(r.photo)).blob();r.photos=[await prep(b)];delete r.photo;await put(r);ch=1}catch{}}else if('photo'in r){delete r.photo;await put(r);ch=1}}return ch}
+(async()=>{await opn();navigator.storage?.persist?.();await load();if(await migrate())await load()})();
 </script></body></html>
