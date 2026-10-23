@@ -19,7 +19,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:4px 6px;border-bottom:1p
 </style></head><body><main id="app"></main><nav id="nav"></nav><div id="mod"></div>
 <script>
 /* ===== 1. UTILIDADES ===== */
-const KEY='mis_servicios_v1',$=s=>document.querySelector(s);
+const APP_VERSION='2.0',KEY='mis_servicios_v1',$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const EUR=new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}),NUM=new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
@@ -33,10 +33,10 @@ const addM=(s,n)=>{const d=P(s),day=d.getDate();d.setDate(1);d.setMonth(d.getMon
 const diff=(a,b)=>Math.round((P(a)-P(b))/864e5);
 const MESES={mensual:1,bimestral:2,trimestral:3,semestral:6,anual:12};
 /* ===== 2. DATOS Y ALMACENAMIENTO ===== */
-function def(){return{version:1,asociados:[['Casa 1','casa'],['Casa 2','casa'],['Coche 1','vehiculo'],['Coche 2','vehiculo'],['General','general']].map(([n,t])=>({id:uid(),nombre:n,tipo:t,archivado:false})),
-categorias:['Suministros','Telecomunicaciones','Seguros','Suscripciones','Impuestos y tasas','Vehículo','Mantenimiento hogar','Otros'],
-contratos:[],recibos:[],repostajes:[],gastos:[],ideas:[],ajustes:{rojo:15,naranja:60,rec:[30,7],bak:30},lastBackup:null}}
-function migrate(d){d.version=d.version||1;/* futuras migraciones: if(d.version<2){...;d.version=2} */return Object.assign(def(),d)}
+function def(){return{version:2,asociados:[['Casa 1','casa'],['Casa 2','casa'],['Coche 1','vehiculo'],['Coche 2','vehiculo'],['General','general']].map(([n,t])=>({id:uid(),nombre:n,tipo:t,archivado:false})),
+categorias:['Suministros','Telecomunicaciones','Seguros','Suscripciones','Impuestos y tasas','Vehículo','Mantenimiento hogar','Otros','Gimnasio','Comunidad de vecinos'],
+contratos:[],recibos:[],repostajes:[],gastos:[],ideas:[],ajustes:{rojo:15,naranja:60,rec:[30,7],bak:30,catGas:'Vehículo'},lastBackup:null}}
+function migrate(d){d.version=d.version||1;if(d.version<2){try{if(!localStorage.getItem('mis_servicios_prev_v1'))localStorage.setItem('mis_servicios_prev_v1',localStorage.getItem(KEY)||JSON.stringify(d))}catch(e){}d.ajustes=Object.assign({catGas:'Vehículo'},d.ajustes);d.version=2}return Object.assign(def(),d)}
 function load(){try{const r=localStorage.getItem(KEY);return r?migrate(JSON.parse(r)):def()}catch(e){return def()}}
 let S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){alert('⚠️ No se pudo guardar: el almacenamiento está lleno o bloqueado. Exporta una copia de seguridad y libera espacio.');return false}}
@@ -66,7 +66,7 @@ const meses=['mensual','bimestral','trimestral','semestral','anual'];
 const FIELDS={
 contratos:()=>[{k:'nombre',l:'Nombre',r:1},{k:'proveedor',l:'Proveedor'},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},
 {k:'importe',l:'Importe (€)',t:'number'},{k:'periodicidad',l:'Periodicidad',t:'select',o:meses,d:'mensual'},{k:'tipoImporte',l:'Tipo de importe',t:'select',o:['fijo','variable']},
-{k:'tipoSuministro',l:'Suministro',t:'select',o:['ninguno','electricidad','agua','gas','otro']},{k:'proxCobro',l:'Próximo cobro',t:'date'},{k:'inicio',l:'Fecha de inicio',t:'date'},
+{k:'tipoSuministro',l:'Tipo de servicio',t:'select',o:[['ninguno','ninguno'],['electricidad','electricidad'],['agua','agua'],['gas','gas'],['internet','internet'],['movil','móvil'],['otro','otro']]},{k:'proxCobro',l:'Próximo cobro',t:'date'},{k:'inicio',l:'Fecha de inicio',t:'date'},
 {k:'vence',l:'Vencimiento / renovación',t:'date'},{k:'renovAuto',l:'Renovación automática',t:'check'},{k:'renMeses',l:'Periodo de renovación (meses)',t:'number',d:12},
 {k:'preaviso',l:'Preaviso (días)',t:'number',d:30},{k:'finPerm',l:'Fin de permanencia',t:'date'},{k:'pago',l:'Forma de pago'},{k:'nContrato',l:'Nº contrato / póliza'},
 {k:'telefono',l:'Teléfono de atención'},{k:'linea',l:'Móvil: nº de línea'},{k:'usuaria',l:'Móvil: persona usuaria'},{k:'documento',l:'Dónde está el documento'},{k:'notas',l:'Notas',t:'area'},
@@ -85,7 +85,7 @@ function edit(kind,id,dup){
   if(save())go();else return false})}
 function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
 /* ===== 6. PANTALLAS ===== */
-const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'recibos',idf:'todas',idq:'',d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1}};
+const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'recibos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',d1:'',d2:'',q:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1}};
 const TABS=[['inicio','Inicio'],['contratos','Contratos'],['gastos','Gastos'],['informes','Informes'],['mas','Más']];
 function go(t,s){if(t){ui.tab=t;ui.sub=s||''}
  $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('');
@@ -117,10 +117,10 @@ function gest(id){const c=gc(id);c.aviso=!c.aviso;save();go()}
 function cancel(id){if(ask('¿Cancelar el contrato? Se conserva el histórico.')){const c=gc(id);c.estado='cancelado';c.fechaCancel=today();save();go()}}
 /* --- Gastos --- */
 function gastos(){const g=ui.gv,tb=[['recibos','Recibos'],['repostajes','Gasolina'],['gastos','Sueltos']];
- const l=[...S[g]].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+ const l=S[g].filter(r=>gfl(g,r)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
  const txt={recibos:r=>`${esc(gc(r.contrato)?.nombre||'—')} · ${r.consumo?NUM.format(r.consumo)+' '+r.unidad:'sin consumo'}`,repostajes:r=>`${esc(an(r.coche))} · ${NUM.format(r.litros)} L · ${NUM.format(r.ppl||0)} €/L${r.km?' · '+NUM.format(r.km)+' km':''}`,gastos:r=>`${esc(r.desc)} · ${esc(r.categoria)} · ${esc(an(r.asociado))}`};
  return`<h1>Gastos</h1><div class="tabs">${tb.map(([k,v])=>`<button class="${g===k?'on':''}" onclick="ui.gv='${k}';go()">${v}</button>`).join('')}</div>
-<button class="p" onclick="edit('${g}')">+ Añadir</button>${g==='repostajes'?fuel():''}
+<button class="p" onclick="edit('${g}')">+ Añadir</button><div class="card np"><div class="row"><select onchange="ui.gf.a=this.value;go()"><option value="">Todos los asociados</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.gf.a===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select><select onchange="ui.gf.c=this.value;go()"><option value="">Todas las categorías</option>${S.categorias.map(c=>`<option${ui.gf.c===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="row"><label>Desde<input type="date" value="${ui.gf.d1}" onchange="ui.gf.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.gf.d2}" onchange="ui.gf.d2=this.value;go()"></label></div><div class="row"><input placeholder="Buscar…" value="${esc(ui.gf.q)}" onchange="ui.gf.q=this.value;go()"><button class="s" onclick="ui.gf={a:'',c:'',d1:'',d2:'',q:''};go()">Limpiar</button></div></div><div class="m">${l.length} registros · ${eur(l.reduce((t,r)=>t+r.importe,0))}</div>${g==='repostajes'?fuel():''}
 ${l.length?l.map(r=>`<div class="card"><div class="row sp"><b>${eur(r.importe)}</b><span class="m">${fd(r.fecha)}</span></div><div class="m">${txt[g](r)}</div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('${g}','${r.id}')">Editar</button><button class="s d" onclick="del('${g}','${r.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Aún no hay registros.</div>'}`}
 function fuelStats(coche){const l=S.repostajes.filter(r=>r.coche===coche).sort((a,b)=>a.fecha.localeCompare(b.fecha)||(a.km||0)-(b.km||0));
  let prev=null,lit=0,eu=0,km=0;
@@ -131,9 +131,9 @@ function fuelStats(coche){const l=S.repostajes.filter(r=>r.coche===coche).sort((
 function fuel(){return S.asociados.filter(a=>a.tipo==='vehiculo').map(a=>{const s=fuelStats(a.id);return`<div class="card"><b>${esc(a.nombre)}</b><div class="m">Consumo: ${s.cons?NUM.format(s.cons)+' L/100 km':'sin datos suficientes'} · ${s.e100?NUM.format(s.e100)+' €/100 km':'sin datos suficientes'} · Precio medio: ${s.ppl?NUM.format(s.ppl)+' €/L':'sin datos'}</div></div>`}).join('')}
 /* --- Informes --- */
 function items(d1,d2){const days=diff(d2,d1)+1,out=[],mk=(part,fecha,importe,aso,cat)=>out.push({part,fecha,importe,aso,cat});
- S.contratos.filter(c=>c.estado!=='cancelado'&&c.tipoImporte!=='variable').forEach(c=>mk('fix',d1,eq(c)*12/365.25*days,c.asociado,c.categoria));
+ S.contratos.filter(c=>c.tipoImporte!=='variable'&&(c.estado!=='cancelado'||c.fechaCancel)).forEach(c=>{const a=c.inicio&&c.inicio>d1?c.inicio:d1,b=c.fechaCancel&&c.fechaCancel<d2?c.fechaCancel:d2,n=diff(b,a)+1;if(n>0)mk('fix',d1,eq(c)*12/365.25*n,c.asociado,c.categoria)});
  S.recibos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>{const c=gc(r.contrato);mk('var',r.fecha,r.importe,c?.asociado,c?.categoria)});
- S.repostajes.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk('gas',r.fecha,r.importe,r.coche,'Vehículo'));
+ S.repostajes.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk('gas',r.fecha,r.importe,r.coche,S.ajustes.catGas));
  S.gastos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk('sue',r.fecha,r.importe,r.asociado,r.categoria));return out}
 const PN={fix:'Contratos fijos',var:'Recibos variables',gas:'Gasolina',sue:'Gastos sueltos'};
 function sum(a,k){const m={};a.forEach(x=>m[x[k]]=(m[x[k]]||0)+x.importe);return m}
@@ -143,7 +143,7 @@ function informes(){const it=items(ui.d1,ui.d2).filter(x=>ui.pf[x.part]),tot=sum
  const mm={};it.filter(x=>x.part!=='fix').forEach(x=>{const k=x.fecha.slice(0,7);mm[k]=(mm[k]||0)+x.importe});
  const ks=Object.keys(mm).sort(),mx=Math.max(1,...Object.values(mm)),W=Math.max(300,ks.length*44);
  const svg=ks.length?`<div style="overflow-x:auto"><svg width="${W}" height="150" role="img">${ks.map((k,i)=>{const h=mm[k]/mx*100;return`<rect x="${i*44+6}" y="${120-h}" width="32" height="${h}" fill="var(--p)" rx="3"/><text x="${i*44+22}" y="136" font-size="10" text-anchor="middle" fill="currentColor">${k.slice(5)}/${k.slice(2,4)}</text><text x="${i*44+22}" y="${114-h}" font-size="9" text-anchor="middle" fill="currentColor">${Math.round(mm[k])}</text>`}).join('')}</svg></div>`:'<div class="m">Sin recibos, gasolina ni gastos en el periodo.</div>';
- return`<h1>Informes</h1><div class="card np"><div class="row"><label>Desde<input type="date" value="${ui.d1}" onchange="ui.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.d2}" onchange="ui.d2=this.value;go()"></label></div>
+ return`<h1>Informes</h1><div class="card np"><div class="tabs" style="flex-wrap:wrap">${[['mes','Este mes'],['mesant','Mes anterior'],['tri','Trimestre'],['ano','Año'],['12m','12 meses'],['anoant','Año anterior']].map(([k,l])=>`<button class="${ui.per===k?'on':''}" onclick="setP('${k}')">${l}</button>`).join('')}</div>${['mes','mesant','tri','ano','anoant'].includes(ui.per)?`<div class="row"><button onclick="shiftP(-1)">◀</button><button onclick="shiftP(1)">▶</button></div>`:''}<div class="row"><label>Desde<input type="date" value="${ui.d1}" onchange="ui.d1=this.value;ui.per='';go()"></label><label>Hasta<input type="date" value="${ui.d2}" onchange="ui.d2=this.value;ui.per='';go()"></label></div>
 <div class="row">${Object.keys(PN).map(k=>`<label><input type="checkbox" ${ui.pf[k]?'checked':''} onchange="ui.pf.${k}=this.checked;go()"> ${PN[k]}</label>`).join('')}</div>
 <label><input type="checkbox" ${ui.comb?'checked':''} onchange="ui.comb=this.checked;go()"> Mostrar total combinado</label><button onclick="print()">Imprimir / PDF</button></div>
 <h2>${fd(ui.d1)} – ${fd(ui.d2)}</h2><div class="card"><table>${Object.keys(PN).filter(k=>ui.pf[k]).map(k=>`<tr><td>${PN[k]}</td><td class="n"><b>${eur(tot[k])}</b></td><td class="n m">año ant.: ${eur(pt[k])}</td></tr>`).join('')}
@@ -152,12 +152,13 @@ ${ui.comb?`<tr><td><b>Total combinado</b></td><td class="n"><b>${eur(Object.valu
 <h2>Por asociado</h2><div class="card">${tbl(sum(it,'aso'),an)}</div><h2>Por categoría</h2><div class="card">${tbl(sum(it,'cat'))}</div><h2>Por mes (sin contratos fijos)</h2><div class="card">${svg}</div>`}
 /* --- Más --- */
 function mas(){const s=ui.sub;if(s)return SUB[s]();
- return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['acerca','Acerca de']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left" onclick="go('mas','${k}')">${l} ›</button>`).join('')}`}
+ return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}</p>`}
 const back=`<button onclick="go('mas')">‹ Más</button>`;
 const SUB={
-aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Renombrar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
-cat:()=>`${back}<h1>Categorías</h1><button class="p" onclick="addCat()">+ Añadir</button>${S.categorias.map((c,i)=>`<div class="card row sp">${esc(c)}<button class="s" onclick="renCat(${i})">Renombrar</button></div>`).join('')}`,
-ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bak',l:'Aviso copia antigua (días)',t:'number',r:1}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak},o=>{S.ajustes={rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak};save();go('mas')})});return back},
+aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Editar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
+cat:()=>`${back}<h1>Categorías</h1><button class="p" onclick="addCat()">+ Añadir</button>${S.categorias.map((c,i)=>`<div class="card row sp"><span>${esc(c)} <span class="m">(${catUse(c)} usos${c===S.ajustes.catGas?' · gasolina':''})</span></span><span><button class="s" onclick="renCat(${i})">Editar</button><button class="s d" onclick="delCat(${i})">Eliminar</button></span></div>`).join('')}`,
+borrar:()=>`${back}<h1>Borrar datos de esta app</h1><div class="card warn"><p>Se borrarán contratos, recibos, gastos y ajustes de <b>Mis servicios</b> en este navegador. No se puede deshacer y no afecta a otras apps.</p><button class="p" onclick="exportJ();go('mas','borrar')">1. Descargar copia de seguridad ahora</button><label>2. Escribe BORRAR para confirmar<input id="bq" autocomplete="off" oninput="$('#bb').disabled=this.value.trim()!=='BORRAR'"></label><button class="d" id="bb" disabled onclick="wipe()">Borrar todo</button></div>`,
+ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bak',l:'Aviso copia antigua (días)',t:'number',r:1},{k:'catGas',l:'Categoría para gasolina',t:'select',o:S.categorias}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak,catGas:a.catGas},o=>{S.ajustes={rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak,catGas:o.catGas};save();go('mas')})});return back},
 bak:()=>`${back}<h1>Copia de seguridad</h1><div class="card"><p class="m">Última copia: ${fd(S.lastBackup)}</p><button class="p" onclick="exportJ()">Exportar JSON</button><p><input type="file" accept=".json,application/json" onchange="importJ(this.files[0])"></p><p class="m">Importar sustituye los datos actuales.</p></div>`,
 ics:()=>`${back}<h1>Exportar al calendario</h1><div class="card"><p class="m">Eventos de día completo con límite de aviso y vencimiento, con dos alarmas.</p><button class="p" onclick="icsAll()">Descargar .ics de todos los contratos activos</button></div>`,
 ideas:()=>{const q=ui.idq.toLowerCase(),l=S.ideas.filter(i=>(ui.idf==='todas'||(ui.idf==='pend'?i.estado==='pendiente':i.estado==='implementada'))&&(!q||i.texto.toLowerCase().includes(q)));
@@ -165,12 +166,27 @@ ideas:()=>{const q=ui.idq.toLowerCase(),l=S.ideas.filter(i=>(ui.idf==='todas'||(
 <div class="tabs">${[['todas','Todas'],['pend','Pendientes'],['impl','Implementadas']].map(([k,v])=>`<button class="${ui.idf===k?'on':''}" onclick="ui.idf='${k}';go('mas','ideas')">${v}</button>`).join('')}</div>
 <input placeholder="Buscar…" value="${esc(ui.idq)}" oninput="ui.idq=this.value;go('mas','ideas');$('#app input').focus()">
 ${l.length?l.map(i=>`<div class="card"><div style="white-space:pre-wrap">${esc(i.texto)}</div><div class="m">${fd(i.creada)} · ${i.estado}${i.fechaImpl?' '+fd(i.fechaImpl):''}</div><div class="row"><button class="s" onclick="ideaEd('${i.id}')">Editar</button><button class="s" onclick="ideaTog('${i.id}')">${i.estado==='pendiente'?'Implementada':'Volver a pendiente'}</button><button class="s d" onclick="ideaDel('${i.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Sin ideas todavía.</div>'}`},
-acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v1 · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (localStorage).</span></div>`};
-function addAso(){modal('Nuevo asociado',[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','vehiculo','persona','general']}],{},o=>{S.asociados.push({id:uid(),...o,archivado:false});save();go('mas','aso')})}
-function renAso(id){const a=A(id),n=prompt('Nuevo nombre',a.nombre);if(n&&n.trim()){a.nombre=n.trim();save();go('mas','aso')}}
+acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v${APP_VERSION} · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (localStorage).</span></div>`};
+const asoF=()=>[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','trastero','garaje','vehiculo','persona','general']},{k:'perteneceA',l:'Pertenece a (casa; para trastero/garaje)',t:'select',o:[['','—'],...aOpts(null,'casa')]}];
+function addAso(){modal('Nuevo asociado',asoF(),{},o=>{S.asociados.push({id:uid(),...o,archivado:false});save();go('mas','aso')})}
+function renAso(id){const a=A(id);modal('Editar asociado',asoF(),a,o=>{Object.assign(a,o);save();go('mas','aso')})}
 function arcAso(id){const a=A(id);a.archivado=!a.archivado;save();go('mas','aso')}
-function addCat(){const n=prompt('Nueva categoría');if(n&&n.trim()){S.categorias.push(n.trim());save();go('mas','cat')}}
-function renCat(i){const o=S.categorias[i],n=prompt('Nuevo nombre',o);if(n&&n.trim()){S.categorias[i]=n.trim();[...S.contratos,...S.gastos].forEach(x=>{if(x.categoria===o)x.categoria=n.trim()});save();go('mas','cat')}}
+const catUse=c=>[...S.contratos,...S.gastos].filter(x=>x.categoria===c).length;
+const catOk=(n,ex)=>{n=(n||'').trim();if(!n)return null;if(S.categorias.some(c=>c!==ex&&c.toLowerCase()===n.toLowerCase())){alert('Ya existe una categoría con ese nombre.');return null}return n};
+function addCat(){const n=catOk(prompt('Nueva categoría'));if(n){S.categorias.push(n);save();go('mas','cat')}}
+function renCat(i){const o=S.categorias[i],n=catOk(prompt('Nuevo nombre',o),o);if(n){S.categorias[i]=n;[...S.contratos,...S.gastos].forEach(x=>{if(x.categoria===o)x.categoria=n});if(S.ajustes.catGas===o)S.ajustes.catGas=n;save();go('mas','cat')}}
+function delCat(i){const o=S.categorias[i],n=catUse(o),otras=S.categorias.filter(c=>c!==o);if(!otras.length){alert('Debe quedar al menos una categoría.');return}
+ if(!n&&S.ajustes.catGas!==o){if(ask('¿Eliminar "'+o+'"?')){S.categorias.splice(i,1);save();go('mas','cat')}return}
+ modal('Eliminar "'+o+'" ('+n+' registros)',[{k:'dest',l:'Pasar sus registros a',t:'select',o:otras,r:1}],{},v=>{[...S.contratos,...S.gastos].forEach(x=>{if(x.categoria===o)x.categoria=v.dest});if(S.ajustes.catGas===o)S.ajustes.catGas=v.dest;S.categorias.splice(S.categorias.indexOf(o),1);save();go('mas','cat')})}
+async function wipe(){try{Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+ try{const dbs=indexedDB.databases?await indexedDB.databases():[{name:'mis_servicios'}];await Promise.all(dbs.filter(d=>d.name&&d.name.startsWith('mis_servicios')).map(d=>new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=r})))}catch(e){}
+ S=def();alert('Datos de la app borrados.');location.reload()}
+function gfl(g,r){const f=ui.gf,c=g==='recibos'?gc(r.contrato):null,aso=g==='recibos'?c?.asociado:g==='repostajes'?r.coche:r.asociado,cat=g==='recibos'?c?.categoria:g==='repostajes'?S.ajustes.catGas:r.categoria;
+ return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
+function setP(k){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),F=(a,b)=>{ui.d1=ISO(a);ui.d2=ISO(b)};ui.per=k;
+ if(k==='mes')F(new Date(y,m,1),new Date(y,m+1,0));else if(k==='mesant')F(new Date(y,m-1,1),new Date(y,m,0));else if(k==='tri'){const q=Math.floor(m/3)*3;F(new Date(y,q,1),new Date(y,q+3,0))}
+ else if(k==='ano')F(new Date(y,0,1),new Date(y,11,31));else if(k==='anoant')F(new Date(y-1,0,1),new Date(y-1,11,31));else{ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
+function shiftP(n){const s=ui.per==='tri'?3:(ui.per==='ano'||ui.per==='anoant')?12:1,d=P(ui.d1),m=d.getMonth()+n*s;ui.d1=ISO(new Date(d.getFullYear(),m,1));ui.d2=ISO(new Date(d.getFullYear(),m+s,0));go()}
 /* Ideas */
 function ideaEd(id){const i=S.ideas.find(x=>x.id===id);modal(i?'Editar idea':'Nueva idea',[{k:'texto',l:'Idea',t:'area',r:1}],i||{},o=>{if(i)i.texto=o.texto;else S.ideas.push({id:uid(),texto:o.texto,creada:today(),estado:'pendiente'});save();go('mas','ideas')})}
 function ideaTog(id){const i=S.ideas.find(x=>x.id===id);if(i.estado==='pendiente'){i.estado='implementada';i.fechaImpl=today()}else{i.estado='pendiente';delete i.fechaImpl}save();go('mas','ideas')}
@@ -180,7 +196,7 @@ function copyPend(){const t=S.ideas.filter(i=>i.estado==='pendiente').map((i,n)=
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
 function exportJ(){S.lastBackup=today();save();dl(`mis_servicios_${today()}.json`,JSON.stringify({app:'mis_servicios',...S,exportado:new Date().toISOString()},null,1),'application/json');go('mas','bak')}
 function importJ(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);
- if(d.app!=='mis_servicios'||typeof d.version!=='number'||!['asociados','categorias','contratos','recibos','repostajes','gastos'].every(k=>Array.isArray(d[k])))throw 0;
+ if(d.app!=='mis_servicios'||typeof d.version!=='number'||d.version>2||!['asociados','categorias','contratos','recibos','repostajes','gastos'].every(k=>Array.isArray(d[k])))throw 0;
  if(!ask('Importar SUSTITUYE todos los datos actuales. ¿Continuar?'))return;
  if(ask('¿Descargar antes una copia de los datos actuales?'))dl(`mis_servicios_antes_${today()}.json`,JSON.stringify({app:'mis_servicios',...S}),'application/json');
  delete d.app;S=migrate(d);if(save())go('mas','bak')}catch(e){alert('Archivo no válido: no es una copia de Mis servicios.')}};r.readAsText(f)}
