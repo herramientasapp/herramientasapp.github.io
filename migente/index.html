@@ -109,6 +109,30 @@ details.card[open]>summary::before{content:'▾ '}
 .grupo-row:last-child{border:0}
 .grupo-row input,.grupo-row .icon-input{width:auto;flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
 .grupo-row .icon-input{flex:0 0 60px;text-align:center}
+/* ===== v1.2: selector con búsqueda ===== */
+.picker{position:relative}
+.picker input{padding-right:34px}
+.picker .clear-pick{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;display:none;padding:4px 8px}
+.picker .clear-pick.on{display:block}
+.pick-list{max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:4px;background:var(--bg)}
+.pick-list .pick-item{padding:9px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pick-list .pick-item:last-child{border:0}
+.pick-list .pick-item:hover,.pick-list .pick-item.sel{background:var(--primary-soft)}
+.pick-list .pick-item .meta{color:var(--muted);font-size:12px}
+.pick-list .pick-empty{padding:10px 12px;color:var(--muted);font-size:13px}
+/* ===== v1.2: etiquetas en inicio ===== */
+.tag-section{margin:12px 0}
+.tag-section .tag-title{font:600 15px Georgia,serif;color:var(--ink);margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.tag-section .tag-title .count{font-size:12px;color:var(--muted);font-weight:400}
+.tag-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tag-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:14px;background:var(--accent-soft);color:var(--accent);border:1px dashed var(--accent);font-size:13px;cursor:pointer;font-family:inherit}
+.tag-chip .n{font-weight:700;opacity:.85}
+/* ===== v1.2: botones guardar y añadir ===== */
+.form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.form-actions .btn{flex:1 1 auto;min-width:140px;margin:0;text-align:center}
+.banner-dup{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}
+.banner-dup b{color:var(--accent)}
+.group-h{font:600 14px Georgia,serif;color:var(--muted);margin:10px 0 2px;text-transform:uppercase;letter-spacing:.5px;font-size:12px}
 @media print{
   body{padding:0;background:#fff;color:#000}
   header,nav,.noprint,.btn{display:none!important}
@@ -130,7 +154,7 @@ details.card[open]>summary::before{content:'▾ '}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION='1.1';
+const APP_VERSION='1.2';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const p2=n=>String(n).padStart(2,'0');
@@ -140,6 +164,8 @@ const fd=s=>s?s.split('-').reverse().join('/'):'';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const D=s=>new Date(s+'T12:00');
 const days=(a,b)=>Math.round((D(a)-D(b))/864e5);
+/* v1.2: normalizar para búsqueda sin acentos */
+const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 
 const GRUPOS_DEF=[
   {id:'familiaPropia',nombre:'Mi familia',icono:'👨‍👩‍👧'},
@@ -217,7 +243,7 @@ function inverseTipo(originalTipo,sexo){
 }
 
 const DEF=()=>({
-  version:1.1,
+  version:1.2,
   personas:[],
   grupos:JSON.parse(JSON.stringify(GRUPOS_DEF)),
   ideas:[],
@@ -237,6 +263,7 @@ let callTimer=null;
 window.__searchQ='';
 window.__grupoFilter='todos';
 window.__printFilter='todos';
+window.__tagFilter=null; /* v1.2 */
 
 const db=new Promise(res=>{
   try{const r=indexedDB.open('migente',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}
@@ -272,6 +299,11 @@ function migrate(d){
     if(d.set.mostrarRecientes===undefined)d.set.mostrarRecientes=true;
     if(d.set.avisarCopia===undefined)d.set.avisarCopia=true;
     d.version=1.1;
+  }
+  if(d.version<1.2){
+    /* asegurar etiquetas en todas las personas */
+    (d.personas||[]).forEach(p=>{if(!Array.isArray(p.etiquetas))p.etiquetas=[];});
+    d.version=1.2;
   }
   return d;
 }
@@ -321,17 +353,19 @@ function renderNav(){
   $('#nav').innerHTML=items.map(it=>`<button class="${tab===it.k?'on':''}" onclick="go('${it.k}')"><span>${it.i}</span>${it.l}</button>`).join('');
 }
 
+/* v1.2: búsqueda sin acentos */
 function search(q){
-  q=(q||'').toLowerCase().trim();
+  q=norm(q);
   if(!q)return S.personas;
   return S.personas.filter(p=>
-    (p.nombre||'').toLowerCase().includes(q)||
-    (p.apodo||'').toLowerCase().includes(q)||
-    (p.contexto||'').toLowerCase().includes(q)||
-    (p.notas||'').toLowerCase().includes(q)||
-    (p.relacionConmigo||'').toLowerCase().includes(q)||
-    (p.relacionMujer||'').toLowerCase().includes(q)||
-    (p.ciudad||'').toLowerCase().includes(q)
+    norm(p.nombre).includes(q)||
+    norm(p.apodo).includes(q)||
+    norm(p.contexto).includes(q)||
+    norm(p.notas).includes(q)||
+    norm(p.relacionConmigo).includes(q)||
+    norm(p.relacionMujer).includes(q)||
+    norm(p.ciudad).includes(q)||
+    (p.etiquetas||[]).some(t=>norm(t).includes(q))
   );
 }
 
@@ -363,10 +397,7 @@ function getAlerts(){
 function renderBell(){
   const alerts=getAlerts();
   const badge=$('#bellBadge');
-  if(badge){
-    badge.textContent=alerts.length;
-    badge.classList.toggle('on',alerts.length>0);
-  }
+  if(badge){badge.textContent=alerts.length;badge.classList.toggle('on',alerts.length>0);}
   const panel=$('#bellPanel');
   if(panel&&panel.classList.contains('open')){
     if(!alerts.length){panel.innerHTML='<p class="empty">Todo al día. No hay avisos.</p>';return;}
@@ -377,11 +408,9 @@ function renderBell(){
   }
 }
 function toggleBell(forceClose){
-  const panel=$('#bellPanel');
-  if(!panel)return;
+  const panel=$('#bellPanel');if(!panel)return;
   if(forceClose===true){panel.classList.remove('open');return;}
-  panel.classList.toggle('open');
-  renderBell();
+  panel.classList.toggle('open');renderBell();
 }
 
 /* ============ INICIO ============ */
@@ -397,11 +426,28 @@ function vInicio(){
   let html=`<h2>${nombres}</h2>`;
   html+=`<p class="mut s" style="margin-top:0">${total} ${total===1?'persona':'personas'} en tu lista</p>`;
 
-  html+=`<input class="search" type="search" placeholder="🔍 Buscar por nombre, apodo, relación…" readonly onclick="window.__searchQ='';window.__grupoFilter='todos';go('personas');setTimeout(()=>{const e=document.getElementById('searchPersonas');if(e)e.focus();},80)" style="cursor:pointer" />`;
+  html+=`<input class="search" type="search" placeholder="🔍 Buscar por nombre, apodo, relación…" readonly onclick="window.__searchQ='';window.__grupoFilter='todos';window.__tagFilter=null;go('personas');setTimeout(()=>{const e=document.getElementById('searchPersonas');if(e)e.focus();},80)" style="cursor:pointer" />`;
 
   // Chips de grupos
   if(S.grupos.length){
-    html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;
+    html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';window.__tagFilter=null;go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;
+  }
+
+  // v1.2: etiquetas en inicio
+  const tagMap={};
+  for(const p of S.personas){
+    for(const t of (p.etiquetas||[])){
+      const key=norm(t);
+      if(!key)continue;
+      if(!tagMap[key])tagMap[key]={label:t,personas:[]};
+      tagMap[key].personas.push(p.id);
+    }
+  }
+  const tags=Object.entries(tagMap).sort((a,b)=>b[1].personas.length-a[1].personas.length||a[1].label.localeCompare(b[1].label,'es'));
+  if(tags.length){
+    html+=`<div class="tag-section card"><div class="tag-title">🏷️ Etiquetas <span class="count">${tags.length}</span></div><div class="tag-chips">`;
+    html+=tags.map(([key,v])=>`<button class="tag-chip" onclick="window.__tagFilter='${esc(v.label)}';window.__searchQ='';window.__grupoFilter='todos';go('personas')">${esc(v.label)} <span class="n">${v.personas.length}</span></button>`).join('');
+    html+=`</div></div>`;
   }
 
   // Vistos recientemente
@@ -423,7 +469,6 @@ function vInicio(){
   if(!total){
     html+=`<div class="empty"><div class="big">👥</div><p>Aún no tienes personas en tu lista.</p><p class="s">Toca <b>Personas</b> abajo y luego <b>+ Añadir persona</b> para empezar.</p></div>`;
   }
-
   return html;
 }
 
@@ -431,10 +476,14 @@ function vInicio(){
 function vPersonas(){
   const grupo=window.__grupoFilter||'todos';
   const q=window.__searchQ||'';
+  const tag=window.__tagFilter;
+  let tagNote='';
+  if(tag)tagNote=`<div class="banner-dup" style="margin-top:0">Filtrando por etiqueta <b>${esc(tag)}</b> · <button class="lnk" style="display:inline;font-size:13px" onclick="window.__tagFilter=null;render()">quitar filtro</button></div>`;
   return `<div style="display:flex;justify-content:space-between;align-items:center">
     <h2 style="margin:0">Personas</h2>
     <button class="btn" onclick="editPersona()" style="margin:0">+ Añadir</button>
   </div>
+    ${tagNote}
     <input class="search" id="searchPersonas" type="search" placeholder="🔍 Buscar…" value="${esc(q)}" oninput="onSearch(this.value)" style="margin-top:10px" />
     <div class="chips">
       <button class="${grupo==='todos'?'on':''}" onclick="window.__grupoFilter='todos';render()">Todas</button>
@@ -447,8 +496,11 @@ function onSearch(v){window.__searchQ=v;renderList();}
 function renderList(){
   const q=window.__searchQ||'';
   const grupo=window.__grupoFilter||'todos';
-  const filtradas=search(q).filter(p=>grupo==='todos'||p.grupo===grupo)
-    .sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  const tag=window.__tagFilter;
+  let base=search(q);
+  if(grupo!=='todos')base=base.filter(p=>p.grupo===grupo);
+  if(tag)base=base.filter(p=>(p.etiquetas||[]).some(t=>norm(t)===norm(tag)));
+  const filtradas=base.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
   const list=$('#listPersonas');
   const count=$('#countPersonas');
   if(!list)return;
@@ -490,7 +542,6 @@ function vFicha(){
   html+=callBtn;
   html+=`</div>`;
 
-  // Vínculos
   html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>Vínculos</b><button class="btn small alt" onclick="addVinculoUI('${p.id}')" style="margin:0">+ Añadir vínculo</button></div>`;
   html+=renderVinculos(p);
   html+=`</div>`;
@@ -505,7 +556,7 @@ function vFicha(){
 
   if(p.etiquetas&&p.etiquetas.length){
     html+=`<div class="card"><div class="mut s" style="margin-bottom:6px">Etiquetas</div>`;
-    html+=p.etiquetas.map(t=>`<span class="ptag">${esc(t)}</span>`).join('');
+    html+=p.etiquetas.map(t=>`<span class="tag-chip" style="cursor:default">${esc(t)}</span>`).join('');
     html+=`</div>`;
   }
   if(p.notas){
@@ -515,6 +566,20 @@ function vFicha(){
   html+=`<div class="card noprint"><button class="btn alt" onclick="editPersona('${p.id}')">✏️ Editar</button><button class="btn alt" onclick="marcarVisto('${p.id}')">✓ Le he visto hoy</button><button class="btn danger" style="float:right" onclick="borrarPersona('${p.id}')">🗑️</button></div>`;
   return html;
 }
+
+/* v1.2: vínculos agrupados por categoría */
+function categoriaDeTipo(t){
+  if(['esposo','esposa','pareja','novio','novia','ex pareja','ex novio','ex novia'].includes(t))return'Cónyuge / pareja';
+  if(['hijo','hija','hijo/a','nieto','nieta','bisnieto','bisnieta'].includes(t))return'Descendientes';
+  if(['padre','madre','padre/madre','abuelo','abuela','bisabuelo','bisabuela'].includes(t))return'Ascendientes';
+  if(['hermano','hermana','hermano/a','primo','prima','primo segundo','prima segunda'].includes(t))return'Hermanos y primos';
+  if(['tío','tía','tío/a','sobrino','sobrina','sobrino/a','tío abuelo','tía abuela','sobrino nieto','sobrina nieta','sobrino/a nieto/a'].includes(t))return'Tíos y sobrinos';
+  if(['cuñado','cuñada','suegro','suegra','yerno','nuera'].includes(t))return'Familia política';
+  if(['padrino','madrina','ahijado','ahijada'].includes(t))return'Padrinos / ahijados';
+  return'Otros';
+}
+const ORDEN_CAT=['Cónyuge / pareja','Descendientes','Ascendientes','Hermanos y primos','Tíos y sobrinos','Familia política','Padrinos / ahijados','Otros'];
+
 function renderVinculos(p){
   if(!p.vinculos||!p.vinculos.length)return'<p class="mut s">Sin vínculos registrados. Toca "+ Añadir vínculo" para empezar.</p>';
   const items=p.vinculos.map(v=>{
@@ -522,39 +587,123 @@ function renderVinculos(p){
     if(!o)return null;
     return{persona:o,tipo:v.tipo};
   }).filter(Boolean);
-  // Agrupar por tipo
-  const byTipo={};
-  items.forEach(it=>{if(!byTipo[it.tipo])byTipo[it.tipo]=[];byTipo[it.tipo].push(it.persona)});
-  return Object.entries(byTipo).map(([tipo,personas])=>{
-    return personas.map(persona=>`<div class="vinculo-row">
-      ${avatar(persona,'tiny')}
-      <span class="v-name"><a href="#" onclick="openFicha('${persona.id}');return false">${esc(persona.nombre)}</a></span>
-      <span class="v-tipo">${esc(tipo)}</span>
-      <button class="v-del" onclick="delVinculo('${p.id}','${persona.id}')" title="Borrar vínculo">×</button>
+  if(!items.length)return'<p class="mut s">Sin vínculos registrados.</p>';
+  /* agrupar por categoría */
+  const byCat={};
+  items.forEach(it=>{
+    const cat=categoriaDeTipo(it.tipo);
+    if(!byCat[cat])byCat[cat]=[];
+    byCat[cat].push(it);
+  });
+  let html='';
+  for(const cat of ORDEN_CAT){
+    if(!byCat[cat])continue;
+    html+=`<div class="group-h">${cat}</div>`;
+    html+=byCat[cat].map(it=>`<div class="vinculo-row">
+      ${avatar(it.persona,'tiny')}
+      <span class="v-name"><a href="#" onclick="openFicha('${it.persona.id}');return false">${esc(it.persona.nombre)}</a></span>
+      <span class="v-tipo">${esc(it.tipo)}</span>
+      <button class="v-del" onclick="delVinculo('${p.id}','${it.persona.id}')" title="Borrar vínculo">×</button>
     </div>`).join('');
+  }
+  return html;
+}
+
+/* ============ v1.2: SELECTOR CON BÚSQUEDA ============ */
+let pickerState={field:null,query:'',selectedId:null,target:'modal'};
+
+function openPersonaPicker(opts){
+  /* opts: {target:'modal'|'form', onPick:fn, exclude:[ids], title} */
+  pickerState={...pickerState,...opts,query:'',selectedId:null};
+  const otras=S.personas.filter(p=>!(opts.exclude||[]).includes(p.id));
+  const listHtml=otras.map(p=>{
+    const rel=p.relacionConmigo||p.relacionMujer||'';
+    return`<div class="pick-item" data-id="${p.id}" data-norm="${esc(norm(p.nombre)+' '+norm(p.apodo)+' '+norm(rel))}" onclick="pickPersona('${p.id}')">
+      <span>${esc(p.nombre)}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}${p.fallecido?' <span class="ptag dead">†</span>':''}</span>
+      <span class="meta">${esc(rel)}</span>
+    </div>`;
   }).join('');
+  const html=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${esc(opts.title||'Elegir persona')}</h3>
+    <div class="picker">
+      <input type="search" id="pickQ" placeholder="Escribe para buscar…" oninput="filterPicker(this.value)" autocomplete="off">
+      <button type="button" class="clear-pick" id="pickClear" onclick="clearPick()">×</button>
+    </div>
+    <div class="pick-list" id="pickList">${listHtml||'<div class="pick-empty">No hay personas.</div>'}</div>
+    <div style="margin-top:12px"><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
+  </div></div>`;
+  $('#modal').innerHTML=html;
+  setTimeout(()=>{const e=document.getElementById('pickQ');if(e)e.focus();},50);
+}
+function filterPicker(q){
+  q=norm(q);
+  const list=document.getElementById('pickList');if(!list)return;
+  const clearBtn=document.getElementById('pickClear');if(clearBtn)clearBtn.classList.toggle('on',!!q);
+  const items=list.querySelectorAll('.pick-item');
+  let shown=0;
+  items.forEach(it=>{
+    const ok=!q||it.dataset.norm.includes(q);
+    it.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  let empty=list.querySelector('.pick-empty');
+  if(!shown){
+    if(!empty){empty=document.createElement('div');empty.className='pick-empty';empty.textContent='Sin coincidencias.';list.appendChild(empty);}
+  }else if(empty){empty.remove();}
+}
+function clearPick(){
+  const e=document.getElementById('pickQ');if(e){e.value='';filterPicker('');e.focus();}
+}
+function pickPersona(id){
+  if(pickerState.onPick)pickerState.onPick(id);
 }
 
 function addVinculoUI(personId){
   const p=getP(personId);if(!p)return;
-  const otras=S.personas.filter(x=>x.id!==personId).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  const otras=S.personas.filter(x=>x.id!==personId);
   if(!otras.length){toast('Necesitas al menos otra persona');return;}
-  const opts=otras.map(x=>`<option value="${x.id}">${esc(x.nombre)}</option>`).join('');
   const tipos=TIPOS_OPCIONES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
   $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Añadir vínculo a ${esc(p.nombre)}</h3>
-    <label>¿Qué es esta persona para ${esc(p.nombre.split(' ')[0])}?<select id="v_persona">${opts}</select></label>
+    <label>¿Qué persona?<div class="picker"><input type="search" id="v_persona_q" placeholder="Escribe para buscar…" oninput="filterVinculoPicker(this.value)" autocomplete="off"><button type="button" class="clear-pick" onclick="clearVinculoPick()">×</button></div></label>
+    <div class="pick-list" id="v_persona_list"></div>
+    <input type="hidden" id="v_persona" value="">
     <label>Tipo de vínculo<select id="v_tipo">${tipos}</select></label>
     <div style="margin-top:12px">
       <button class="btn" onclick="saveVinculo('${personId}')">Guardar</button>
       <button class="btn alt" onclick="closeModal()">Cancelar</button>
     </div>
   </div></div>`;
+  renderVinculoPicker(personId,'');
+}
+function renderVinculoPicker(personId,q){
+  const list=document.getElementById('v_persona_list');if(!list)return;
+  q=norm(q);
+  const otras=S.personas.filter(x=>x.id!==personId).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  const filtradas=otras.filter(x=>!q||norm(x.nombre).includes(q)||norm(x.apodo).includes(q));
+  const sel=document.getElementById('v_persona').value;
+  if(!filtradas.length){list.innerHTML='<div class="pick-empty">Sin coincidencias.</div>';return;}
+  list.innerHTML=filtradas.slice(0,200).map(x=>{
+    const rel=x.relacionConmigo||x.relacionMujer||'';
+    return`<div class="pick-item ${sel===x.id?'sel':''}" onclick="selectVinculo('${x.id}')"><span>${esc(x.nombre)}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(rel)}</span></div>`;
+  }).join('');
+}
+function filterVinculoPicker(q){renderVinculoPicker($('#v_persona').dataset.pid||currentId,q);}
+function clearVinculoPick(){const e=document.getElementById('v_persona_q');if(e){e.value='';renderVinculoPicker(currentId,'');}}
+function selectVinculo(id){
+  const h=document.getElementById('v_persona');if(!h)return;
+  h.value=id;
+  const p=getP(id);
+  const q=document.getElementById('v_persona_q');if(q&&p)q.value=p.nombre;
+  renderVinculoPicker(currentId,'');
+  /* cerrar la lista y mostrar selección */
+  const list=document.getElementById('v_persona_list');
+  if(list)list.innerHTML=`<div class="pick-item sel"><span>Seleccionado: <b>${esc(p?p.nombre:'')}</b></span></div>`;
 }
 function saveVinculo(personId){
   const otherId=$('#v_persona').value;
   const tipo=$('#v_tipo').value;
-  if(!otherId||!tipo)return;
+  if(!otherId||!tipo){toast('Elige persona y tipo');return;}
   addVinculo(personId,otherId,tipo);
   closeModal();
   toast('Vínculo añadido');
@@ -637,7 +786,7 @@ function vAnadir(){
   const grupo=p.grupo||(S.grupos[0]?S.grupos[0].id:'otros');
   return `<button class="lnk" onclick="editingId=null;go('personas')">‹ Volver</button>
   <h2>${title}</h2>
-  <form id="pform" onsubmit="saveForm(event)">
+  <form id="pform" onsubmit="saveForm(event, 'stay')">
     <label>Foto (opcional)
       <div class="photo-zone" onclick="$('#photoInput').click()" data-foto="${p.foto||''}">
         ${p.foto?`<img id="photoPreview" src="${p.foto}">`:`<div style="font-size:48px;color:var(--muted)">📷</div>`}
@@ -681,11 +830,25 @@ function vAnadir(){
       <label style="display:flex;align-items:flex-end;padding-bottom:11px"><input type="checkbox" name="fallecido" ${p.fallecido?'checked':''} style="width:auto;margin:0 6px 0 0"> Fallecido/a</label>
     </div>
 
-    <div style="margin-top:16px">
-      <button type="submit" class="btn">${editingId?'Guardar cambios':'Añadir persona'}</button>
+    <div id="dupBanner"></div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">${editingId?'Guardar cambios':'Guardar persona'}</button>
+      ${!editingId?`<button type="button" class="btn alt" onclick="saveFormFromBtn(event,'new')">💾 Guardar y añadir otra</button>`:''}
+      ${!editingId?`<button type="button" class="btn alt" onclick="saveFormFromBtn(event,'family')">👨‍👩‍👧 Guardar y añadir familiar</button>`:''}
       ${editingId?`<button type="button" class="btn alt" onclick="editingId=null;go('ficha')">Cancelar</button>`:''}
     </div>
+    <input type="hidden" name="__action" value="stay">
   </form>`;
+}
+
+/* v1.2: guardar con acciones */
+function saveFormFromBtn(ev,action){
+  ev.preventDefault();
+  const f=document.getElementById('pform');
+  const hidden=f.querySelector('input[name="__action"]');
+  if(hidden)hidden.value=action;
+  f.requestSubmit();
 }
 
 async function handlePhoto(input){
@@ -717,7 +880,13 @@ function resizePhoto(file){
   });
 }
 
-function saveForm(e){
+/* v1.2: detección de duplicados */
+function findDuplicates(nombre,excludeId){
+  const key=norm(nombre);
+  return S.personas.filter(p=>p.id!==excludeId&&norm(p.nombre)===key);
+}
+
+function saveForm(e,action){
   e.preventDefault();
   const f=e.target;
   const zone=$('.photo-zone');
@@ -745,17 +914,57 @@ function saveForm(e){
   };
   if(!datos.nombre){toast('El nombre es obligatorio');return;}
 
+  /* duplicados */
+  const dup=findDuplicates(datos.nombre,editingId);
+  if(dup.length&&!f.dataset.dupConfirmed){
+    const banner=document.getElementById('dupBanner');
+    if(banner){
+      banner.innerHTML=`<div class="banner-dup">Ya existe <b>${esc(dup[0].nombre)}</b>${dup.length>1?' y otros '+dup.length:''}. ¿Es la misma persona?</div>
+      <div style="margin-top:6px">
+        <button type="button" class="btn small alt" onclick="window.openFicha('${dup[0].id}')">Abrir la existente</button>
+        <button type="button" class="btn small" onclick="document.getElementById('pform').dataset.dupConfirmed='1';document.getElementById('pform').requestSubmit()">Es otra persona, guardar igual</button>
+      </div>`;
+      banner.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    return;
+  }
+
+  const acc=f.__action||action||'stay';
+  let savedId=null;
   if(editingId){
     const id=editingId;
     const old=getP(id);
     Object.assign(old,datos);
     recomputeAllInverses();
+    savedId=id;
     editingId=null;
-    upd();openFicha(id);toast('Guardado');
+    upd();
+    if(acc==='stay'){openFicha(savedId);toast('Guardado');}
   }else{
     const np={id:uid(),...datos,vinculos:[]};
     S.personas.push(np);
-    upd();openFicha(np.id);toast('Añadido');
+    savedId=np.id;
+    upd();
+  }
+
+  if(acc==='new'){
+    /* mantener grupo seleccionado, limpiar formulario */
+    const g=datos.grupo;
+    editingId=null;
+    tab='anadir';sub='';
+    render();
+    setTimeout(()=>{const sel=document.querySelector('#pform select[name=grupo]');if(sel)sel.value=g;},0);
+    toast('Guardado. Añade otra persona');
+    window.scrollTo(0,0);
+  }else if(acc==='family'){
+    /* guardar y abrir añadir vínculo familiar */
+    editingId=null;
+    openFicha(savedId);
+    toast('Guardado. Añade familiares desde Vínculos');
+    setTimeout(()=>{addVinculoUI(savedId);},200);
+  }else if(acc==='stay'&&!editingId){
+    openFicha(savedId);
+    toast('Añadido');
   }
 }
 
@@ -801,7 +1010,7 @@ function vMas(){
   let html=`<h2>Más</h2>`;
   html+=`<div class="card"><div class="mut s">Tu lista</div><div style="font-size:20px;font-weight:600;margin:4px 0">${total} ${total===1?'persona':'personas'}</div><div class="mut s">${conFoto} con foto · ${fallecidos} fallecido${fallecidos===1?'':'s'} · ${S.grupos.length} grupos</div></div>`;
   html+=`<div class="card"><button class="btn alt block" onclick="go('mas','flash')">🎯 Repaso (flashcards)</button><button class="btn alt block" onclick="go('mas','ajustes')">⚙️ Ajustes</button><button class="btn alt block" onclick="go('mas','grupos')">📁 Grupos</button><button class="btn alt block" onclick="go('mas','ideas')">💡 Ideas de mejora</button><button class="btn alt block" onclick="go('mas','print')">🖨️ Hoja de contactos imprimible</button></div>`;
-  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.lastBackup?fd(S.lastBackup):'nunca'}</p><button class="btn block" onclick="exportJSON()">💾 Exportar copia (JSON)</button><label class="btn alt block" style="text-align:center;margin:8px 0 0;cursor:pointer">📂 Cargar copia<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.lastBackup?fd(S.lastBackup):'nunca'}</p><button class="btn block" onclick="exportJSON()">💾 Exportar copia (JSON)</button><button class="btn alt block" onclick="exportCSV()">📊 Exportar a CSV</button><label class="btn alt block" style="text-align:center;margin:8px 0 0;cursor:pointer">📂 Cargar copia<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>`;
   html+=`<div class="card"><div class="sec" style="margin-top:0">Información</div><p class="mut s">Mi gente v${APP_VERSION} · datos solo en este dispositivo, sin nube.</p></div>`;
   return html;
 }
@@ -976,6 +1185,22 @@ function exportJSON(){
   URL.revokeObjectURL(a.href);
   toast('Copia descargada');
   setTimeout(render,100);
+}
+/* v1.2: exportar CSV */
+function exportCSV(){
+  const headers=['nombre','apodo','comoLlamar','sexo','grupo','relacionConmigo','relacionMujer','contexto','telefono','ciudad','cumple','etiquetas','notas','ultimaVez','fallecido','vinculos'];
+  const rows=S.personas.map(p=>{
+    const grupo=getG(p.grupo);
+    const vincs=(p.vinculos||[]).map(v=>{const o=getP(v.personaId);return o?`${o.nombre} (${v.tipo})`:'';}).filter(Boolean).join('; ');
+    return [
+      p.nombre||'',p.apodo||'',p.comoLlamar||'',p.sexo||'',grupo?grupo.nombre:'',p.relacionConmigo||'',p.relacionMujer||'',p.contexto||'',p.telefono||'',p.ciudad||'',p.cumple||'',(p.etiquetas||[]).join('; '),p.notas||'',p.ultimaVez||'',p.fallecido?'sí':'no',vincs
+    ];
+  });
+  const csv=[headers,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`mi-gente-${today()}.csv`;a.click();
+  URL.revokeObjectURL(a.href);
+  toast('CSV descargado');
 }
 function importJSON(input){
   const f=input.files[0];if(!f)return;
