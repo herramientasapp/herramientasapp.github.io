@@ -2,6 +2,11 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2c5f7c">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mi gente">
 <title>Mi gente</title>
 <style>
 :root{--bg:#f7f4ef;--card:#fff;--ink:#2d3436;--muted:#7f8c8d;--primary:#2c5f7c;--primary-soft:#e6eef3;--accent:#e07856;--accent-soft:#fbeae4;--sage:#7a9b86;--line:#e5e0d8;--warn:#d97706;--danger:#c0392b;color-scheme:light}
@@ -27,18 +32,22 @@ h2{font:600 24px Georgia,serif;margin:8px 0 4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-size:16px;margin-bottom:10px}
 .search::placeholder{color:var(--muted)}
-.pcard{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0;cursor:pointer;text-align:left;width:100%;color:inherit;font:inherit}
+
+/* v1.3: tarjetas de persona más compactas */
+.pcard{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 10px;margin:4px 0;cursor:pointer;text-align:left;width:100%;color:inherit;font:inherit;min-height:0}
 .pcard:active{background:var(--primary-soft)}
-.avatar{width:56px;height:56px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font:600 22px Georgia,serif;flex-shrink:0;overflow:hidden}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font:600 17px Georgia,serif;flex-shrink:0;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .avatar.big{width:96px;height:96px;font-size:38px}
 .avatar.xl{width:140px;height:140px;font-size:54px}
-.avatar.tiny{width:36px;height:36px;font-size:14px}
-.pname{font-weight:600;font-size:16px}
-.pmeta{font-size:13px;color:var(--muted);margin-top:2px}
+.avatar.tiny{width:30px;height:30px;font-size:12px}
+.pname{font-weight:600;font-size:15px;line-height:1.25}
+.pmeta{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ptag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;background:var(--primary-soft);color:var(--primary);margin-right:4px;margin-top:3px}
 .ptag.dead{background:#eee;color:#666}
 @media(prefers-color-scheme:dark){.ptag.dead{background:#333;color:#999}}
+.dead-cross{color:var(--muted);font-weight:400;font-size:.9em;margin-left:2px}
+
 .ficha-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
 .ficha-head .info{flex:1}
 .ficha-head h2{margin:0}
@@ -93,9 +102,9 @@ details.card[open]>summary::before{content:'▾ '}
 .print-item{display:flex;gap:10px;align-items:center;border:1px solid var(--line);padding:10px;border-radius:10px;background:var(--card)}
 .print-item .pn{font-weight:bold;font-size:14px}
 .print-item .pr{font-size:12px;color:var(--muted)}
-.vinculo-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.vinculo-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
 .vinculo-row:last-child{border:0}
-.vinculo-row .v-name{flex:1}
+.vinculo-row .v-name{flex:1;font-size:14px}
 .vinculo-row .v-name a{color:var(--primary);text-decoration:none;font-weight:500}
 .vinculo-row .v-tipo{font-size:12px;color:var(--muted);padding:2px 8px;background:var(--primary-soft);border-radius:10px}
 .vinculo-row .v-del{background:none;border:0;color:var(--danger);font-size:20px;cursor:pointer;padding:0 6px;line-height:1}
@@ -109,7 +118,6 @@ details.card[open]>summary::before{content:'▾ '}
 .grupo-row:last-child{border:0}
 .grupo-row input,.grupo-row .icon-input{width:auto;flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
 .grupo-row .icon-input{flex:0 0 60px;text-align:center}
-/* ===== v1.2: selector con búsqueda ===== */
 .picker{position:relative}
 .picker input{padding-right:34px}
 .picker .clear-pick{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;display:none;padding:4px 8px}
@@ -120,19 +128,40 @@ details.card[open]>summary::before{content:'▾ '}
 .pick-list .pick-item:hover,.pick-list .pick-item.sel{background:var(--primary-soft)}
 .pick-list .pick-item .meta{color:var(--muted);font-size:12px}
 .pick-list .pick-empty{padding:10px 12px;color:var(--muted);font-size:13px}
-/* ===== v1.2: etiquetas en inicio ===== */
 .tag-section{margin:12px 0}
-.tag-section .tag-title{font:600 15px Georgia,serif;color:var(--ink);margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.tag-section .tag-title{font:600 15px Georgia,serif;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px}
 .tag-section .tag-title .count{font-size:12px;color:var(--muted);font-weight:400}
-.tag-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:14px;background:var(--accent-soft);color:var(--accent);border:1px dashed var(--accent);font-size:13px;cursor:pointer;font-family:inherit}
 .tag-chip .n{font-weight:700;opacity:.85}
-/* ===== v1.2: botones guardar y añadir ===== */
 .form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .form-actions .btn{flex:1 1 auto;min-width:140px;margin:0;text-align:center}
 .banner-dup{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}
 .banner-dup b{color:var(--accent)}
 .group-h{font:600 14px Georgia,serif;color:var(--muted);margin:10px 0 2px;text-transform:uppercase;letter-spacing:.5px;font-size:12px}
+
+/* v1.3: pantalla de bloqueo */
+#lockScreen{position:fixed;inset:0;background:var(--primary);color:#fff;z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#lockScreen.on{display:flex}
+#lockScreen .lock-ico{font-size:64px;margin-bottom:16px}
+#lockScreen h2{font:600 26px Georgia,serif;margin:0 0 8px;color:#fff}
+#lockScreen p{opacity:.85;margin:0 0 24px;max-width:320px}
+#lockScreen .btn{background:#fff;color:var(--primary);padding:16px 32px;font-size:17px}
+#lockScreen .btn.alt{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}
+#lockScreen .lock-msg{margin-top:16px;font-size:13px;opacity:.8;min-height:20px}
+
+/* v1.3: sección de etiquetas */
+.tag-edit-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tag-edit-row:last-child{border:0}
+.tag-edit-row .t-name{flex:1;font-size:14px}
+.tag-edit-row .t-count{font-size:12px;color:var(--muted);padding:2px 8px;background:var(--primary-soft);border-radius:10px}
+.tag-edit-row .btn.small{margin:0}
+.password-row{display:flex;gap:8px;margin-top:8px}
+.password-row input{flex:1}
+.enc-opt{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;color:var(--ink)}
+.enc-opt input{width:auto;margin:0}
+.warn-box{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+
 @media print{
   body{padding:0;background:#fff;color:#000}
   header,nav,.noprint,.btn{display:none!important}
@@ -143,6 +172,14 @@ details.card[open]>summary::before{content:'▾ '}
   @page{margin:12mm}
 }
 </style></head><body>
+<div id="lockScreen">
+  <div class="lock-ico">🔒</div>
+  <h2>Mi gente</h2>
+  <p>Desbloquea con la huella, el rostro o el PIN de tu móvil.</p>
+  <button class="btn" onclick="unlockApp()">Desbloquear</button>
+  <button class="btn alt" onclick="disableLockFromScreen()">Desactivar bloqueo</button>
+  <div class="lock-msg" id="lockMsg"></div>
+</div>
 <header>
   <h1>Mi gente</h1>
   <button class="bell" onclick="toggleBell()">🔔<span class="badge" id="bellBadge"></span></button>
@@ -154,7 +191,7 @@ details.card[open]>summary::before{content:'▾ '}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION='1.2';
+const APP_VERSION='1.3';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const p2=n=>String(n).padStart(2,'0');
@@ -164,7 +201,6 @@ const fd=s=>s?s.split('-').reverse().join('/'):'';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const D=s=>new Date(s+'T12:00');
 const days=(a,b)=>Math.round((D(a)-D(b))/864e5);
-/* v1.2: normalizar para búsqueda sin acentos */
 const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 
 const GRUPOS_DEF=[
@@ -243,11 +279,11 @@ function inverseTipo(originalTipo,sexo){
 }
 
 const DEF=()=>({
-  version:1.2,
+  version:1.3,
   personas:[],
   grupos:JSON.parse(JSON.stringify(GRUPOS_DEF)),
   ideas:[],
-  set:{miNombre:'',miMujer:'',umbralDias:180,diasCumple:15,mostrarRecientes:true,avisarCopia:true},
+  set:{miNombre:'',miMujer:'',umbralDias:180,diasCumple:15,mostrarRecientes:true,avisarCopia:true,usarBloqueo:false},
   lastBackup:null
 });
 
@@ -263,36 +299,32 @@ let callTimer=null;
 window.__searchQ='';
 window.__grupoFilter='todos';
 window.__printFilter='todos';
-window.__tagFilter=null; /* v1.2 */
+window.__tagFilter=null;
 
 const db=new Promise(res=>{
   try{const r=indexedDB.open('migente',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}
 });
+async function idbGet(k){const d=await db;if(!d)return null;try{return await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}
+async function idbSet(k,v){const d=await db;if(!d)return;try{d.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}
+async function idbDel(k){const d=await db;if(!d)return;try{d.transaction('kv','readwrite').objectStore('kv').delete(k)}catch(e){}}
 
 async function load(){
-  let v=null;const d=await db;
-  if(d){try{v=await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get('s');q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){}}
+  let v=null;
+  v=await idbGet('s');
   if(v)S=migrate(v);
-  else{
-    try{const ls=localStorage.getItem('migente');if(ls)S=migrate(JSON.parse(ls))}catch(e){}
-  }
+  else{try{const ls=localStorage.getItem('migente');if(ls)S=migrate(JSON.parse(ls))}catch(e){}}
   S.set=Object.assign(DEF().set,S.set);
 }
 async function save(){
   const c=JSON.parse(JSON.stringify(S));
-  const d=await db;
-  if(d){try{d.transaction('kv','readwrite').objectStore('kv').put(c,'s')}catch(e){}}
+  await idbSet('s',c);
   try{localStorage.setItem('migente',JSON.stringify(c))}catch(e){}
 }
 function migrate(d){
   d.version=d.version||1.0;
   if(d.version<1.1){
     if(!d.grupos||!d.grupos.length)d.grupos=JSON.parse(JSON.stringify(GRUPOS_DEF));
-    (d.personas||[]).forEach(p=>{
-      if(!p.vinculos)p.vinculos=[];
-      if(p.sexo===undefined)p.sexo='';
-      if(!p.grupo)p.grupo='otros';
-    });
+    (d.personas||[]).forEach(p=>{if(!p.vinculos)p.vinculos=[];if(p.sexo===undefined)p.sexo='';if(!p.grupo)p.grupo='otros';});
     if(!d.ideas)d.ideas=[];
     d.set=d.set||{};
     if(d.set.diasCumple===undefined)d.set.diasCumple=15;
@@ -300,28 +332,16 @@ function migrate(d){
     if(d.set.avisarCopia===undefined)d.set.avisarCopia=true;
     d.version=1.1;
   }
-  if(d.version<1.2){
-    /* asegurar etiquetas en todas las personas */
-    (d.personas||[]).forEach(p=>{if(!Array.isArray(p.etiquetas))p.etiquetas=[];});
-    d.version=1.2;
-  }
+  if(d.version<1.2){(d.personas||[]).forEach(p=>{if(!Array.isArray(p.etiquetas))p.etiquetas=[];});d.version=1.2;}
+  if(d.version<1.3){d.set=d.set||{};if(d.set.usarBloqueo===undefined)d.set.usarBloqueo=false;d.version=1.3;}
   return d;
 }
 function upd(){save();render();}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 function getP(id){return S.personas.find(p=>p.id===id);}
 function getG(id){return S.grupos.find(g=>g.id===id);}
-
-function initials(nombre){
-  if(!nombre)return '?';
-  const parts=nombre.trim().split(/\s+/);
-  if(parts.length===1)return parts[0][0].toUpperCase();
-  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
-}
-function avatar(p,cls=''){
-  if(p.foto)return`<div class="avatar ${cls}"><img src="${p.foto}" alt=""></div>`;
-  return`<div class="avatar ${cls}">${esc(initials(p.nombre))}</div>`;
-}
+function initials(nombre){if(!nombre)return '?';const parts=nombre.trim().split(/\s+/);if(parts.length===1)return parts[0][0].toUpperCase();return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
+function avatar(p,cls=''){if(p.foto)return`<div class="avatar ${cls}"><img src="${p.foto}" alt=""></div>`;return`<div class="avatar ${cls}">${esc(initials(p.nombre))}</div>`;}
 
 function nextBirthday(cumple){
   if(!cumple)return null;
@@ -340,169 +360,179 @@ function nextBirthday(cumple){
   const age=y?next.getFullYear()-y:null;
   return{dias,age,fecha:next};
 }
-
 function go(t,s){tab=t;sub=s||'';if(t!=='ficha')currentId=null;render();window.scrollTo(0,0);}
 function openFicha(id){currentId=id;tab='ficha';sub='';render();window.scrollTo(0,0);}
 
 function renderNav(){
-  const items=[
-    {k:'inicio',l:'Inicio',i:'🏠'},
-    {k:'personas',l:'Personas',i:'👥'},
-    {k:'mas',l:'Más',i:'☰'}
-  ];
+  const items=[{k:'inicio',l:'Inicio',i:'🏠'},{k:'personas',l:'Personas',i:'👥'},{k:'mas',l:'Más',i:'☰'}];
   $('#nav').innerHTML=items.map(it=>`<button class="${tab===it.k?'on':''}" onclick="go('${it.k}')"><span>${it.i}</span>${it.l}</button>`).join('');
 }
-
-/* v1.2: búsqueda sin acentos */
 function search(q){
   q=norm(q);
   if(!q)return S.personas;
   return S.personas.filter(p=>
-    norm(p.nombre).includes(q)||
-    norm(p.apodo).includes(q)||
-    norm(p.contexto).includes(q)||
-    norm(p.notas).includes(q)||
-    norm(p.relacionConmigo).includes(q)||
-    norm(p.relacionMujer).includes(q)||
-    norm(p.ciudad).includes(q)||
-    (p.etiquetas||[]).some(t=>norm(t).includes(q))
+    norm(p.nombre).includes(q)||norm(p.apodo).includes(q)||norm(p.contexto).includes(q)||
+    norm(p.notas).includes(q)||norm(p.relacionConmigo).includes(q)||norm(p.relacionMujer).includes(q)||
+    norm(p.ciudad).includes(q)||(p.etiquetas||[]).some(t=>norm(t).includes(q))
   );
 }
-
 function render(){
-  renderNav();
-  renderBell();
+  renderNav();renderBell();
   $('#main').innerHTML=({inicio:vInicio,personas:vPersonas,anadir:vAnadir,ficha:vFicha,flash:vFlash,mas:vMas})[tab]();
   if(tab==='personas')renderList();
 }
 
+/* ============ BLOQUEO WEBAUTHN ============ */
+let webauthnAvailable=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+function b64urlToBuf(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
+function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+
+async function registerLock(){
+  if(!webauthnAvailable){toast('Este navegador no permite el desbloqueo del móvil');return false;}
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const userId=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({
+      publicKey:{
+        challenge,
+        rp:{name:'Mi gente'},
+        user:{id:userId,name:'migente-user',displayName:'Mi gente'},
+        pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+        timeout:60000,
+        attestation:'none'
+      }
+    });
+    if(!cred)return false;
+    await idbSet('lockCredId',bufToB64url(cred.rawId));
+    return true;
+  }catch(e){console.warn(e);toast('No se pudo activar el desbloqueo');return false;}
+}
+async function hasLockCredential(){const v=await idbGet('lockCredId');return !!v;}
+async function unlockApp(){
+  const msg=$('#lockMsg');if(msg)msg.textContent='';
+  if(!webauthnAvailable){hideLock();return;}
+  const credIdB64=await idbGet('lockCredId');
+  if(!credIdB64){hideLock();return;}
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const cred=await navigator.credentials.get({
+      publicKey:{
+        challenge,
+        allowCredentials:[{type:'public-key',id:b64urlToBuf(credIdB64)}],
+        userVerification:'required',
+        timeout:60000
+      }
+    });
+    if(cred){hideLock();}
+    else if(msg){msg.textContent='No se pudo verificar. Inténtalo de nuevo.';}
+  }catch(e){
+    console.warn(e);
+    if(e.name==='NotAllowedError'){if(msg)msg.textContent='Desbloqueo cancelado. Toca "Desbloquear" para reintentar.';}
+    else if(e.name==='InvalidStateError'||e.name==='NotFoundError'){
+      if(msg)msg.textContent='El desbloqueo del móvil ha cambiado. Desactívalo y vuelve a activarlo en Ajustes.';
+    }else{if(msg)msg.textContent='Error de desbloqueo. Reintenta o desactiva el bloqueo.';}
+  }
+}
+async function disableLockFromScreen(){
+  if(!confirm('¿Desactivar el bloqueo de la app? Podrás volver a activarlo en Ajustes.'))return;
+  S.set.usarBloqueo=false;
+  await idbDel('lockCredId');
+  save();
+  hideLock();
+  toast('Bloqueo desactivado');
+}
+function showLock(){$('#lockScreen').classList.add('on');}
+function hideLock(){$('#lockScreen').classList.remove('on');}
+async function lockNow(){
+  if(!S.set.usarBloqueo){toast('El bloqueo está desactivado');return;}
+  showLock();
+}
+
 /* ============ CAMPANITA ============ */
 function getAlerts(){
-  const alerts=[];
-  const N=S.set.diasCumple||15;
+  const alerts=[];const N=S.set.diasCumple||15;
   for(const p of S.personas){
     if(p.fallecido)continue;
     const b=nextBirthday(p.cumple);
-    if(b&&b.dias<=N){
-      alerts.push({tipo:'cumple',ico:'🎂',texto:`${p.nombre} cumple ${b.dias===0?'¡hoy!':b.dias===1?'mañana':'en '+b.dias+' días'}`,personaId:p.id});
-    }
+    if(b&&b.dias<=N){alerts.push({tipo:'cumple',ico:'🎂',texto:`${p.nombre} cumple ${b.dias===0?'¡hoy!':b.dias===1?'mañana':'en '+b.dias+' días'}`,personaId:p.id});}
   }
   if(S.set.avisarCopia&&S.personas.length){
-    if(!S.lastBackup||days(today(),S.lastBackup)>30){
-      alerts.push({tipo:'backup',ico:'💾',texto:'Hace más de 30 días que no guardas copia',personaId:null});
-    }
+    if(!S.lastBackup||days(today(),S.lastBackup)>30){alerts.push({tipo:'backup',ico:'💾',texto:'Hace más de 30 días que no guardas copia',personaId:null});}
   }
   return alerts;
 }
 function renderBell(){
-  const alerts=getAlerts();
-  const badge=$('#bellBadge');
+  const alerts=getAlerts();const badge=$('#bellBadge');
   if(badge){badge.textContent=alerts.length;badge.classList.toggle('on',alerts.length>0);}
   const panel=$('#bellPanel');
   if(panel&&panel.classList.contains('open')){
     if(!alerts.length){panel.innerHTML='<p class="empty">Todo al día. No hay avisos.</p>';return;}
-    panel.innerHTML=`<h3>Avisos</h3>`+alerts.map((a,i)=>{
+    panel.innerHTML=`<h3>Avisos</h3>`+alerts.map(a=>{
       if(a.tipo==='cumple')return`<div class="alert" onclick="openFicha('${a.personaId}');toggleBell(true)"><span class="ico">${a.ico}</span><span>${esc(a.texto)}</span></div>`;
       return`<div class="alert backup"><span class="ico">${a.ico}</span><span>${esc(a.texto)}</span></div>`;
     }).join('');
   }
 }
-function toggleBell(forceClose){
-  const panel=$('#bellPanel');if(!panel)return;
-  if(forceClose===true){panel.classList.remove('open');return;}
-  panel.classList.toggle('open');renderBell();
-}
+function toggleBell(forceClose){const panel=$('#bellPanel');if(!panel)return;if(forceClose===true){panel.classList.remove('open');return;}panel.classList.toggle('open');renderBell();}
 
 /* ============ INICIO ============ */
 function vInicio(){
   const hoy=today();
-  const recientes=S.personas
-    .filter(p=>p.ultimaVez&&days(hoy,p.ultimaVez)>=0&&days(hoy,p.ultimaVez)<=60)
-    .sort((a,b)=>(b.ultimaVez||'').localeCompare(a.ultimaVez||'')).slice(0,10);
-
+  const recientes=S.personas.filter(p=>p.ultimaVez&&days(hoy,p.ultimaVez)>=0&&days(hoy,p.ultimaVez)<=60).sort((a,b)=>(b.ultimaVez||'').localeCompare(a.ultimaVez||'')).slice(0,10);
   const total=S.personas.length;
   const nombres=S.set.miNombre?`Hola, ${esc(S.set.miNombre)}`:'Hola';
-
   let html=`<h2>${nombres}</h2>`;
   html+=`<p class="mut s" style="margin-top:0">${total} ${total===1?'persona':'personas'} en tu lista</p>`;
-
   html+=`<input class="search" type="search" placeholder="🔍 Buscar por nombre, apodo, relación…" readonly onclick="window.__searchQ='';window.__grupoFilter='todos';window.__tagFilter=null;go('personas');setTimeout(()=>{const e=document.getElementById('searchPersonas');if(e)e.focus();},80)" style="cursor:pointer" />`;
+  if(S.grupos.length){html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';window.__tagFilter=null;go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;}
 
-  // Chips de grupos
-  if(S.grupos.length){
-    html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';window.__tagFilter=null;go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;
-  }
-
-  // v1.2: etiquetas en inicio
+  /* v1.3: etiquetas plegadas */
   const tagMap={};
-  for(const p of S.personas){
-    for(const t of (p.etiquetas||[])){
-      const key=norm(t);
-      if(!key)continue;
-      if(!tagMap[key])tagMap[key]={label:t,personas:[]};
-      tagMap[key].personas.push(p.id);
-    }
-  }
+  for(const p of S.personas){for(const t of (p.etiquetas||[])){const key=norm(t);if(!key)continue;if(!tagMap[key])tagMap[key]={label:t,personas:[]};tagMap[key].personas.push(p.id);}}
   const tags=Object.entries(tagMap).sort((a,b)=>b[1].personas.length-a[1].personas.length||a[1].label.localeCompare(b[1].label,'es'));
   if(tags.length){
-    html+=`<div class="tag-section card"><div class="tag-title">🏷️ Etiquetas <span class="count">${tags.length}</span></div><div class="tag-chips">`;
+    html+=`<details class="card tag-section"><summary>🏷️ Etiquetas <span class="count">${tags.length}</span></summary><div class="tag-chips">`;
     html+=tags.map(([key,v])=>`<button class="tag-chip" onclick="window.__tagFilter='${esc(v.label)}';window.__searchQ='';window.__grupoFilter='todos';go('personas')">${esc(v.label)} <span class="n">${v.personas.length}</span></button>`).join('');
-    html+=`</div></div>`;
+    html+=`</div></details>`;
   }
 
-  // Vistos recientemente
+  /* v1.3: recientes plegados */
   if(S.set.mostrarRecientes){
-    html+=`<details class="card" ${recientes.length?'open':''}><summary>🕐 Vistos recientemente</summary>`;
+    html+=`<details class="card"><summary>🕐 Vistos recientemente</summary>`;
     if(recientes.length){
       html+=recientes.map(p=>{
         const grupo=getG(p.grupo);
         const rel=p.relacionConmigo||p.relacionMujer||(grupo?grupo.nombre:'');
         const cuando=days(hoy,p.ultimaVez)===0?'hoy':`hace ${days(hoy,p.ultimaVez)} días`;
-        return`<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)}</div><div class="pmeta">${esc(rel)} · ${cuando}</div></div></button>`;
+        return`<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)}${p.fallecido?' <span class="dead-cross">†</span>':''}</div><div class="pmeta">${esc(rel)} · ${cuando}</div></div></button>`;
       }).join('');
-    }else{
-      html+=`<p class="mut s" style="margin:8px 0 0">Aún no has marcado a nadie como visto.</p>`;
-    }
+    }else{html+=`<p class="mut s" style="margin:8px 0 0">Aún no has marcado a nadie como visto.</p>`;}
     html+=`</details>`;
   }
-
-  if(!total){
-    html+=`<div class="empty"><div class="big">👥</div><p>Aún no tienes personas en tu lista.</p><p class="s">Toca <b>Personas</b> abajo y luego <b>+ Añadir persona</b> para empezar.</p></div>`;
-  }
+  if(!total){html+=`<div class="empty"><div class="big">👥</div><p>Aún no tienes personas en tu lista.</p><p class="s">Toca <b>Personas</b> abajo y luego <b>+ Añadir persona</b> para empezar.</p></div>`;}
   return html;
 }
 
 /* ============ PERSONAS ============ */
 function vPersonas(){
-  const grupo=window.__grupoFilter||'todos';
-  const q=window.__searchQ||'';
-  const tag=window.__tagFilter;
+  const grupo=window.__grupoFilter||'todos';const q=window.__searchQ||'';const tag=window.__tagFilter;
   let tagNote='';
   if(tag)tagNote=`<div class="banner-dup" style="margin-top:0">Filtrando por etiqueta <b>${esc(tag)}</b> · <button class="lnk" style="display:inline;font-size:13px" onclick="window.__tagFilter=null;render()">quitar filtro</button></div>`;
-  return `<div style="display:flex;justify-content:space-between;align-items:center">
-    <h2 style="margin:0">Personas</h2>
-    <button class="btn" onclick="editPersona()" style="margin:0">+ Añadir</button>
-  </div>
+  return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Personas</h2><button class="btn" onclick="editPersona()" style="margin:0">+ Añadir</button></div>
     ${tagNote}
     <input class="search" id="searchPersonas" type="search" placeholder="🔍 Buscar…" value="${esc(q)}" oninput="onSearch(this.value)" style="margin-top:10px" />
-    <div class="chips">
-      <button class="${grupo==='todos'?'on':''}" onclick="window.__grupoFilter='todos';render()">Todas</button>
-      ${S.grupos.map(g=>`<button class="${grupo===g.id?'on':''}" onclick="window.__grupoFilter='${g.id}';render()">${g.icono} ${esc(g.nombre)}</button>`).join('')}
-    </div>
-    <p class="mut s" id="countPersonas"></p>
-    <div id="listPersonas"></div>`;
+    <div class="chips"><button class="${grupo==='todos'?'on':''}" onclick="window.__grupoFilter='todos';render()">Todas</button>${S.grupos.map(g=>`<button class="${grupo===g.id?'on':''}" onclick="window.__grupoFilter='${g.id}';render()">${g.icono} ${esc(g.nombre)}</button>`).join('')}</div>
+    <p class="mut s" id="countPersonas"></p><div id="listPersonas"></div>`;
 }
 function onSearch(v){window.__searchQ=v;renderList();}
 function renderList(){
-  const q=window.__searchQ||'';
-  const grupo=window.__grupoFilter||'todos';
-  const tag=window.__tagFilter;
+  const q=window.__searchQ||'';const grupo=window.__grupoFilter||'todos';const tag=window.__tagFilter;
   let base=search(q);
   if(grupo!=='todos')base=base.filter(p=>p.grupo===grupo);
   if(tag)base=base.filter(p=>(p.etiquetas||[]).some(t=>norm(t)===norm(tag)));
   const filtradas=base.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
-  const list=$('#listPersonas');
-  const count=$('#countPersonas');
+  const list=$('#listPersonas');const count=$('#countPersonas');
   if(!list)return;
   if(count)count.textContent=filtradas.length+' '+(filtradas.length===1?'persona':'personas');
   if(!filtradas.length){list.innerHTML=`<div class="empty"><div class="big">🔍</div><p>No hay resultados.</p></div>`;return;}
@@ -510,8 +540,8 @@ function renderList(){
     const grupoObj=getG(p.grupo);
     const rel=p.relacionConmigo||p.relacionMujer||(grupoObj?grupoObj.nombre:'');
     const tel=p.telefono?' · 📞 '+esc(p.telefono):'';
-    const dead=p.fallecido?'<span class="ptag dead">†</span>':'';
-    return `<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)} ${dead}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}</div><div class="pmeta">${esc(rel)}${tel}</div></div></button>`;
+    const dead=p.fallecido?' <span class="dead-cross">†</span>':'';
+    return `<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)}${dead}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}</div><div class="pmeta">${esc(rel)}${tel}</div></div></button>`;
   }).join('');
 }
 
@@ -523,29 +553,18 @@ function vFicha(){
   const deadTag=p.fallecido?'<span class="ptag dead">† Fallecido/a</span>':'';
   const grupoObj=getG(p.grupo);
   const groupLabel=grupoObj?`${grupoObj.icono} ${grupoObj.nombre}`:'';
-
   let bdayLine='—';
-  if(b){
-    const ageTxt=b.age!=null?` · cumple ${b.age}`:'';
-    const cuando=b.dias===0?'¡Hoy!':b.dias===1?'Mañana':`En ${b.dias} días`;
-    bdayLine=`${fd(p.cumple)} · ${cuando}${ageTxt}`;
-  }
-
+  if(b){const ageTxt=b.age!=null?` · cumple ${b.age}`:'';const cuando=b.dias===0?'¡Hoy!':b.dias===1?'Mañana':`En ${b.dias} días`;bdayLine=`${fd(p.cumple)} · ${cuando}${ageTxt}`;}
   const callBtn=p.telefono?`<button class="btn call" id="callBtn" onclick="callStart('${esc(p.telefono)}')">📞 Llamar a ${esc(p.nombre.split(' ')[0])}</button>`:'';
-
   let html=`<button class="lnk noprint" onclick="go('personas')">‹ Volver</button>`;
   html+=`<div class="card"><div class="ficha-head">${avatar(p,'big')}<div class="info"><h2>${esc(p.nombre)}</h2>${p.apodo?`<div class="apodo">«${esc(p.apodo)}»</div>`:''}<div style="margin-top:6px">${deadTag}</div></div></div>`;
   if(p.comoLlamar)html+=`<div style="margin:6px 0"><span class="mut s">Le llamo:</span> <span class="rel-chip">${esc(p.comoLlamar)}</span></div>`;
   if(p.relacionConmigo)html+=`<div><span class="rel-chip">Conmigo: ${esc(p.relacionConmigo)}</span></div>`;
   if(p.relacionMujer&&S.set.miMujer)html+=`<div><span class="rel-chip rel-mujer">Con ${esc(S.set.miMujer)}: ${esc(p.relacionMujer)}</span></div>`;
   if(p.contexto)html+=`<div class="ctx">"${esc(p.contexto)}"</div>`;
-  html+=callBtn;
-  html+=`</div>`;
-
+  html+=callBtn;html+=`</div>`;
   html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>Vínculos</b><button class="btn small alt" onclick="addVinculoUI('${p.id}')" style="margin:0">+ Añadir vínculo</button></div>`;
-  html+=renderVinculos(p);
-  html+=`</div>`;
-
+  html+=renderVinculos(p);html+=`</div>`;
   html+=`<div class="card">`;
   if(p.telefono)html+=`<div class="kv"><span class="k">Teléfono</span><span class="v">${esc(p.telefono)}</span></div>`;
   if(b)html+=`<div class="kv"><span class="k">Cumpleaños</span><span class="v">${bdayLine}</span></div>`;
@@ -553,21 +572,11 @@ function vFicha(){
   if(groupLabel)html+=`<div class="kv"><span class="k">Grupo</span><span class="v">${esc(groupLabel)}</span></div>`;
   if(p.ultimaVez)html+=`<div class="kv"><span class="k">Última vez</span><span class="v">${fd(p.ultimaVez)}</span></div>`;
   html+=`</div>`;
-
-  if(p.etiquetas&&p.etiquetas.length){
-    html+=`<div class="card"><div class="mut s" style="margin-bottom:6px">Etiquetas</div>`;
-    html+=p.etiquetas.map(t=>`<span class="tag-chip" style="cursor:default">${esc(t)}</span>`).join('');
-    html+=`</div>`;
-  }
-  if(p.notas){
-    html+=`<div class="card"><div class="mut s" style="margin-bottom:4px">Notas</div><div style="white-space:pre-wrap">${esc(p.notas)}</div></div>`;
-  }
-
+  if(p.etiquetas&&p.etiquetas.length){html+=`<div class="card"><div class="mut s" style="margin-bottom:6px">Etiquetas</div>`;html+=p.etiquetas.map(t=>`<span class="tag-chip" style="cursor:default">${esc(t)}</span>`).join('');html+=`</div>`;}
+  if(p.notas){html+=`<div class="card"><div class="mut s" style="margin-bottom:4px">Notas</div><div style="white-space:pre-wrap">${esc(p.notas)}</div></div>`;}
   html+=`<div class="card noprint"><button class="btn alt" onclick="editPersona('${p.id}')">✏️ Editar</button><button class="btn alt" onclick="marcarVisto('${p.id}')">✓ Le he visto hoy</button><button class="btn danger" style="float:right" onclick="borrarPersona('${p.id}')">🗑️</button></div>`;
   return html;
 }
-
-/* v1.2: vínculos agrupados por categoría */
 function categoriaDeTipo(t){
   if(['esposo','esposa','pareja','novio','novia','ex pareja','ex novio','ex novia'].includes(t))return'Cónyuge / pareja';
   if(['hijo','hija','hijo/a','nieto','nieta','bisnieto','bisnieta'].includes(t))return'Descendientes';
@@ -579,29 +588,18 @@ function categoriaDeTipo(t){
   return'Otros';
 }
 const ORDEN_CAT=['Cónyuge / pareja','Descendientes','Ascendientes','Hermanos y primos','Tíos y sobrinos','Familia política','Padrinos / ahijados','Otros'];
-
 function renderVinculos(p){
   if(!p.vinculos||!p.vinculos.length)return'<p class="mut s">Sin vínculos registrados. Toca "+ Añadir vínculo" para empezar.</p>';
-  const items=p.vinculos.map(v=>{
-    const o=getP(v.personaId);
-    if(!o)return null;
-    return{persona:o,tipo:v.tipo};
-  }).filter(Boolean);
+  const items=p.vinculos.map(v=>{const o=getP(v.personaId);if(!o)return null;return{persona:o,tipo:v.tipo};}).filter(Boolean);
   if(!items.length)return'<p class="mut s">Sin vínculos registrados.</p>';
-  /* agrupar por categoría */
-  const byCat={};
-  items.forEach(it=>{
-    const cat=categoriaDeTipo(it.tipo);
-    if(!byCat[cat])byCat[cat]=[];
-    byCat[cat].push(it);
-  });
+  const byCat={};items.forEach(it=>{const cat=categoriaDeTipo(it.tipo);if(!byCat[cat])byCat[cat]=[];byCat[cat].push(it);});
   let html='';
   for(const cat of ORDEN_CAT){
     if(!byCat[cat])continue;
     html+=`<div class="group-h">${cat}</div>`;
     html+=byCat[cat].map(it=>`<div class="vinculo-row">
       ${avatar(it.persona,'tiny')}
-      <span class="v-name"><a href="#" onclick="openFicha('${it.persona.id}');return false">${esc(it.persona.nombre)}</a></span>
+      <span class="v-name"><a href="#" onclick="openFicha('${it.persona.id}');return false">${esc(it.persona.nombre)}</a>${it.persona.fallecido?'<span class="dead-cross">†</span>':''}</span>
       <span class="v-tipo">${esc(it.tipo)}</span>
       <button class="v-del" onclick="delVinculo('${p.id}','${it.persona.id}')" title="Borrar vínculo">×</button>
     </div>`).join('');
@@ -609,55 +607,19 @@ function renderVinculos(p){
   return html;
 }
 
-/* ============ v1.2: SELECTOR CON BÚSQUEDA ============ */
+/* ============ SELECTOR CON BÚSQUEDA ============ */
 let pickerState={field:null,query:'',selectedId:null,target:'modal'};
-
-function openPersonaPicker(opts){
-  /* opts: {target:'modal'|'form', onPick:fn, exclude:[ids], title} */
-  pickerState={...pickerState,...opts,query:'',selectedId:null};
-  const otras=S.personas.filter(p=>!(opts.exclude||[]).includes(p.id));
-  const listHtml=otras.map(p=>{
-    const rel=p.relacionConmigo||p.relacionMujer||'';
-    return`<div class="pick-item" data-id="${p.id}" data-norm="${esc(norm(p.nombre)+' '+norm(p.apodo)+' '+norm(rel))}" onclick="pickPersona('${p.id}')">
-      <span>${esc(p.nombre)}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}${p.fallecido?' <span class="ptag dead">†</span>':''}</span>
-      <span class="meta">${esc(rel)}</span>
-    </div>`;
-  }).join('');
-  const html=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>${esc(opts.title||'Elegir persona')}</h3>
-    <div class="picker">
-      <input type="search" id="pickQ" placeholder="Escribe para buscar…" oninput="filterPicker(this.value)" autocomplete="off">
-      <button type="button" class="clear-pick" id="pickClear" onclick="clearPick()">×</button>
-    </div>
-    <div class="pick-list" id="pickList">${listHtml||'<div class="pick-empty">No hay personas.</div>'}</div>
-    <div style="margin-top:12px"><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
-  </div></div>`;
-  $('#modal').innerHTML=html;
-  setTimeout(()=>{const e=document.getElementById('pickQ');if(e)e.focus();},50);
-}
+function pickPersona(id){if(pickerState.onPick)pickerState.onPick(id);}
+function clearPick(){const e=document.getElementById('pickQ');if(e){e.value='';filterPicker('');e.focus();}}
 function filterPicker(q){
-  q=norm(q);
-  const list=document.getElementById('pickList');if(!list)return;
+  q=norm(q);const list=document.getElementById('pickList');if(!list)return;
   const clearBtn=document.getElementById('pickClear');if(clearBtn)clearBtn.classList.toggle('on',!!q);
-  const items=list.querySelectorAll('.pick-item');
-  let shown=0;
-  items.forEach(it=>{
-    const ok=!q||it.dataset.norm.includes(q);
-    it.style.display=ok?'':'none';
-    if(ok)shown++;
-  });
+  const items=list.querySelectorAll('.pick-item');let shown=0;
+  items.forEach(it=>{const ok=!q||it.dataset.norm.includes(q);it.style.display=ok?'':'none';if(ok)shown++;});
   let empty=list.querySelector('.pick-empty');
-  if(!shown){
-    if(!empty){empty=document.createElement('div');empty.className='pick-empty';empty.textContent='Sin coincidencias.';list.appendChild(empty);}
-  }else if(empty){empty.remove();}
+  if(!shown){if(!empty){empty=document.createElement('div');empty.className='pick-empty';empty.textContent='Sin coincidencias.';list.appendChild(empty);}}
+  else if(empty){empty.remove();}
 }
-function clearPick(){
-  const e=document.getElementById('pickQ');if(e){e.value='';filterPicker('');e.focus();}
-}
-function pickPersona(id){
-  if(pickerState.onPick)pickerState.onPick(id);
-}
-
 function addVinculoUI(personId){
   const p=getP(personId);if(!p)return;
   const otras=S.personas.filter(x=>x.id!==personId);
@@ -669,10 +631,7 @@ function addVinculoUI(personId){
     <div class="pick-list" id="v_persona_list"></div>
     <input type="hidden" id="v_persona" value="">
     <label>Tipo de vínculo<select id="v_tipo">${tipos}</select></label>
-    <div style="margin-top:12px">
-      <button class="btn" onclick="saveVinculo('${personId}')">Guardar</button>
-      <button class="btn alt" onclick="closeModal()">Cancelar</button>
-    </div>
+    <div style="margin-top:12px"><button class="btn" onclick="saveVinculo('${personId}')">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
   </div></div>`;
   renderVinculoPicker(personId,'');
 }
@@ -685,91 +644,58 @@ function renderVinculoPicker(personId,q){
   if(!filtradas.length){list.innerHTML='<div class="pick-empty">Sin coincidencias.</div>';return;}
   list.innerHTML=filtradas.slice(0,200).map(x=>{
     const rel=x.relacionConmigo||x.relacionMujer||'';
-    return`<div class="pick-item ${sel===x.id?'sel':''}" onclick="selectVinculo('${x.id}')"><span>${esc(x.nombre)}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(rel)}</span></div>`;
+    return`<div class="pick-item ${sel===x.id?'sel':''}" onclick="selectVinculo('${x.id}')"><span>${esc(x.nombre)}${x.fallecido?' <span class="dead-cross">†</span>':''}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(rel)}</span></div>`;
   }).join('');
 }
-function filterVinculoPicker(q){renderVinculoPicker($('#v_persona').dataset.pid||currentId,q);}
+function filterVinculoPicker(q){renderVinculoPicker(currentId,q);}
 function clearVinculoPick(){const e=document.getElementById('v_persona_q');if(e){e.value='';renderVinculoPicker(currentId,'');}}
 function selectVinculo(id){
   const h=document.getElementById('v_persona');if(!h)return;
-  h.value=id;
-  const p=getP(id);
+  h.value=id;const p=getP(id);
   const q=document.getElementById('v_persona_q');if(q&&p)q.value=p.nombre;
-  renderVinculoPicker(currentId,'');
-  /* cerrar la lista y mostrar selección */
   const list=document.getElementById('v_persona_list');
   if(list)list.innerHTML=`<div class="pick-item sel"><span>Seleccionado: <b>${esc(p?p.nombre:'')}</b></span></div>`;
 }
 function saveVinculo(personId){
-  const otherId=$('#v_persona').value;
-  const tipo=$('#v_tipo').value;
+  const otherId=$('#v_persona').value;const tipo=$('#v_tipo').value;
   if(!otherId||!tipo){toast('Elige persona y tipo');return;}
-  addVinculo(personId,otherId,tipo);
-  closeModal();
-  toast('Vínculo añadido');
+  addVinculo(personId,otherId,tipo);closeModal();toast('Vínculo añadido');
 }
 function addVinculo(personId,otherId,tipo){
   if(personId===otherId)return;
-  const p=getP(personId),o=getP(otherId);
-  if(!p||!o)return;
-  if(!p.vinculos)p.vinculos=[];
-  if(!o.vinculos)o.vinculos=[];
+  const p=getP(personId),o=getP(otherId);if(!p||!o)return;
+  if(!p.vinculos)p.vinculos=[];if(!o.vinculos)o.vinculos=[];
   const existingP=p.vinculos.find(v=>v.personaId===otherId);
-  if(existingP)existingP.tipo=tipo;
-  else p.vinculos.push({personaId:otherId,tipo});
+  if(existingP)existingP.tipo=tipo;else p.vinculos.push({personaId:otherId,tipo});
   const inv=inverseTipo(tipo,p.sexo);
   const existingO=o.vinculos.find(v=>v.personaId===personId);
-  if(existingO)existingO.tipo=inv;
-  else o.vinculos.push({personaId:personId,tipo:inv});
+  if(existingO)existingO.tipo=inv;else o.vinculos.push({personaId:personId,tipo:inv});
   upd();
 }
 function delVinculo(personId,otherId){
   if(!confirm('¿Borrar este vínculo? Se borrará también el inverso.'))return;
-  const p=getP(personId),o=getP(otherId);
-  if(!p)return;
+  const p=getP(personId),o=getP(otherId);if(!p)return;
   p.vinculos=(p.vinculos||[]).filter(v=>v.personaId!==otherId);
   if(o)o.vinculos=(o.vinculos||[]).filter(v=>v.personaId!==personId);
-  upd();
-  toast('Vínculo borrado');
+  upd();toast('Vínculo borrado');
 }
 function recomputeAllInverses(){
-  for(const p of S.personas){
-    for(const v of(p.vinculos||[])){
-      const o=getP(v.personaId);
-      if(!o)continue;
-      const inv=inverseTipo(v.tipo,p.sexo);
-      const existing=(o.vinculos||[]).find(x=>x.personaId===p.id);
-      if(existing)existing.tipo=inv;
-    }
-  }
+  for(const p of S.personas){for(const v of(p.vinculos||[])){const o=getP(v.personaId);if(!o)continue;const inv=inverseTipo(v.tipo,p.sexo);const existing=(o.vinculos||[]).find(x=>x.personaId===p.id);if(existing)existing.tipo=inv;}}
 }
 function closeModal(){$('#modal').innerHTML='';}
-
 function callStart(tel){
   const btn=$('#callBtn');if(!btn)return;
   if(btn.classList.contains('confirm')){
     const a=document.createElement('a');a.href='tel:'+tel;a.click();
-    btn.classList.remove('confirm');
-    const p=getP(currentId);
+    btn.classList.remove('confirm');const p=getP(currentId);
     btn.textContent='📞 Llamar a '+(p?p.nombre.split(' ')[0]:'');
     clearTimeout(callTimer);
   }else{
-    btn.classList.add('confirm');
-    btn.textContent='📞 ¿Seguro? Toca otra vez';
-    callTimer=setTimeout(()=>{
-      const b=$('#callBtn');if(!b)return;
-      b.classList.remove('confirm');
-      const p=getP(currentId);
-      if(p)b.textContent='📞 Llamar a '+p.nombre.split(' ')[0];
-    },3000);
+    btn.classList.add('confirm');btn.textContent='📞 ¿Seguro? Toca otra vez';
+    callTimer=setTimeout(()=>{const b=$('#callBtn');if(!b)return;b.classList.remove('confirm');const p=getP(currentId);if(p)b.textContent='📞 Llamar a '+p.nombre.split(' ')[0];},3000);
   }
 }
-function marcarVisto(id){
-  const p=getP(id);if(!p)return;
-  p.ultimaVez=today();
-  upd();
-  toast('Marcado como visto hoy');
-}
+function marcarVisto(id){const p=getP(id);if(!p)return;p.ultimaVez=today();upd();toast('Marcado como visto hoy');}
 function borrarPersona(id){
   if(!confirm('¿Borrar esta persona? No se puede deshacer.'))return;
   S.personas=S.personas.filter(p=>p.id!==id);
@@ -779,13 +705,11 @@ function borrarPersona(id){
 
 /* ============ FORMULARIO ============ */
 function editPersona(id){editingId=id||null;tab='anadir';sub='';render();window.scrollTo(0,0);}
-
 function vAnadir(){
   const p=editingId?getP(editingId):{};
   const title=editingId?'Editar persona':'Nueva persona';
   const grupo=p.grupo||(S.grupos[0]?S.grupos[0].id:'otros');
-  return `<button class="lnk" onclick="editingId=null;go('personas')">‹ Volver</button>
-  <h2>${title}</h2>
+  return `<button class="lnk" onclick="editingId=null;go('personas')">‹ Volver</button><h2>${title}</h2>
   <form id="pform" onsubmit="saveForm(event, 'stay')">
     <label>Foto (opcional)
       <div class="photo-zone" onclick="$('#photoInput').click()" data-foto="${p.foto||''}">
@@ -795,43 +719,30 @@ function vAnadir(){
       <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
     </label>
     ${p.foto?`<button type="button" class="btn alt small" onclick="clearPhoto()" style="margin-bottom:6px">✕ Quitar foto</button>`:''}
-
     <label>Nombre completo *<input name="nombre" value="${esc(p.nombre||'')}" required placeholder="Ej.: Manuel García López"></label>
-
     <div class="form-grid">
       <label>Apodo<input name="apodo" value="${esc(p.apodo||'')}" placeholder="Ej.: Manolo"></label>
       <label>Cómo me dirijo<input name="comoLlamar" value="${esc(p.comoLlamar||'')}" placeholder="Ej.: Manolo, tú, Sr."></label>
     </div>
-
     <div class="form-grid">
       <label>Sexo<select name="sexo"><option value="" ${!p.sexo?'selected':''}>—</option><option value="m" ${p.sexo==='m'?'selected':''}>Hombre</option><option value="f" ${p.sexo==='f'?'selected':''}>Mujer</option></select></label>
       <label>Grupo<select name="grupo">${S.grupos.map(g=>`<option value="${g.id}" ${grupo===g.id?'selected':''}>${g.icono} ${esc(g.nombre)}</option>`).join('')}</select></label>
     </div>
-
     <label>Relación conmigo (texto libre)<input name="relacionConmigo" value="${esc(p.relacionConmigo||'')}" placeholder="Ej.: primo hermano, amigo, sobrino"></label>
-
     ${S.set.miMujer?`<label>Relación con ${esc(S.set.miMujer)}<input name="relacionMujer" value="${esc(p.relacionMujer||'')}" placeholder="Ej.: cuñado, primo, amigo"></label>`:''}
-
     <label>El "clic" que te hace recordarle<textarea name="contexto" rows="2" placeholder="Ej.: vecino del 3º, marido de Marta la del colegio">${esc(p.contexto||'')}</textarea></label>
-
     <div class="form-grid">
       <label>Teléfono<input name="telefono" type="tel" value="${esc(p.telefono||'')}" placeholder="Ej.: 612 345 678"></label>
       <label>Ciudad<input name="ciudad" value="${esc(p.ciudad||'')}" placeholder="Ej.: Zaragoza"></label>
     </div>
-
     <label>Cumpleaños (opcional; año si lo sabes)<input name="cumple" value="${esc(p.cumple||'')}" placeholder="MM-DD o AAAA-MM-DD"></label>
-
     <label>Etiquetas (separadas por comas)<input name="etiquetas" value="${esc((p.etiquetas||[]).join(', '))}" placeholder="Ej.: boda de Marta 2024, verano en el pueblo"></label>
-
     <label>Notas<textarea name="notas" rows="3">${esc(p.notas||'')}</textarea></label>
-
     <div class="form-grid">
       <label>Última vez que le vi<input name="ultimaVez" type="date" value="${esc(p.ultimaVez||'')}"></label>
       <label style="display:flex;align-items:flex-end;padding-bottom:11px"><input type="checkbox" name="fallecido" ${p.fallecido?'checked':''} style="width:auto;margin:0 6px 0 0"> Fallecido/a</label>
     </div>
-
     <div id="dupBanner"></div>
-
     <div class="form-actions">
       <button type="submit" class="btn">${editingId?'Guardar cambios':'Guardar persona'}</button>
       ${!editingId?`<button type="button" class="btn alt" onclick="saveFormFromBtn(event,'new')">💾 Guardar y añadir otra</button>`:''}
@@ -841,8 +752,6 @@ function vAnadir(){
     <input type="hidden" name="__action" value="stay">
   </form>`;
 }
-
-/* v1.2: guardar con acciones */
 function saveFormFromBtn(ev,action){
   ev.preventDefault();
   const f=document.getElementById('pform');
@@ -850,12 +759,10 @@ function saveFormFromBtn(ev,action){
   if(hidden)hidden.value=action;
   f.requestSubmit();
 }
-
 async function handlePhoto(input){
   const file=input.files[0];if(!file)return;
   const dataUri=await resizePhoto(file);
-  const zone=$('.photo-zone');
-  if(!zone)return;
+  const zone=$('.photo-zone');if(!zone)return;
   zone.innerHTML=`<img id="photoPreview" src="${dataUri}"><div class="hint">Toca para cambiar</div>`;
   zone.dataset.foto=dataUri;
 }
@@ -879,13 +786,10 @@ function resizePhoto(file){
     };reader.readAsDataURL(file);
   });
 }
-
-/* v1.2: detección de duplicados */
 function findDuplicates(nombre,excludeId){
   const key=norm(nombre);
   return S.personas.filter(p=>p.id!==excludeId&&norm(p.nombre)===key);
 }
-
 function saveForm(e,action){
   e.preventDefault();
   const f=e.target;
@@ -893,28 +797,15 @@ function saveForm(e,action){
   let foto;
   if(zone.dataset.foto!==undefined)foto=zone.dataset.foto||null;
   else foto=editingId?getP(editingId).foto:null;
-
   const datos={
-    nombre:f.nombre.value.trim(),
-    apodo:f.apodo.value.trim(),
-    comoLlamar:f.comoLlamar.value.trim(),
-    sexo:f.sexo.value,
-    grupo:f.grupo.value,
-    relacionConmigo:f.relacionConmigo.value.trim(),
-    relacionMujer:f.relacionMujer?f.relacionMujer.value.trim():'',
-    contexto:f.contexto.value.trim(),
-    telefono:f.telefono.value.trim(),
-    ciudad:f.ciudad.value.trim(),
-    cumple:f.cumple.value.trim(),
-    etiquetas:f.etiquetas.value.split(',').map(t=>t.trim()).filter(Boolean),
-    notas:f.notas.value.trim(),
-    ultimaVez:f.ultimaVez.value,
-    fallecido:f.fallecido.checked,
-    foto
+    nombre:f.nombre.value.trim(),apodo:f.apodo.value.trim(),comoLlamar:f.comoLlamar.value.trim(),
+    sexo:f.sexo.value,grupo:f.grupo.value,relacionConmigo:f.relacionConmigo.value.trim(),
+    relacionMujer:f.relacionMujer?f.relacionMujer.value.trim():'',contexto:f.contexto.value.trim(),
+    telefono:f.telefono.value.trim(),ciudad:f.ciudad.value.trim(),cumple:f.cumple.value.trim(),
+    etiquetas:f.etiquetas.value.split(',').map(t=>t.trim()).filter(Boolean),notas:f.notas.value.trim(),
+    ultimaVez:f.ultimaVez.value,fallecido:f.fallecido.checked,foto
   };
   if(!datos.nombre){toast('El nombre es obligatorio');return;}
-
-  /* duplicados */
   const dup=findDuplicates(datos.nombre,editingId);
   if(dup.length&&!f.dataset.dupConfirmed){
     const banner=document.getElementById('dupBanner');
@@ -928,58 +819,32 @@ function saveForm(e,action){
     }
     return;
   }
-
   const acc=f.__action||action||'stay';
   let savedId=null;
   if(editingId){
-    const id=editingId;
-    const old=getP(id);
-    Object.assign(old,datos);
-    recomputeAllInverses();
-    savedId=id;
-    editingId=null;
-    upd();
+    const id=editingId;const old=getP(id);
+    Object.assign(old,datos);recomputeAllInverses();savedId=id;editingId=null;upd();
     if(acc==='stay'){openFicha(savedId);toast('Guardado');}
   }else{
     const np={id:uid(),...datos,vinculos:[]};
-    S.personas.push(np);
-    savedId=np.id;
-    upd();
+    S.personas.push(np);savedId=np.id;upd();
   }
-
   if(acc==='new'){
-    /* mantener grupo seleccionado, limpiar formulario */
-    const g=datos.grupo;
-    editingId=null;
-    tab='anadir';sub='';
-    render();
+    const g=datos.grupo;editingId=null;tab='anadir';sub='';render();
     setTimeout(()=>{const sel=document.querySelector('#pform select[name=grupo]');if(sel)sel.value=g;},0);
-    toast('Guardado. Añade otra persona');
-    window.scrollTo(0,0);
+    toast('Guardado. Añade otra persona');window.scrollTo(0,0);
   }else if(acc==='family'){
-    /* guardar y abrir añadir vínculo familiar */
-    editingId=null;
-    openFicha(savedId);
-    toast('Guardado. Añade familiares desde Vínculos');
+    editingId=null;openFicha(savedId);toast('Guardado. Añade familiares desde Vínculos');
     setTimeout(()=>{addVinculoUI(savedId);},200);
-  }else if(acc==='stay'&&!editingId){
-    openFicha(savedId);
-    toast('Añadido');
-  }
+  }else if(acc==='stay'&&!editingId){openFicha(savedId);toast('Añadido');}
 }
 
 /* ============ REPASO ============ */
 function vFlash(){
   const pool=S.personas.filter(p=>!p.fallecido&&(!flashGroup||p.grupo===flashGroup));
-  if(!pool.length){
-    return `<h2>Repaso</h2><div class="empty"><div class="big">🎯</div><p>No hay personas para repasar.</p><p class="s">Añade personas a tu lista primero.</p></div>`;
-  }
-  if(!flashId||!pool.find(p=>p.id===flashId)){
-    flashId=pool[Math.floor(Math.random()*pool.length)].id;
-    flashRevealed=false;
-  }
-  const p=getP(flashId);
-  const rel=p.relacionConmigo||p.relacionMujer||'';
+  if(!pool.length){return `<h2>Repaso</h2><div class="empty"><div class="big">🎯</div><p>No hay personas para repasar.</p><p class="s">Añade personas a tu lista primero.</p></div>`;}
+  if(!flashId||!pool.find(p=>p.id===flashId)){flashId=pool[Math.floor(Math.random()*pool.length)].id;flashRevealed=false;}
+  const p=getP(flashId);const rel=p.relacionConmigo||p.relacionMujer||'';
   let html=`<button class="lnk" onclick="go('mas')">‹ Más</button><h2>Repaso</h2><div class="chips"><button class="${!flashGroup?'on':''}" onclick="flashGroup=null;flashId=null;render()">Todas</button>${S.grupos.map(g=>`<button class="${flashGroup===g.id?'on':''}" onclick="flashGroup='${g.id}';flashId=null;render()">${g.icono} ${esc(g.nombre)}</button>`).join('')}</div>`;
   html+=`<div class="flash">${avatar(p,'xl')}`;
   if(flashRevealed){
@@ -991,9 +856,7 @@ function vFlash(){
     html+=`<button class="reveal-btn" onclick="flashRevealed=true;render()">👁️ ¿Quién es?</button><p class="mut s" style="margin-top:16px">Piensa un momento antes de revelar.</p>`;
   }
   html+=`</div>`;
-  if(flashRevealed){
-    html+=`<div class="card noprint" style="text-align:center"><button class="btn" onclick="flashRevealed=false;flashId=null;render()">Otra persona</button><button class="btn alt" onclick="openFicha('${p.id}')">Ver ficha</button></div>`;
-  }
+  if(flashRevealed){html+=`<div class="card noprint" style="text-align:center"><button class="btn" onclick="flashRevealed=false;flashId=null;render()">Otra persona</button><button class="btn alt" onclick="openFicha('${p.id}')">Ver ficha</button></div>`;}
   return html;
 }
 
@@ -1003,21 +866,22 @@ function vMas(){
   if(sub==='grupos')return vGrupos();
   if(sub==='ideas')return vIdeas();
   if(sub==='print')return vPrint();
+  if(sub==='etiquetas')return vEtiquetas();
   if(sub==='flash'){tab='flash';return vFlash();}
   const total=S.personas.length;
   const conFoto=S.personas.filter(p=>p.foto).length;
   const fallecidos=S.personas.filter(p=>p.fallecido).length;
   let html=`<h2>Más</h2>`;
   html+=`<div class="card"><div class="mut s">Tu lista</div><div style="font-size:20px;font-weight:600;margin:4px 0">${total} ${total===1?'persona':'personas'}</div><div class="mut s">${conFoto} con foto · ${fallecidos} fallecido${fallecidos===1?'':'s'} · ${S.grupos.length} grupos</div></div>`;
-  html+=`<div class="card"><button class="btn alt block" onclick="go('mas','flash')">🎯 Repaso (flashcards)</button><button class="btn alt block" onclick="go('mas','ajustes')">⚙️ Ajustes</button><button class="btn alt block" onclick="go('mas','grupos')">📁 Grupos</button><button class="btn alt block" onclick="go('mas','ideas')">💡 Ideas de mejora</button><button class="btn alt block" onclick="go('mas','print')">🖨️ Hoja de contactos imprimible</button></div>`;
-  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.lastBackup?fd(S.lastBackup):'nunca'}</p><button class="btn block" onclick="exportJSON()">💾 Exportar copia (JSON)</button><button class="btn alt block" onclick="exportCSV()">📊 Exportar a CSV</button><label class="btn alt block" style="text-align:center;margin:8px 0 0;cursor:pointer">📂 Cargar copia<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>`;
-  html+=`<div class="card"><div class="sec" style="margin-top:0">Información</div><p class="mut s">Mi gente v${APP_VERSION} · datos solo en este dispositivo, sin nube.</p></div>`;
+  html+=`<div class="card"><button class="btn alt block" onclick="go('mas','flash')">🎯 Repaso (flashcards)</button><button class="btn alt block" onclick="go('mas','etiquetas')">🏷️ Etiquetas</button><button class="btn alt block" onclick="go('mas','grupos')">📁 Grupos</button><button class="btn alt block" onclick="go('mas','ideas')">💡 Ideas de mejora</button><button class="btn alt block" onclick="go('mas','print')">🖨️ Hoja de contactos imprimible</button><button class="btn alt block" onclick="go('mas','ajustes')">⚙️ Ajustes</button></div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.lastBackup?fd(S.lastBackup):'nunca'}</p><button class="btn block" onclick="openExportModal()">💾 Exportar copia</button><button class="btn alt block" onclick="exportCSV()">📊 Exportar a CSV</button><label class="btn alt block" style="text-align:center;margin:8px 0 0;cursor:pointer">📂 Cargar copia<input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(this)"></label></div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Información</div><p class="mut s">Mi gente v${APP_VERSION} · datos solo en este dispositivo, sin nube.</p>${S.set.usarBloqueo&&webauthnAvailable?`<button class="btn alt block" onclick="lockNow()">🔒 Bloquear ahora</button>`:''}</div>`;
   return html;
 }
 
 function vAjustes(){
-  return `<button class="lnk" onclick="go('mas')">‹ Volver</button>
-  <h2>Ajustes</h2>
+  const lockAvailable=webauthnAvailable;
+  return `<button class="lnk" onclick="go('mas')">‹ Volver</button><h2>Ajustes</h2>
   <form onsubmit="saveAjustes(event)">
     <div class="card">
       <label>Tu nombre<input name="miNombre" value="${esc(S.set.miNombre||'')}" placeholder="Cómo quieres que te salude la app"></label>
@@ -1028,11 +892,30 @@ function vAjustes(){
     </div>
     <button type="submit" class="btn">Guardar</button>
   </form>
-  <div class="card" style="margin-top:20px"><div class="sec" style="margin-top:0">Borrar todos los datos</div><p class="mut s">Elimina todas las personas, grupos e ideas. Haz copia antes.</p><button class="btn danger block" onclick="if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){S=DEF();upd();go('inicio');toast('Todo borrado')}">Borrar todo</button></div>`;
+
+  <div class="card" style="margin-top:20px">
+    <div class="sec" style="margin-top:0">🔒 Bloqueo de la app</div>
+    ${!lockAvailable?`<div class="warn-box">Este navegador o contexto no permite usar el desbloqueo del móvil. Asegúrate de abrir la app desde GitHub Pages (HTTPS), no como archivo local.</div>`:`
+    <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="lockToggle" ${S.set.usarBloqueo?'checked':''} onchange="toggleLock(this.checked)" style="width:auto;margin:0"> Pedir desbloqueo del móvil al abrir la app</label>
+    <p class="mut s" style="margin:6px 0 0">Usa la huella, el rostro, el patrón o el PIN que tengas configurado en el móvil. Si cambias el desbloqueo del móvil, la app te pedirá volver a activarlo.</p>
+    ${S.set.usarBloqueo?`<button type="button" class="btn alt block" onclick="lockNow()" style="margin-top:10px">🔒 Bloquear ahora</button>`:''}
+    `}
+  </div>
+
+  <div class="card" style="margin-top:20px"><div class="sec" style="margin-top:0">Borrar todos los datos</div><p class="mut s">Elimina todas las personas, grupos e ideas. Haz copia antes.</p><button class="btn danger block" onclick="if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){S=DEF();idbDel('lockCredId');upd();go('inicio');toast('Todo borrado')}">Borrar todo</button></div>`;
+}
+async function toggleLock(on){
+  if(on){
+    const ok=await registerLock();
+    if(ok){S.set.usarBloqueo=true;save();toast('Bloqueo activado');}
+    else{S.set.usarBloqueo=false;save();const t=$('#lockToggle');if(t)t.checked=false;}
+  }else{
+    S.set.usarBloqueo=false;await idbDel('lockCredId');save();toast('Bloqueo desactivado');
+  }
+  render();
 }
 function saveAjustes(e){
-  e.preventDefault();
-  const f=e.target;
+  e.preventDefault();const f=e.target;
   S.set.miNombre=f.miNombre.value.trim();
   S.set.miMujer=f.miMujer.value.trim();
   S.set.diasCumple=Math.max(1,Math.min(60,parseInt(f.diasCumple.value)||15));
@@ -1041,44 +924,111 @@ function saveAjustes(e){
   upd();go('mas');toast('Ajustes guardados');
 }
 
+/* ============ v1.3: ETIQUETAS ============ */
+function vEtiquetas(){
+  const tagMap={};
+  for(const p of S.personas){for(const t of (p.etiquetas||[])){const key=norm(t);if(!key)continue;if(!tagMap[key])tagMap[key]={label:t,count:0};tagMap[key].count++;}}
+  const tags=Object.entries(tagMap).sort((a,b)=>a[1].label.localeCompare(b[1].label,'es'));
+  let html=`<button class="lnk" onclick="go('mas')">‹ Volver</button><h2>Etiquetas</h2>`;
+  html+=`<p class="mut s">Renombrar una etiqueta la actualiza en todas las personas que la comparten. Borrarla la quita de todas.</p>`;
+  html+=`<div class="card">`;
+  if(!tags.length){html+=`<p class="mut s">Todavía no hay etiquetas. Añádelas al editar una persona.</p>`;}
+  else{
+    html+=tags.map(([key,v])=>`<div class="tag-edit-row">
+      <span class="t-name">${esc(v.label)}</span>
+      <span class="t-count">${v.count}</span>
+      <button class="btn small alt" onclick="renameTag('${esc(v.label).replace(/'/g,"\\'")}')">✏️</button>
+      <button class="btn small danger" onclick="deleteTag('${esc(v.label).replace(/'/g,"\\'")}')">🗑️</button>
+    </div>`).join('');
+  }
+  html+=`</div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Crear etiqueta nueva</div>
+    <p class="mut s" style="margin-top:0">Crea la etiqueta y asígnala a las personas que quieras.</p>
+    <label>Nombre de la etiqueta<input id="newTagName" placeholder="Ej.: primos de María"></label>
+    <button class="btn" onclick="openNewTagPicker()">Elegir personas y crear</button>
+  </div>`;
+  return html;
+}
+function renameTag(oldLabel){
+  const tagMap={};
+  for(const p of S.personas){for(const t of (p.etiquetas||[])){const key=norm(t);if(!key)continue;tagMap[key]=t;}}
+  const oldKey=norm(oldLabel);
+  const current=tagMap[oldKey]||oldLabel;
+  const nuevo=prompt('Nuevo nombre para la etiqueta "'+current+'":',current);
+  if(nuevo===null)return;
+  const nn=nuevo.trim();
+  if(!nn){toast('El nombre no puede estar vacío');return;}
+  const newKey=norm(nn);
+  if(newKey===oldKey){/* solo cambia mayúsculas/acentos visibles */
+    for(const p of S.personas){p.etiquetas=(p.etiquetas||[]).map(t=>norm(t)===oldKey?nn:t);}
+    upd();toast('Etiqueta actualizada');return;
+  }
+  /* fusionar si ya existe */
+  let merged=0;
+  for(const p of S.personas){
+    if(!Array.isArray(p.etiquetas))continue;
+    const tenia=p.etiquetas.some(t=>norm(t)===oldKey);
+    if(!tenia)continue;
+    /* quitar la vieja y añadir la nueva sin duplicar */
+    p.etiquetas=p.etiquetas.filter(t=>norm(t)!==oldKey);
+    if(!p.etiquetas.some(t=>norm(t)===newKey)){p.etiquetas.push(nn);}
+    else merged++;
+  }
+  upd();
+  toast(merged?`Etiqueta renombrada y fusionada (${merged} duplicados evitados)`:'Etiqueta renombrada en todas las personas');
+}
+function deleteTag(label){
+  const key=norm(label);
+  const count=S.personas.filter(p=>(p.etiquetas||[]).some(t=>norm(t)===key)).length;
+  if(!confirm(`¿Borrar la etiqueta "${label}" de ${count} persona${count===1?'':'s'}?`))return;
+  for(const p of S.personas){p.etiquetas=(p.etiquetas||[]).filter(t=>norm(t)!==key);}
+  upd();toast('Etiqueta borrada');
+}
+function openNewTagPicker(){
+  const nombre=$('#newTagName').value.trim();
+  if(!nombre){toast('Escribe un nombre para la etiqueta');return;}
+  const key=norm(nombre);
+  const yaExiste=S.personas.some(p=>(p.etiquetas||[]).some(t=>norm(t)===key));
+  if(yaExiste){
+    if(!confirm(`La etiqueta "${nombre}" ya existe. ¿Añadirla a más personas?`))return;
+  }
+  const otras=S.personas.slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
+  const listHtml=otras.map(p=>`<label style="display:flex;align-items:center;gap:8px;margin:4px 0;font-size:14px;color:var(--ink)"><input type="checkbox" class="tagpick" value="${p.id}" style="width:auto;margin:0"> ${esc(p.nombre)}${p.fallecido?' <span class="dead-cross">†</span>':''}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}</label>`).join('');
+  $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Asignar "${esc(nombre)}" a…</h3>
+    <div class="pick-list" style="max-height:50vh">${listHtml||'<div class="pick-empty">No hay personas.</div>'}</div>
+    <div style="margin-top:12px"><button class="btn" onclick="confirmNewTag('${esc(nombre).replace(/'/g,"\\'")}')">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
+  </div></div>`;
+}
+function confirmNewTag(nombre){
+  const key=norm(nombre);
+  const checks=document.querySelectorAll('.tagpick:checked');
+  let n=0;
+  for(const c of checks){
+    const p=getP(c.value);if(!p)continue;
+    if(!Array.isArray(p.etiquetas))p.etiquetas=[];
+    if(!p.etiquetas.some(t=>norm(t)===key)){p.etiquetas.push(nombre);n++;}
+  }
+  closeModal();upd();
+  toast(n?`Etiqueta asignada a ${n} persona${n===1?'':'s'}`:'No se seleccionó ninguna persona');
+}
+
 function vGrupos(){
   let html=`<button class="lnk" onclick="go('mas')">‹ Volver</button><h2>Grupos</h2>`;
   html+=`<p class="mut s">Añade, edita o borra grupos. Al borrar un grupo con personas, te preguntará a dónde moverlas.</p>`;
   html+=`<div class="card">`;
   html+=S.grupos.map((g,i)=>{
     const count=S.personas.filter(p=>p.grupo===g.id).length;
-    return`<div class="grupo-row">
-      <input class="icon-input" value="${esc(g.icono)}" onchange="updateGrupo(${i},'icono',this.value)">
-      <input value="${esc(g.nombre)}" onchange="updateGrupo(${i},'nombre',this.value)">
-      <span class="mut s">${count}</span>
-      <button class="btn alt small" onclick="delGrupo(${i})" style="margin:0">×</button>
-    </div>`;
+    return`<div class="grupo-row"><input class="icon-input" value="${esc(g.icono)}" onchange="updateGrupo(${i},'icono',this.value)"><input value="${esc(g.nombre)}" onchange="updateGrupo(${i},'nombre',this.value)"><span class="mut s">${count}</span><button class="btn alt small" onclick="delGrupo(${i})" style="margin:0">×</button></div>`;
   }).join('');
   html+=`</div>`;
-  html+=`<div class="card"><b>Nuevo grupo</b>
-    <div class="grupo-row" style="margin-top:8px">
-      <input class="icon-input" id="ng_icono" value="📌" maxlength="4">
-      <input id="ng_nombre" placeholder="Ej.: Clases de guitarra">
-      <button class="btn small" onclick="addGrupo()" style="margin:0">Añadir</button>
-    </div>
-  </div>`;
+  html+=`<div class="card"><b>Nuevo grupo</b><div class="grupo-row" style="margin-top:8px"><input class="icon-input" id="ng_icono" value="📌" maxlength="4"><input id="ng_nombre" placeholder="Ej.: Clases de guitarra"><button class="btn small" onclick="addGrupo()" style="margin:0">Añadir</button></div></div>`;
   return html;
 }
-function updateGrupo(i,campo,val){
-  if(!val.trim()){render();return;}
-  S.grupos[i][campo]=val.trim();
-  upd();
-}
-function addGrupo(){
-  const icono=$('#ng_icono').value.trim()||'📌';
-  const nombre=$('#ng_nombre').value.trim();
-  if(!nombre){toast('Pon un nombre');return;}
-  S.grupos.push({id:uid(),nombre,icono});
-  upd();toast('Grupo añadido');
-}
+function updateGrupo(i,campo,val){if(!val.trim()){render();return;}S.grupos[i][campo]=val.trim();upd();}
+function addGrupo(){const icono=$('#ng_icono').value.trim()||'📌';const nombre=$('#ng_nombre').value.trim();if(!nombre){toast('Pon un nombre');return;}S.grupos.push({id:uid(),nombre,icono});upd();toast('Grupo añadido');}
 function delGrupo(i){
-  const g=S.grupos[i];
-  const count=S.personas.filter(p=>p.grupo===g.id).length;
+  const g=S.grupos[i];const count=S.personas.filter(p=>p.grupo===g.id).length;
   if(count>0){
     const otras=S.grupos.filter((_,idx)=>idx!==i);
     if(!otras.length){toast('Debe quedar al menos un grupo');return;}
@@ -1090,11 +1040,9 @@ function delGrupo(i){
   }
 }
 function confirmarDelGrupo(i){
-  const dest=$('#gdest').value;
-  const g=S.grupos[i];
+  const dest=$('#gdest').value;const g=S.grupos[i];
   S.personas.forEach(p=>{if(p.grupo===g.id)p.grupo=dest;});
-  S.grupos.splice(i,1);
-  closeModal();upd();toast('Grupo borrado');
+  S.grupos.splice(i,1);closeModal();upd();toast('Grupo borrado');
 }
 
 function vIdeas(){
@@ -1103,70 +1051,25 @@ function vIdeas(){
   let html=`<button class="lnk" onclick="go('mas')">‹ Volver</button><h2>Ideas de mejora</h2>`;
   html+=`<p class="mut s">Apunta ideas para futuras versiones. Puedes copiarlas y pegarlas en el prompt de una IA.</p>`;
   html+=`<div class="card"><textarea id="ideaText" rows="4" placeholder="Escribe aquí la idea (admite varias líneas)"></textarea><button class="btn" onclick="addIdea()">Añadir idea</button></div>`;
-  if(pendientes.length){
-    html+=`<div class="sec">Pendientes (${pendientes.length})</div><div class="card">`;
-    html+=pendientes.map(i=>renderIdea(i)).join('');
-    html+=`</div>`;
-    html+=`<button class="btn alt block" onclick="copyIdeas()">📋 Copiar pendientes para la IA</button>`;
-  }
-  if(implementadas.length){
-    html+=`<div class="sec">Implementadas (${implementadas.length})</div><div class="card">`;
-    html+=implementadas.map(i=>renderIdea(i)).join('');
-    html+=`</div>`;
-  }
+  if(pendientes.length){html+=`<div class="sec">Pendientes (${pendientes.length})</div><div class="card">`;html+=pendientes.map(i=>renderIdea(i)).join('');html+=`</div>`;html+=`<button class="btn alt block" onclick="copyIdeas()">📋 Copiar pendientes para la IA</button>`;}
+  if(implementadas.length){html+=`<div class="sec">Implementadas (${implementadas.length})</div><div class="card">`;html+=implementadas.map(i=>renderIdea(i)).join('');html+=`</div>`;}
   if(!S.ideas.length)html+=`<div class="empty"><div class="big">💡</div><p>Todavía no hay ideas.</p></div>`;
   return html;
 }
 function renderIdea(i){
-  return`<div class="idea ${i.estado==='implementada'?'impl':''}">
-    <div class="meta">${fd(i.fecha)}${i.fechaImplementada?' · implementada '+fd(i.fechaImplementada):''}</div>
-    <div class="texto">${esc(i.texto)}</div>
-    <div class="actions">
-      <button class="btn small alt" onclick="toggleIdea('${i.id}')">${i.estado==='implementada'?'↺ Volver a pendiente':'✓ Implementada'}</button>
-      <button class="btn small alt" onclick="copyIdea('${i.id}')">📋 Copiar</button>
-      <button class="btn small danger" onclick="delIdea('${i.id}')">🗑️</button>
-    </div>
-  </div>`;
+  return`<div class="idea ${i.estado==='implementada'?'impl':''}"><div class="meta">${fd(i.fecha)}${i.fechaImplementada?' · implementada '+fd(i.fechaImplementada):''}</div><div class="texto">${esc(i.texto)}</div><div class="actions"><button class="btn small alt" onclick="toggleIdea('${i.id}')">${i.estado==='implementada'?'↺ Volver a pendiente':'✓ Implementada'}</button><button class="btn small alt" onclick="copyIdea('${i.id}')">📋 Copiar</button><button class="btn small danger" onclick="delIdea('${i.id}')">🗑️</button></div></div>`;
 }
-function addIdea(){
-  const t=$('#ideaText').value.trim();
-  if(!t)return;
-  S.ideas.push({id:uid(),texto:t,fecha:today(),estado:'pendiente'});
-  upd();toast('Idea añadida');
-}
-function toggleIdea(id){
-  const i=S.ideas.find(x=>x.id===id);if(!i)return;
-  if(i.estado==='pendiente'){i.estado='implementada';i.fechaImplementada=today();}
-  else{i.estado='pendiente';delete i.fechaImplementada;}
-  upd();
-}
-function delIdea(id){
-  if(!confirm('¿Borrar esta idea?'))return;
-  S.ideas=S.ideas.filter(x=>x.id!==id);upd();toast('Idea borrada');
-}
-function copyIdea(id){
-  const i=S.ideas.find(x=>x.id===id);if(!i)return;
-  copyText(i.texto,'Idea copiada');
-}
-function copyIdeas(){
-  const pend=S.ideas.filter(i=>i.estado==='pendiente');
-  if(!pend.length){toast('No hay ideas pendientes');return;}
-  const txt='Ideas pendientes para Mi gente v'+APP_VERSION+':\n\n'+pend.map((i,n)=>`${n+1}. (${fd(i.fecha)}) ${i.texto}`).join('\n\n');
-  copyText(txt,'Copiadas '+pend.length+' ideas');
-}
-function copyText(txt,msg){
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>prompt('Copia este texto:',txt));
-  }else{
-    prompt('Copia este texto:',txt);
-  }
-}
+function addIdea(){const t=$('#ideaText').value.trim();if(!t)return;S.ideas.push({id:uid(),texto:t,fecha:today(),estado:'pendiente'});upd();toast('Idea añadida');}
+function toggleIdea(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;if(i.estado==='pendiente'){i.estado='implementada';i.fechaImplementada=today();}else{i.estado='pendiente';delete i.fechaImplementada;}upd();}
+function delIdea(id){if(!confirm('¿Borrar esta idea?'))return;S.ideas=S.ideas.filter(x=>x.id!==id);upd();toast('Idea borrada');}
+function copyIdea(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;copyText(i.texto,'Idea copiada');}
+function copyIdeas(){const pend=S.ideas.filter(i=>i.estado==='pendiente');if(!pend.length){toast('No hay ideas pendientes');return;}const txt='Ideas pendientes para Mi gente v'+APP_VERSION+':\n\n'+pend.map((i,n)=>`${n+1}. (${fd(i.fecha)}) ${i.texto}`).join('\n\n');copyText(txt,'Copiadas '+pend.length+' ideas');}
+function copyText(txt,msg){if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>prompt('Copia este texto:',txt));}else{prompt('Copia este texto:',txt);}}
 
 function vPrint(){
   const q=window.__printFilter||'todos';
   const personas=S.personas.filter(p=>q==='todos'||p.grupo===q).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
-  return `<button class="lnk noprint" onclick="go('mas')">‹ Volver</button>
-  <h2 class="noprint">Hoja de contactos</h2>
+  return `<button class="lnk noprint" onclick="go('mas')">‹ Volver</button><h2 class="noprint">Hoja de contactos</h2>
   <div class="chips noprint"><button class="${q==='todos'?'on':''}" onclick="window.__printFilter='todos';render()">Todas</button>${S.grupos.map(g=>`<button class="${q===g.id?'on':''}" onclick="window.__printFilter='${g.id}';render()">${g.icono} ${esc(g.nombre)}</button>`).join('')}</div>
   <p class="mut s noprint">${personas.length} personas. Pulsa Imprimir para el PDF.</p>
   <button class="btn block noprint" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
@@ -1176,25 +1079,95 @@ function vPrint(){
   }).join('')}</div>`;
 }
 
-/* ============ BACKUP ============ */
-function exportJSON(){
-  S.lastBackup=today();save();
-  const data=JSON.stringify({app:'migente',...S,exportado:new Date().toISOString()},null,1);
-  const blob=new Blob([data],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`mi-gente-${today()}.json`;a.click();
+/* ============ BACKUP + CIFRADO ============ */
+function openExportModal(){
+  $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Exportar copia</h3>
+    <div class="enc-opt"><input type="radio" name="encMode" id="encOn" value="on" checked><label for="encOn" style="margin:0;color:var(--ink);font-weight:500">Cifrada con contraseña <span class="mut s">(recomendado)</span></label></div>
+    <div class="enc-opt"><input type="radio" name="encMode" id="encOff" value="off"><label for="encOff" style="margin:0;color:var(--ink);font-weight:500">Sin cifrar <span class="mut s">(red de seguridad si olvidas la contraseña)</span></label></div>
+    <div id="encPwdBox">
+      <label>Contraseña (mínimo 6 caracteres)<input type="password" id="expPwd" autocomplete="new-password"></label>
+      <label>Repite la contraseña<input type="password" id="expPwd2" autocomplete="new-password"></label>
+      <div class="warn-box">⚠️ Si olvidas esta contraseña, no podrás recuperar la copia. Guárdala en un lugar seguro.</div>
+    </div>
+    <div style="margin-top:12px"><button class="btn" onclick="doExport()">Exportar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
+  </div></div>`;
+  document.querySelectorAll('input[name=encMode]').forEach(r=>r.addEventListener('change',()=>{
+    const on=document.getElementById('encOn').checked;
+    document.getElementById('encPwdBox').style.display=on?'':'none';
+  }));
+}
+async function deriveKey(password,salt,iter){
+  const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function doExport(){
+  const cifrado=document.getElementById('encOn').checked;
+  S.lastBackup=today();await save();
+  const payload=JSON.stringify({app:'migente',...S,exportado:new Date().toISOString()});
+  let blob,filename;
+  if(cifrado){
+    const pwd=document.getElementById('expPwd').value;
+    const pwd2=document.getElementById('expPwd2').value;
+    if(pwd.length<6){toast('La contraseña debe tener al menos 6 caracteres');return;}
+    if(pwd!==pwd2){toast('Las contraseñas no coinciden');return;}
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const iter=310000;
+    const key=await deriveKey(pwd,salt,iter);
+    const enc=new TextEncoder();
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(payload));
+    const out={app:'migente',encrypted:true,v:1,alg:'AES-256-GCM',kdf:'PBKDF2-SHA256',iter,salt:bufToB64url(salt),iv:bufToB64url(iv),data:bufToB64url(ct)};
+    blob=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+    filename=`mi-gente-cifrada-${today()}.json`;
+  }else{
+    blob=new Blob([JSON.stringify({app:'migente',...S,exportado:new Date().toISOString()},null,1)],{type:'application/json'});
+    filename=`mi-gente-${today()}.json`;
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
   URL.revokeObjectURL(a.href);
-  toast('Copia descargada');
+  closeModal();
+  toast(cifrado?'Copia cifrada descargada':'Copia sin cifrar descargada');
   setTimeout(render,100);
 }
-/* v1.2: exportar CSV */
+function importJSON(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(d.app!=='migente')throw 0;
+      if(d.encrypted===true){
+        const pwd=prompt('Esta copia está cifrada. Introduce la contraseña:');
+        if(pwd===null){input.value='';return;}
+        try{
+          const salt=b64urlToBuf(d.salt);const iv=b64urlToBuf(d.iv);const ct=b64urlToBuf(d.data);
+          const key=await deriveKey(pwd,salt,d.iter||310000);
+          const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
+          const txt=new TextDecoder().decode(dec);
+          const inner=JSON.parse(txt);
+          if(inner.app!=='migente'||!Array.isArray(inner.personas))throw 0;
+          if(!confirm('Se reemplazarán todos los datos actuales. ¿Continuar?')){input.value='';return;}
+          S=migrate(inner);S.set=Object.assign(DEF().set,S.set);
+          await save();upd();go('inicio');toast('Copia cifrada cargada');
+        }catch(e){alert('Contraseña incorrecta o archivo dañado.');}
+      }else{
+        if(!Array.isArray(d.personas))throw 0;
+        if(!confirm('Se reemplazarán todos los datos actuales. ¿Continuar?')){input.value='';return;}
+        S=migrate(d);S.set=Object.assign(DEF().set,S.set);
+        await save();upd();go('inicio');toast('Copia cargada');
+      }
+    }catch(e){alert('Archivo no válido. Debe ser una copia de Mi gente.');}
+    input.value='';
+  };r.readAsText(f);
+}
 function exportCSV(){
   const headers=['nombre','apodo','comoLlamar','sexo','grupo','relacionConmigo','relacionMujer','contexto','telefono','ciudad','cumple','etiquetas','notas','ultimaVez','fallecido','vinculos'];
   const rows=S.personas.map(p=>{
     const grupo=getG(p.grupo);
     const vincs=(p.vinculos||[]).map(v=>{const o=getP(v.personaId);return o?`${o.nombre} (${v.tipo})`:'';}).filter(Boolean).join('; ');
-    return [
-      p.nombre||'',p.apodo||'',p.comoLlamar||'',p.sexo||'',grupo?grupo.nombre:'',p.relacionConmigo||'',p.relacionMujer||'',p.contexto||'',p.telefono||'',p.ciudad||'',p.cumple||'',(p.etiquetas||[]).join('; '),p.notas||'',p.ultimaVez||'',p.fallecido?'sí':'no',vincs
-    ];
+    return [p.nombre||'',p.apodo||'',p.comoLlamar||'',p.sexo||'',grupo?grupo.nombre:'',p.relacionConmigo||'',p.relacionMujer||'',p.contexto||'',p.telefono||'',p.ciudad||'',p.cumple||'',(p.etiquetas||[]).join('; '),p.notas||'',p.ultimaVez||'',p.fallecido?'sí':'no',vincs];
   });
   const csv=[headers,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
@@ -1202,21 +1175,19 @@ function exportCSV(){
   URL.revokeObjectURL(a.href);
   toast('CSV descargado');
 }
-function importJSON(input){
-  const f=input.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    try{
-      const d=JSON.parse(r.result);
-      if(d.app!=='migente'||!Array.isArray(d.personas))throw 0;
-      if(!confirm('Se reemplazarán todos los datos actuales. ¿Continuar?'))return;
-      S=migrate(d);
-      S.set=Object.assign(DEF().set,S.set);
-      upd();go('inicio');toast('Copia cargada');
-    }catch(e){alert('Archivo no válido. Debe ser una copia de Mi gente.');}
-  };r.readAsText(f);
-}
 
-load().then(()=>render());
+/* ============ ARRANQUE ============ */
+async function boot(){
+  await load();
+  if('serviceWorker' in navigator){
+    try{navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){}
+  }
+  render();
+  if(S.set.usarBloqueo&&webauthnAvailable&&await hasLockCredential()){
+    showLock();
+    /* intento automático de desbloqueo (algunos navegadores lo permiten tras interacción) */
+  }
+}
+boot();
 </script>
 </body></html>
