@@ -32,8 +32,6 @@ h2{font:600 24px Georgia,serif;margin:8px 0 4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-size:16px;margin-bottom:10px}
 .search::placeholder{color:var(--muted)}
-
-/* v1.3: tarjetas de persona más compactas */
 .pcard{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 10px;margin:4px 0;cursor:pointer;text-align:left;width:100%;color:inherit;font:inherit;min-height:0}
 .pcard:active{background:var(--primary-soft)}
 .avatar{width:44px;height:44px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font:600 17px Georgia,serif;flex-shrink:0;overflow:hidden}
@@ -47,7 +45,6 @@ h2{font:600 24px Georgia,serif;margin:8px 0 4px}
 .ptag.dead{background:#eee;color:#666}
 @media(prefers-color-scheme:dark){.ptag.dead{background:#333;color:#999}}
 .dead-cross{color:var(--muted);font-weight:400;font-size:.9em;margin-left:2px}
-
 .ficha-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
 .ficha-head .info{flex:1}
 .ficha-head h2{margin:0}
@@ -147,8 +144,9 @@ details.card[open]>summary::before{content:'▾ '}
 #lockScreen h2{font:600 26px Georgia,serif;margin:0 0 8px;color:#fff}
 #lockScreen p{opacity:.85;margin:0 0 24px;max-width:320px}
 #lockScreen .btn{background:#fff;color:var(--primary);padding:16px 32px;font-size:17px}
-#lockScreen .btn.alt{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}
-#lockScreen .lock-msg{margin-top:16px;font-size:13px;opacity:.8;min-height:20px}
+#lockScreen .lock-msg{margin-top:16px;font-size:13px;opacity:.9;min-height:20px;max-width:320px}
+#lockScreen .forgot{display:none;margin-top:20px;font-size:12px;color:rgba(255,255,255,.7);text-decoration:underline;background:none;border:0;cursor:pointer;font-family:inherit}
+#lockScreen .forgot.on{display:inline-block}
 
 /* v1.3: sección de etiquetas */
 .tag-edit-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -156,11 +154,10 @@ details.card[open]>summary::before{content:'▾ '}
 .tag-edit-row .t-name{flex:1;font-size:14px}
 .tag-edit-row .t-count{font-size:12px;color:var(--muted);padding:2px 8px;background:var(--primary-soft);border-radius:10px}
 .tag-edit-row .btn.small{margin:0}
-.password-row{display:flex;gap:8px;margin-top:8px}
-.password-row input{flex:1}
 .enc-opt{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;color:var(--ink)}
 .enc-opt input{width:auto;margin:0}
 .warn-box{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.info-box{background:var(--primary-soft);border:1px solid var(--primary);border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
 
 @media print{
   body{padding:0;background:#fff;color:#000}
@@ -177,8 +174,8 @@ details.card[open]>summary::before{content:'▾ '}
   <h2>Mi gente</h2>
   <p>Desbloquea con la huella, el rostro o el PIN de tu móvil.</p>
   <button class="btn" onclick="unlockApp()">Desbloquear</button>
-  <button class="btn alt" onclick="disableLockFromScreen()">Desactivar bloqueo</button>
   <div class="lock-msg" id="lockMsg"></div>
+  <button class="forgot" id="forgotBtn" onclick="forgotLock()">He olvidado el desbloqueo del móvil</button>
 </div>
 <header>
   <h1>Mi gente</h1>
@@ -191,7 +188,7 @@ details.card[open]>summary::before{content:'▾ '}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION='1.3';
+const APP_VERSION='1.3.1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const p2=n=>String(n).padStart(2,'0');
@@ -279,7 +276,7 @@ function inverseTipo(originalTipo,sexo){
 }
 
 const DEF=()=>({
-  version:1.3,
+  version:1.31,
   personas:[],
   grupos:JSON.parse(JSON.stringify(GRUPOS_DEF)),
   ideas:[],
@@ -334,6 +331,7 @@ function migrate(d){
   }
   if(d.version<1.2){(d.personas||[]).forEach(p=>{if(!Array.isArray(p.etiquetas))p.etiquetas=[];});d.version=1.2;}
   if(d.version<1.3){d.set=d.set||{};if(d.set.usarBloqueo===undefined)d.set.usarBloqueo=false;d.version=1.3;}
+  if(d.version<1.31){d.version=1.31;}
   return d;
 }
 function upd(){save();render();}
@@ -382,8 +380,9 @@ function render(){
   if(tab==='personas')renderList();
 }
 
-/* ============ BLOQUEO WEBAUTHN ============ */
+/* ============ v1.3.1: BLOQUEO WEBAUTHN SIN ESCAPE ============ */
 let webauthnAvailable=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+let lockAttempts=0;
 function b64urlToBuf(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
 function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 
@@ -409,6 +408,11 @@ async function registerLock(){
   }catch(e){console.warn(e);toast('No se pudo activar el desbloqueo');return false;}
 }
 async function hasLockCredential(){const v=await idbGet('lockCredId');return !!v;}
+function updateForgotLink(){
+  const btn=document.getElementById('forgotBtn');
+  if(!btn)return;
+  btn.classList.toggle('on',lockAttempts>=3);
+}
 async function unlockApp(){
   const msg=$('#lockMsg');if(msg)msg.textContent='';
   if(!webauthnAvailable){hideLock();return;}
@@ -424,28 +428,41 @@ async function unlockApp(){
         timeout:60000
       }
     });
-    if(cred){hideLock();}
-    else if(msg){msg.textContent='No se pudo verificar. Inténtalo de nuevo.';}
+    if(cred){
+      lockAttempts=0;updateForgotLink();
+      hideLock();
+    }else{
+      lockAttempts++;updateForgotLink();
+      if(msg)msg.textContent='No se pudo verificar. Inténtalo de nuevo.';
+    }
   }catch(e){
     console.warn(e);
-    if(e.name==='NotAllowedError'){if(msg)msg.textContent='Desbloqueo cancelado. Toca "Desbloquear" para reintentar.';}
-    else if(e.name==='InvalidStateError'||e.name==='NotFoundError'){
-      if(msg)msg.textContent='El desbloqueo del móvil ha cambiado. Desactívalo y vuelve a activarlo en Ajustes.';
-    }else{if(msg)msg.textContent='Error de desbloqueo. Reintenta o desactiva el bloqueo.';}
+    lockAttempts++;updateForgotLink();
+    if(e.name==='NotAllowedError'){
+      if(msg)msg.textContent='Desbloqueo cancelado. Toca "Desbloquear" para reintentar.';
+    }else if(e.name==='InvalidStateError'||e.name==='NotFoundError'){
+      if(msg)msg.textContent='El desbloqueo del móvil ha cambiado. Revisa las opciones de abajo.';
+    }else{
+      if(msg)msg.textContent='Error de desbloqueo. Reintenta.';
+    }
   }
 }
-async function disableLockFromScreen(){
-  if(!confirm('¿Desactivar el bloqueo de la app? Podrás volver a activarlo en Ajustes.'))return;
-  S.set.usarBloqueo=false;
-  await idbDel('lockCredId');
-  save();
-  hideLock();
-  toast('Bloqueo desactivado');
+async function forgotLock(){
+  if(!confirm('¿Has olvidado el desbloqueo del móvil?\n\nSe borrarán TODOS los datos de Mi gente en este dispositivo y la app volverá a empezar en blanco.\n\nEsto NO se puede deshacer.'))return;
+  if(!confirm('CONFIRMACIÓN FINAL:\n\n¿Seguro que quieres borrar todos los datos y entrar con la app vacía?'))return;
+  try{
+    const d=await db;
+    if(d){try{d.transaction('kv','readwrite').objectStore('kv').clear()}catch(e){}}
+    try{indexedDB.deleteDatabase('migente')}catch(e){}
+    try{localStorage.removeItem('migente')}catch(e){}
+  }catch(e){}
+  location.reload();
 }
-function showLock(){$('#lockScreen').classList.add('on');}
+function showLock(){$('#lockScreen').classList.add('on');updateForgotLink();}
 function hideLock(){$('#lockScreen').classList.remove('on');}
 async function lockNow(){
   if(!S.set.usarBloqueo){toast('El bloqueo está desactivado');return;}
+  lockAttempts=0;updateForgotLink();
   showLock();
 }
 
@@ -486,8 +503,6 @@ function vInicio(){
   html+=`<p class="mut s" style="margin-top:0">${total} ${total===1?'persona':'personas'} en tu lista</p>`;
   html+=`<input class="search" type="search" placeholder="🔍 Buscar por nombre, apodo, relación…" readonly onclick="window.__searchQ='';window.__grupoFilter='todos';window.__tagFilter=null;go('personas');setTimeout(()=>{const e=document.getElementById('searchPersonas');if(e)e.focus();},80)" style="cursor:pointer" />`;
   if(S.grupos.length){html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';window.__tagFilter=null;go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;}
-
-  /* v1.3: etiquetas plegadas */
   const tagMap={};
   for(const p of S.personas){for(const t of (p.etiquetas||[])){const key=norm(t);if(!key)continue;if(!tagMap[key])tagMap[key]={label:t,personas:[]};tagMap[key].personas.push(p.id);}}
   const tags=Object.entries(tagMap).sort((a,b)=>b[1].personas.length-a[1].personas.length||a[1].label.localeCompare(b[1].label,'es'));
@@ -496,8 +511,6 @@ function vInicio(){
     html+=tags.map(([key,v])=>`<button class="tag-chip" onclick="window.__tagFilter='${esc(v.label)}';window.__searchQ='';window.__grupoFilter='todos';go('personas')">${esc(v.label)} <span class="n">${v.personas.length}</span></button>`).join('');
     html+=`</div></details>`;
   }
-
-  /* v1.3: recientes plegados */
   if(S.set.mostrarRecientes){
     html+=`<details class="card"><summary>🕐 Vistos recientemente</summary>`;
     if(recientes.length){
@@ -897,12 +910,13 @@ function vAjustes(){
     <div class="sec" style="margin-top:0">🔒 Bloqueo de la app</div>
     ${!lockAvailable?`<div class="warn-box">Este navegador o contexto no permite usar el desbloqueo del móvil. Asegúrate de abrir la app desde GitHub Pages (HTTPS), no como archivo local.</div>`:`
     <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="lockToggle" ${S.set.usarBloqueo?'checked':''} onchange="toggleLock(this.checked)" style="width:auto;margin:0"> Pedir desbloqueo del móvil al abrir la app</label>
-    <p class="mut s" style="margin:6px 0 0">Usa la huella, el rostro, el patrón o el PIN que tengas configurado en el móvil. Si cambias el desbloqueo del móvil, la app te pedirá volver a activarlo.</p>
+    <p class="mut s" style="margin:6px 0 0">Usa la huella, el rostro, el patrón o el PIN que tengas configurado en el móvil.</p>
     ${S.set.usarBloqueo?`<button type="button" class="btn alt block" onclick="lockNow()" style="margin-top:10px">🔒 Bloquear ahora</button>`:''}
+    <div class="info-box" style="margin-top:12px"><b>Modelo de seguridad:</b> el bloqueo biométrico impide el acceso casual a la app, pero los datos se guardan sin cifrar en el navegador (IndexedDB y localStorage). Para proteger las copias de seguridad, usa la exportación cifrada con contraseña.</div>
     `}
   </div>
 
-  <div class="card" style="margin-top:20px"><div class="sec" style="margin-top:0">Borrar todos los datos</div><p class="mut s">Elimina todas las personas, grupos e ideas. Haz copia antes.</p><button class="btn danger block" onclick="if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){S=DEF();idbDel('lockCredId');upd();go('inicio');toast('Todo borrado')}">Borrar todo</button></div>`;
+  <div class="card" style="margin-top:20px"><div class="sec" style="margin-top:0">Borrar todos los datos</div><p class="mut s">Elimina todas las personas, grupos e ideas. Haz copia antes.</p><button class="btn danger block" onclick="if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){S=DEF();idbDel('lockCredId');save();upd();go('inicio');toast('Todo borrado')}">Borrar todo</button></div>`;
 }
 async function toggleLock(on){
   if(on){
@@ -959,17 +973,15 @@ function renameTag(oldLabel){
   const nn=nuevo.trim();
   if(!nn){toast('El nombre no puede estar vacío');return;}
   const newKey=norm(nn);
-  if(newKey===oldKey){/* solo cambia mayúsculas/acentos visibles */
+  if(newKey===oldKey){
     for(const p of S.personas){p.etiquetas=(p.etiquetas||[]).map(t=>norm(t)===oldKey?nn:t);}
     upd();toast('Etiqueta actualizada');return;
   }
-  /* fusionar si ya existe */
   let merged=0;
   for(const p of S.personas){
     if(!Array.isArray(p.etiquetas))continue;
     const tenia=p.etiquetas.some(t=>norm(t)===oldKey);
     if(!tenia)continue;
-    /* quitar la vieja y añadir la nueva sin duplicar */
     p.etiquetas=p.etiquetas.filter(t=>norm(t)!==oldKey);
     if(!p.etiquetas.some(t=>norm(t)===newKey)){p.etiquetas.push(nn);}
     else merged++;
@@ -1185,7 +1197,6 @@ async function boot(){
   render();
   if(S.set.usarBloqueo&&webauthnAvailable&&await hasLockCredential()){
     showLock();
-    /* intento automático de desbloqueo (algunos navegadores lo permiten tras interacción) */
   }
 }
 boot();
