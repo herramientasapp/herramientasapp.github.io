@@ -1,1 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Lector RSS</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --panel: #ffffff;
+    --border: #e0e0e5;
+    --text: #1c1c1e;
+    --muted: #8e8e93;
+    --accent: #0a84ff;
+    --unread: #0a84ff;
+    --danger: #ff3b30;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 16px; margin: 0; flex: 1; }
+  header input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    width: 320px;
+    max-width: 50vw;
+  }
+  button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 260px 1fr 1fr;
+    overflow: hidden;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    #reader { display: none; }
+  }
+
+  /* Columna fuentes */
+  #sources {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 8px;
+  }
+  #sources h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 12px 8px 6px;
+    letter-spacing: 0.5px;
+  }
+  .source-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .source-item:hover { background: var(--bg); }
+  .source-item.active { background: #e3f0ff; color: var(--accent); }
+  .source-item .count {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--unread);
+    color: white;
+    border-radius: 10px;
+    padding: 1px 7px;
+    min-width: 18px;
+    text-align: center;
+  }
+  .source-item .del {
+    margin-left: auto;
+    color: var(--danger);
+    font-size: 14px;
+    opacity: 0;
+  }
+  .source-item:hover .del { opacity: 1; }
+
+  /* Columna lista */
+  #list {
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .article {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--panel);
+  }
+  .article:hover { background: #fafafa; }
+  .article.unread { border-left: 3px solid var(--unread); }
+  .article.read { opacity: 0.65; }
+  .article .title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+  .article .meta {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 10px;
+  }
+  .article .snippet {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Columna lector */
+  #reader {
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 24px;
+  }
+  #reader .placeholder {
+    color: var(--muted);
+    text-align: center;
+    margin-top: 40%;
+    font-size: 14px;
+  }
+  #reader h2 { font-size: 20px; margin: 0 0 8px; line-height: 1.3; }
+  #reader .reader-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  #reader .reader-body {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  #reader .reader-body img { max-width: 100%; height: auto; border-radius: 6px; }
+  #reader .reader-body a { color: var(--accent); }
+
+  #status {
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    min-height: 28px;
+  }
+  #status.error { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📰 Mi Lector RSS</h1>
+  <input id="feedUrl" type="text" placeholder="https://ejemplo.com/feed.xml" />
+  <button id="addBtn">Añadir fuente</button>
+  <button id="refreshBtn" class="secondary">Actualizar</button>
+  <button id="markAllBtn" class="secondary">Marcar todo leído</button>
+</header>
+
+<main>
+  <aside id="sources">
+    <h2>Fuentes</h2>
+    <div id="sourceList"></div>
+  </aside>
+  <section id="list"></section>
+  <section id="reader">
+    <div class="placeholder">Selecciona un artículo para leerlo aquí</div>
+  </section>
+</main>
+
+<div id="status">Listo.</div>
+
+<script>
+/* ============ ESTADO GLOBAL ============ */
+const LS_SOURCES = 'rss_sources_v1';
+const LS_READ    = 'rss_read_v1';
+const LS_ARTICLES= 'rss_articles_v1';
+
+const state = {
+  sources: [],   // [{url, title}]
+  articles: [],  // [{id, sourceUrl, title, link, date, snippet, content}]
+  read: new Set(),
+  activeSource: null,
+  activeArticle: null,
+  loading: false,
+};
+
+/* ============ PERSISTENCIA ============ */
+function loadState() {
+  try {
+    state.sources  = JSON.parse(localStorage.getItem(LS_SOURCES)  || '[]');
+    state.articles = JSON.parse(localStorage.getItem(LS_ARTICLES) || '[]');
+    state.read     = new Set(JSON.parse(localStorage.getItem(LS_READ) || '[]'));
+  } catch(e) { console.warn('Error cargando estado', e); }
+}
+function saveSources()  { localStorage.setItem(LS_SOURCES,  JSON.stringify(state.sources)); }
+function saveArticles() { localStorage.setItem(LS_ARTICLES, JSON.stringify(state.articles.slice(0, 2000))); }
+function saveRead()     { localStorage.setItem(LS_READ,     JSON.stringify([...state.read])); }
+
+/* ============ PROXY / RED ============ */
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+];
+
+async function fetchFeed(url) {
+  let lastErr;
+  for (const makeUrl of PROXIES) {
+    try {
+      const res = await fetch(makeUrl(url), { method: 'GET' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (!text || text.length < 50) throw new Error('Respuesta vacía');
+      return text;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('No se pudo descargar el feed');
+}
+
+/* ============ PARSER RSS/ATOM ============ */
+function parseFeed(xmlText, sourceUrl) {
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const parseErr = doc.querySelector('parsererror');
+  if (parseErr) throw new Error('XML inválido');
+
+  const isAtom = doc.querySelector('feed') !== null;
+  const items = isAtom
+    ? [...doc.querySelectorAll('entry')]
+    : [...doc.querySelectorAll('item, entry')];
+
+  return items.map(it => {
+    const get = (sel) => it.querySelector(sel)?.textContent?.trim() || '';
+    const link = isAtom
+      ? (it.querySelector('link[rel="alternate"]')?.getAttribute('href')
+         || it.querySelector('link')?.getAttribute('href') || '')
+      : get('link') || it.querySelector('link')?.getAttribute('href') || '';
+
+    const dateStr = get('pubDate') || get('published') || get('updated') || get('dc:date');
+    const date = dateStr ? new Date(dateStr) : new Date();
+    const content = get('content:encoded') || get('content') || get('summary') || get('description');
+    const snippet = stripHtml(content).slice(0, 200);
+
+    const title = get('title') || '(Sin título)';
+    const id = link || (sourceUrl + '|' + title);
+
+    return {
+      id,
+      sourceUrl,
+      title,
+      link,
+      date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
+      snippet,
+      content,
+    };
+  });
+}
+
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html || '';
+  return d.textContent || d.innerText || '';
+}
+
+/* ============ RENDER ============ */
+const $sources   = document.getElementById('sourceList');
+const $list      = document.getElementById('list');
+const $reader    = document.getElementById('reader');
+const $status    = document.getElementById('status');
+const $feedUrl   = document.getElementById('feedUrl');
+const $addBtn    = document.getElementById('addBtn');
+const $refresh   = document.getElementById('refreshBtn');
+const $markAll   = document.getElementById('markAllBtn');
+
+function setStatus(msg, isError=false) {
+  $status.textContent = msg;
+  $status.className = isError ? 'error' : '';
+}
+
+function renderSources() {
+  $sources.innerHTML = '';
+  const allItem = document.createElement('div');
+  allItem.className = 'source-item' + (state.activeSource === null ? ' active' : '');
+  allItem.innerHTML = `<span>🗂️ Todas</span>`;
+  allItem.onclick = () => { state.activeSource = null; renderSources(); renderList(); };
+  $sources.appendChild(allItem);
+
+  state.sources.forEach(s => {
+    const unread = state.articles.filter(a => a.sourceUrl === s.url && !state.read.has(a.id)).length;
+    const div = document.createElement('div');
+    div.className = 'source-item' + (state.activeSource === s.url ? ' active' : '');
+    div.innerHTML = `
+      <span>📡 ${escapeHtml(s.title || s.url)}</span>
+      ${unread ? `<span class="count">${unread}</span>` : ''}
+      <span class="del" title="Eliminar">✕</span>
+    `;
+    div.onclick = (e) => {
+      if (e.target.classList.contains('del')) {
+        if (confirm(`¿Eliminar "${s.title || s.url}"?`)) {
+          state.sources = state.sources.filter(x => x.url !== s.url);
+          state.articles = state.articles.filter(a => a.sourceUrl !== s.url);
+          if (state.activeSource === s.url) state.activeSource = null;
+          saveSources(); saveArticles(); renderSources(); renderList();
+        }
+        return;
+      }
+      state.activeSource = s.url;
+      renderSources(); renderList();
+    };
+    $sources.appendChild(div);
+  });
+}
+
+function renderList() {
+  let items = state.articles;
+  if (state.activeSource) items = items.filter(a => a.sourceUrl === state.activeSource);
+  items = [...items].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  if (!items.length) {
+    $list.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">
+      No hay artículos. Añade una fuente o pulsa "Actualizar".
+    </div>`;
+    return;
+  }
+
+  $list.innerHTML = '';
+  items.forEach(a => {
+    const read = state.read.has(a.id);
+    const el = document.createElement('div');
+    el.className = 'article ' + (read ? 'read' : 'unread');
+    el.innerHTML = `
+      <div class="title">${escapeHtml(a.title)}</div>
+      <div class="meta">
+        <span>${escapeHtml(sourceTitle(a.sourceUrl))}</span>
+        <span>${formatDate(a.date)}</span>
+      </div>
+      <div class="snippet">${escapeHtml(a.snippet)}</div>
+    `;
+    el.onclick = () => openArticle(a);
+    $list.appendChild(el);
+  });
+}
+
+function openArticle(a) {
+  state.activeArticle = a;
+  state.read.add(a.id);
+  saveRead();
+  renderSources(); renderList();
+
+  const body = a.content && a.content.length > 40
+    ? sanitizeHtml(a.content)
+    : `<p>${escapeHtml(a.snippet)}</p>
+       <p><a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">Leer en el sitio original →</a></p>`;
+
+  $reader.innerHTML = `
+    <h2>${escapeHtml(a.title)}</h2>
+    <div class="reader-meta">
+      ${escapeHtml(sourceTitle(a.sourceUrl))} · ${formatDate(a.date)}
+      · <a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">Abrir original</a>
+    </div>
+    <div class="reader-body">${body}</div>
+  `;
+  $reader.scrollTop = 0;
+}
+
+function sourceTitle(url) {
+  const s = state.sources.find(x => x.url === url);
+  return s?.title || url;
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const diff = (Date.now() - d) / 60000;
+  if (diff < 60) return `hace ${Math.max(1, Math.round(diff))} min`;
+  if (diff < 60*24) return `hace ${Math.round(diff/60)} h`;
+  return d.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Saneado básico: deja solo etiquetas seguras
+function sanitizeHtml(html) {
+  const allowed = new Set(['P','BR','A','STRONG','EM','B','I','U','UL','OL','LI',
+    'H1','H2','H3','H4','H5','H6','BLOCKQUOTE','IMG','FIGURE','FIGCAPTION','CODE','PRE','HR','SPAN','DIV']);
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const walk = (node) => {
+    [...node.children].forEach(child => {
+      if (!allowed.has(child.tagName)) {
+        child.replaceWith(...child.childNodes);
+        return;
+      }
+      [...child.attributes].forEach(attr => {
+        if (attr.name.startsWith('on')) child.removeAttribute(attr.name);
+      });
+      walk(child);
+    });
+  };
+  walk(tpl.content);
+  return tpl.innerHTML;
+}
+
+/* ============ ACCIONES ============ */
+async function addSource() {
+  const url = $feedUrl.value.trim();
+  if (!url) return;
+  if (state.sources.some(s => s.url === url)) {
+    setStatus('Esa fuente ya está añadida', true); return;
+  }
+  setStatus('Añadiendo fuente...');
+  $addBtn.disabled = true;
+  try {
+    const xml = await fetchFeed(url);
+    const items = parseFeed(xml, url);
+    // Intentamos sacar el título del canal
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    const title = doc.querySelector('channel > title')?.textContent?.trim()
+      || doc.querySelector('feed > title')?.textContent?.trim()
+      || new URL(url).hostname;
+
+    state.sources.push({ url, title });
+    saveSources();
+    mergeArticles(items);
+    $feedUrl.value = '';
+    setStatus(`✓ Añadida "${title}" con ${items.length} artículos`);
+    renderSources(); renderList();
+  } catch (e) {
+    console.error(e);
+    setStatus(`✗ No se pudo añadir: ${e.message}`, true);
+  } finally {
+    $addBtn.disabled = false;
+  }
+}
+
+async function refreshAll() {
+  if (!state.sources.length) { setStatus('No hay fuentes que actualizar', true); return; }
+  if (state.loading) return;
+  state.loading = true;
+  $refresh.disabled = true;
+
+  let okCount = 0, errCount = 0, totalNew = 0;
+  for (let i = 0; i < state.sources.length; i++) {
+    const s = state.sources[i];
+    setStatus(`Actualizando ${i+1}/${state.sources.length}: ${s.title}...`);
+    try {
+      const xml = await fetchFeed(s.url);
+      const items = parseFeed(xml, s.url);
+      const before = state.articles.length;
+      mergeArticles(items);
+      totalNew += state.articles.length - before;
+      okCount++;
+    } catch (e) {
+      console.warn('Error en', s.url, e);
+      errCount++;
+    }
+  }
+  saveArticles();
+  state.loading = false;
+  $refresh.disabled = false;
+  setStatus(`✓ ${okCount} fuentes actualizadas, ${errCount} con error, ${totalNew} artículos nuevos.`);
+  renderSources(); renderList();
+}
+
+function mergeArticles(newItems) {
+  const byId = new Map(state.articles.map(a => [a.id, a]));
+  newItems.forEach(a => {
+    if (!byId.has(a.id)) byId.set(a.id, a);
+  });
+  state.articles = [...byId.values()];
+  saveArticles();
+}
+
+function markAllRead() {
+  const items = state.activeSource
+    ? state.articles.filter(a => a.sourceUrl === state.activeSource)
+    : state.articles;
+  items.forEach(a => state.read.add(a.id));
+  saveRead(); renderSources(); renderList();
+}
+
+/* ============ EVENTOS ============ */
+$addBtn.onclick = addSource;
+$feedUrl.addEventListener('keydown', e => { if (e.key === 'Enter') addSource(); });
+$refresh.onclick = refreshAll;
+$markAll.onclick = markAllRead;
+
+/* ============ ARRANQUE ============ */
+loadState();
+
+// Fuentes de ejemplo si es la primera vez
+if (state.sources.length === 0 && state.articles.length === 0) {
+  const ejemplos = [
+    { url: 'https://www.xataka.com/feedburner.xml', title: 'Xataka' },
+    { url: 'https://hnrss.org/frontpage', title: 'Hacker News' },
+    { url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada', title: 'El País' },
+    { url: 'https://www.microsiervos.com/index.xml', title: 'Microsiervos' },
+  ];
+  state.sources = ejemplos;
+  saveSources();
+}
+
+renderSources();
+renderList();
+setStatus(`Listo. ${state.sources.length} fuentes guardadas. Pulsa "Actualizar" para descargar.`);
+
+// Auto-actualización cada 30 minutos (opcional, quítalo si no lo quieres)
+// setInterval(refreshAll, 30 * 60 * 1000);
+</script>
+
+</body>
+</html>
