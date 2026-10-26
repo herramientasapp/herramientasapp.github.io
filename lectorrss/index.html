@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v1.1</title>
+<title>Mi Lector RSS - v1.2</title>
 <!-- Cargamos Readability desde CDN para extraer el texto completo -->
 <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
 <style>
@@ -55,6 +55,7 @@
   .source-item { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:14px; color:var(--text); }
   .source-item:hover, .source-item.active { background:var(--bg); }
   .source-item .count { margin-left:auto; font-size:11px; background:var(--unread); color:#fff; border-radius:10px; padding:2px 8px; font-weight:600; }
+  .source-item .count.error { background:var(--danger); }
   .source-item .edit-btn { margin-left:4px; font-size:16px; color:var(--muted); opacity:0.6; padding:4px; }
   
   #list-container { flex:1; overflow-y:auto; background:var(--bg); width:100%; max-width: 100%; }
@@ -190,7 +191,7 @@
     <span id="statusText">Cargando…</span>
     <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
   </div>
-  <span class="version-tag">v1.1</span>
+  <span class="version-tag">v1.2</span>
 </div>
 
 <!-- Modales -->
@@ -320,7 +321,8 @@ const state = {
   collapsedCategories: new Set(),
   searchTerm: '',
   lastAction: null,
-  readerFontSize: 16
+  readerFontSize: 16,
+  failedSources: new Set()
 };
 
 const DEFAULT_PROMPTS = [
@@ -453,11 +455,21 @@ function renderSources() {
     if (!isCollapsed) {
       catSources.forEach(s => {
         const unread = state.articles.filter(a => a.sourceUrl === s.url && !state.read.has(a.id)).length;
+        const isFailed = state.failedSources.has(s.url);
+        
         const div = document.createElement('div');
         div.className = 'source-item' + (state.viewMode === s.url && !state.showOnlyFavorites ? ' active' : '');
+        
+        let countHtml = '';
+        if (isFailed) {
+          countHtml = `<span class="count error" title="Error al conectar">⚠️</span>`;
+        } else if (unread > 0) {
+          countHtml = `<span class="count">${unread}</span>`;
+        }
+
         div.innerHTML = `
-          <span style="margin-left:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📡 ${escapeHtml(s.title || s.url)}</span>
-          ${unread ? `<span class="count">${unread}</span>` : ''}
+          <span style="margin-left:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${isFailed ? 'opacity:0.5;' : ''}">📡 ${escapeHtml(s.title || s.url)}</span>
+          ${countHtml}
           <button class="edit-btn" onclick="event.stopPropagation(); openEditSource('${escapeHtml(s.url)}')">⚙️</button>
         `;
         div.onclick = () => { state.viewMode = s.url; state.showOnlyFavorites = false; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
@@ -587,6 +599,12 @@ function openArticle(a) {
     <div class="reader-meta">${escapeHtml(sourceTitle(a.sourceUrl))} · ${formatDate(a.date)}</div>
     <div class="reader-body">${body}</div>
   `;
+  
+  // Arreglar imágenes rotas en el lector
+  document.querySelectorAll('#readerContent img').forEach(img => {
+    img.onerror = function() { this.style.display = 'none'; };
+  });
+
   document.getElementById('reader-container').scrollTop = 0;
 }
 
@@ -867,7 +885,7 @@ document.getElementById('opmlFile').onchange = async (e) => {
   e.target.value = '';
 };
 
-// --- NUEVA LÓGICA DE DESCARGA CON CLOUDFLARE WORKER ---
+// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER ---
 const PROXY_URL = 'https://rss-proxy.lector-rss.workers.dev';
 
 async function fetchFeedXml(feedUrl) {
@@ -906,7 +924,7 @@ function parseRssXml(xmlText, sourceUrl) {
     const date = dateStr ? new Date(dateStr) : new Date();
     const description = get('description') || get('summary') || get('content');
     
-    // ARREGLO: Usar getElementsByTagName para evitar el error de los dos puntos (:)
+    // Usar getElementsByTagName para evitar el error de los dos puntos (:)
     const contentEl = item.getElementsByTagName('content:encoded')[0];
     const contentEncoded = contentEl ? (contentEl.textContent || '').trim() : description;
 
@@ -959,6 +977,7 @@ async function extractWithReadability(url) {
 
 async function loadData() {
   setStatus('Cargando fuentes…');
+  state.failedSources.clear();
 
   let allSources = [];
   try {
@@ -994,7 +1013,7 @@ async function loadData() {
       const xml = await fetchFeedXml(source.url);
       let items = parseRssXml(xml, source.url);
 
-      items = items.slice(0, 10); // Limitar a 10 por fuente para no saturar
+      items = items.slice(0, 10); // Limitar a 10 por fuente
 
       for (const item of items) {
         if (item.link) {
@@ -1008,6 +1027,8 @@ async function loadData() {
     } catch (e) {
       console.warn(`Error con ${source.title}:`, e.message);
       errorCount++;
+      state.failedSources.add(source.url);
+      validSources.push(source); // MANTENER LA FUENTE VISIBLE AUNQUE FALLE
     }
   }
 
@@ -1045,12 +1066,12 @@ async function loadData() {
   renderList();
   
   if (errorCount > 0) {
-    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fuentes fallaron).`);
+    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fuentes bloqueadas).`);
   } else {
     setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
   }
 }
-// --- FIN DE LA NUEVA LÓGICA DE DESCARGA ---
+// --- FIN DE LA LÓGICA DE DESCARGA ---
 
 function getIdeas() { try { return JSON.parse(localStorage.getItem(LS_IDEAS) || '[]'); } catch { return []; } }
 function setIdeas(arr) { localStorage.setItem(LS_IDEAS, JSON.stringify(arr)); }
