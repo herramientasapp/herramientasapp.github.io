@@ -184,8 +184,16 @@ main{flex:1;display:flex;overflow:hidden}
 
 <div class="ov" id="tagModal"><div class="modal">
   <h3>🏷️ Etiquetar artículo</h3>
-  <input id="tagIn" placeholder="Etiqueta (ej. Recetas)"><div id="tagList" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
+  <div id="artTags" class="row" style="justify-content:flex-start;margin-bottom:8px"></div><input id="tagIn" placeholder="Etiqueta (ej. Recetas)"><div id="tagList" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
   <div class="row"><button class="sec" onclick="hide('tagModal')">Cancelar</button><button onclick="saveTag()">Guardar</button></div>
+</div></div>
+
+<div class="ov" id="tagEdModal"><div class="modal">
+  <h3>🏷️ Editar etiqueta</h3>
+  <label>Nombre</label><input id="teName">
+  <p class="muted" style="margin-top:-6px">Si escribes el nombre de otra etiqueta que ya existe, se fusionan.</p>
+  <div class="row" style="justify-content:space-between"><button class="dan" onclick="delTagAll()">Eliminar</button>
+    <div class="row"><button class="sec" onclick="hide('tagEdModal')">Cancelar</button><button onclick="saveTagEdit()">Guardar</button></div></div>
 </div></div>
 
 <div class="ov" id="aiModal"><div class="modal">
@@ -260,7 +268,6 @@ function calcTags(){S.tags=new Set();S.saved.forEach(a=>(a.tags||[]).forEach(t=>
 function loadSources(){
   let s=LS.get(K.src,[]);
   const hidden=LS.get('rss_hidden_sources',[]),ov=LS.get('rss_source_overrides',{}); // migración de versiones anteriores
-  if(!s.length)s=[{url:'https://hnrss.org/frontpage',title:'Hacker News',category:'Tecnología'},{url:'https://www.xataka.com/feedburner.xml',title:'Xataka',category:'Tecnología'}];
   S.sources=s.filter(x=>!hidden.includes(x.url)).map(x=>ov[x.url]?{...x,title:ov[x.url].title||x.title,category:ov[x.url].category||x.category}:x);
   LS.set(K.src,S.sources);localStorage.removeItem('rss_hidden_sources');localStorage.removeItem('rss_source_overrides');
 }
@@ -353,7 +360,7 @@ async function loadData(only){
     list.forEach(s=>(fetched.get(s.url)||[]).forEach(a=>{if(!old.has(a.id))fresh++;take(a)}));
     S.articles.filter(a=>!fetched.has(a.sourceUrl)).forEach(take); // conserva lo anterior de fuentes que fallan o no se recargan
     S.articles=out.sort((a,b)=>new Date(b.date)-new Date(a.date));
-    setProgress(100);updateTitle();renderSources();renderList();
+    loading=false;setProgress(100);updateTitle();renderSources();renderList();
     setStatus(`Listo. ${out.length} artículos de ${S.sources.length} fuentes${err?` (${err} fallos)`:''}.`);
     if(fresh>0&&old.size>0)toast(`¡${fresh} artículos nuevos!`);
     lastLoad=Date.now();cachePut({id:'articles',list:S.articles,at:lastLoad}).catch(()=>{});
@@ -380,7 +387,7 @@ function renderSources(){
   fixed('⭐ Favoritos','all',S.favs.size,true);
   fixed('💾 Guardados','saved',S.saved.size,false);
   const tags=[...S.tags].filter(t=>!f||t.toLowerCase().includes(f));
-  if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>out.push(item(t,0,S.tag===t?'active':'',()=>go('saved',false,t))))}
+  if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>out.push(item(t,[...S.saved.values()].filter(a=>(a.tags||[]).includes(t)).length,S.tag===t?'active':'',()=>go('saved',false,t),h('button',{text:'⚙️',title:'Editar etiqueta',onclick:e=>{e.stopPropagation();editTag(t)}}))))}
   const cats={};S.sources.forEach(s=>(cats[s.category||'General']??=[]).push(s));
   Object.keys(cats).sort().forEach(cat=>{
     const ss=cats[cat].filter(s=>!f||(s.title||'').toLowerCase().includes(f)||cat.toLowerCase().includes(f));
@@ -413,7 +420,7 @@ function visible(){
 }
 function renderList(top){
   const l=$('list'),y=l.scrollTop,items=visible();
-  if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':'No hay artículos.'}));
+  if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':S.sources.length?'No hay artículos.':'Aún no tienes fuentes. Abre el menú ☰ y pulsa ＋ para añadir la primera.'}));
   else l.replaceChildren(...items.map(row));
   l.scrollTop=top?0:y;
 }
@@ -520,7 +527,7 @@ async function shareArt(){
 
 /* ---------- Etiquetas ---------- */
 function openTag(){
-  if(!S.art)return;$('tagIn').value='';
+  if(!S.art)return;$('tagIn').value='';renderArtTags();
   $('tagList').replaceChildren(...[...S.tags].map(t=>h('span',{class:'tag',style:'cursor:pointer',text:t,onclick:()=>$('tagIn').value=t})));
   show('tagModal');$('tagIn').focus();
 }
@@ -532,6 +539,35 @@ async function saveTag(){
     c.tags=[...new Set([...(c.tags||[]),t])];await dbPut(c);
   }catch{toast('No se pudo guardar la etiqueta');return}
   calcTags();hide('tagModal');setStatus('Etiqueta añadida (el artículo queda guardado).');refresh();
+}
+
+/* ---------- Gestión de etiquetas ---------- */
+let editingTag=null;
+function renderArtTags(){
+  const c=S.saved.get(S.art?.id);
+  $('artTags').replaceChildren(...((c&&c.tags)||[]).map(t=>h('span',{class:'tag',style:'cursor:pointer',title:'Quitar de este artículo',text:t+' ✕',onclick:()=>rmArtTag(t)})));
+}
+async function rmArtTag(t){
+  const c=S.saved.get(S.art?.id);if(!c)return;
+  c.tags=(c.tags||[]).filter(x=>x!==t);
+  try{await dbPut(c)}catch{toast('No se pudo quitar la etiqueta');return}
+  calcTags();renderArtTags();refresh();
+}
+async function retag(fn){ // aplica fn a las etiquetas de cada artículo guardado
+  try{for(const c of S.saved.values()){const nt=fn(c.tags||[]);if(nt){c.tags=nt;await dbPut(c)}}}catch{toast('No se pudo actualizar alguna etiqueta')}
+  calcTags();updateTitle();refresh();
+}
+function editTag(t){editingTag=t;$('teName').value=t;show('tagEdModal')}
+async function saveTagEdit(){
+  const o=editingTag,n=$('teName').value.trim();if(!n)return;
+  if(n!==o){await retag(l=>l.includes(o)?[...new Set(l.map(x=>x===o?n:x))]:null);if(S.tag===o)S.tag=n;setStatus(`Etiqueta renombrada a «${n}».`)}
+  hide('tagEdModal');updateTitle();refresh();
+}
+async function delTagAll(){
+  const o=editingTag;if(!confirm(`¿Eliminar la etiqueta «${o}» de todos los artículos? Los artículos no se borran.`))return;
+  await retag(l=>l.includes(o)?l.filter(x=>x!==o):null);
+  if(S.tag===o){S.tag=null;S.view='saved'}
+  hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta «${o}» eliminada.`);
 }
 
 /* ---------- Prompts de IA ---------- */
