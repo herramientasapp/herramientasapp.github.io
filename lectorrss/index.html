@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v1.3 Pro</title>
+<title>Mi Lector RSS - v1.3.1</title>
 <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
 <style>
   :root { --bg:#f5f5f7; --panel:#fff; --border:#e0e0e5; --text:#1c1c1e; --muted:#8e8e93; --accent:#0a84ff; --unread:#0a84ff; --danger:#ff3b30; --ok:#34c759; --favorite:#ffcc00; --reader-size:16px; }
@@ -14,8 +14,11 @@
   * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; transition: background 0.3s, color 0.3s; }
   
-  /* Barra de progreso superior */
   #progress-bar { position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0%; z-index:9999; transition: width 0.3s ease; }
+  
+  /* Toast (Mensaje flotante) */
+  #toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-100px); background:var(--text); color:var(--panel); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:10000; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity:0; pointer-events:none; }
+  #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
   header { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20; height:52px; }
   header h1 { font-size:16px; margin:0; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
@@ -92,7 +95,6 @@
     #drawer { width:85vw; left:-85vw; }
   }
 
-  /* Etiquetas */
   .tag-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; background:rgba(10, 132, 255, 0.1); color:var(--accent); margin-right:4px; border: 1px solid rgba(10, 132, 255, 0.2); }
 
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:200; padding:16px; }
@@ -104,20 +106,10 @@
   .modal input, .modal textarea, .modal select { width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:15px; margin-bottom:16px; background:var(--bg); color:var(--text); font-family:inherit; }
   .modal textarea { min-height:120px; resize:vertical; }
   .modal .actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
-  
-  .idea { padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; font-size:14px; }
-  .idea.done { opacity:.6; }
-  .idea .text { white-space:pre-wrap; line-height:1.4; margin-bottom:8px; }
-  .idea .idea-actions { display:flex; gap:8px; }
-  .idea .idea-actions button { padding:6px 10px; font-size:12px; }
 
   #status { padding:6px 12px; font-size:11px; color:var(--muted); background:var(--panel); border-top:1px solid var(--border); min-height:28px; display:flex; justify-content:space-between; align-items:center; }
   .version-tag { font-size:10px; color:#ccc; }
   .undo-btn { background:var(--accent); color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-left:8px; }
-  
-  .help-box { background: rgba(10, 132, 255, 0.1); border-left: 4px solid var(--accent); padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
-  .help-box code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-  .feed-editor-textarea { font-family: monospace; font-size: 13px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
   
   .prompt-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; cursor:pointer; }
   .prompt-item:hover { background:var(--bg); }
@@ -127,6 +119,7 @@
 <body>
 
 <div id="progress-bar"></div>
+<div id="toast"></div>
 
 <header>
   <button class="icon" onclick="toggleDrawer()">☰</button>
@@ -195,7 +188,7 @@
     <span id="statusText">Cargando…</span>
     <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
   </div>
-  <span class="version-tag">v1.3 Pro</span>
+  <span class="version-tag">v1.3.1</span>
 </div>
 
 <!-- Modales -->
@@ -361,7 +354,7 @@ const DEFAULT_PROMPTS = [
 let db = null;
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('mi_lector_db', 2); // Subimos versión por nuevas tablas
+    const req = indexedDB.open('mi_lector_db', 2);
     req.onupgradeneeded = e => {
       const d = e.target.result;
       if (!d.objectStoreNames.contains('guardados')) d.createObjectStore('guardados', { keyPath: 'id' });
@@ -387,6 +380,13 @@ const $searchBar = document.getElementById('searchBar');
 const $searchInput = document.getElementById('searchInput');
 const $filterBtn = document.getElementById('filterBtn');
 const $progressBar = document.getElementById('progress-bar');
+const $toast = document.getElementById('toast');
+
+function showToast(msg) {
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  setTimeout(() => { $toast.classList.remove('show'); }, 3000);
+}
 
 function setStatus(msg, type='') { 
   $statusText.textContent = msg; 
@@ -547,13 +547,9 @@ function renderList() {
     if (state.showOnlyFavorites) items = items.filter(a => state.favorites.has(a.id));
   }
   
-  if (state.activeTagFilter) {
-    items = items.filter(a => a.tags && a.tags.includes(state.activeTagFilter));
-  }
+  if (state.activeTagFilter) items = items.filter(a => a.tags && a.tags.includes(state.activeTagFilter));
   if (state.showOnlyUnread) items = items.filter(a => !state.read.has(a.id));
-  if (state.searchTerm) {
-    items = items.filter(a => a.title.toLowerCase().includes(state.searchTerm) || a.snippet.toLowerCase().includes(state.searchTerm));
-  }
+  if (state.searchTerm) items = items.filter(a => a.title.toLowerCase().includes(state.searchTerm) || a.snippet.toLowerCase().includes(state.searchTerm));
 
   items = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
   
@@ -677,7 +673,6 @@ async function openArticle(a) {
   };
 
   if (!a.content || a.content.length < 200) {
-    // LAZY LOAD: Extraer contenido bajo demanda
     $readerContent.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--muted);">Extrayendo texto completo…<br><br><div class="spinner" style="display:inline-block; width:30px; height:30px; border:3px solid rgba(10,132,255,0.3); border-top-color:var(--accent); border-radius:50%; animation: spin 1s linear infinite;"></div></div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
     
     const full = await extractWithReadability(a.link);
@@ -689,7 +684,7 @@ async function openArticle(a) {
         state.saved.set(a.id, toSave);
       }
     } else {
-      a.content = a.snippet; // Fallback
+      a.content = a.snippet; 
     }
   }
 
@@ -737,7 +732,6 @@ window.saveTag = () => {
     saved.tags = a.tags;
     dbPut('guardados', saved);
   } else {
-    // Si no está guardado, lo guardamos automáticamente al etiquetar para no perder la etiqueta
     const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
     dbPut('guardados', toSave);
     state.saved.set(a.id, toSave);
@@ -746,10 +740,7 @@ window.saveTag = () => {
   document.getElementById('tagModal').classList.remove('show');
   setStatus('Etiqueta añadida.', 'ok');
   renderSources(); renderList();
-  // Refrescar la vista del lector
-  if (document.body.classList.contains('reading')) {
-    openArticle(state.activeArticle);
-  }
+  if (document.body.classList.contains('reading')) openArticle(state.activeArticle);
 };
 
 window.openSettings = () => {
@@ -1051,7 +1042,7 @@ document.getElementById('opmlFile').onchange = async (e) => {
   e.target.value = '';
 };
 
-// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER (LAZY LOAD) ---
+// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER ---
 const PROXY_URL = 'https://rss-proxy.lector-rss.workers.dev';
 
 async function fetchFeedXml(feedUrl) {
@@ -1099,7 +1090,7 @@ function parseRssXml(xmlText, sourceUrl) {
       link,
       date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
       snippet: stripHtml(contentEncoded).slice(0, 200),
-      content: contentEncoded || description, // Puede ser corto, se extrae en openArticle si es necesario
+      content: contentEncoded || description,
     });
   });
 
@@ -1171,6 +1162,10 @@ async function loadData() {
   const validSources = [];
   let errorCount = 0;
   let processedCount = 0;
+  
+  // Para el toast de nuevos artículos
+  const oldArticleIds = new Set(state.articles.map(a => a.id));
+  let newArticlesCount = 0;
 
   for (const source of allSources) {
     processedCount++;
@@ -1181,11 +1176,12 @@ async function loadData() {
       const xml = await fetchFeedXml(source.url);
       let items = parseRssXml(xml, source.url);
 
-      items = items.slice(0, state.maxArticles); // Límite configurable
-
-      // AQUÍ ESTÁ EL CAMBIO CLAVE DEL LAZY LOAD: 
-      // Ya NO llamamos a Readability para cada item. Solo guardamos el resumen del RSS.
+      items = items.slice(0, state.maxArticles); 
       
+      items.forEach(item => {
+        if (!oldArticleIds.has(item.id)) newArticlesCount++;
+      });
+
       allArticles.push(...items);
       validSources.push(source);
     } catch (e) {
@@ -1201,7 +1197,6 @@ async function loadData() {
   state.sources = validSources;
   state.articles = allArticles;
 
-  // Restaurar estado local
   try { const s = localStorage.getItem(LS_READ); if (s) state.read = new Set(JSON.parse(s)); } catch(e){}
   try { const s = localStorage.getItem(LS_FAVS); if (s) state.favorites = new Set(JSON.parse(s)); } catch(e){}
   try {
@@ -1229,7 +1224,6 @@ async function loadData() {
     const savedArr = await dbGetAll('guardados');
     state.saved = new Map(savedArr.map(x => [x.id, x]));
     
-    // Reconstruir etiquetas
     state.tags.clear();
     state.saved.forEach(a => {
       if (a.tags) a.tags.forEach(t => state.tags.set(t, t));
@@ -1245,6 +1239,10 @@ async function loadData() {
     setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fallos).`);
   } else {
     setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
+  }
+  
+  if (newArticlesCount > 0) {
+    showToast(`¡${newArticlesCount} artículos nuevos!`);
   }
 }
 
