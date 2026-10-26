@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v1.3.2</title>
+<title>Mi Lector RSS - v1.4</title>
 <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
 <style>
   :root { --bg:#f5f5f7; --panel:#fff; --border:#e0e0e5; --text:#1c1c1e; --muted:#8e8e93; --accent:#0a84ff; --unread:#0a84ff; --danger:#ff3b30; --ok:#34c759; --favorite:#ffcc00; --reader-size:16px; }
@@ -185,7 +185,7 @@
     <span id="statusText">Cargando…</span>
     <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
   </div>
-  <span class="version-tag">v1.3.2</span>
+  <span class="version-tag">v1.4</span>
 </div>
 
 <!-- Modales -->
@@ -210,7 +210,7 @@
     <textarea id="quickPromptInput" rows="3">Resume este artículo en 3 puntos clave con un tono directo:</textarea>
     
     <label>Artículos a descargar por fuente (Lista)</label>
-    <input type="number" id="maxArticlesInput" value="50" min="10" max="100">
+    <input type="number" id="maxArticlesInput" value="40" min="10" max="100">
     
     <div class="actions" style="margin-top:24px;">
       <button class="secondary" onclick="document.getElementById('settingsModal').classList.remove('show')">Cerrar</button>
@@ -339,7 +339,7 @@ const state = {
   readerFontSize: 16,
   failedSources: new Set(),
   quickAIPrompt: "Resume este artículo en 3 puntos clave con un tono directo:",
-  maxArticles: 50
+  maxArticles: 40
 };
 
 const DEFAULT_PROMPTS = [
@@ -680,8 +680,6 @@ async function openArticle(a) {
         state.saved.set(a.id, toSave);
       }
     } else {
-      // SI READABILITY FALLA, USAMOS EL CONTENIDO ORIGINAL DEL RSS (content:encoded)
-      // El Español a veces lo mete completo aquí.
       if (a.fullRssContent && a.fullRssContent.length > 200) {
         a.content = a.fullRssContent;
       } else {
@@ -753,7 +751,7 @@ window.openSettings = () => {
 
 window.saveSettings = () => {
   state.quickAIPrompt = document.getElementById('quickPromptInput').value;
-  state.maxArticles = parseInt(document.getElementById('maxArticlesInput').value) || 50;
+  state.maxArticles = parseInt(document.getElementById('maxArticlesInput').value) || 40;
   
   const settings = { quickAIPrompt: state.quickAIPrompt, maxArticles: state.maxArticles };
   localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
@@ -1083,7 +1081,6 @@ function parseRssXml(xmlText, sourceUrl) {
     const date = dateStr ? new Date(dateStr) : new Date();
     const description = get('description') || get('summary') || get('content');
     
-    // Guardamos el contenido completo del RSS por si falla Readability
     const contentEl = item.getElementsByTagName('content:encoded')[0];
     const fullRssContent = contentEl ? (contentEl.textContent || '').trim() : description;
 
@@ -1094,8 +1091,8 @@ function parseRssXml(xmlText, sourceUrl) {
       link,
       date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
       snippet: stripHtml(fullRssContent).slice(0, 200),
-      fullRssContent: fullRssContent, // Guardamos el texto completo del RSS
-      content: fullRssContent // Inicialmente asignamos esto
+      fullRssContent: fullRssContent,
+      content: fullRssContent
     });
   });
 
@@ -1109,7 +1106,7 @@ async function extractWithReadability(url) {
     if (!res.ok) return null;
     const html = await res.text();
 
-    // Si la respuesta del Worker es muy corta, probablemente sea un bloqueo.
+    // Si es muy corto, probablemente sea bloqueo
     if (html.length < 1000) return null;
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -1184,6 +1181,15 @@ async function loadData() {
       let items = parseRssXml(xml, source.url);
 
       items = items.slice(0, state.maxArticles); 
+      
+      // AQUÍ ESTÁ EL TRUCO: Extraemos el texto en el momento de la descarga 
+      // (como en la versión de esta mañana que SÍ funcionaba con El Español)
+      for (const item of items) {
+        if (item.link) {
+          const full = await extractWithReadability(item.link);
+          if (full && full.length > 500) item.content = full;
+        }
+      }
       
       items.forEach(item => {
         if (!oldArticleIds.has(item.id)) newArticlesCount++;
