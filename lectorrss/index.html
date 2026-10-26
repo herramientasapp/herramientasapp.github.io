@@ -2,1333 +2,706 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v2.1 Final</title>
-<script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src https://rss-proxy.lector-rss.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Mi Lector RSS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0a84ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Lector">
+<script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js" crossorigin="anonymous"></script>
 <style>
-  :root { --bg:#f5f5f7; --panel:#fff; --border:#e0e0e5; --text:#1c1c1e; --muted:#8e8e93; --accent:#0a84ff; --unread:#0a84ff; --danger:#ff3b30; --ok:#34c759; --favorite:#ffcc00; --reader-size:16px; }
-  body.dark-mode { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; }
-  @media (prefers-color-scheme: dark) { body:not(.light-mode) { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; } }
-
-  * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; transition: background 0.3s, color 0.3s; }
-  
-  #progress-bar { position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0%; z-index:9999; transition: width 0.3s ease; }
-  #toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-100px); background:var(--text); color:var(--panel); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:10000; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity:0; pointer-events:none; }
-  #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-
-  header { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20; height:52px; }
-  header h1 { font-size:16px; margin:0; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
-  button { padding:8px 12px; border:none; border-radius:8px; background:var(--accent); color:#fff; font-size:13px; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; }
-  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--border); }
-  button.icon { padding:8px; background:transparent; color:var(--text); border:none; font-size:18px; }
-  button.danger { background:var(--danger); color:#fff; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  button.active { background:var(--accent); color:white; border-color:var(--accent); }
-  
-  main { flex:1; display:flex; position:relative; overflow:hidden; }
-  
-  #drawer { position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--panel); z-index:100; transition:left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; border-right:1px solid var(--border); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-  #drawer.open { left:0; }
-  .drawer-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-  .drawer-header h2 { margin:0; font-size:18px; }
-  .drawer-search { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-  .drawer-search input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px; }
-  .drawer-content { flex:1; overflow-y:auto; padding:8px; }
-  
-  .drawer-menu { position: relative; }
-  .drawer-menu-content { display: none; position: absolute; right: 0; top: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 150; min-width: 220px; flex-direction: column; padding: 8px; gap: 4px; }
-  .drawer-menu.open .drawer-menu-content { display: flex; }
-  .drawer-menu-content button { justify-content: flex-start; padding: 10px 12px; font-size: 14px; color: var(--text); background: transparent; }
-  .drawer-menu-content button:hover { background: var(--bg); }
-
-  #overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-  #overlay.show { opacity:1; pointer-events:auto; }
-  
-  .category-title { font-size:11px; text-transform:uppercase; color:var(--muted); margin:16px 8px 6px; letter-spacing:.5px; display:flex; align-items:center; gap:4px; cursor:pointer; }
-  .source-item { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:14px; color:var(--text); }
-  .source-item:hover, .source-item.active { background:var(--bg); }
-  .source-item .count { margin-left:auto; font-size:11px; background:var(--unread); color:#fff; border-radius:10px; padding:2px 8px; font-weight:600; }
-  .source-item .count.error { background:var(--danger); }
-  .source-item.failed { color: var(--danger); }
-  .source-item .edit-btn { margin-left:4px; font-size:16px; color:var(--muted); opacity:0.6; padding:4px; }
-  
-  #list-container { flex:1; overflow-y:auto; background:var(--bg); width:100%; max-width: 100%; }
-  @media(min-width:900px) { #list-container { max-width: 450px; border-right: 1px solid var(--border); } }
-  
-  .article-wrapper { position:relative; overflow:hidden; border-bottom:1px solid var(--border); background:var(--panel); }
-  .article { padding:10px 14px; cursor:pointer; background:var(--panel); display:flex; gap:10px; position:relative; transition:transform 0.15s ease-out; width:100%; z-index:2; border-top: 3px solid transparent; }
-  .article.is-fav { border-top-color: rgba(255, 204, 0, 0.4); }
-  .article.is-read { border-top-color: rgba(10, 132, 255, 0.3); }
-  .article:hover { background:var(--bg); }
-  .article.read { opacity:.65; }
-  .article .thumb { width:48px; height:48px; border-radius:6px; object-fit:cover; flex-shrink:0; background:var(--bg); }
-  .article .body { flex:1; min-width:0; }
-  .article .title { font-size:14px; font-weight:600; margin-bottom:4px; line-height:1.25; }
-  .article .meta { font-size:11px; color:var(--muted); display:flex; gap:6px; flex-wrap:wrap; }
-  .article .snippet { font-size:12px; color:var(--muted); margin-top:4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .article .delete-btn { position:absolute; top:10px; right:10px; color:var(--danger); background:none; border:none; font-size:16px; padding:0; cursor:pointer; z-index:5; }
-  
-  #reader-container { display:none; flex:1; background:var(--panel); overflow-y:auto; flex-direction:column; }
-  @media(min-width:900px) { 
-    #list-container { display:block !important; } 
-    #reader-container { display:flex !important; } 
-  }
-  
-  /* BARRA DE ICONOS MÁS ALTA Y GRANDE */
-  .reader-header { position:sticky; top:0; background:var(--panel); padding:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; z-index:10; overflow-x:auto; min-height: 56px; }
-  .reader-header .title { font-size:15px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;}
-  .reader-header .icon { padding:10px; font-size:20px; } /* Iconos más grandes */
-  .reader-content { padding:20px; max-width:800px; margin:0 auto; width:100%; }
-  .reader-content h2 { font-size:22px; margin:0 0 12px; line-height:1.3; }
-  .reader-meta { font-size:13px; color:var(--muted); margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-  .reader-body { font-size:var(--reader-size); line-height:1.7; }
-  .reader-body img { max-width:100%; height:auto; border-radius:8px; margin:12px 0; }
-  .reader-body a { color:var(--accent); }
-  
-  @media(max-width:899px) {
-    body.reading #list-container { display:none; }
-    body.reading #reader-container { display:flex; }
-    body.reading header { display:none; }
-    #drawer { width:85vw; left:-85vw; }
-  }
-
-  .tag-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; background:rgba(10, 132, 255, 0.1); color:var(--accent); margin-right:4px; border: 1px solid rgba(10, 132, 255, 0.2); }
-
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:200; padding:16px; }
-  .modal-overlay.show { display:flex; }
-  .modal { background:var(--panel); border-radius:12px; padding:20px; width:min(520px,100%); max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.3); }
-  .modal h3 { margin:0 0 12px; font-size:18px; }
-  .modal p { font-size:14px; color:var(--muted); line-height:1.5; }
-  .modal label { display:block; font-size:13px; font-weight:600; margin-bottom:4px; margin-top:12px; }
-  .modal input, .modal textarea, .modal select { width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:15px; margin-bottom:16px; background:var(--bg); color:var(--text); font-family:inherit; }
-  .modal textarea { min-height:120px; resize:vertical; }
-  .modal .actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
-
-  .idea-item { padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; font-size:14px; }
-  .idea-item.done { opacity:.6; }
-  .idea-item .text { white-space:pre-wrap; line-height:1.4; margin-bottom:8px; }
-  .idea-item .idea-actions { display:flex; gap:8px; }
-  .idea-item .idea-actions button { padding:6px 10px; font-size:12px; }
-
-  #status { padding:6px 12px; font-size:11px; color:var(--muted); background:var(--panel); border-top:1px solid var(--border); min-height:28px; display:flex; justify-content:space-between; align-items:center; }
-  .version-tag { font-size:10px; color:#ccc; }
-  .undo-btn { background:var(--accent); color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-left:8px; }
-  
-  .help-box { background: rgba(10, 132, 255, 0.1); border-left: 4px solid var(--accent); padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
-  .help-box code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-  .feed-editor-textarea { font-family: monospace; font-size: 13px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
-  
-  .prompt-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; cursor:pointer; }
-  .prompt-item:hover { background:var(--bg); }
-  .prompt-item .del-prompt { color:var(--danger); font-size:16px; padding:4px; cursor:pointer; }
+:root{color-scheme:light dark;--bg:light-dark(#f5f5f7,#1c1c1e);--panel:light-dark(#fff,#2c2c2e);--border:light-dark(#e0e0e5,#3a3a3c);--text:light-dark(#1c1c1e,#f2f2f7);--muted:#8e8e93;--accent:#0a84ff;--danger:#ff3b30;--rs:16px}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+button{padding:8px 12px;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;cursor:pointer;white-space:nowrap}
+button.sec{background:transparent;color:var(--accent);border:1px solid var(--border)}
+button.ic{padding:8px 10px;background:transparent;color:var(--text);font-size:19px}
+button.ic.on{background:var(--accent);color:#fff}
+button.dan{background:var(--danger)}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-size:15px;margin:4px 0 12px}
+textarea{min-height:90px;resize:vertical}
+label{font-weight:600;font-size:13px}
+.muted{color:var(--muted);font-size:12px}.center{text-align:center;padding:30px}
+#bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:999;transition:width .3s}
+#toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-90px);background:var(--text);color:var(--panel);padding:10px 18px;border-radius:20px;font-weight:600;z-index:1000;transition:transform .3s;pointer-events:none}
+#toast.show{transform:translate(-50%,0)}
+header{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);min-height:52px}
+header h1{font-size:16px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#searchBar{display:none;padding:8px 12px 0;background:var(--panel);border-bottom:1px solid var(--border)}
+main{flex:1;display:flex;overflow:hidden}
+#list{flex:1;overflow-y:auto;overscroll-behavior-y:contain}
+#reader{display:none;flex:1;overflow-y:auto;background:var(--panel);flex-direction:column}
+@media(min-width:900px){#list{flex:none;width:430px;border-right:1px solid var(--border)}#reader{display:flex}#reader .back{display:none}}
+@media(max-width:899px){body.reading #list,body.reading header,body.reading #searchBar{display:none}body.reading #reader{display:flex}}
+.article{display:flex;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border);border-left:3px solid transparent;cursor:pointer}
+.article:hover{background:var(--bg)}.article.fav{border-left-color:#ffcc00}.article.read{opacity:.6}
+.thumb{width:56px;height:56px;border-radius:6px;object-fit:cover;flex:none}
+.article .body{flex:1;min-width:0}.title{font-weight:600;line-height:1.25;margin-bottom:3px}
+.meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.snippet{font-size:12px;color:var(--muted);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tag{padding:1px 6px;border-radius:4px;font-size:11px;background:#0a84ff1a;color:var(--accent)}
+.rhead{position:sticky;top:0;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);z-index:5}
+.rhead>*{flex:1 1 0;max-width:72px;min-width:0;display:flex}
+.rhead .ic{display:flex;align-items:center;justify-content:center;width:100%;padding:9px 0}
+.rhead .ic svg{display:block}
+.rc{padding:20px;max-width:780px;margin:0 auto;width:100%}.rc h2{font-size:22px;line-height:1.3;margin:0 0 10px}
+.rmeta{font-size:13px;color:var(--muted);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.rbody{font-size:var(--rs);line-height:1.7;overflow-wrap:anywhere}.rbody img{max-width:100%;height:auto;border-radius:8px}.rbody a{color:var(--accent)}.rbody pre{overflow-x:auto}.rbody table{display:block;overflow-x:auto}
+.spin{width:28px;height:28px;border:3px solid #0a84ff4d;border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;margin:20px auto}@keyframes sp{to{transform:rotate(360deg)}}
+#overlay{position:fixed;inset:0;background:#0008;z-index:90;opacity:0;pointer-events:none;transition:opacity .3s}#overlay.show{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(300px,85vw);transform:translateX(-105%);background:var(--panel);z-index:100;transition:transform .3s;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+#drawer.open{transform:none}
+.dh{display:flex;align-items:center;gap:4px;padding:8px 12px}.dh h2{flex:1;margin:0;font-size:18px}
+#drawer .f{padding:0 12px}#srcList{flex:1;overflow-y:auto;padding:0 8px 16px}
+.cat{font-size:11px;text-transform:uppercase;color:var(--muted);margin:14px 8px 4px;letter-spacing:.5px;cursor:pointer}
+.src{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer}.src:hover,.src.active{background:var(--bg)}.src.failed{color:var(--danger)}
+.src .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.count{font-size:11px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 8px;font-weight:600}
+.src button{padding:2px 6px;background:none;color:var(--muted);font-size:15px}
+#status{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;font-size:11px;color:var(--muted);background:var(--panel);border-top:1px solid var(--border);min-height:28px}
+#status button{padding:3px 8px;font-size:11px;margin-left:8px}
+.ov{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:200;padding:16px}.ov.show{display:flex}
+.modal{background:var(--panel);border-radius:12px;padding:20px;width:min(520px,100%);max-height:88vh;overflow-y:auto}.modal h3{margin:0 0 12px}
+.row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.page{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}.page.show{display:flex}
+.page .pb{flex:1;overflow-y:auto;padding:16px;max-width:640px;width:100%;margin:0 auto}
+.page h4{margin:20px 0 8px;font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.5px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.card.done{opacity:.6}.card .tx{white-space:pre-wrap;line-height:1.4;margin-bottom:8px;overflow-wrap:anywhere}.card .row{justify-content:flex-start}.card button{padding:5px 10px;font-size:12px}
+.pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer}.pr:hover{background:var(--bg)}
+.sw{position:relative;overflow:hidden;background:var(--bg)}
+.sw .sb{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:20px;color:#fff}
+.sw .sb span{visibility:hidden}
+.sw .article{position:relative}
+.rnav{display:flex;gap:8px;margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
+.rnav button{flex:1;min-width:0;text-align:left;white-space:normal;padding:10px 12px;color:var(--text)}
+.rnav button:last-child{text-align:right}
+.rnav .nt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;margin-top:2px}
+#ptr{position:fixed;top:60px;left:50%;transform:translate(-50%,-30px);width:36px;height:36px;border-radius:50%;background:var(--panel);border:1px solid var(--border);box-shadow:0 2px 8px #0003;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--accent);opacity:0;pointer-events:none;z-index:50}
 </style>
 </head>
 <body>
-
-<div id="progress-bar"></div>
-<div id="toast"></div>
+<div id="bar"></div><div id="toast"></div><div id="ptr">⟳</div>
 
 <header>
-  <button class="icon" onclick="toggleDrawer()">☰</button>
-  <h1 id="currentViewTitle">Todas</h1>
-  <button class="icon" id="filterBtn" onclick="toggleUnreadFilter()" title="Filtrar no leídos">👁️</button>
-  <button class="icon" id="searchBtn" onclick="toggleSearch()" title="Buscar">🔍</button>
-  <button class="icon" onclick="confirmMarkAllRead()" title="Marcar todo leído">✓</button>
-  <button class="icon" onclick="loadData()" title="Recargar">⟳</button>
+  <button class="ic" onclick="toggleDrawer()" title="Menú">☰</button>
+  <h1 id="viewTitle">Todas</h1>
+  <button class="ic" id="fBtn" onclick="toggleUnread()" title="Solo no leídos">👁️</button>
+  <button class="ic" onclick="toggleSearch()" title="Buscar">🔍</button>
+  <button class="ic" onclick="markAllRead()" title="Marcar todo como leído">✓</button>
+  <button class="ic" onclick="loadData()" title="Actualizar">⟳</button>
 </header>
-
-<div id="searchBar" style="display:none; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border);">
-  <input type="text" id="searchInput" placeholder="Buscar en artículos..." style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
-</div>
+<div id="searchBar"><input id="q" placeholder="Buscar en artículos…"></div>
 
 <main>
-  <section id="list-container"></section>
-  
-  <section id="reader-container">
-    <div class="reader-header">
-      <button class="icon" onclick="closeArticle()">←</button>
-      <div class="title" id="readerHeaderTitle"></div>
-      <button class="icon" id="readerShareBtn" title="Compartir">📤</button>
-      <button class="icon" id="readerFavBtn" title="Favorito">☆</button>
-      <button class="icon" id="readerSaveBtn" title="Guardar">💾</button>
-      <button class="icon" id="readerTagBtn" title="Etiquetar">🏷️</button>
-      <button class="icon" onclick="quickAISummary()" title="Resumen Rápido IA">✨</button>
-      <button class="icon" id="readerUnreadBtn" title="Marcar no leído" onclick="toggleReadStatus()">↺</button>
-      <button class="icon" onclick="openReaderMenu()" title="Más">⋮</button>
+  <section id="list"></section>
+  <section id="reader">
+    <div class="rhead">
+      <button class="ic back" onclick="closeArt()" title="Volver">←</button>
+      <button class="ic" id="bShare" onclick="shareArt()" title="Compartir"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></button>
+      <button class="ic" id="bFav" onclick="toggleFav(S.art.id)" title="Favorito (se guarda también sin conexión)">☆</button>
+      <button class="ic" onclick="openTag()" title="Etiquetar">🏷️</button>
+      <button class="ic" onclick="openPrompts()" title="Profundizar con IA">✨</button>
+      <button class="ic" id="bRead" onclick="toggleRead(S.art.id)" title="Marcar leído / no leído">↺</button>
+      <a id="bOrig" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button class="ic" title="Abrir original">↗</button></a>
     </div>
-    <div class="reader-content" id="readerContent"></div>
+    <div class="rc" id="rc"><p class="center muted">Selecciona un artículo</p></div>
   </section>
 </main>
 
 <div id="overlay" onclick="toggleDrawer()"></div>
-<div id="drawer">
-  <div class="drawer-header">
-    <h2>📰 Mi Lector</h2>
-    <div class="drawer-menu" id="drawerMenu">
-      <button class="icon" onclick="toggleDrawerMenu(event)">⋮</button>
-      <div class="drawer-menu-content">
-        <button class="secondary" onclick="openAddModal(); closeDrawerMenu(); toggleDrawer();">+ Añadir Fuente</button>
-        <button class="secondary" onclick="openDiscoverModal(); closeDrawerMenu(); toggleDrawer();">🔍 Descubrir Feed</button>
-        <button class="secondary" onclick="document.getElementById('opmlFile').click(); closeDrawerMenu(); toggleDrawer();">📥 Importar OPML</button>
-        <button class="secondary" onclick="openFeedEditor(); closeDrawerMenu(); toggleDrawer();">⚙️ Editor de Feeds</button>
-        <button class="secondary" onclick="toggleTheme(); closeDrawerMenu(); toggleDrawer();" id="themeToggleBtn">🌙 Modo Oscuro</button>
-        <button class="secondary" onclick="openSettings(); closeDrawerMenu(); toggleDrawer();">⚙️ Ajustes</button>
-        <button class="secondary" onclick="document.getElementById('ideasModal').classList.add('show'); closeDrawerMenu(); toggleDrawer();">💡 Ideas</button>
-        <button class="secondary" onclick="exportBackup(); closeDrawerMenu();">📤 Exportar JSON</button>
-        <button class="secondary" onclick="document.getElementById('importFile').click(); closeDrawerMenu();">📥 Importar JSON</button>
-      </div>
-    </div>
-    <button class="icon" onclick="toggleDrawer()">✕</button>
+<aside id="drawer">
+  <div class="dh"><h2>📰 Mi Lector</h2>
+    <button class="ic" onclick="show('srcModal',newSrc());toggleDrawer()" title="Añadir fuente">＋</button>
+    <button class="ic" onclick="show('settings');toggleDrawer()" title="Ajustes">⚙️</button>
+    <button class="ic" onclick="toggleDrawer()">✕</button></div>
+  <div class="f"><input id="srcFilter" placeholder="Filtrar fuentes o etiquetas…" oninput="renderSources()"></div>
+  <div id="srcList"></div>
+</aside>
+
+<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v4.0</span></div>
+
+<!-- Ajustes -->
+<div class="page" id="settings">
+  <div class="dh"><button class="ic" onclick="hide('settings')">←</button><h2>Ajustes</h2></div>
+  <div class="pb">
+    <h4>Apariencia</h4>
+    <label>Tema</label><select id="cTheme" onchange="saveCfg()"><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Oscuro</option></select>
+    <label>Tamaño de letra al leer: <span id="fontVal"></span></label><input type="range" id="cFont" min="12" max="26" oninput="saveCfg()">
+    <h4>Lectura</h4>
+    <label>Artículos a descargar por fuente</label><input type="number" id="cMax" min="10" max="200" onchange="saveCfg()">
+    <p class="muted" style="margin-top:-8px">A mayor número, más tardará en actualizar.</p>
+    <label>Prompt de IA rápido (primero de la lista ✨)</label><textarea id="cQuick" onchange="saveCfg()"></textarea>
+    <h4>Fuentes</h4>
+    <div class="row" style="justify-content:flex-start">
+      <button class="sec" onclick="show('srcModal',newSrc())">＋ Añadir fuente</button>
+      <button class="sec" onclick="openEditor()">Editor de feeds</button>
+      <button class="sec" onclick="$('opml').click()">Importar OPML</button>
+      <button class="sec" onclick="exportOpml()">Exportar OPML</button></div>
+    <p class="muted">Para descubrir el feed de una web prueba: /feed, /rss, /rss.xml, /feed.xml, /atom.xml</p>
+    <h4>Datos</h4>
+    <div class="row" style="justify-content:flex-start">
+      <button class="sec" onclick="exportBackup()">📤 Exportar copia (JSON)</button>
+      <button class="sec" onclick="$('imp').click()">📥 Importar copia</button></div>
+    <h4>Más</h4>
+    <button class="sec" onclick="show('ideas')">💡 Ideas de mejora</button>
   </div>
-  
-  <div class="drawer-search">
-    <input type="text" id="sourceSearch" placeholder="Filtrar fuentes o etiquetas..." oninput="renderSources()">
-  </div>
-  
-  <div class="drawer-content" id="drawerSources"></div>
-  
-  <input type="file" id="importFile" accept=".json" style="display:none">
-  <input type="file" id="opmlFile" accept=".opml,.xml" style="display:none">
 </div>
 
-<div id="status">
-  <div style="display:flex; align-items:center;">
-    <span id="statusText">Cargando…</span>
-    <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
+<!-- Ideas de mejora -->
+<div class="page" id="ideas">
+  <div class="dh"><button class="ic" onclick="hide('ideas')">←</button><h2>Ideas de mejora</h2></div>
+  <div class="pb">
+    <textarea id="ideaText" placeholder="Escribe una idea… (admite saltos de línea)"></textarea>
+    <div class="row" style="margin-bottom:16px"><button onclick="saveIdea()">Guardar idea</button></div>
+    <div id="ideasList"></div>
   </div>
-  <span class="version-tag">v2.1 Final</span>
 </div>
+
+<input type="file" id="imp" accept=".json" hidden><input type="file" id="opml" accept=".opml,.xml" hidden>
 
 <!-- Modales -->
-<div class="modal-overlay" id="tagModal">
-  <div class="modal">
-    <h3>🏷️ Etiquetar artículo</h3>
-    <input id="tagInput" type="text" placeholder="Escribe una etiqueta (ej. Recetas)">
-    <div id="existingTags" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
-    <div class="actions">
-      <button class="secondary" onclick="document.getElementById('tagModal').classList.remove('show')">Cancelar</button>
-      <button onclick="saveTag()">Guardar</button>
-    </div>
-  </div>
-</div>
+<div class="ov" id="srcModal"><div class="modal">
+  <h3 id="srcH">Fuente</h3>
+  <label>Dirección de la web o del feed</label><input id="sUrl" type="url" placeholder="https://ejemplo.com (busco el feed por ti)">
+  <label>Título</label><input id="sTitle">
+  <label>Categoría</label><input id="sCat" value="General">
+  <div class="row" style="justify-content:space-between">
+    <button class="dan" id="sDel" onclick="delSrc()">Eliminar</button>
+    <div class="row"><button class="sec" onclick="hide('srcModal')">Cancelar</button><button id="sSave" onclick="saveSrc()">Guardar</button></div></div>
+</div></div>
 
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <h3>⚙️ Ajustes de la App</h3>
-    
-    <label>Prompt para Resumen Rápido (✨)</label>
-    <p style="font-size:12px; margin-top:-8px; margin-bottom:8px;">Este texto se copiará junto al enlace al pulsar el botón ✨.</p>
-    <textarea id="quickPromptInput" rows="3">Resume este artículo en 3 puntos clave con un tono directo:</textarea>
-    
-    <label>Artículos a descargar por fuente (Lista)</label>
-    <p style="font-size:12px; margin-top:-8px; margin-bottom:8px;">A mayor número, más tardará en actualizar.</p>
-    <input type="number" id="maxArticlesInput" value="50" min="10" max="200">
-    
-    <div class="actions" style="margin-top:24px;">
-      <button class="secondary" onclick="document.getElementById('settingsModal').classList.remove('show')">Cerrar</button>
-      <button onclick="saveSettings()">Guardar Ajustes</button>
-    </div>
-  </div>
-</div>
+<div class="ov" id="edModal"><div class="modal">
+  <h3>Editor de feeds</h3>
+  <p class="muted">Una fuente por línea: <code>URL | Título | Categoría</code></p>
+  <textarea id="edText" rows="10" style="font-family:monospace;font-size:13px;white-space:pre;overflow-x:auto"></textarea>
+  <div class="row"><button class="sec" onclick="copy($('edText').value);toast('Copiado')">📋 Copiar</button><button class="sec" onclick="hide('edModal')">Cancelar</button><button onclick="saveEditor()">Guardar</button></div>
+</div></div>
 
-<div class="modal-overlay" id="ideasModal">
-  <div class="modal">
-    <h3>💡 Ideas de mejora</h3>
-    <textarea id="ideaText" placeholder="Escribe una idea…"></textarea>
-    <div class="actions" style="margin-bottom:16px"><button onclick="saveIdea()">Guardar idea</button></div>
-    <div id="ideasList"></div>
-    <div class="actions" style="margin-top:16px"><button class="secondary" onclick="document.getElementById('ideasModal').classList.remove('show')">Cerrar</button></div>
-  </div>
-</div>
+<div class="ov" id="tagModal"><div class="modal">
+  <h3>🏷️ Etiquetar artículo</h3>
+  <input id="tagIn" placeholder="Etiqueta (ej. Recetas)"><div id="tagList" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
+  <div class="row"><button class="sec" onclick="hide('tagModal')">Cancelar</button><button onclick="saveTag()">Guardar</button></div>
+</div></div>
 
-<div class="modal-overlay" id="addModal">
-  <div class="modal">
-    <h3>Añadir fuente local</h3>
-    <label>URL del Feed</label>
-    <input id="newSourceUrl" type="url" placeholder="https://ejemplo.com/feed.xml">
-    <label>Título</label>
-    <input id="newSourceTitle" type="text" placeholder="Ej. Mi Blog Favorito">
-    <label>Categoría</label>
-    <input id="newSourceCategory" type="text" placeholder="Ej. Tecnología" value="General">
-    <div class="actions">
-      <button class="secondary" onclick="document.getElementById('addModal').classList.remove('show')">Cancelar</button>
-      <button onclick="confirmAddSource()">Añadir</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="discoverModal">
-  <div class="modal">
-    <h3>🔍 Descubrir Feed por Dominio</h3>
-    <p>Para encontrar el RSS de una web, prueba a añadir estas rutas al final del dominio:</p>
-    <ul style="font-size:13px; color:var(--muted); padding-left:20px;">
-      <li><code>/feed</code></li>
-      <li><code>/rss</code></li>
-      <li><code>/rss.xml</code></li>
-      <li><code>/feed.xml</code></li>
-      <li><code>/atom.xml</code></li>
-    </ul>
-    <div class="actions">
-      <button class="secondary" onclick="document.getElementById('discoverModal').classList.remove('show')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="feedEditorModal">
-  <div class="modal">
-    <h3>⚙️ Editor de Feeds</h3>
-    <div class="help-box">
-      <strong>¿Cómo actualizar tus fuentes?</strong><br>
-      Añade o edita tus fuentes aquí (una por línea con formato <code>URL | Título | Categoría</code>).
-    </div>
-    <textarea id="feedEditorText" class="feed-editor-textarea" rows="10"></textarea>
-    <div class="actions" style="justify-content:space-between; margin-top:16px;">
-      <div style="display:flex; gap:8px;">
-        <button class="secondary" onclick="copyFeedEditor()">📋 Copiar</button>
-        <button class="secondary" onclick="restoreHidden()">👁️ Restaurar ocultas</button>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="secondary" onclick="document.getElementById('feedEditorModal').classList.remove('show')">Cancelar</button>
-        <button onclick="saveFeedEditor()">Guardar en la app</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="editSourceModal">
-  <div class="modal">
-    <h3>Editar fuente</h3>
-    <label>Título</label>
-    <input id="editSourceTitle" type="text">
-    <label>Categoría</label>
-    <input id="editSourceCategory" type="text">
-    <input type="hidden" id="editSourceUrl">
-    <div class="actions" style="justify-content:space-between;">
-      <button class="danger" id="deleteSourceBtn">Eliminar/Ocultar</button>
-      <div style="display:flex; gap:8px;">
-        <button class="secondary" onclick="document.getElementById('editSourceModal').classList.remove('show')">Cancelar</button>
-        <button onclick="saveEditSource()">Guardar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="readerMenuModal">
-  <div class="modal">
-    <h3>Opciones del artículo</h3>
-    <div class="actions" style="flex-direction:column; align-items:stretch; gap:10px;">
-      <button class="secondary" onclick="openAIModal(); document.getElementById('readerMenuModal').classList.remove('show');">✨ Profundizar con IA</button>
-      <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin: 10px 0;">
-        <button class="secondary" onclick="changeFontSize(1)">A+ Aumentar letra</button>
-        <span id="fontSizeDisplay" style="font-size:14px; font-weight:600;">16px</span>
-        <button class="secondary" onclick="changeFontSize(-1)">A- Reducir letra</button>
-      </div>
-      <a href="#" id="readerOriginalLink" target="_blank" style="text-decoration:none;"><button class="secondary" style="width:100%;">↗ Abrir en el sitio original</button></a>
-    </div>
-    <div class="actions" style="margin-top:20px;">
-      <button class="secondary" onclick="document.getElementById('readerMenuModal').classList.remove('show')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="aiModal">
-  <div class="modal">
-    <h3>✨ Profundizar con IA</h3>
-    <p>Elige un prompt. Se copiará junto con el enlace del artículo.</p>
-    
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <input type="text" id="newPromptInput" placeholder="Escribe tu prompt personalizado..." style="margin-bottom:0; flex:1;">
-      <button onclick="saveCustomPrompt()">Guardar</button>
-    </div>
-    
-    <div id="promptList" style="max-height:300px; overflow-y:auto;"></div>
-    
-    <div class="actions" style="margin-top:20px;">
-      <button class="secondary" onclick="document.getElementById('aiModal').classList.remove('show')">Cerrar</button>
-    </div>
-  </div>
-</div>
+<div class="ov" id="aiModal"><div class="modal">
+  <h3>✨ Profundizar con IA</h3>
+  <p class="muted">Elige un prompt: se copia junto con el título y el enlace.</p>
+  <div class="row" style="flex-wrap:nowrap"><input id="newPrompt" placeholder="Tu prompt personalizado…" style="margin-bottom:0"><button onclick="addPrompt()">Guardar</button></div>
+  <div id="prompts" style="margin-top:12px"></div>
+  <div class="row"><button class="sec" onclick="hide('aiModal')">Cerrar</button></div>
+</div></div>
 
 <script>
-const state = {
-  sources: [], articles: [], read: new Set(), favorites: new Set(),
-  localSources: [], saved: new Map(), tags: new Map(),
-  activeSource: null, viewMode: 'all', showOnlyFavorites: false, showOnlyUnread: false,
-  activeArticle: null, activeTagFilter: null,
-  collapsedCategories: new Set(),
-  searchTerm: '',
-  lastAction: null,
-  readerFontSize: 16,
-  failedSources: new Set(),
-  quickAIPrompt: "Resume este artículo en 3 puntos clave con un tono directo:",
-  maxArticles: 50
-};
+const $=id=>document.getElementById(id);
+const K={read:'rss_read_v1',favs:'rss_favs_v1',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1'};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('No se pudo guardar: almacenamiento lleno')}}};
+const h=(t,p={},...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p)){if(a==='class')e.className=v;else if(a==='text')e.textContent=v;else if(a.startsWith('on'))e[a]=v;else e.setAttribute(a,v)}e.append(...k);return e};
+/* Capas (lector móvil, menú, ajustes, modales): el botón/gesto "atrás" las cierra en vez de salir de la app */
+const L=[];let ign=0;
+function lpush(n){if(!L.includes(n)){L.push(n);history.pushState(null,'')}}
+function lpop(n){const i=L.indexOf(n);if(i<0)return;L.splice(i,1);ign++;history.back()}
+function closeLayer(n){if(n==='reader')closeReader();else if(n==='drawer')setDrawer(false);else $(n).classList.remove('show')}
+addEventListener('popstate',()=>{if(ign>0){ign--;return}const n=L.pop();if(n)closeLayer(n)});
+const show=id=>{$(id).classList.add('show');lpush(id)},hide=id=>{$(id).classList.remove('show');lpop(id)};
 
-const DEFAULT_PROMPTS = [
-  "Resume este artículo en 3 puntos clave.",
-  "Explícame este artículo como si tuviera 10 años.",
-  "Dame contraargumentos o críticas a esta noticia.",
-  "¿Cuáles son las implicaciones a largo plazo de lo que cuenta este artículo?",
-  "Extrae los datos más importantes y crea una tabla."
-];
+const _c=LS.get(K.cfg,{});
+const S={sources:[],articles:[],read:new Set(LS.get(K.read,[])),favs:new Set(LS.get(K.favs,[])),saved:new Map(),tags:new Set(),
+  view:'all',onlyFav:false,onlyUnread:false,tag:null,search:'',art:null,undo:null,failed:new Map(),collapsed:new Set(),
+  cfg:{quick:_c.quickAIPrompt||'Resume este artículo en 3 puntos clave con un tono directo:',max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16)}};
+const DEFAULT_PROMPTS=['Resume este artículo en 3 puntos clave.','Explícame este artículo como si tuviera 10 años.','Dame contraargumentos o críticas a esta noticia.','¿Cuáles son las implicaciones a largo plazo de lo que cuenta este artículo?','Extrae los datos más importantes y crea una tabla.'];
+const PROXY_URL='https://rss-proxy.lector-rss.workers.dev';
+const CONCURRENCY=4; // pon 1 si algún día el worker se queja de peticiones en paralelo
 
-let db = null;
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('mi_lector_db', 2);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('guardados')) d.createObjectStore('guardados', { keyPath: 'id' });
-      if (!d.objectStoreNames.contains('etiquetas')) d.createObjectStore('etiquetas', { keyPath: 'id' });
-    };
-    req.onsuccess = e => { db = e.target.result; resolve(db); };
-    req.onerror = e => reject(e.target.error);
+/* ---------- Utilidades ---------- */
+let _tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3000)}
+const setStatus=(m,u=null)=>{S.undo=u;$('stText').textContent=m;$('undoBtn').style.display=u?'inline-block':'none'};
+const errMsg=e=>e.name==='TimeoutError'?'Tiempo de espera agotado':/^HTTP \d+/.test(e.message)?'El servidor respondió '+e.message:e.message==='Failed to fetch'?'Sin conexión':e.message;
+function setProgress(p){const b=$('bar');if(p>0&&p<100){b.style.width=p+'%';b.style.opacity=1}else{b.style.opacity=0;setTimeout(()=>b.style.width=0,300)}}
+const safeUrl=u=>{u=(u||'').trim();return /^https?:\/\//i.test(u)?u:''};
+const safeImg=u=>{u=(u||'').trim();if(u.startsWith('//'))u='https:'+u;return /^https?:\/\//i.test(u)||/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(u)?u:''};
+const thumbFrom=html=>{const m=(html||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?safeImg(m[1]):''};
+function fmt(iso){const d=new Date(iso);if(isNaN(d))return'';const m=(Date.now()-d)/6e4;if(m<60)return`hace ${Math.max(1,Math.round(m))} min`;if(m<1440)return`hace ${Math.round(m/60)} h`;return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+const srcTitle=u=>S.sources.find(s=>s.url===u)?.title||u;
+const tagsOf=a=>S.saved.get(a.id)?.tags||a.tags||[];
+async function copy(t){try{await navigator.clipboard.writeText(t)}catch{const x=h('textarea');x.value=t;document.body.append(x);x.select();document.execCommand('copy');x.remove()}}
+
+/* Sanitizador por lista blanca (elementos y atributos), con enlaces/imágenes validados */
+const OK=new Set('P BR A STRONG EM B I U UL OL LI H1 H2 H3 H4 H5 H6 BLOCKQUOTE IMG FIGURE FIGCAPTION CODE PRE HR SPAN DIV TABLE THEAD TBODY TR TD TH'.split(' '));
+const DROP=/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|NOSCRIPT|TEMPLATE|FORM|VIDEO|AUDIO|HEAD|SVG|MATH)$/i;
+const ATTR={A:['href','title'],IMG:['src','alt','title'],TD:['colspan','rowspan'],TH:['colspan','rowspan']};
+function clean(node){
+  [...node.childNodes].forEach(c=>{
+    if(c.nodeType===3)return;
+    if(c.nodeType!==1){c.remove();return}
+    if(DROP.test(c.tagName)){c.remove();return}
+    if(!OK.has(c.tagName)){clean(c);c.replaceWith(...c.childNodes);return}
+    [...c.attributes].forEach(a=>{if(!(ATTR[c.tagName]||[]).includes(a.name))c.removeAttribute(a.name)});
+    if(c.tagName==='A'){const u=safeUrl(c.getAttribute('href'));if(u){c.setAttribute('href',u);c.target='_blank';c.rel='noopener noreferrer nofollow'}else c.removeAttribute('href')}
+    if(c.tagName==='IMG'){const u=safeImg(c.getAttribute('src'));if(!u){c.remove();return}c.setAttribute('src',u);c.loading='lazy';c.referrerPolicy='no-referrer'}
+    clean(c);
   });
 }
-function dbPut(store, a) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).put(a); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
-function dbDelete(store, id) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(id); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
-function dbGetAll(store) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readonly'); const req = tx.objectStore(store).getAll(); req.onsuccess = () => res(req.result || []); req.onerror = e => rej(e.target.error); }); }
+function sanitizeHtml(html){const t=document.createElement('template');t.innerHTML=html;clean(t.content);return t.innerHTML}
 
-const LS_READ = 'rss_read_v1'; const LS_FAVS = 'rss_favs_v1'; const LS_LOCAL_SOURCES = 'rss_local_sources_v1'; const LS_IDEAS = 'rss_ideas_v1'; const LS_PROMPTS = 'rss_prompts_v1'; const LS_FONT = 'rss_font_v1'; const LS_THEME = 'rss_theme_v1'; const LS_SETTINGS = 'rss_settings_v1';
+/* ---------- IndexedDB (artículos guardados) ---------- */
+let db;
+const openDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open('mi_lector_db',3);r.onupgradeneeded=e=>{const d=e.target.result;['guardados','etiquetas','cache'].forEach(n=>d.objectStoreNames.contains(n)||d.createObjectStore(n,{keyPath:'id'}))};r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>ko(r.error)});
+const tx=(m,f,st='guardados')=>new Promise((ok,ko)=>{const t=db.transaction(st,m);const r=f(t.objectStore(st));t.oncomplete=()=>ok(r&&r.result);t.onerror=()=>ko(t.error)});
+const dbPut=a=>tx('readwrite',s=>s.put(a)),dbDel=id=>tx('readwrite',s=>s.delete(id)),dbAll=()=>tx('readonly',s=>s.getAll());
+const cachePut=v=>tx('readwrite',s=>s.put(v),'cache'),cacheGet=()=>tx('readonly',s=>s.get('articles'),'cache');
+function calcTags(){S.tags=new Set();S.saved.forEach(a=>(a.tags||[]).forEach(t=>S.tags.add(t)))}
 
-const $list = document.getElementById('list-container');
-const $readerContent = document.getElementById('readerContent');
-const $drawerSources = document.getElementById('drawerSources');
-const $statusText = document.getElementById('statusText');
-const $viewTitle = document.getElementById('currentViewTitle');
-const $undoBtn = document.getElementById('undoBtn');
-const $searchBar = document.getElementById('searchBar');
-const $searchInput = document.getElementById('searchInput');
-const $filterBtn = document.getElementById('filterBtn');
-const $progressBar = document.getElementById('progress-bar');
-const $toast = document.getElementById('toast');
-
-function showToast(msg) {
-  $toast.textContent = msg;
-  $toast.classList.add('show');
-  setTimeout(() => { $toast.classList.remove('show'); }, 3000);
+/* ---------- Fuentes (lista única persistente) ---------- */
+function loadSources(){
+  let s=LS.get(K.src,[]);
+  const hidden=LS.get('rss_hidden_sources',[]),ov=LS.get('rss_source_overrides',{}); // migración de versiones anteriores
+  if(!s.length)s=[{url:'https://hnrss.org/frontpage',title:'Hacker News',category:'Tecnología'},{url:'https://www.xataka.com/feedburner.xml',title:'Xataka',category:'Tecnología'}];
+  S.sources=s.filter(x=>!hidden.includes(x.url)).map(x=>ov[x.url]?{...x,title:ov[x.url].title||x.title,category:ov[x.url].category||x.category}:x);
+  LS.set(K.src,S.sources);localStorage.removeItem('rss_hidden_sources');localStorage.removeItem('rss_source_overrides');
 }
+const saveSources=()=>LS.set(K.src,S.sources);
 
-function setStatus(msg, type='') { 
-  $statusText.textContent = msg; 
-  $statusText.parentElement.parentElement.className = type; 
-  $undoBtn.style.display = state.lastAction ? 'inline-block' : 'none';
-}
-function setProgress(percent) {
-  if (percent > 0 && percent < 100) {
-    $progressBar.style.width = percent + '%';
-    $progressBar.style.opacity = '1';
-  } else {
-    $progressBar.style.opacity = '0';
-    setTimeout(() => { $progressBar.style.width = '0%'; }, 300);
-  }
-}
-function clearUndo() { state.lastAction = null; $undoBtn.style.display = 'none'; }
-window.undoAction = () => {
-  if (!state.lastAction) return;
-  if (state.lastAction.type === 'markAllRead') {
-    state.lastAction.ids.forEach(id => state.read.delete(id));
-    localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
-    setStatus('Acción deshecha.', 'ok');
-  }
-  clearUndo();
-  renderSources(); renderList();
-};
-
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function sourceTitle(url){ const s=[...state.sources,...state.localSources].find(x=>x.url===url); return s?.title || url; }
-function formatDate(iso){ const d=new Date(iso); if(isNaN(d)) return ''; const diff=(Date.now()-d)/60000; if(diff<60) return `hace ${Math.max(1,Math.round(diff))} min`; if(diff<60*24) return `hace ${Math.round(diff/60)} h`; return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
-function firstImage(html){ if(!html) return null; const m=html.match(/<img[^>]+src="([^"]+)"/i); return m?m[1]:null; }
-
-function toggleDrawer() {
-  document.getElementById('drawer').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('show');
-}
-
-// Cierra el menú de 3 puntos al hacer clic fuera
-window.closeDrawerMenu = () => {
-  document.getElementById('drawerMenu').classList.remove('open');
-};
-window.toggleDrawerMenu = (event) => {
-  event.stopPropagation();
-  document.getElementById('drawerMenu').classList.toggle('open');
-};
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('drawerMenu');
-  if (menu && menu.classList.contains('open') && !menu.contains(e.target)) {
-    menu.classList.remove('open');
-  }
-});
-
-function toggleSearch() {
-  $searchBar.style.display = $searchBar.style.display === 'none' ? 'block' : 'none';
-  if ($searchBar.style.display === 'block') $searchInput.focus();
-  else { $searchInput.value = ''; state.searchTerm = ''; renderList(); }
-}
-$searchInput.addEventListener('input', (e) => {
-  state.searchTerm = e.target.value.toLowerCase();
-  renderList();
-});
-
-function toggleUnreadFilter() {
-  state.showOnlyUnread = !state.showOnlyUnread;
-  $filterBtn.classList.toggle('active', state.showOnlyUnread);
-  renderList();
-}
-
-function toggleTheme() {
-  const isDark = document.body.classList.toggle('dark-mode');
-  document.body.classList.toggle('light-mode', !isDark);
-  localStorage.setItem(LS_THEME, isDark ? 'dark' : 'light');
-  document.getElementById('themeToggleBtn').textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
-}
-
-function renderSources() {
-  $drawerSources.innerHTML = '';
-  const filter = document.getElementById('sourceSearch').value.toLowerCase();
-  
-  const mkFixed = (label, mode, count, isFavFilter = false) => {
-    if (filter && !label.toLowerCase().includes(filter)) return;
-    const div = document.createElement('div');
-    div.className = 'source-item' + (state.viewMode === mode && state.showOnlyFavorites === isFavFilter && !state.activeTagFilter ? ' active' : '');
-    div.innerHTML = `<span>${label}</span>${count ? `<span class="count">${count}</span>` : ''}`;
-    div.onclick = () => { 
-      state.viewMode = mode; 
-      state.showOnlyFavorites = isFavFilter;
-      state.activeTagFilter = null;
-      updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); 
-    };
-    $drawerSources.appendChild(div);
-  };
-  mkFixed('🗂️ Todas', 'all', state.articles.filter(a => !state.read.has(a.id)).length);
-  mkFixed('⭐ Favoritos', 'all', state.favorites.size, true);
-  mkFixed('💾 Guardados', 'saved', state.saved.size);
-
-  if (state.tags.size > 0) {
-    const tagHeader = document.createElement('div');
-    tagHeader.className = 'category-title';
-    tagHeader.innerHTML = `<span>🏷️ Mis Etiquetas</span>`;
-    $drawerSources.appendChild(tagHeader);
-    
-    state.tags.forEach(tag => {
-      if (filter && !tag.toLowerCase().includes(filter)) return;
-      const div = document.createElement('div');
-      div.className = 'source-item' + (state.activeTagFilter === tag ? ' active' : '');
-      div.innerHTML = `<span style="margin-left:12px; flex:1;">${escapeHtml(tag)}</span>`;
-      div.onclick = () => { state.viewMode = 'saved'; state.showOnlyFavorites = false; state.activeTagFilter = tag; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
-      $drawerSources.appendChild(div);
-    });
-  }
-
-  const cats = {};
-  [...state.sources, ...state.localSources].forEach(s => {
-    const c = s.category || 'General';
-    if (!cats[c]) cats[c] = [];
-    cats[c].push(s);
-  });
-
-  Object.keys(cats).sort().forEach(cat => {
-    const catSources = cats[cat].filter(s => !filter || s.title.toLowerCase().includes(filter) || cat.toLowerCase().includes(filter));
-    if (!catSources.length) return;
-
-    const isCollapsed = state.collapsedCategories.has(cat);
-    const catHeader = document.createElement('div');
-    catHeader.className = 'category-title';
-    catHeader.innerHTML = `<span>${isCollapsed ? '▶' : '▼'}</span> ${escapeHtml(cat)}`;
-    catHeader.onclick = () => {
-      if (isCollapsed) state.collapsedCategories.delete(cat);
-      else state.collapsedCategories.add(cat);
-      renderSources();
-    };
-    $drawerSources.appendChild(catHeader);
-
-    if (!isCollapsed) {
-      catSources.forEach(s => {
-        const unread = state.articles.filter(a => a.sourceUrl === s.url && !state.read.has(a.id)).length;
-        const isFailed = state.failedSources.has(s.url);
-        
-        const div = document.createElement('div');
-        div.className = 'source-item' + (state.viewMode === s.url && !state.showOnlyFavorites && !state.activeTagFilter ? ' active' : '') + (isFailed ? ' failed' : '');
-        
-        let countHtml = '';
-        if (isFailed) countHtml = `<span class="count error" title="Error al conectar">⚠️</span>`;
-        else if (unread > 0) countHtml = `<span class="count">${unread}</span>`;
-
-        div.innerHTML = `
-          <span style="margin-left:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📡 ${escapeHtml(s.title || s.url)}</span>
-          ${countHtml}
-          <button class="edit-btn" onclick="event.stopPropagation(); openEditSource('${escapeHtml(s.url)}')">⚙️</button>
-        `;
-        div.onclick = () => { state.viewMode = s.url; state.showOnlyFavorites = false; state.activeTagFilter = null; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
-        $drawerSources.appendChild(div);
-      });
-    }
-  });
-}
-
-function updateViewTitle() {
-  if (state.activeTagFilter) $viewTitle.textContent = 'Etiqueta: ' + state.activeTagFilter;
-  else if (state.showOnlyFavorites) $viewTitle.textContent = 'Favoritos';
-  else if (state.viewMode === 'all') $viewTitle.textContent = 'Todas las noticias';
-  else if (state.viewMode === 'saved') $viewTitle.textContent = 'Guardados';
-  else $viewTitle.textContent = sourceTitle(state.viewMode);
-}
-
-function renderList() {
-  let items;
-  if (state.viewMode === 'saved') items = [...state.saved.values()];
-  else {
-    items = state.articles;
-    if (state.viewMode !== 'all') items = items.filter(a => a.sourceUrl === state.viewMode);
-    if (state.showOnlyFavorites) items = items.filter(a => state.favorites.has(a.id));
-  }
-  
-  if (state.activeTagFilter) items = items.filter(a => a.tags && a.tags.includes(state.activeTagFilter));
-  if (state.showOnlyUnread) items = items.filter(a => !state.read.has(a.id));
-  if (state.searchTerm) items = items.filter(a => a.title.toLowerCase().includes(state.searchTerm) || a.snippet.toLowerCase().includes(state.searchTerm));
-
-  items = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  if (!items.length) { 
-    $list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:14px;">No hay artículos.</div>'; 
-    return; 
-  }
-  
-  $list.innerHTML = '';
-  items.forEach(a => {
-    const read = state.read.has(a.id);
-    const isFav = state.favorites.has(a.id);
-    const thumb = firstImage(a.content);
-    const isSavedView = state.viewMode === 'saved';
-    
-    const wrapper = document.createElement('div');
-    wrapper.className = 'article-wrapper';
-    
-    const el = document.createElement('div');
-    el.className = 'article ' + (read ? 'read' : '') + (isFav ? ' is-fav' : '') + (read && !isFav ? ' is-read' : '');
-    el.innerHTML = `
-      ${thumb ? `<img class="thumb" src="${escapeHtml(thumb)}" loading="lazy" onerror="this.style.display='none'">` : ''}
-      <div class="body">
-        <div class="title">${isFav ? '⭐ ' : ''}${escapeHtml(a.title)}</div>
-        <div class="meta">
-          <span>${escapeHtml(sourceTitle(a.sourceUrl))}</span>
-          <span>${formatDate(a.date)}</span>
-          ${a.tags ? a.tags.map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`).join('') : ''}
-        </div>
-        <div class="snippet">${escapeHtml(a.snippet)}</div>
-      </div>
-      ${isSavedView ? `<button class="delete-btn" onclick="event.stopPropagation(); removeSaved('${escapeHtml(a.id)}')">🗑️</button>` : ''}
-    `;
-    
-    let startX = 0, startY = 0, currentX = 0, isSwiping = false, isScrolling = false;
-    el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isSwiping = false; isScrolling = false; el.style.transition = 'none'; }, {passive: true});
-    el.addEventListener('touchmove', e => {
-      if (isScrolling) return;
-      const dx = e.touches[0].clientX - startX; const dy = e.touches[0].clientY - startY;
-      if (!isSwiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) isSwiping = true;
-      if (isSwiping) { currentX = dx; el.style.transform = `translateX(${currentX}px)`; }
-      else if (Math.abs(dy) > 10) isScrolling = true;
-    }, {passive: true});
-    el.addEventListener('touchend', () => {
-      if (isSwiping) {
-        el.style.transition = 'transform 0.2s ease-out';
-        if (currentX > 70) {
-          if (state.favorites.has(a.id)) state.favorites.delete(a.id); else state.favorites.add(a.id);
-          localStorage.setItem(LS_FAVS, JSON.stringify([...state.favorites]));
-        } else if (currentX < -70) {
-          if (state.read.has(a.id)) state.read.delete(a.id); else state.read.add(a.id);
-          localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
-        }
-        el.style.transform = 'translateX(0)';
-        renderSources(); renderList();
-      }
-      currentX = 0; isSwiping = false; isScrolling = false;
-    });
-    el.onclick = (e) => { if (Math.abs(currentX) < 10) openArticle(a); };
-    
-    wrapper.appendChild(el);
-    $list.appendChild(wrapper);
-  });
-}
-
-async function openArticle(a) {
-  state.activeArticle = a;
-  state.read.add(a.id); localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
-  document.body.classList.add('reading');
-  renderSources(); renderList();
-
-  const isSaved = state.saved.has(a.id);
-  const isFav = state.favorites.has(a.id);
-  
-  document.getElementById('readerHeaderTitle').textContent = a.title;
-  document.getElementById('readerOriginalLink').href = a.link;
-  
-  const $shareBtn = document.getElementById('readerShareBtn');
-  $shareBtn.onclick = () => {
-    if (navigator.share) {
-      navigator.share({ title: a.title, url: a.link }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(a.link);
-      setStatus('Enlace copiado.', 'ok');
-    }
-  };
-
-  const $favBtn = document.getElementById('readerFavBtn');
-  $favBtn.textContent = isFav ? '⭐' : '☆';
-  $favBtn.onclick = () => {
-    if (state.favorites.has(a.id)) state.favorites.delete(a.id); else state.favorites.add(a.id);
-    localStorage.setItem(LS_FAVS, JSON.stringify([...state.favorites]));
-    renderSources(); renderList(); openArticle(a);
-  };
-
-  const $saveBtn = document.getElementById('readerSaveBtn');
-  $saveBtn.textContent = isSaved ? '🗑️' : '💾';
-  $saveBtn.onclick = async () => {
-    if (state.saved.has(a.id)) { await dbDelete('guardados', a.id); state.saved.delete(a.id); setStatus('Eliminado.', 'ok'); }
-    else { const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() }; await dbPut('guardados', toSave); state.saved.set(a.id, toSave); setStatus('Guardado offline.', 'ok'); }
-    renderSources(); renderList(); openArticle(a);
-  };
-
-  const $tagBtn = document.getElementById('readerTagBtn');
-  $tagBtn.onclick = () => {
-    document.getElementById('tagInput').value = '';
-    document.getElementById('tagInput').focus();
-    
-    const existingDiv = document.getElementById('existingTags');
-    existingDiv.innerHTML = '';
-    state.tags.forEach(t => {
-      const btn = document.createElement('span');
-      btn.className = 'tag-badge';
-      btn.style.cursor = 'pointer';
-      btn.textContent = t;
-      btn.onclick = () => { document.getElementById('tagInput').value = t; };
-      existingDiv.appendChild(btn);
-    });
-
-    document.getElementById('tagModal').classList.add('show');
-  };
-
-  if (!a.content || a.content.length < 200) {
-    $readerContent.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--muted);">Extrayendo texto completo…<br><br><div class="spinner" style="display:inline-block; width:30px; height:30px; border:3px solid rgba(10,132,255,0.3); border-top-color:var(--accent); border-radius:50%; animation: spin 1s linear infinite;"></div></div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
-    
-    const full = await extractWithReadability(a.link);
-    if (full && full.length > 500) {
-      a.content = full;
-      if (isSaved) {
-        const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
-        await dbPut('guardados', toSave);
-        state.saved.set(a.id, toSave);
-      }
-    } else {
-      if (a.fullRssContent && a.fullRssContent.length > 200) {
-        a.content = a.fullRssContent;
-      } else {
-        a.content = a.snippet; 
-      }
-    }
-  }
-
-  const hasFull = a.content && a.content.length > 500;
-  const body = hasFull
-    ? sanitizeHtml(a.content)
-    : `<p>${escapeHtml(a.snippet)}</p><p style="color:var(--muted);font-size:14px;margin-top:20px;">No se pudo extraer el texto completo. <a href="${escapeHtml(a.link)}" target="_blank">Leer original →</a></p>`;
-
-  $readerContent.innerHTML = `
-    <h2>${escapeHtml(a.title)}</h2>
-    <div class="reader-meta">
-      ${escapeHtml(sourceTitle(a.sourceUrl))} · ${formatDate(a.date)}
-      ${a.tags ? `<br><br>${a.tags.map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`).join('')}` : ''}
-    </div>
-    <div class="reader-body">${body}</div>
-  `;
-  
-  document.querySelectorAll('#readerContent img').forEach(img => {
-    img.onerror = function() { this.style.display = 'none'; };
-  });
-
-  document.getElementById('reader-container').scrollTop = 0;
-}
-
-window.quickAISummary = () => {
-  if (!state.activeArticle) return;
-  const text = `${state.quickAIPrompt}\n\nArtículo: ${state.activeArticle.title}\nEnlace: ${state.activeArticle.link}`;
-  navigator.clipboard.writeText(text).then(() => {
-    setStatus('✨ Resumen copiado al portapapeles.', 'ok');
-  });
-};
-
-window.saveTag = () => {
-  const tag = document.getElementById('tagInput').value.trim();
-  if (!tag || !state.activeArticle) return;
-  
-  const a = state.activeArticle;
-  if (!a.tags) a.tags = [];
-  if (!a.tags.includes(tag)) a.tags.push(tag);
-  
-  state.tags.set(tag, tag);
-  
-  if (state.saved.has(a.id)) {
-    const saved = state.saved.get(a.id);
-    saved.tags = a.tags;
-    dbPut('guardados', saved);
-  } else {
-    const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
-    dbPut('guardados', toSave);
-    state.saved.set(a.id, toSave);
-  }
-
-  document.getElementById('tagModal').classList.remove('show');
-  setStatus('Etiqueta añadida.', 'ok');
-  renderSources(); renderList();
-  if (document.body.classList.contains('reading')) openArticle(state.activeArticle);
-};
-
-window.openSettings = () => {
-  document.getElementById('quickPromptInput').value = state.quickAIPrompt;
-  document.getElementById('maxArticlesInput').value = state.maxArticles;
-  document.getElementById('settingsModal').classList.add('show');
-};
-
-window.saveSettings = () => {
-  state.quickAIPrompt = document.getElementById('quickPromptInput').value;
-  state.maxArticles = parseInt(document.getElementById('maxArticlesInput').value) || 50;
-  
-  const settings = { quickAIPrompt: state.quickAIPrompt, maxArticles: state.maxArticles };
-  localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
-  
-  document.getElementById('settingsModal').classList.remove('show');
-  setStatus('Ajustes guardados.', 'ok');
-};
-
-window.openReaderMenu = () => {
-  document.getElementById('fontSizeDisplay').textContent = state.readerFontSize + 'px';
-  document.getElementById('readerMenuModal').classList.add('show');
-};
-
-window.toggleReadStatus = () => {
-  if (!state.activeArticle) return;
-  if (state.read.has(state.activeArticle.id)) state.read.delete(state.activeArticle.id);
-  else state.read.add(state.activeArticle.id);
-  localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
-  setStatus('Estado de lectura cambiado.', 'ok');
-  renderSources(); renderList();
-};
-
-window.changeFontSize = (delta) => {
-  state.readerFontSize = Math.max(12, Math.min(26, state.readerFontSize + delta));
-  document.documentElement.style.setProperty('--reader-size', state.readerFontSize + 'px');
-  localStorage.setItem(LS_FONT, state.readerFontSize);
-  document.getElementById('fontSizeDisplay').textContent = state.readerFontSize + 'px';
-};
-
-function closeArticle() { document.body.classList.remove('reading'); }
-
-function sanitizeHtml(html) {
-  const allowed = new Set(['P','BR','A','STRONG','EM','B','I','U','UL','OL','LI','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','IMG','FIGURE','FIGCAPTION','CODE','PRE','HR','SPAN','DIV','TABLE','THEAD','TBODY','TR','TD','TH']);
-  const tpl = document.createElement('template'); tpl.innerHTML = html;
-  const walk = node => { [...node.children].forEach(child => {
-    if (!allowed.has(child.tagName)) { child.replaceWith(...child.childNodes); return; }
-    [...child.attributes].forEach(attr => {
-      if (attr.name.startsWith('on')) child.removeAttribute(attr.name);
-      if (child.tagName === 'IMG' && attr.name === 'src' && !/^https?:/i.test(attr.value) && !attr.value.startsWith('data:')) child.removeAttribute('src');
-    }); walk(child);
-  }); };
-  walk(tpl.content); return tpl.innerHTML;
-}
-
-window.openAIModal = () => {
-  if (!state.activeArticle) return;
-  renderPrompts();
-  document.getElementById('aiModal').classList.add('show');
-};
-
-function getCustomPrompts() {
-  try { return JSON.parse(localStorage.getItem(LS_PROMPTS) || '[]'); } catch { return []; }
-}
-function setCustomPrompts(arr) { localStorage.setItem(LS_PROMPTS, JSON.stringify(arr)); }
-
-window.saveCustomPrompt = () => {
-  const text = document.getElementById('newPromptInput').value.trim();
-  if (!text) return;
-  const prompts = getCustomPrompts();
-  prompts.push(text);
-  setCustomPrompts(prompts);
-  document.getElementById('newPromptInput').value = '';
-  renderPrompts();
-};
-
-window.deleteCustomPrompt = (index) => {
-  const prompts = getCustomPrompts();
-  prompts.splice(index, 1);
-  setCustomPrompts(prompts);
-  renderPrompts();
-};
-
-window.copyPrompt = (text) => {
-  const article = state.activeArticle;
-  const finalText = `${text}\n\nArtículo: ${article.title}\nEnlace: ${article.link}`;
-  navigator.clipboard.writeText(finalText).then(() => {
-    setStatus('Prompt copiado al portapapeles.', 'ok');
-    document.getElementById('aiModal').classList.remove('show');
-  });
-};
-
-function renderPrompts() {
-  const list = document.getElementById('promptList');
-  list.innerHTML = '';
-  
-  DEFAULT_PROMPTS.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'prompt-item';
-    div.innerHTML = `<span>${escapeHtml(p)}</span>`;
-    div.onclick = () => copyPrompt(p);
-    list.appendChild(div);
-  });
-  
-  const custom = getCustomPrompts();
-  custom.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'prompt-item';
-    div.innerHTML = `<span>${escapeHtml(p)}</span><span class="del-prompt" onclick="event.stopPropagation(); deleteCustomPrompt(${i})">🗑️</span>`;
-    div.onclick = () => copyPrompt(p);
-    list.appendChild(div);
-  });
-}
-
-window.confirmMarkAllRead = () => {
-  let items = state.viewMode === 'saved' ? [...state.saved.values()] : state.articles;
-  if (state.viewMode !== 'all' && state.viewMode !== 'saved') items = items.filter(a => a.sourceUrl === state.viewMode);
-  if (state.showOnlyFavorites) items = items.filter(a => state.favorites.has(a.id));
-  
-  if (!items.length) return;
-  if (!confirm(`¿Marcar los ${items.length} artículos como leídos?`)) return;
-  
-  const ids = items.map(a => a.id);
-  ids.forEach(id => state.read.add(id));
-  localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
-  
-  state.lastAction = { type: 'markAllRead', ids: ids };
-  setStatus('Todos marcados como leídos.', 'ok');
-  renderSources(); renderList();
-};
-
-window.removeSaved = async (id) => {
-  if (!confirm('¿Eliminar este artículo de guardados?')) return;
-  await dbDelete('guardados', id);
-  state.saved.delete(id);
-  setStatus('Artículo eliminado.', 'ok');
-  renderSources(); renderList();
-};
-
-window.openAddModal = () => {
-  document.getElementById('newSourceUrl').value = '';
-  document.getElementById('newSourceTitle').value = '';
-  document.getElementById('newSourceCategory').value = 'General';
-  document.getElementById('addModal').classList.add('show');
-};
-
-window.confirmAddSource = () => {
-  const url = document.getElementById('newSourceUrl').value.trim();
-  if (!url) return;
-  const title = document.getElementById('newSourceTitle').value.trim() || url;
-  const category = document.getElementById('newSourceCategory').value.trim() || 'General';
-  state.localSources.push({ url, title, category });
-  localStorage.setItem(LS_LOCAL_SOURCES, JSON.stringify(state.localSources));
-  document.getElementById('addModal').classList.remove('show');
-  setStatus(`Fuente "${title}" añadida.`, 'ok');
-  renderSources();
-  loadData();
-};
-
-window.openDiscoverModal = () => document.getElementById('discoverModal').classList.add('show');
-
-window.openFeedEditor = () => {
-  const all = [...state.sources, ...state.localSources];
-  const text = all.map(s => `${s.url} | ${s.title} | ${s.category || 'General'}`).join('\n');
-  document.getElementById('feedEditorText').value = text;
-  document.getElementById('feedEditorModal').classList.add('show');
-};
-
-window.copyFeedEditor = () => {
-  const ta = document.getElementById('feedEditorText');
-  ta.select();
-  document.execCommand('copy');
-  setStatus('Lista copiada al portapapeles.', 'ok');
-};
-
-window.restoreHidden = () => {
-  localStorage.removeItem('rss_hidden_sources');
-  setStatus('Fuentes ocultas restauradas.', 'ok');
-  loadData();
-};
-
-window.saveFeedEditor = () => {
-  const lines = document.getElementById('feedEditorText').value.split('\n');
-  const newSources = [];
-  lines.forEach(line => {
-    if (!line.trim()) return;
-    const parts = line.split('|').map(p => p.trim());
-    if (parts[0]) newSources.push({ url: parts[0], title: parts[1] || parts[0], category: parts[2] || 'General' });
-  });
-  state.localSources = newSources;
-  localStorage.setItem(LS_LOCAL_SOURCES, JSON.stringify(state.localSources));
-  
-  const urls = newSources.map(s => s.url);
-  const hidden = JSON.parse(localStorage.getItem('rss_hidden_sources') || '[]');
-  state.sources.forEach(s => { if (!urls.includes(s.url)) hidden.push(s.url); });
-  localStorage.setItem('rss_hidden_sources', JSON.stringify([...new Set(hidden)]));
-  
-  document.getElementById('feedEditorModal').classList.remove('show');
-  setStatus('Lista de fuentes actualizada localmente.', 'ok');
-  renderSources(); 
-  loadData();
-};
-
-window.openEditSource = (url) => {
-  const s = [...state.sources, ...state.localSources].find(x => x.url === url);
-  if (!s) return;
-  document.getElementById('editSourceUrl').value = s.url;
-  document.getElementById('editSourceTitle').value = s.title;
-  document.getElementById('editSourceCategory').value = s.category || 'General';
-  
-  document.getElementById('deleteSourceBtn').onclick = () => {
-    const isLocal = state.localSources.some(x => x.url === url);
-    if (isLocal) {
-      if (!confirm('¿Eliminar esta fuente local?')) return;
-      state.localSources = state.localSources.filter(x => x.url !== url);
-      localStorage.setItem(LS_LOCAL_SOURCES, JSON.stringify(state.localSources));
-    } else {
-      if (!confirm('No puedes borrar una fuente por defecto, pero puedes ocultarla. ¿Ocultar?')) return;
-      const hidden = JSON.parse(localStorage.getItem('rss_hidden_sources') || '[]');
-      hidden.push(url);
-      localStorage.setItem('rss_hidden_sources', JSON.stringify(hidden));
-    }
-    if (state.viewMode === url) state.viewMode = 'all';
-    document.getElementById('editSourceModal').classList.remove('show');
-    setStatus('Fuente eliminada/ocultada.', 'ok');
-    updateViewTitle(); renderSources(); renderList();
-  };
-  document.getElementById('editSourceModal').classList.add('show');
-};
-
-window.saveEditSource = () => {
-  const url = document.getElementById('editSourceUrl').value;
-  const isLocal = state.localSources.some(x => x.url === url);
-  
-  if (isLocal) {
-    const s = state.localSources.find(x => x.url === url);
-    s.title = document.getElementById('editSourceTitle').value.trim() || s.title;
-    s.category = document.getElementById('editSourceCategory').value.trim() || 'General';
-    localStorage.setItem(LS_LOCAL_SOURCES, JSON.stringify(state.localSources));
-  } else {
-    const overrides = JSON.parse(localStorage.getItem('rss_source_overrides') || '{}');
-    overrides[url] = {
-      title: document.getElementById('editSourceTitle').value.trim(),
-      category: document.getElementById('editSourceCategory').value.trim() || 'General'
-    };
-    localStorage.setItem('rss_source_overrides', JSON.stringify(overrides));
-  }
-  
-  document.getElementById('editSourceModal').classList.remove('show');
-  setStatus('Fuente actualizada.', 'ok');
-  updateViewTitle(); renderSources(); renderList();
-};
-
-window.exportBackup = async () => {
-  const arr = await dbGetAll('guardados');
-  if (!arr.length) { setStatus('No hay guardados.', 'error'); return; }
-  const blob = new Blob([JSON.stringify({ version: 1, savedAt: new Date().toISOString(), articles: arr }, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `mi_lector_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
-  setStatus(`Exportados ${arr.length} artículos.`, 'ok');
-};
-
-document.getElementById('importFile').onchange = async (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  try {
-    const text = await file.text(); const data = JSON.parse(text);
-    const arr = Array.isArray(data) ? data : (data.articles || []);
-    if (!arr.length) { setStatus('Archivo vacío.', 'error'); return; }
-    for (const art of arr) { if (art.id) await dbPut('guardados', art); }
-    const savedArr = await dbGetAll('guardados'); state.saved = new Map(savedArr.map(x => [x.id, x]));
-    setStatus(`Importados ${arr.length} artículos.`, 'ok'); renderSources(); renderList();
-  } catch (e) { setStatus('Error importando.', 'error'); }
-  e.target.value = '';
-};
-
-// --- ARREGLO DUPLICADOS OPML ---
-document.getElementById('opmlFile').onchange = async (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  try {
-    const text = await file.text();
-    const doc = new DOMParser().parseFromString(text, 'text/xml');
-    const outlines = doc.querySelectorAll('outline[type="rss"], outline[xmlUrl]');
-    let count = 0;
-    
-    // Función para normalizar URLs y evitar duplicados (http vs https, barras finales)
-    const normalizeUrl = (u) => {
-      if (!u) return '';
-      return u.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
-    };
-
-    const existingUrls = new Set([
-      ...state.localSources.map(s => normalizeUrl(s.url)),
-      ...state.sources.map(s => normalizeUrl(s.url))
-    ]);
-
-    outlines.forEach(o => {
-      const url = o.getAttribute('xmlUrl');
-      const normUrl = normalizeUrl(url);
-      
-      if (url && !existingUrls.has(normUrl)) {
-        const title = o.getAttribute('title') || o.getAttribute('text') || url;
-        const category = o.parentElement?.getAttribute('text') || 'General';
-        state.localSources.push({ url, title, category });
-        existingUrls.add(normUrl); // Evita duplicados dentro del mismo archivo OPML
-        count++;
-      }
-    });
-    
-    localStorage.setItem(LS_LOCAL_SOURCES, JSON.stringify(state.localSources));
-    setStatus(`Importadas ${count} fuentes nuevas desde OPML.`, 'ok');
-    renderSources();
-    loadData();
-  } catch (e) { setStatus('Error al leer OPML.', 'error'); }
-  e.target.value = '';
-};
-
-// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER ---
-const PROXY_URL = 'https://rss-proxy.lector-rss.workers.dev';
-
-async function fetchFeedXml(feedUrl) {
-  const url = `${PROXY_URL}?url=${encodeURIComponent(feedUrl)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+/* ---------- LÓGICA DE DESCARGA (worker de Cloudflare) — sin cambios de fondo ---------- */
+async function fetchFeedXml(feedUrl){
+  const res=await fetch(`${PROXY_URL}?url=${encodeURIComponent(feedUrl)}`,{signal:AbortSignal.timeout(25000)});
+  if(!res.ok)throw new Error(`HTTP ${res.status}`);
   return res.text();
 }
-
-function stripHtml(html) {
-  return (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function parseRssXml(xmlText, sourceUrl) {
-  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
-  const isAtom = doc.querySelector('feed') !== null;
-  const items = doc.querySelectorAll(isAtom ? 'entry' : 'item');
-  const articles = [];
-
-  items.forEach(item => {
-    const get = (tag) => {
-      const el = item.querySelector(tag);
-      return el ? (el.textContent || '').trim() : '';
-    };
-
-    let link = '';
-    if (isAtom) {
-      const linkEl = item.querySelector('link[href]');
-      link = linkEl ? linkEl.getAttribute('href') : '';
-    } else {
-      link = get('link') || get('guid');
-    }
-
-    const title = get('title') || '(Sin título)';
-    const dateStr = get('pubDate') || get('published') || get('updated');
-    const date = dateStr ? new Date(dateStr) : new Date();
-    const description = get('description') || get('summary') || get('content');
-    
-    const contentEl = item.getElementsByTagName('content:encoded')[0];
-    const fullRssContent = contentEl ? (contentEl.textContent || '').trim() : description;
-
+function stripHtml(html){return(html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()}
+function parseRssXml(xmlText,sourceUrl){
+  const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+  const isAtom=doc.querySelector('feed')!==null;
+  const items=doc.querySelectorAll(isAtom?'entry':'item');
+  if(doc.querySelector('parsererror')||!items.length)throw new Error('No es un feed válido o está vacío');
+  const articles=[];
+  items.forEach(item=>{
+    const get=tag=>{const el=item.querySelector(tag);return el?(el.textContent||'').trim():''};
+    let link='';
+    if(isAtom){const l=item.querySelector('link[href]');link=l?l.getAttribute('href'):''}
+    else link=get('link')||get('guid');
+    const title=get('title')||'(Sin título)';
+    const dateStr=get('pubDate')||get('published')||get('updated');
+    const date=dateStr?new Date(dateStr):new Date();
+    const description=get('description')||get('summary')||get('content');
+    const contentEl=item.getElementsByTagName('content:encoded')[0];
+    const fullRssContent=contentEl?(contentEl.textContent||'').trim():description;
+    const mt=item.getElementsByTagName('media:thumbnail')[0]||item.getElementsByTagName('media:content')[0]||item.querySelector('enclosure[type^="image"]');
     articles.push({
-      id: link || (sourceUrl + '|' + title),
-      sourceUrl,
-      title: stripHtml(title),
-      link,
-      date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
-      snippet: stripHtml(fullRssContent).slice(0, 200),
-      fullRssContent: fullRssContent,
-      content: "" // Empieza vacío para forzar el Lazy Load
+      id:link||(sourceUrl+'|'+title),sourceUrl,title:stripHtml(title),link,
+      date:isNaN(date)?new Date().toISOString():date.toISOString(),
+      snippet:stripHtml(fullRssContent).slice(0,200),fullRssContent,
+      thumb:safeImg(mt?.getAttribute('url'))||thumbFrom(fullRssContent),
+      content:''
     });
   });
-
   return articles;
 }
-
-async function extractWithReadability(url) {
-  try {
-    const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl);
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    if (html.length < 1000) return null;
-
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const reader = new Readability(doc, { charThreshold: 100 });
-    const article = reader.parse();
-
-    if (!article || !article.content) return null;
-
-    const base = new URL(url);
-    let cleaned = article.content.replace(
-      /<img([^>]*?)src="([^"]+)"/gi,
-      (match, pre, src) => {
-        try { return `<img${pre}src="${new URL(src, base).href}"`; }
-        catch { return match; }
-      }
-    );
-
-    cleaned = cleaned
-      .replace(/<img[^>]*width=["']?1["']?[^>]*>/gi, '')
-      .replace(/<img[^>]*height=["']?1["']?[^>]*>/gi, '')
-      .replace(/ on\w+="[^"]*"/gi, '');
-
+async function extractWithReadability(url){
+  try{
+    if(typeof Readability==='undefined')return null;
+    const res=await fetch(`${PROXY_URL}?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(25000)});
+    if(!res.ok)return null;
+    const html=await res.text();
+    if(html.length<1000)return null;
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const article=new Readability(doc,{charThreshold:100}).parse();
+    if(!article||!article.content)return null;
+    const base=new URL(url);
+    let cleaned=article.content.replace(/<img([^>]*?)src="([^"]+)"/gi,(m,pre,src)=>{try{return`<img${pre}src="${new URL(src,base).href}"`}catch{return m}});
+    cleaned=cleaned.replace(/<img[^>]*width=["']?1["']?[^>]*>/gi,'').replace(/<img[^>]*height=["']?1["']?[^>]*>/gi,'').replace(/ on\w+="[^"]*"/gi,'');
     return cleaned.trim();
-  } catch (e) {
-    return null;
-  }
+  }catch(e){return null}
 }
 
-async function loadData() {
-  setStatus('Cargando fuentes…');
-  setProgress(5);
-  state.failedSources.clear();
+/* Detecta el feed a partir de la dirección de una web (usa el mismo proxy, sin cambios en el worker) */
+async function discoverFeed(input){
+  const get=async(u,ms)=>{const r=await fetch(`${PROXY_URL}?url=${encodeURIComponent(u)}`,{signal:AbortSignal.timeout(ms)});if(!r.ok)throw new Error('HTTP '+r.status);return r.text()};
+  const isFeed=t=>/<(rss|feed|rdf:RDF)[\s>]/i.test(t.slice(0,3000));
+  const feedTitle=t=>{try{return new DOMParser().parseFromString(t,'text/xml').querySelector('channel > title, feed > title')?.textContent.trim()||''}catch{return''}};
+  let html='';try{html=await get(input,20000)}catch{}
+  if(html&&isFeed(html))return{url:input,title:feedTitle(html)};
+  const c=[];
+  if(html){new DOMParser().parseFromString(html,'text/html').querySelectorAll('link[rel~="alternate"][type*="rss"],link[rel~="alternate"][type*="atom"]').forEach(l=>{try{c.push(new URL(l.getAttribute('href'),input).href)}catch{}})}
+  const o=new URL(input).origin;['/feed','/rss','/rss.xml','/feed.xml','/atom.xml','/index.xml'].forEach(x=>c.push(o+x));
+  for(const u of new Set(c)){try{const t=await get(u,10000);if(isFeed(t))return{url:u,title:feedTitle(t)}}catch{}}
+  return null;
+}
 
-  let allSources = [];
-  try {
-    const saved = localStorage.getItem(LS_LOCAL_SOURCES);
-    if (saved) allSources = JSON.parse(saved);
-  } catch (e) {}
+let loading=false,lastLoad=0;
+async function loadData(only){
+  if(loading)return;if(!navigator.onLine){setStatus('Sin conexión: mostrando la copia guardada.');return}loading=true;
+  try{
+    setStatus('Cargando fuentes…');setProgress(5);
+    const list=Array.isArray(only)?only:S.sources;
+    if(!Array.isArray(only))S.failed.clear();else only.forEach(s=>S.failed.delete(s.url));
+    const old=new Map(S.articles.map(a=>[a.id,a]));
+    const fetched=new Map();let i=0,done=0,err=0,fresh=0;
+    const worker=async()=>{while(i<list.length){
+      const s=list[i++];
+      try{setStatus(`Leyendo ${s.title}…`);fetched.set(s.url,parseRssXml(await fetchFeedXml(s.url),s.url).slice(0,S.cfg.max))}
+      catch(e){console.warn(`Error con ${s.title}:`,e.message);err++;S.failed.set(s.url,errMsg(e))}
+      setProgress(5+(++done/list.length)*90);
+    }};
+    await Promise.all(Array.from({length:Math.min(CONCURRENCY,list.length)},worker));
+    const urls=new Set(S.sources.map(s=>s.url)),seen=new Set(),out=[];
+    const take=a=>{if(seen.has(a.id)||!urls.has(a.sourceUrl))return;seen.add(a.id);const o=old.get(a.id);if(o?.content&&!a.content)a.content=o.content;out.push(a)};
+    list.forEach(s=>(fetched.get(s.url)||[]).forEach(a=>{if(!old.has(a.id))fresh++;take(a)}));
+    S.articles.filter(a=>!fetched.has(a.sourceUrl)).forEach(take); // conserva lo anterior de fuentes que fallan o no se recargan
+    S.articles=out.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    setProgress(100);updateTitle();renderSources();renderList();
+    setStatus(`Listo. ${out.length} artículos de ${S.sources.length} fuentes${err?` (${err} fallos)`:''}.`);
+    if(fresh>0&&old.size>0)toast(`¡${fresh} artículos nuevos!`);
+    lastLoad=Date.now();cachePut({id:'articles',list:S.articles,at:lastLoad}).catch(()=>{});
+    if(!err&&!Array.isArray(only)){const keep=new Set([...S.articles.map(a=>a.id),...S.saved.keys()]),n=S.read.size;S.read=new Set([...S.read].filter(id=>keep.has(id)));if(S.read.size!==n)persist()}
+  }finally{loading=false}
+}
 
-  if (allSources.length === 0) {
-    allSources = [
-      { url: 'https://hnrss.org/frontpage', title: 'Hacker News', category: 'Tecnología' },
-      { url: 'https://www.xataka.com/feedburner.xml', title: 'Xataka', category: 'Tecnología' },
-    ];
-  }
+/* ---------- Vistas ---------- */
+function updateTitle(){
+  $('viewTitle').textContent=S.tag?'Etiqueta: '+S.tag:S.onlyFav?'Favoritos':S.view==='all'?'Todas las noticias':S.view==='saved'?'Guardados':srcTitle(S.view);
+}
+function go(mode,fav,tag){S.view=mode;S.onlyFav=!!fav;S.tag=tag||null;updateTitle();renderSources();renderList(true);toggleDrawer();closeArt();$('list').scrollTop=0}
+function setDrawer(o){$('drawer').classList.toggle('open',o);$('overlay').classList.toggle('show',o)}
+function toggleDrawer(){const o=!$('drawer').classList.contains('open');setDrawer(o);o?lpush('drawer'):lpop('drawer')}
+function toggleSearch(){const b=$('searchBar'),o=b.style.display==='block';b.style.display=o?'none':'block';if(o){$('q').value='';S.search='';renderList(true)}else $('q').focus()}
+$('q').oninput=e=>{S.search=e.target.value.toLowerCase();renderList(true)};
+function toggleUnread(){S.onlyUnread=!S.onlyUnread;$('fBtn').classList.toggle('on',S.onlyUnread);renderList(true)}
 
-  const hidden = JSON.parse(localStorage.getItem('rss_hidden_sources') || '[]');
-  const overrides = JSON.parse(localStorage.getItem('rss_source_overrides') || '{}');
-  
-  allSources = allSources.filter(s => !hidden.includes(s.url)).map(s => {
-    if (overrides[s.url]) {
-      return { ...s, title: overrides[s.url].title || s.title, category: overrides[s.url].category || s.category };
-    }
-    return s;
-  });
-
-  const allArticles = [];
-  const validSources = [];
-  let errorCount = 0;
-  let processedCount = 0;
-  
-  const oldArticleIds = new Set(state.articles.map(a => a.id));
-  let newArticlesCount = 0;
-
-  for (const source of allSources) {
-    processedCount++;
-    setProgress(5 + (processedCount / allSources.length) * 90);
-    
-    try {
-      setStatus(`Leyendo ${source.title}…`);
-      const xml = await fetchFeedXml(source.url);
-      let items = parseRssXml(xml, source.url);
-
-      items = items.slice(0, state.maxArticles); 
-      
-      items.forEach(item => {
-        if (!oldArticleIds.has(item.id)) newArticlesCount++;
-      });
-
-      allArticles.push(...items);
-      validSources.push(source);
-    } catch (e) {
-      console.warn(`Error con ${source.title}:`, e.message);
-      errorCount++;
-      state.failedSources.add(source.url);
-      validSources.push(source); 
-    }
-  }
-
-  allArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  state.sources = validSources;
-  state.articles = allArticles;
-
-  try { const s = localStorage.getItem(LS_READ); if (s) state.read = new Set(JSON.parse(s)); } catch(e){}
-  try { const s = localStorage.getItem(LS_FAVS); if (s) state.favorites = new Set(JSON.parse(s)); } catch(e){}
-  try {
-    const s = localStorage.getItem(LS_FONT);
-    if (s) {
-      state.readerFontSize = parseInt(s);
-      document.documentElement.style.setProperty('--reader-size', state.readerFontSize + 'px');
-    }
-  } catch(e){}
-  try {
-    const settings = JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}');
-    if (settings.quickAIPrompt) state.quickAIPrompt = settings.quickAIPrompt;
-    if (settings.maxArticles) state.maxArticles = settings.maxArticles;
-  } catch(e){}
-  try {
-    const theme = localStorage.getItem(LS_THEME);
-    if (theme === 'dark') {
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
-      document.getElementById('themeToggleBtn').textContent = '☀️ Modo Claro';
-    }
-  } catch(e){}
-
-  try {
-    const savedArr = await dbGetAll('guardados');
-    state.saved = new Map(savedArr.map(x => [x.id, x]));
-    
-    state.tags.clear();
-    state.saved.forEach(a => {
-      if (a.tags) a.tags.forEach(t => state.tags.set(t, t));
+function renderSources(){
+  const f=$('srcFilter').value.toLowerCase(),out=[];
+  const item=(label,n,cls,fn,extra)=>h('div',{class:'src '+cls,onclick:fn},h('span',{class:'lbl',text:label}),n?h('span',{class:'count',text:n}):'',extra||'');
+  const fixed=(lbl,mode,n,fav)=>{if(f&&!lbl.toLowerCase().includes(f))return;out.push(item(lbl,n,S.view===mode&&S.onlyFav===fav&&!S.tag?'active':'',()=>go(mode,fav)))};
+  fixed('🗂️ Todas','all',S.articles.filter(a=>!S.read.has(a.id)).length,false);
+  fixed('⭐ Favoritos','all',S.favs.size,true);
+  fixed('💾 Guardados','saved',S.saved.size,false);
+  const tags=[...S.tags].filter(t=>!f||t.toLowerCase().includes(f));
+  if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>out.push(item(t,0,S.tag===t?'active':'',()=>go('saved',false,t))))}
+  const cats={};S.sources.forEach(s=>(cats[s.category||'General']??=[]).push(s));
+  Object.keys(cats).sort().forEach(cat=>{
+    const ss=cats[cat].filter(s=>!f||(s.title||'').toLowerCase().includes(f)||cat.toLowerCase().includes(f));
+    if(!ss.length)return;
+    const col=S.collapsed.has(cat);
+    out.push(h('div',{class:'cat',text:(col?'▶ ':'▼ ')+cat,onclick:()=>{col?S.collapsed.delete(cat):S.collapsed.add(cat);renderSources()}}));
+    if(col)return;
+    ss.forEach(s=>{
+      const un=S.articles.filter(a=>a.sourceUrl===s.url&&!S.read.has(a.id)).length,bad=S.failed.has(s.url);
+      const el=item('📡 '+(s.title||s.url),0,(S.view===s.url&&!S.onlyFav&&!S.tag?'active ':'')+(bad?'failed':''),()=>go(s.url),null);
+      if(bad)el.append(h('span',{class:'count',style:'background:var(--danger)',text:'⚠️',onclick:e=>{e.stopPropagation();toast(`${s.title}: ${S.failed.get(s.url)}`)}}));
+      else if(un)el.append(h('span',{class:'count',text:un}));
+      el.append(h('button',{text:'⚙️',title:'Editar fuente',onclick:e=>{e.stopPropagation();show('srcModal',editSrc(s))}}));
+      out.push(el);
     });
-  } catch (e) {}
-
-  setProgress(100);
-  updateViewTitle();
-  renderSources();
-  renderList();
-  
-  if (errorCount > 0) {
-    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fallos).`);
-  } else {
-    setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
-  }
-  
-  if (newArticlesCount > 0) {
-    showToast(`¡${newArticlesCount} artículos nuevos!`);
-  }
-}
-
-// --- SISTEMA DE IDEAS ---
-function getIdeas() { try { return JSON.parse(localStorage.getItem(LS_IDEAS) || '[]'); } catch { return []; } }
-function setIdeas(arr) { localStorage.setItem(LS_IDEAS, JSON.stringify(arr)); }
-window.saveIdea = () => { const text = document.getElementById('ideaText').value.trim(); if (!text) return; const ideas = getIdeas(); ideas.push({ id: 'i' + Date.now(), text, done: false, createdAt: new Date().toISOString() }); setIdeas(ideas); document.getElementById('ideaText').value = ''; renderIdeas(); };
-window.toggleIdea = (id) => { const ideas = getIdeas(); const idx = ideas.findIndex(x => x.id === id); if (idx >= 0) { ideas[idx].done = !ideas[idx].done; setIdeas(ideas); renderIdeas(); } };
-window.deleteIdea = (id) => { if (!confirm('¿Borrar idea?')) return; setIdeas(getIdeas().filter(x => x.id !== id)); renderIdeas(); };
-
-function renderIdeas() {
-  const ideas = getIdeas(); const cont = document.getElementById('ideasList');
-  if (!ideas.length) { cont.innerHTML = '<p style="text-align:center;padding:12px">Aún no hay ideas.</p>'; return; }
-  cont.innerHTML = '';
-  ideas.forEach(idea => {
-    const div = document.createElement('div'); div.className = 'idea-item' + (idea.done ? ' done' : '');
-    div.innerHTML = `<div class="text">${escapeHtml(idea.text)}</div><div class="idea-actions"><button class="secondary" onclick="toggleIdea('${idea.id}')">${idea.done ? '↺ Desmarcar' : '✓ Implementado'}</button><button class="secondary" onclick="deleteIdea('${idea.id}')" style="color:var(--danger); border-color:var(--danger);">🗑 Borrar</button></div>`;
-    cont.appendChild(div);
   });
+  $('srcList').replaceChildren(...out);
 }
 
-(async () => {
-  try { 
-    await openDB(); 
-    renderIdeas();
-    await loadData(); 
-  } catch (e) { setStatus('Error: ' + e.message, 'error'); }
+function visible(){
+  let it;
+  if(S.view==='saved')it=[...S.saved.values()];
+  else if(S.onlyFav){const m=new Map(S.articles.map(a=>[a.id,a]));S.saved.forEach((a,id)=>{if(!m.has(id))m.set(id,a)});it=[...m.values()]}
+  else it=S.articles.filter(a=>S.view==='all'||a.sourceUrl===S.view);
+  if(S.onlyFav)it=it.filter(a=>S.favs.has(a.id));
+  if(S.tag)it=it.filter(a=>tagsOf(a).includes(S.tag));
+  if(S.onlyUnread)it=it.filter(a=>!S.read.has(a.id));
+  if(S.search)it=it.filter(a=>(a.title+' '+(a.snippet||'')).toLowerCase().includes(S.search));
+  return it.sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+function renderList(top){
+  const l=$('list'),y=l.scrollTop,items=visible();
+  if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':'No hay artículos.'}));
+  else l.replaceChildren(...items.map(row));
+  l.scrollTop=top?0:y;
+}
+const swipeAct=(fn,msg)=>{fn();setStatus(msg,()=>{fn();setStatus('Acción deshecha.')})};
+function row(a){
+  const rd=S.read.has(a.id),fv=S.favs.has(a.id),th=a.thumb||thumbFrom(a.content);
+  const el=h('div',{class:'article'+(rd?' read':'')+(fv?' fav':'')},
+    th?h('img',{class:'thumb',src:th,loading:'lazy',referrerpolicy:'no-referrer',onerror:function(){this.remove()}}):'',
+    h('div',{class:'body'},
+      h('div',{class:'title',text:(fv?'⭐ ':'')+a.title}),
+      h('div',{class:'meta'},h('span',{text:srcTitle(a.sourceUrl)}),h('span',{text:fmt(a.date)}),...tagsOf(a).map(t=>h('span',{class:'tag',text:t}))),
+      h('div',{class:'snippet',text:a.snippet||''})));
+  // Gestos: → favorito (y guardado offline), ← leído/no leído. Se ve el color e icono al arrastrar.
+  const sL=h('span',{text:fv?'☆':'⭐'}),sR=h('span',{text:rd?'↺':'✓'}),sb=h('div',{class:'sb'},sL,sR),wrap=h('div',{class:'sw'},sb,el);
+  let x0=0,y0=0,dx=0,sw=false;
+  el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;sw=false;el.style.transition='none'},{passive:true});
+  el.addEventListener('touchmove',e=>{const mx=e.touches[0].clientX-x0,my=e.touches[0].clientY-y0;if(!sw&&Math.abs(mx)>10&&Math.abs(mx)>Math.abs(my))sw=true;
+    if(sw){dx=mx;el.style.transform=`translateX(${dx}px)`;sb.style.background=dx>0?'#f5b400':'var(--accent)';sL.style.visibility=dx>0?'visible':'hidden';sR.style.visibility=dx>0?'hidden':'visible'}},{passive:true});
+  el.addEventListener('touchend',()=>{el.style.transition='transform .2s';el.style.transform='';sb.style.background='';sL.style.visibility=sR.style.visibility='';if(!sw)return;
+    if(dx>70)swipeAct(()=>toggleFav(a.id),fv?'Quitado de favoritos.':'Añadido a favoritos (guardado sin conexión).');
+    else if(dx<-70)swipeAct(()=>toggleRead(a.id),rd?'Marcado como no leído.':'Marcado como leído.')});
+  el.onclick=()=>{if(!sw)openArticle(a)};
+  return wrap;
+}
+
+/* ---------- Estado: leído / favorito (⭐ = también guardado sin conexión) ---------- */
+const persist=()=>{LS.set(K.read,[...S.read]);LS.set(K.favs,[...S.favs])};
+const refresh=()=>{renderSources();renderList();paintBar()};
+const findArt=id=>S.articles.find(a=>a.id===id)||S.saved.get(id);
+async function fillOffline(c){ // descarga el texto completo en segundo plano
+  if(c.content&&c.content.length>500)return;
+  const full=await extractWithReadability(c.link);
+  if(full&&full.length>500&&S.saved.get(c.id)===c){c.content=full;dbPut(c).catch(()=>{})}
+}
+async function toggleFav(id){
+  const a=findArt(id);if(!a)return;
+  try{
+    if(S.favs.has(id)){
+      S.favs.delete(id);const c=S.saved.get(id);
+      if(c&&!(c.tags||[]).length){await dbDel(id);S.saved.delete(id)}
+    }else{
+      S.favs.add(id);
+      if(!S.saved.has(id)){const c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};await dbPut(c);S.saved.set(id,c);fillOffline(c)}
+    }
+  }catch{toast('No se pudo guardar sin conexión')}
+  persist();calcTags();refresh();
+}
+function toggleRead(id){S.read.has(id)?S.read.delete(id):S.read.add(id);persist();refresh()}
+function markAllRead(){
+  const it=visible();if(!it.length||!confirm(`¿Marcar los ${it.length} artículos como leídos?`))return;
+  const ids=it.filter(a=>!S.read.has(a.id)).map(a=>a.id);ids.forEach(id=>S.read.add(id));persist();
+  setStatus('Todos marcados como leídos.',()=>{ids.forEach(id=>S.read.delete(id));persist();setStatus('Acción deshecha.');refresh()});refresh();
+}
+function undo(){if(S.undo)S.undo()}
+
+/* ---------- Lector ---------- */
+let tok=0,listY=0;
+const mob=()=>matchMedia('(max-width:899px)').matches;
+function paintBar(){
+  const a=S.art;if(!a)return;
+  $('bFav').textContent=S.favs.has(a.id)?'⭐':'☆';
+  $('bRead').style.opacity=S.read.has(a.id)?1:.4;
+  const l=safeUrl(a.link);l?$('bOrig').href=l:$('bOrig').removeAttribute('href');
+}
+function closeReader(){if(!document.body.classList.contains('reading'))return;document.body.classList.remove('reading');$('list').scrollTop=listY}
+const closeArt=()=>{lpop('reader');closeReader()};
+function navBox(){
+  const nav=S.nav||[],i=nav.indexOf(S.art.id);if(i<0||nav.length<2)return'';
+  const mk=(d,lbl)=>{const t=findArt(nav[i+d]);return t?h('button',{class:'sec',onclick:()=>step(d)},h('div',{class:'muted',text:lbl}),h('div',{class:'nt',text:t.title})):h('span',{style:'flex:1'})};
+  return h('div',{class:'rnav'},mk(-1,'← Anterior'),mk(1,'Siguiente →'));
+}
+function step(d){const nav=S.nav||[],i=nav.indexOf(S.art?.id);if(i<0)return;const t=findArt(nav[i+d]);if(t)openArticle(t,true)}
+async function openArticle(a,keepNav){
+  const my=++tok;S.art=a;S.read.add(a.id);persist();
+  if(!keepNav)S.nav=visible().map(x=>x.id);
+  if(!document.body.classList.contains('reading')){listY=$('list').scrollTop;document.body.classList.add('reading');if(mob())lpush('reader')}
+  refresh();
+  const body=h('div',{class:'rbody'}),meta=h('div',{class:'rmeta'});
+  const info=()=>{const n=(body.textContent||'').trim().split(/\s+/).length;meta.textContent=`${srcTitle(a.sourceUrl)} · ${fmt(a.date)}`+(n>120?` · ${Math.max(1,Math.round(n/200))} min de lectura`:'')};
+  info();
+  $('rc').replaceChildren(h('h2',{text:a.title}),meta,body,navBox());
+  $('reader').scrollTop=0;
+  if(!a.content||a.content.length<200){
+    body.replaceChildren(h('div',{class:'spin'}),h('p',{class:'center muted',text:'Extrayendo texto completo…'}));
+    const full=await extractWithReadability(a.link);
+    if(full&&full.length>500)a.content=full;
+    else a.content=(a.fullRssContent&&a.fullRssContent.length>200)?a.fullRssContent:a.snippet;
+    if(S.saved.has(a.id)){const c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:S.saved.get(a.id).savedAt,tags:S.saved.get(a.id).tags};S.saved.set(a.id,c);dbPut(c).catch(()=>{})}
+    if(my!==tok)return; // el usuario abrió otro artículo mientras tanto
+  }
+  if(a.content&&a.content.length>500)body.innerHTML=sanitizeHtml(a.content);
+  else{
+    body.replaceChildren(h('p',{text:a.snippet||''}));
+    const l=safeUrl(a.link);
+    if(l)body.append(h('p',{class:'muted',style:'margin-top:20px',text:'No se pudo extraer el texto completo. '}),h('a',{href:l,target:'_blank',rel:'noopener noreferrer',text:'Leer original →'}));
+  }
+  body.querySelectorAll('img').forEach(i=>i.onerror=()=>i.style.display='none');
+  info();
+}
+async function shareArt(){
+  const a=S.art,l=safeUrl(a?.link);if(!l)return;
+  if(navigator.share)navigator.share({title:a.title,url:l}).catch(()=>{});else{await copy(l);toast('Enlace copiado')}
+}
+
+/* ---------- Etiquetas ---------- */
+function openTag(){
+  if(!S.art)return;$('tagIn').value='';
+  $('tagList').replaceChildren(...[...S.tags].map(t=>h('span',{class:'tag',style:'cursor:pointer',text:t,onclick:()=>$('tagIn').value=t})));
+  show('tagModal');$('tagIn').focus();
+}
+async function saveTag(){
+  const t=$('tagIn').value.trim(),a=S.art;if(!t||!a)return;
+  try{
+    let c=S.saved.get(a.id);
+    if(!c){c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};S.saved.set(a.id,c)}
+    c.tags=[...new Set([...(c.tags||[]),t])];await dbPut(c);
+  }catch{toast('No se pudo guardar la etiqueta');return}
+  calcTags();hide('tagModal');setStatus('Etiqueta añadida (el artículo queda guardado).');refresh();
+}
+
+/* ---------- Prompts de IA ---------- */
+const customPrompts=()=>LS.get(K.prompts,[]);
+function openPrompts(){if(!S.art)return;renderPrompts();show('aiModal')}
+function renderPrompts(){
+  const use=p=>async()=>{const l=safeUrl(S.art.link)||S.art.link;await copy(`${p}\n\nArtículo: ${S.art.title}\nEnlace: ${l}`);hide('aiModal');toast('Prompt copiado')};
+  const rows=[['⚡ '+S.cfg.quick,0],...DEFAULT_PROMPTS.map(p=>[p,0])].map(([p])=>h('div',{class:'pr',onclick:use(p.replace(/^⚡ /,''))},h('span',{text:p})));
+  customPrompts().forEach((p,i)=>rows.push(h('div',{class:'pr',onclick:use(p)},h('span',{text:p}),h('span',{text:'🗑️',onclick:e=>{e.stopPropagation();const l=customPrompts();l.splice(i,1);LS.set(K.prompts,l);renderPrompts()}}))));
+  $('prompts').replaceChildren(...rows);
+}
+function addPrompt(){const t=$('newPrompt').value.trim();if(!t)return;LS.set(K.prompts,[...customPrompts(),t]);$('newPrompt').value='';renderPrompts()}
+
+/* ---------- Fuentes: alta, edición, editor, OPML ---------- */
+let editing=null,origUrl='';
+function newSrc(){editing=null;origUrl='';$('srcH').textContent='Añadir fuente';$('sUrl').value='';$('sTitle').value='';$('sCat').value='General';$('sDel').style.display='none';return'srcModal'}
+function editSrc(s){editing=s;origUrl=s.url;$('srcH').textContent='Editar fuente';$('sUrl').value=s.url;$('sTitle').value=s.title;$('sCat').value=s.category||'General';$('sDel').style.display='';return'srcModal'}
+let savingSrc=false;
+async function saveSrc(){
+  if(savingSrc)return;
+  let raw=$('sUrl').value.trim();if(raw&&!/^[a-z]+:\/\//i.test(raw))raw='https://'+raw;
+  let url=safeUrl(raw),title=$('sTitle').value.trim();const category=$('sCat').value.trim()||'General';
+  if(!url)return toast('Escribe la dirección de la web o del feed');
+  if(!editing||url!==origUrl){
+    savingSrc=true;const b=$('sSave');b.disabled=true;b.textContent='Buscando feed…';
+    let f=null;try{f=await discoverFeed(url)}catch{}
+    savingSrc=false;b.disabled=false;b.textContent='Guardar';
+    if(f){url=f.url;if(!title)title=f.title}
+    else if(!confirm('No he podido comprobar que ahí haya un feed RSS. ¿Añadirla igualmente?'))return;
+  }
+  if(S.sources.some(s=>s!==editing&&s.url===url))return toast('Esa fuente ya existe');
+  let s=editing;
+  if(s)Object.assign(s,{url,title:title||url,category});else{s={url,title:title||url,category};S.sources.push(s)}
+  if(editing&&S.view===origUrl)S.view=url;
+  saveSources();hide('srcModal');updateTitle();renderSources();renderList();
+  if(!editing||url!==origUrl)loadData([s]);
+}
+function exportOpml(){
+  const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const cats={};S.sources.forEach(s=>(cats[s.category||'General']??=[]).push(s));
+  const body=Object.keys(cats).sort().map(c=>`    <outline text="${esc(c)}" title="${esc(c)}">\n${cats[c].map(s=>`      <outline type="rss" text="${esc(s.title)}" title="${esc(s.title)}" xmlUrl="${esc(s.url)}"/>`).join('\n')}\n    </outline>`).join('\n');
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head><title>Mi Lector RSS</title></head>\n  <body>\n${body}\n  </body>\n</opml>`;
+  const url=URL.createObjectURL(new Blob([xml],{type:'text/x-opml'}));
+  h('a',{href:url,download:`mi_lector_fuentes_${new Date().toISOString().slice(0,10)}.opml`}).click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('OPML exportado');
+}
+function delSrc(){
+  if(!editing||!confirm('¿Eliminar esta fuente?'))return;
+  const u=editing.url;S.sources=S.sources.filter(s=>s!==editing);S.articles=S.articles.filter(a=>a.sourceUrl!==u);
+  if(S.view===u)S.view='all';saveSources();hide('srcModal');updateTitle();renderSources();renderList();setStatus('Fuente eliminada.');
+}
+function openEditor(){$('edText').value=S.sources.map(s=>`${s.url} | ${s.title} | ${s.category||'General'}`).join('\n');show('edModal')}
+function saveEditor(){
+  const ns=[];
+  $('edText').value.split('\n').forEach(l=>{if(!l.trim())return;const p=l.split('|').map(x=>x.trim()),u=safeUrl(p[0]);if(u&&!ns.some(s=>s.url===u))ns.push({url:u,title:p[1]||u,category:p[2]||'General'})});
+  S.sources=ns;saveSources();hide('edModal');S.view='all';updateTitle();renderSources();loadData();
+}
+$('opml').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const doc=new DOMParser().parseFromString(await f.text(),'text/xml');
+    const norm=u=>(u||'').toLowerCase().replace(/^https?:\/\//,'').replace(/\/$/,'');
+    const have=new Set(S.sources.map(s=>norm(s.url))),added=[];
+    doc.querySelectorAll('outline[type="rss"], outline[xmlUrl]').forEach(o=>{
+      const url=safeUrl(o.getAttribute('xmlUrl'));if(!url||have.has(norm(url)))return;
+      have.add(norm(url));added.push({url,title:o.getAttribute('title')||o.getAttribute('text')||url,category:o.parentElement?.getAttribute('text')||'General'});
+    });
+    S.sources.push(...added);saveSources();renderSources();setStatus(`Importadas ${added.length} fuentes nuevas desde OPML.`);
+    if(added.length)loadData(added);
+  }catch{toast('Error al leer el OPML')}
+  e.target.value='';
+};
+
+/* ---------- Copia de seguridad completa ---------- */
+async function exportBackup(){
+  let arts=[];try{arts=await dbAll()}catch{}
+  const data={version:2,date:new Date().toISOString(),articles:arts,sources:S.sources,read:[...S.read],favs:[...S.favs],prompts:customPrompts(),ideas:LS.get(K.ideas,[]),cfg:{...S.cfg}};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  const a=h('a',{href:url,download:`mi_lector_backup_${new Date().toISOString().slice(0,10)}.json`});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Copia exportada');
+}
+$('imp').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const d=JSON.parse(await f.text()),arts=Array.isArray(d)?d:(d.articles||[]);
+    for(const a of arts)if(a&&typeof a.id==='string')await dbPut(a);
+    if(!Array.isArray(d)&&d.version===2){
+      if(Array.isArray(d.sources)){const have=new Set(S.sources.map(s=>s.url));d.sources.forEach(s=>{const u=safeUrl(s?.url);if(u&&!have.has(u)){S.sources.push({url:u,title:String(s.title||u),category:String(s.category||'General')});have.add(u)}});saveSources()}
+      if(Array.isArray(d.read))d.read.forEach(x=>S.read.add(x));
+      if(Array.isArray(d.favs))d.favs.forEach(x=>S.favs.add(x));
+      persist();
+      if(Array.isArray(d.prompts))LS.set(K.prompts,[...new Set([...customPrompts(),...d.prompts.filter(p=>typeof p==='string')])]);
+      if(Array.isArray(d.ideas)){const cur=LS.get(K.ideas,[]),ids=new Set(cur.map(i=>i.id));LS.set(K.ideas,[...cur,...d.ideas.filter(i=>i&&typeof i.text==='string'&&!ids.has(i.id))]);renderIdeas()}
+    }
+    S.saved=new Map((await dbAll()).map(x=>[x.id,x]));calcTags();refresh();toast('Copia importada');
+  }catch{toast('Archivo no válido')}
+  e.target.value='';
+};
+
+/* ---------- Ajustes ---------- */
+function applyCfg(){
+  const r=document.documentElement;
+  S.cfg.theme==='auto'?r.removeAttribute('data-theme'):r.dataset.theme=S.cfg.theme;
+  r.style.setProperty('--rs',S.cfg.font+'px');
+  $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;$('cQuick').value=S.cfg.quick;
+}
+function saveCfg(){
+  S.cfg.theme=$('cTheme').value;S.cfg.font=+$('cFont').value||16;
+  S.cfg.max=Math.min(200,Math.max(10,parseInt($('cMax').value)||50));S.cfg.quick=$('cQuick').value.trim()||S.cfg.quick;
+  LS.set(K.cfg,{quickAIPrompt:S.cfg.quick,maxArticles:S.cfg.max,theme:S.cfg.theme});LS.set(K.font,S.cfg.font);applyCfg();
+}
+
+/* ---------- Ideas de mejora ---------- */
+let editId=null;
+const ideasUpd=fn=>{const l=LS.get(K.ideas,[]);fn(l);LS.set(K.ideas,l);renderIdeas()};
+function saveIdea(){const t=$('ideaText').value.trim();if(!t)return;ideasUpd(l=>l.push({id:'i'+Date.now(),text:t,done:false,createdAt:new Date().toISOString()}));$('ideaText').value=''}
+function renderIdeas(){
+  const l=LS.get(K.ideas,[]);
+  if(!l.length){$('ideasList').replaceChildren(h('p',{class:'center muted',text:'Aún no hay ideas.'}));return}
+  $('ideasList').replaceChildren(...l.map(i=>{
+    if(editId===i.id){
+      const ta=h('textarea');ta.value=i.text;
+      return h('div',{class:'card'},ta,h('div',{class:'row'},
+        h('button',{text:'Guardar',onclick:()=>{const t=ta.value.trim();if(!t)return;editId=null;ideasUpd(x=>{x.find(y=>y.id===i.id).text=t})}}),
+        h('button',{class:'sec',text:'Cancelar',onclick:()=>{editId=null;renderIdeas()}})));
+    }
+    return h('div',{class:'card'+(i.done?' done':'')},h('div',{class:'tx',text:i.text}),h('div',{class:'row'},
+      h('button',{class:'sec',text:i.done?'↺ Desmarcar':'✓ Implementada',onclick:()=>ideasUpd(x=>{const y=x.find(z=>z.id===i.id);y.done=!y.done})}),
+      h('button',{class:'sec',text:'✏️ Editar',onclick:()=>{editId=i.id;renderIdeas()}}),
+      h('button',{class:'sec',style:'color:var(--danger);border-color:var(--danger)',text:'🗑 Borrar',onclick:()=>{if(confirm('¿Borrar idea?'))ideasUpd(x=>{x.splice(x.findIndex(y=>y.id===i.id),1)})}})));
+  }));
+}
+
+/* ---------- Global ---------- */
+document.addEventListener('click',e=>{if(e.target.classList.contains('ov'))hide(e.target.id)});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(L.length)history.back();else closeArt();return}
+  if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey||!S.art)return;
+  if(e.key==='j')step(1);else if(e.key==='k')step(-1);
+});
+
+/* Actualizar al volver a la app si pasaron más de 15 min */
+const AUTO_MIN=15;
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-lastLoad>AUTO_MIN*6e4)loadData()});
+
+/* Tirar hacia abajo para actualizar (lista en móvil) */
+(()=>{
+  const l=$('list'),p=$('ptr');let y0=0,dy=0,on=false;
+  l.addEventListener('touchstart',e=>{on=l.scrollTop===0&&!loading;y0=e.touches[0].clientY;dy=0},{passive:true});
+  l.addEventListener('touchmove',e=>{if(!on)return;dy=e.touches[0].clientY-y0;if(dy<=0){p.style.opacity=0;return}p.style.opacity=Math.min(1,dy/80);p.style.transform=`translate(-50%,${Math.min(dy/2,60)}px) rotate(${dy*3}deg)`},{passive:true});
+  l.addEventListener('touchend',()=>{if(on&&dy>110)loadData();on=false;dy=0;p.style.opacity=0;p.style.transform=''},{passive:true});
+})();
+
+/* Icono de compartir estándar (en iPhone/iPad, el de Apple) */
+const ICO_IOS='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+if(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))$('bShare').innerHTML=ICO_IOS;
+
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+(async()=>{
+  applyCfg();loadSources();renderIdeas();
+  document.querySelectorAll('button[title]').forEach(b=>b.setAttribute('aria-label',b.title));
+  try{
+    await openDB();S.saved=new Map((await dbAll()).map(x=>[x.id,x]));calcTags();
+    const c=await cacheGet();
+    if(c&&Array.isArray(c.list)){const urls=new Set(S.sources.map(s=>s.url));S.articles=c.list.filter(a=>urls.has(a.sourceUrl));lastLoad=c.at||0}
+  }catch(e){console.warn('IndexedDB no disponible',e)}
+  updateTitle();renderSources();renderList();
+  if(S.articles.length)setStatus('Mostrando la copia guardada…');
+  await loadData();
 })();
 </script>
 </body>
