@@ -905,7 +905,10 @@ function parseRssXml(xmlText, sourceUrl) {
     const dateStr = get('pubDate') || get('published') || get('updated');
     const date = dateStr ? new Date(dateStr) : new Date();
     const description = get('description') || get('summary') || get('content');
-    const contentEncoded = get('content:encoded') || description;
+    
+    // ARREGLO: Usar getElementsByTagName para evitar el error de los dos puntos (:)
+    const contentEl = item.getElementsByTagName('content:encoded')[0];
+    const contentEncoded = contentEl ? (contentEl.textContent || '').trim() : description;
 
     articles.push({
       id: link || (sourceUrl + '|' + title),
@@ -983,6 +986,7 @@ async function loadData() {
 
   const allArticles = [];
   const validSources = [];
+  let errorCount = 0;
 
   for (const source of allSources) {
     try {
@@ -1003,6 +1007,7 @@ async function loadData() {
       validSources.push(source);
     } catch (e) {
       console.warn(`Error con ${source.title}:`, e.message);
+      errorCount++;
     }
   }
 
@@ -1038,7 +1043,12 @@ async function loadData() {
   updateViewTitle();
   renderSources();
   renderList();
-  setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
+  
+  if (errorCount > 0) {
+    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fuentes fallaron).`);
+  } else {
+    setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
+  }
 }
 // --- FIN DE LA NUEVA LÓGICA DE DESCARGA ---
 
