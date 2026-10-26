@@ -3,26 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v1.2</title>
-<!-- Cargamos Readability desde CDN para extraer el texto completo -->
+<title>Mi Lector RSS - v1.3 Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
 <style>
   :root { --bg:#f5f5f7; --panel:#fff; --border:#e0e0e5; --text:#1c1c1e; --muted:#8e8e93; --accent:#0a84ff; --unread:#0a84ff; --danger:#ff3b30; --ok:#34c759; --favorite:#ffcc00; --reader-size:16px; }
   
-  /* Modo Oscuro Manual */
-  body.dark-mode {
-    --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff;
-  }
-  /* Modo Oscuro Automático */
-  @media (prefers-color-scheme: dark) {
-    body:not(.light-mode) {
-      --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff;
-    }
-  }
+  body.dark-mode { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; }
+  @media (prefers-color-scheme: dark) { body:not(.light-mode) { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; } }
 
   * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; transition: background 0.3s, color 0.3s; }
   
+  /* Barra de progreso superior */
+  #progress-bar { position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0%; z-index:9999; transition: width 0.3s ease; }
+
   header { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20; height:52px; }
   header h1 { font-size:16px; margin:0; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
   button { padding:8px 12px; border:none; border-radius:8px; background:var(--accent); color:#fff; font-size:13px; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; }
@@ -81,8 +75,9 @@
     #reader-container .reader-header { display:none; }
   }
   
-  .reader-header { position:sticky; top:0; background:var(--panel); padding:10px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; z-index:10; }
-  .reader-header .title { font-size:15px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .reader-header { position:sticky; top:0; background:var(--panel); padding:10px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:4px; z-index:10; overflow-x:auto; }
+  .reader-header .title { font-size:15px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;}
+  .reader-header .icon { padding:6px; font-size:16px; }
   .reader-content { padding:20px; max-width:800px; margin:0 auto; width:100%; }
   .reader-content h2 { font-size:22px; margin:0 0 12px; line-height:1.3; }
   .reader-meta { font-size:13px; color:var(--muted); margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
@@ -96,6 +91,9 @@
     body.reading header { display:none; }
     #drawer { width:85vw; left:-85vw; }
   }
+
+  /* Etiquetas */
+  .tag-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; background:rgba(10, 132, 255, 0.1); color:var(--accent); margin-right:4px; border: 1px solid rgba(10, 132, 255, 0.2); }
 
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:200; padding:16px; }
   .modal-overlay.show { display:flex; }
@@ -128,6 +126,8 @@
 </head>
 <body>
 
+<div id="progress-bar"></div>
+
 <header>
   <button class="icon" onclick="toggleDrawer()">☰</button>
   <h1 id="currentViewTitle">Todas</h1>
@@ -148,9 +148,13 @@
     <div class="reader-header">
       <button class="icon" onclick="closeArticle()">←</button>
       <div class="title" id="readerHeaderTitle"></div>
+      <button class="icon" id="readerShareBtn" title="Compartir">📤</button>
       <button class="icon" id="readerFavBtn" title="Favorito">☆</button>
-      <button class="icon" id="readerSaveBtn" title="Guardar offline">💾</button>
-      <button class="icon" onclick="openReaderMenu()" title="Opciones">⋮</button>
+      <button class="icon" id="readerSaveBtn" title="Guardar">💾</button>
+      <button class="icon" id="readerTagBtn" title="Etiquetar">🏷️</button>
+      <button class="icon" onclick="quickAISummary()" title="Resumen Rápido IA">✨</button>
+      <button class="icon" id="readerUnreadBtn" title="Marcar no leído" onclick="toggleReadStatus()">↺</button>
+      <button class="icon" onclick="openReaderMenu()" title="Más">⋮</button>
     </div>
     <div class="reader-content" id="readerContent"></div>
   </section>
@@ -168,16 +172,16 @@
         <button class="secondary" onclick="document.getElementById('opmlFile').click(); toggleDrawer();">📥 Importar OPML</button>
         <button class="secondary" onclick="openFeedEditor(); toggleDrawer();">⚙️ Editor de Feeds</button>
         <button class="secondary" onclick="toggleTheme(); toggleDrawer();" id="themeToggleBtn">🌙 Modo Oscuro</button>
+        <button class="secondary" onclick="openSettings(); toggleDrawer();">⚙️ Ajustes</button>
         <button class="secondary" onclick="exportBackup()">📤 Exportar JSON</button>
         <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importar JSON</button>
-        <button class="secondary" onclick="document.getElementById('ideasModal').classList.add('show'); toggleDrawer();">💡 Ideas</button>
       </div>
     </div>
     <button class="icon" onclick="toggleDrawer()">✕</button>
   </div>
   
   <div class="drawer-search">
-    <input type="text" id="sourceSearch" placeholder="Filtrar fuentes..." oninput="renderSources()">
+    <input type="text" id="sourceSearch" placeholder="Filtrar fuentes o etiquetas..." oninput="renderSources()">
   </div>
   
   <div class="drawer-content" id="drawerSources"></div>
@@ -191,10 +195,40 @@
     <span id="statusText">Cargando…</span>
     <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
   </div>
-  <span class="version-tag">v1.2</span>
+  <span class="version-tag">v1.3 Pro</span>
 </div>
 
 <!-- Modales -->
+<div class="modal-overlay" id="tagModal">
+  <div class="modal">
+    <h3>🏷️ Etiquetar artículo</h3>
+    <input id="tagInput" type="text" placeholder="Escribe una etiqueta (ej. Recetas)">
+    <div id="existingTags" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
+    <div class="actions">
+      <button class="secondary" onclick="document.getElementById('tagModal').classList.remove('show')">Cancelar</button>
+      <button onclick="saveTag()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>⚙️ Ajustes de la App</h3>
+    
+    <label>Prompt para Resumen Rápido (✨)</label>
+    <p style="font-size:12px; margin-top:-8px; margin-bottom:8px;">Este texto se copiará junto al enlace al pulsar el botón ✨.</p>
+    <textarea id="quickPromptInput" rows="3">Resume este artículo en 3 puntos clave con un tono directo:</textarea>
+    
+    <label>Artículos a descargar por fuente (Lista)</label>
+    <input type="number" id="maxArticlesInput" value="50" min="10" max="100">
+    
+    <div class="actions" style="margin-top:24px;">
+      <button class="secondary" onclick="document.getElementById('settingsModal').classList.remove('show')">Cerrar</button>
+      <button onclick="saveSettings()">Guardar Ajustes</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addModal">
   <div class="modal">
     <h3>Añadir fuente local</h3>
@@ -222,7 +256,6 @@
       <li><code>/feed.xml</code></li>
       <li><code>/atom.xml</code></li>
     </ul>
-    <p>Ejemplo: si la web es <code>https://elespanol.com</code>, prueba con <code>https://elespanol.com/rss</code>.</p>
     <div class="actions">
       <button class="secondary" onclick="document.getElementById('discoverModal').classList.remove('show')">Cerrar</button>
     </div>
@@ -234,7 +267,7 @@
     <h3>⚙️ Editor de Feeds</h3>
     <div class="help-box">
       <strong>¿Cómo actualizar tus fuentes?</strong><br>
-      Añade o edita tus fuentes aquí (una por línea con formato <code>URL | Título | Categoría</code>). Se guardarán directamente en este dispositivo.
+      Añade o edita tus fuentes aquí (una por línea con formato <code>URL | Título | Categoría</code>).
     </div>
     <textarea id="feedEditorText" class="feed-editor-textarea" rows="10"></textarea>
     <div class="actions" style="justify-content:space-between; margin-top:16px;">
@@ -272,10 +305,12 @@
   <div class="modal">
     <h3>Opciones del artículo</h3>
     <div class="actions" style="flex-direction:column; align-items:stretch; gap:10px;">
-      <button class="secondary" onclick="toggleReadStatus(); document.getElementById('readerMenuModal').classList.remove('show');">↺ Marcar como no leído</button>
       <button class="secondary" onclick="openAIModal(); document.getElementById('readerMenuModal').classList.remove('show');">✨ Profundizar con IA</button>
-      <button class="secondary" onclick="changeFontSize(1)">A+ Aumentar letra</button>
-      <button class="secondary" onclick="changeFontSize(-1)">A- Reducir letra</button>
+      <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin: 10px 0;">
+        <button class="secondary" onclick="changeFontSize(1)">A+ Aumentar letra</button>
+        <span id="fontSizeDisplay" style="font-size:14px; font-weight:600;">16px</span>
+        <button class="secondary" onclick="changeFontSize(-1)">A- Reducir letra</button>
+      </div>
       <a href="#" id="readerOriginalLink" target="_blank" style="text-decoration:none;"><button class="secondary" style="width:100%;">↗ Abrir en el sitio original</button></a>
     </div>
     <div class="actions" style="margin-top:20px;">
@@ -287,7 +322,7 @@
 <div class="modal-overlay" id="aiModal">
   <div class="modal">
     <h3>✨ Profundizar con IA</h3>
-    <p>Elige un prompt. Se copiará automáticamente junto con el enlace del artículo para que lo pegues en ChatGPT, Claude o Gemini.</p>
+    <p>Elige un prompt. Se copiará junto con el enlace del artículo.</p>
     
     <div style="display:flex; gap:8px; margin-bottom:16px;">
       <input type="text" id="newPromptInput" placeholder="Escribe tu prompt personalizado..." style="margin-bottom:0; flex:1;">
@@ -302,54 +337,45 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="ideasModal">
-  <div class="modal">
-    <h3>💡 Ideas de mejora</h3>
-    <textarea id="ideaText" placeholder="Escribe una idea…"></textarea>
-    <div class="actions" style="margin-bottom:16px"><button onclick="saveIdea()">Guardar idea</button></div>
-    <div id="ideasList"></div>
-    <div class="actions" style="margin-top:16px"><button class="secondary" onclick="document.getElementById('ideasModal').classList.remove('show')">Cerrar</button></div>
-  </div>
-</div>
-
 <script>
 const state = {
   sources: [], articles: [], read: new Set(), favorites: new Set(),
-  localSources: [], saved: new Map(),
+  localSources: [], saved: new Map(), tags: new Map(),
   activeSource: null, viewMode: 'all', showOnlyFavorites: false, showOnlyUnread: false,
-  activeArticle: null,
+  activeArticle: null, activeTagFilter: null,
   collapsedCategories: new Set(),
   searchTerm: '',
   lastAction: null,
   readerFontSize: 16,
-  failedSources: new Set()
+  failedSources: new Set(),
+  quickAIPrompt: "Resume este artículo en 3 puntos clave con un tono directo:",
+  maxArticles: 50
 };
 
 const DEFAULT_PROMPTS = [
   "Resume este artículo en 3 puntos clave.",
   "Explícame este artículo como si tuviera 10 años.",
-  "Dame contraargumentos o críticas a esta noticia.",
-  "¿Cuáles son las implicaciones a largo plazo de lo que cuenta este artículo?",
-  "Extrae los datos más importantes y crea una tabla."
+  "Dame contraargumentos o críticas a esta noticia."
 ];
 
 let db = null;
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('mi_lector_db', 1);
+    const req = indexedDB.open('mi_lector_db', 2); // Subimos versión por nuevas tablas
     req.onupgradeneeded = e => {
       const d = e.target.result;
       if (!d.objectStoreNames.contains('guardados')) d.createObjectStore('guardados', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('etiquetas')) d.createObjectStore('etiquetas', { keyPath: 'id' });
     };
     req.onsuccess = e => { db = e.target.result; resolve(db); };
     req.onerror = e => reject(e.target.error);
   });
 }
-function dbPut(a) { return new Promise((res, rej) => { const tx = db.transaction('guardados', 'readwrite'); tx.objectStore('guardados').put(a); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
-function dbDelete(id) { return new Promise((res, rej) => { const tx = db.transaction('guardados', 'readwrite'); tx.objectStore('guardados').delete(id); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
-function dbGetAll() { return new Promise((res, rej) => { const tx = db.transaction('guardados', 'readonly'); const req = tx.objectStore('guardados').getAll(); req.onsuccess = () => res(req.result || []); req.onerror = e => rej(e.target.error); }); }
+function dbPut(store, a) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).put(a); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
+function dbDelete(store, id) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(id); tx.oncomplete = res; tx.onerror = e => rej(e.target.error); }); }
+function dbGetAll(store) { return new Promise((res, rej) => { const tx = db.transaction(store, 'readonly'); const req = tx.objectStore(store).getAll(); req.onsuccess = () => res(req.result || []); req.onerror = e => rej(e.target.error); }); }
 
-const LS_READ = 'rss_read_v1'; const LS_FAVS = 'rss_favs_v1'; const LS_LOCAL_SOURCES = 'rss_local_sources_v1'; const LS_IDEAS = 'rss_ideas_v1'; const LS_PROMPTS = 'rss_prompts_v1'; const LS_FONT = 'rss_font_v1'; const LS_THEME = 'rss_theme_v1';
+const LS_READ = 'rss_read_v1'; const LS_FAVS = 'rss_favs_v1'; const LS_LOCAL_SOURCES = 'rss_local_sources_v1'; const LS_PROMPTS = 'rss_prompts_v1'; const LS_FONT = 'rss_font_v1'; const LS_THEME = 'rss_theme_v1'; const LS_SETTINGS = 'rss_settings_v1';
 
 const $list = document.getElementById('list-container');
 const $readerContent = document.getElementById('readerContent');
@@ -360,11 +386,21 @@ const $undoBtn = document.getElementById('undoBtn');
 const $searchBar = document.getElementById('searchBar');
 const $searchInput = document.getElementById('searchInput');
 const $filterBtn = document.getElementById('filterBtn');
+const $progressBar = document.getElementById('progress-bar');
 
 function setStatus(msg, type='') { 
   $statusText.textContent = msg; 
   $statusText.parentElement.parentElement.className = type; 
   $undoBtn.style.display = state.lastAction ? 'inline-block' : 'none';
+}
+function setProgress(percent) {
+  if (percent > 0 && percent < 100) {
+    $progressBar.style.width = percent + '%';
+    $progressBar.style.opacity = '1';
+  } else {
+    $progressBar.style.opacity = '0';
+    setTimeout(() => { $progressBar.style.width = '0%'; }, 300);
+  }
 }
 function clearUndo() { state.lastAction = null; $undoBtn.style.display = 'none'; }
 window.undoAction = () => {
@@ -417,11 +453,12 @@ function renderSources() {
   const mkFixed = (label, mode, count, isFavFilter = false) => {
     if (filter && !label.toLowerCase().includes(filter)) return;
     const div = document.createElement('div');
-    div.className = 'source-item' + (state.viewMode === mode && state.showOnlyFavorites === isFavFilter ? ' active' : '');
+    div.className = 'source-item' + (state.viewMode === mode && state.showOnlyFavorites === isFavFilter && !state.activeTagFilter ? ' active' : '');
     div.innerHTML = `<span>${label}</span>${count ? `<span class="count">${count}</span>` : ''}`;
     div.onclick = () => { 
       state.viewMode = mode; 
       state.showOnlyFavorites = isFavFilter;
+      state.activeTagFilter = null;
       updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); 
     };
     $drawerSources.appendChild(div);
@@ -429,6 +466,23 @@ function renderSources() {
   mkFixed('🗂️ Todas', 'all', state.articles.filter(a => !state.read.has(a.id)).length);
   mkFixed('⭐ Favoritos', 'all', state.favorites.size, true);
   mkFixed('💾 Guardados', 'saved', state.saved.size);
+
+  // Etiquetas
+  if (state.tags.size > 0) {
+    const tagHeader = document.createElement('div');
+    tagHeader.className = 'category-title';
+    tagHeader.innerHTML = `<span>🏷️ Mis Etiquetas</span>`;
+    $drawerSources.appendChild(tagHeader);
+    
+    state.tags.forEach(tag => {
+      if (filter && !tag.toLowerCase().includes(filter)) return;
+      const div = document.createElement('div');
+      div.className = 'source-item' + (state.activeTagFilter === tag ? ' active' : '');
+      div.innerHTML = `<span style="margin-left:12px; flex:1;">${escapeHtml(tag)}</span>`;
+      div.onclick = () => { state.viewMode = 'saved'; state.showOnlyFavorites = false; state.activeTagFilter = tag; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
+      $drawerSources.appendChild(div);
+    });
+  }
 
   const cats = {};
   [...state.sources, ...state.localSources].forEach(s => {
@@ -458,21 +512,18 @@ function renderSources() {
         const isFailed = state.failedSources.has(s.url);
         
         const div = document.createElement('div');
-        div.className = 'source-item' + (state.viewMode === s.url && !state.showOnlyFavorites ? ' active' : '');
+        div.className = 'source-item' + (state.viewMode === s.url && !state.showOnlyFavorites && !state.activeTagFilter ? ' active' : '');
         
         let countHtml = '';
-        if (isFailed) {
-          countHtml = `<span class="count error" title="Error al conectar">⚠️</span>`;
-        } else if (unread > 0) {
-          countHtml = `<span class="count">${unread}</span>`;
-        }
+        if (isFailed) countHtml = `<span class="count error" title="Error al conectar">⚠️</span>`;
+        else if (unread > 0) countHtml = `<span class="count">${unread}</span>`;
 
         div.innerHTML = `
           <span style="margin-left:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${isFailed ? 'opacity:0.5;' : ''}">📡 ${escapeHtml(s.title || s.url)}</span>
           ${countHtml}
           <button class="edit-btn" onclick="event.stopPropagation(); openEditSource('${escapeHtml(s.url)}')">⚙️</button>
         `;
-        div.onclick = () => { state.viewMode = s.url; state.showOnlyFavorites = false; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
+        div.onclick = () => { state.viewMode = s.url; state.showOnlyFavorites = false; state.activeTagFilter = null; updateViewTitle(); renderSources(); renderList(); toggleDrawer(); closeArticle(); };
         $drawerSources.appendChild(div);
       });
     }
@@ -480,7 +531,8 @@ function renderSources() {
 }
 
 function updateViewTitle() {
-  if (state.showOnlyFavorites) $viewTitle.textContent = 'Favoritos';
+  if (state.activeTagFilter) $viewTitle.textContent = 'Etiqueta: ' + state.activeTagFilter;
+  else if (state.showOnlyFavorites) $viewTitle.textContent = 'Favoritos';
   else if (state.viewMode === 'all') $viewTitle.textContent = 'Todas las noticias';
   else if (state.viewMode === 'saved') $viewTitle.textContent = 'Guardados';
   else $viewTitle.textContent = sourceTitle(state.viewMode);
@@ -495,8 +547,10 @@ function renderList() {
     if (state.showOnlyFavorites) items = items.filter(a => state.favorites.has(a.id));
   }
   
+  if (state.activeTagFilter) {
+    items = items.filter(a => a.tags && a.tags.includes(state.activeTagFilter));
+  }
   if (state.showOnlyUnread) items = items.filter(a => !state.read.has(a.id));
-  
   if (state.searchTerm) {
     items = items.filter(a => a.title.toLowerCase().includes(state.searchTerm) || a.snippet.toLowerCase().includes(state.searchTerm));
   }
@@ -513,7 +567,6 @@ function renderList() {
     const read = state.read.has(a.id);
     const isFav = state.favorites.has(a.id);
     const thumb = firstImage(a.content);
-    const isSaved = state.saved.has(a.id);
     const isSavedView = state.viewMode === 'saved';
     
     const wrapper = document.createElement('div');
@@ -525,7 +578,11 @@ function renderList() {
       ${thumb ? `<img class="thumb" src="${escapeHtml(thumb)}" loading="lazy" onerror="this.style.display='none'">` : ''}
       <div class="body">
         <div class="title">${isFav ? '⭐ ' : ''}${escapeHtml(a.title)}</div>
-        <div class="meta"><span>${escapeHtml(sourceTitle(a.sourceUrl))}</span><span>${formatDate(a.date)}</span></div>
+        <div class="meta">
+          <span>${escapeHtml(sourceTitle(a.sourceUrl))}</span>
+          <span>${formatDate(a.date)}</span>
+          ${a.tags ? a.tags.map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`).join('') : ''}
+        </div>
         <div class="snippet">${escapeHtml(a.snippet)}</div>
       </div>
       ${isSavedView ? `<button class="delete-btn" onclick="event.stopPropagation(); removeSaved('${escapeHtml(a.id)}')">🗑️</button>` : ''}
@@ -562,7 +619,7 @@ function renderList() {
   });
 }
 
-function openArticle(a) {
+async function openArticle(a) {
   state.activeArticle = a;
   state.read.add(a.id); localStorage.setItem(LS_READ, JSON.stringify([...state.read]));
   document.body.classList.add('reading');
@@ -570,14 +627,20 @@ function openArticle(a) {
 
   const isSaved = state.saved.has(a.id);
   const isFav = state.favorites.has(a.id);
-  const hasFull = a.content && a.content.length > 500;
-  const body = hasFull
-    ? sanitizeHtml(a.content)
-    : `<p>${escapeHtml(a.snippet)}</p><p style="color:var(--muted);font-size:14px;margin-top:20px;">Este feed solo trae un resumen. <a href="${escapeHtml(a.link)}" target="_blank">Leer original →</a></p>`;
-
+  
   document.getElementById('readerHeaderTitle').textContent = a.title;
   document.getElementById('readerOriginalLink').href = a.link;
   
+  const $shareBtn = document.getElementById('readerShareBtn');
+  $shareBtn.onclick = () => {
+    if (navigator.share) {
+      navigator.share({ title: a.title, url: a.link }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(a.link);
+      setStatus('Enlace copiado.', 'ok');
+    }
+  };
+
   const $favBtn = document.getElementById('readerFavBtn');
   $favBtn.textContent = isFav ? '⭐' : '☆';
   $favBtn.onclick = () => {
@@ -589,18 +652,61 @@ function openArticle(a) {
   const $saveBtn = document.getElementById('readerSaveBtn');
   $saveBtn.textContent = isSaved ? '🗑️' : '💾';
   $saveBtn.onclick = async () => {
-    if (state.saved.has(a.id)) { await dbDelete(a.id); state.saved.delete(a.id); setStatus('Eliminado.', 'ok'); }
-    else { const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() }; await dbPut(toSave); state.saved.set(a.id, toSave); setStatus('Guardado offline.', 'ok'); }
+    if (state.saved.has(a.id)) { await dbDelete('guardados', a.id); state.saved.delete(a.id); setStatus('Eliminado.', 'ok'); }
+    else { const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() }; await dbPut('guardados', toSave); state.saved.set(a.id, toSave); setStatus('Guardado offline.', 'ok'); }
     renderSources(); renderList(); openArticle(a);
   };
 
+  const $tagBtn = document.getElementById('readerTagBtn');
+  $tagBtn.onclick = () => {
+    document.getElementById('tagInput').value = '';
+    document.getElementById('tagInput').focus();
+    
+    const existingDiv = document.getElementById('existingTags');
+    existingDiv.innerHTML = '';
+    state.tags.forEach(t => {
+      const btn = document.createElement('span');
+      btn.className = 'tag-badge';
+      btn.style.cursor = 'pointer';
+      btn.textContent = t;
+      btn.onclick = () => { document.getElementById('tagInput').value = t; };
+      existingDiv.appendChild(btn);
+    });
+
+    document.getElementById('tagModal').classList.add('show');
+  };
+
+  if (!a.content || a.content.length < 200) {
+    // LAZY LOAD: Extraer contenido bajo demanda
+    $readerContent.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--muted);">Extrayendo texto completo…<br><br><div class="spinner" style="display:inline-block; width:30px; height:30px; border:3px solid rgba(10,132,255,0.3); border-top-color:var(--accent); border-radius:50%; animation: spin 1s linear infinite;"></div></div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
+    
+    const full = await extractWithReadability(a.link);
+    if (full) {
+      a.content = full;
+      if (isSaved) {
+        const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
+        await dbPut('guardados', toSave);
+        state.saved.set(a.id, toSave);
+      }
+    } else {
+      a.content = a.snippet; // Fallback
+    }
+  }
+
+  const hasFull = a.content && a.content.length > 500;
+  const body = hasFull
+    ? sanitizeHtml(a.content)
+    : `<p>${escapeHtml(a.snippet)}</p><p style="color:var(--muted);font-size:14px;margin-top:20px;">No se pudo extraer el texto completo. <a href="${escapeHtml(a.link)}" target="_blank">Leer original →</a></p>`;
+
   $readerContent.innerHTML = `
     <h2>${escapeHtml(a.title)}</h2>
-    <div class="reader-meta">${escapeHtml(sourceTitle(a.sourceUrl))} · ${formatDate(a.date)}</div>
+    <div class="reader-meta">
+      ${escapeHtml(sourceTitle(a.sourceUrl))} · ${formatDate(a.date)}
+      ${a.tags ? `<br><br>${a.tags.map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`).join('')}` : ''}
+    </div>
     <div class="reader-body">${body}</div>
   `;
   
-  // Arreglar imágenes rotas en el lector
   document.querySelectorAll('#readerContent img').forEach(img => {
     img.onerror = function() { this.style.display = 'none'; };
   });
@@ -608,7 +714,66 @@ function openArticle(a) {
   document.getElementById('reader-container').scrollTop = 0;
 }
 
-window.openReaderMenu = () => document.getElementById('readerMenuModal').classList.add('show');
+window.quickAISummary = () => {
+  if (!state.activeArticle) return;
+  const text = `${state.quickAIPrompt}\n\nArtículo: ${state.activeArticle.title}\nEnlace: ${state.activeArticle.link}`;
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('✨ Resumen copiado al portapapeles.', 'ok');
+  });
+};
+
+window.saveTag = () => {
+  const tag = document.getElementById('tagInput').value.trim();
+  if (!tag || !state.activeArticle) return;
+  
+  const a = state.activeArticle;
+  if (!a.tags) a.tags = [];
+  if (!a.tags.includes(tag)) a.tags.push(tag);
+  
+  state.tags.set(tag, tag);
+  
+  if (state.saved.has(a.id)) {
+    const saved = state.saved.get(a.id);
+    saved.tags = a.tags;
+    dbPut('guardados', saved);
+  } else {
+    // Si no está guardado, lo guardamos automáticamente al etiquetar para no perder la etiqueta
+    const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
+    dbPut('guardados', toSave);
+    state.saved.set(a.id, toSave);
+  }
+
+  document.getElementById('tagModal').classList.remove('show');
+  setStatus('Etiqueta añadida.', 'ok');
+  renderSources(); renderList();
+  // Refrescar la vista del lector
+  if (document.body.classList.contains('reading')) {
+    openArticle(state.activeArticle);
+  }
+};
+
+window.openSettings = () => {
+  document.getElementById('quickPromptInput').value = state.quickAIPrompt;
+  document.getElementById('maxArticlesInput').value = state.maxArticles;
+  document.getElementById('settingsModal').classList.add('show');
+};
+
+window.saveSettings = () => {
+  state.quickAIPrompt = document.getElementById('quickPromptInput').value;
+  state.maxArticles = parseInt(document.getElementById('maxArticlesInput').value) || 50;
+  
+  const settings = { quickAIPrompt: state.quickAIPrompt, maxArticles: state.maxArticles };
+  localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
+  
+  document.getElementById('settingsModal').classList.remove('show');
+  setStatus('Ajustes guardados.', 'ok');
+};
+
+window.openReaderMenu = () => {
+  document.getElementById('fontSizeDisplay').textContent = state.readerFontSize + 'px';
+  document.getElementById('readerMenuModal').classList.add('show');
+};
+
 window.toggleReadStatus = () => {
   if (!state.activeArticle) return;
   if (state.read.has(state.activeArticle.id)) state.read.delete(state.activeArticle.id);
@@ -617,11 +782,12 @@ window.toggleReadStatus = () => {
   setStatus('Estado de lectura cambiado.', 'ok');
   renderSources(); renderList();
 };
+
 window.changeFontSize = (delta) => {
   state.readerFontSize = Math.max(12, Math.min(26, state.readerFontSize + delta));
   document.documentElement.style.setProperty('--reader-size', state.readerFontSize + 'px');
   localStorage.setItem(LS_FONT, state.readerFontSize);
-  document.getElementById('readerMenuModal').classList.remove('show');
+  document.getElementById('fontSizeDisplay').textContent = state.readerFontSize + 'px';
 };
 
 function closeArticle() { document.body.classList.remove('reading'); }
@@ -717,7 +883,7 @@ window.confirmMarkAllRead = () => {
 
 window.removeSaved = async (id) => {
   if (!confirm('¿Eliminar este artículo de guardados?')) return;
-  await dbDelete(id);
+  await dbDelete('guardados', id);
   state.saved.delete(id);
   setStatus('Artículo eliminado.', 'ok');
   renderSources(); renderList();
@@ -740,7 +906,7 @@ window.confirmAddSource = () => {
   document.getElementById('addModal').classList.remove('show');
   setStatus(`Fuente "${title}" añadida.`, 'ok');
   renderSources();
-  loadData(); // Recargar para descargar la nueva fuente
+  loadData();
 };
 
 window.openDiscoverModal = () => document.getElementById('discoverModal').classList.add('show');
@@ -838,7 +1004,7 @@ window.saveEditSource = () => {
 };
 
 window.exportBackup = async () => {
-  const arr = await dbGetAll();
+  const arr = await dbGetAll('guardados');
   if (!arr.length) { setStatus('No hay guardados.', 'error'); return; }
   const blob = new Blob([JSON.stringify({ version: 1, savedAt: new Date().toISOString(), articles: arr }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -852,8 +1018,8 @@ document.getElementById('importFile').onchange = async (e) => {
     const text = await file.text(); const data = JSON.parse(text);
     const arr = Array.isArray(data) ? data : (data.articles || []);
     if (!arr.length) { setStatus('Archivo vacío.', 'error'); return; }
-    for (const art of arr) { if (art.id) await dbPut(art); }
-    const savedArr = await dbGetAll(); state.saved = new Map(savedArr.map(x => [x.id, x]));
+    for (const art of arr) { if (art.id) await dbPut('guardados', art); }
+    const savedArr = await dbGetAll('guardados'); state.saved = new Map(savedArr.map(x => [x.id, x]));
     setStatus(`Importados ${arr.length} artículos.`, 'ok'); renderSources(); renderList();
   } catch (e) { setStatus('Error importando.', 'error'); }
   e.target.value = '';
@@ -885,7 +1051,7 @@ document.getElementById('opmlFile').onchange = async (e) => {
   e.target.value = '';
 };
 
-// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER ---
+// --- LÓGICA DE DESCARGA CON CLOUDFLARE WORKER (LAZY LOAD) ---
 const PROXY_URL = 'https://rss-proxy.lector-rss.workers.dev';
 
 async function fetchFeedXml(feedUrl) {
@@ -923,8 +1089,6 @@ function parseRssXml(xmlText, sourceUrl) {
     const dateStr = get('pubDate') || get('published') || get('updated');
     const date = dateStr ? new Date(dateStr) : new Date();
     const description = get('description') || get('summary') || get('content');
-    
-    // Usar getElementsByTagName para evitar el error de los dos puntos (:)
     const contentEl = item.getElementsByTagName('content:encoded')[0];
     const contentEncoded = contentEl ? (contentEl.textContent || '').trim() : description;
 
@@ -935,7 +1099,7 @@ function parseRssXml(xmlText, sourceUrl) {
       link,
       date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
       snippet: stripHtml(contentEncoded).slice(0, 200),
-      content: contentEncoded || description,
+      content: contentEncoded || description, // Puede ser corto, se extrae en openArticle si es necesario
     });
   });
 
@@ -977,6 +1141,7 @@ async function extractWithReadability(url) {
 
 async function loadData() {
   setStatus('Cargando fuentes…');
+  setProgress(5);
   state.failedSources.clear();
 
   let allSources = [];
@@ -985,7 +1150,6 @@ async function loadData() {
     if (saved) allSources = JSON.parse(saved);
   } catch (e) {}
 
-  // Fuentes por defecto si no hay ninguna
   if (allSources.length === 0) {
     allSources = [
       { url: 'https://hnrss.org/frontpage', title: 'Hacker News', category: 'Tecnología' },
@@ -1006,29 +1170,29 @@ async function loadData() {
   const allArticles = [];
   const validSources = [];
   let errorCount = 0;
+  let processedCount = 0;
 
   for (const source of allSources) {
+    processedCount++;
+    setProgress(5 + (processedCount / allSources.length) * 90);
+    
     try {
-      setStatus(`Cargando ${source.title}…`);
+      setStatus(`Leyendo ${source.title}…`);
       const xml = await fetchFeedXml(source.url);
       let items = parseRssXml(xml, source.url);
 
-      items = items.slice(0, 10); // Limitar a 10 por fuente
+      items = items.slice(0, state.maxArticles); // Límite configurable
 
-      for (const item of items) {
-        if (item.link) {
-          const full = await extractWithReadability(item.link);
-          if (full) item.content = full;
-        }
-      }
-
+      // AQUÍ ESTÁ EL CAMBIO CLAVE DEL LAZY LOAD: 
+      // Ya NO llamamos a Readability para cada item. Solo guardamos el resumen del RSS.
+      
       allArticles.push(...items);
       validSources.push(source);
     } catch (e) {
       console.warn(`Error con ${source.title}:`, e.message);
       errorCount++;
       state.failedSources.add(source.url);
-      validSources.push(source); // MANTENER LA FUENTE VISIBLE AUNQUE FALLE
+      validSources.push(source); 
     }
   }
 
@@ -1048,6 +1212,11 @@ async function loadData() {
     }
   } catch(e){}
   try {
+    const settings = JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}');
+    if (settings.quickAIPrompt) state.quickAIPrompt = settings.quickAIPrompt;
+    if (settings.maxArticles) state.maxArticles = settings.maxArticles;
+  } catch(e){}
+  try {
     const theme = localStorage.getItem(LS_THEME);
     if (theme === 'dark') {
       document.body.classList.add('dark-mode');
@@ -1057,37 +1226,26 @@ async function loadData() {
   } catch(e){}
 
   try {
-    const savedArr = await dbGetAll();
+    const savedArr = await dbGetAll('guardados');
     state.saved = new Map(savedArr.map(x => [x.id, x]));
+    
+    // Reconstruir etiquetas
+    state.tags.clear();
+    state.saved.forEach(a => {
+      if (a.tags) a.tags.forEach(t => state.tags.set(t, t));
+    });
   } catch (e) {}
 
+  setProgress(100);
   updateViewTitle();
   renderSources();
   renderList();
   
   if (errorCount > 0) {
-    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fuentes bloqueadas).`);
+    setStatus(`Listo. ${allArticles.length} artículos (${errorCount} fallos).`);
   } else {
     setStatus(`Listo. ${allArticles.length} artículos de ${validSources.length} fuentes.`);
   }
-}
-// --- FIN DE LA LÓGICA DE DESCARGA ---
-
-function getIdeas() { try { return JSON.parse(localStorage.getItem(LS_IDEAS) || '[]'); } catch { return []; } }
-function setIdeas(arr) { localStorage.setItem(LS_IDEAS, JSON.stringify(arr)); }
-window.saveIdea = () => { const text = document.getElementById('ideaText').value.trim(); if (!text) return; const ideas = getIdeas(); ideas.push({ id: 'i' + Date.now(), text, done: false, createdAt: new Date().toISOString() }); setIdeas(ideas); document.getElementById('ideaText').value = ''; renderIdeas(); };
-window.toggleIdea = (id) => { const ideas = getIdeas(); const idx = ideas.findIndex(x => x.id === id); if (idx >= 0) { ideas[idx].done = !ideas[idx].done; setIdeas(ideas); renderIdeas(); } };
-window.deleteIdea = (id) => { if (!confirm('¿Borrar idea?')) return; setIdeas(getIdeas().filter(x => x.id !== id)); renderIdeas(); };
-
-function renderIdeas() {
-  const ideas = getIdeas(); const cont = document.getElementById('ideasList');
-  if (!ideas.length) { cont.innerHTML = '<p style="text-align:center;padding:12px">Aún no hay ideas.</p>'; return; }
-  cont.innerHTML = '';
-  ideas.forEach(idea => {
-    const div = document.createElement('div'); div.className = 'idea' + (idea.done ? ' done' : '');
-    div.innerHTML = `<div class="text">${escapeHtml(idea.text)}</div><div class="idea-actions"><button class="secondary" onclick="toggleIdea('${idea.id}')">${idea.done ? '↺ Desmarcar' : '✓ Implementado'}</button><button class="secondary" onclick="deleteIdea('${idea.id}')" style="color:var(--danger); border-color:var(--danger);">🗑 Borrar</button></div>`;
-    cont.appendChild(div);
-  });
 }
 
 (async () => {
