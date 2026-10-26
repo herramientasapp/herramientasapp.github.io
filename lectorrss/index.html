@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mi Lector RSS - v1.3.1</title>
+<title>Mi Lector RSS - v1.3.2</title>
 <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
 <style>
   :root { --bg:#f5f5f7; --panel:#fff; --border:#e0e0e5; --text:#1c1c1e; --muted:#8e8e93; --accent:#0a84ff; --unread:#0a84ff; --danger:#ff3b30; --ok:#34c759; --favorite:#ffcc00; --reader-size:16px; }
-  
   body.dark-mode { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; }
   @media (prefers-color-scheme: dark) { body:not(.light-mode) { --bg:#1c1c1e; --panel:#2c2c2e; --border:#3a3a3c; --text:#f2f2f7; --muted:#8e8e93; --accent:#0a84ff; } }
 
@@ -15,8 +14,6 @@
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; transition: background 0.3s, color 0.3s; }
   
   #progress-bar { position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0%; z-index:9999; transition: width 0.3s ease; }
-  
-  /* Toast (Mensaje flotante) */
   #toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-100px); background:var(--text); color:var(--panel); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:10000; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity:0; pointer-events:none; }
   #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
@@ -188,7 +185,7 @@
     <span id="statusText">Cargando…</span>
     <button id="undoBtn" class="undo-btn" style="display:none" onclick="undoAction()">Deshacer</button>
   </div>
-  <span class="version-tag">v1.3.1</span>
+  <span class="version-tag">v1.3.2</span>
 </div>
 
 <!-- Modales -->
@@ -467,7 +464,6 @@ function renderSources() {
   mkFixed('⭐ Favoritos', 'all', state.favorites.size, true);
   mkFixed('💾 Guardados', 'saved', state.saved.size);
 
-  // Etiquetas
   if (state.tags.size > 0) {
     const tagHeader = document.createElement('div');
     tagHeader.className = 'category-title';
@@ -676,7 +672,7 @@ async function openArticle(a) {
     $readerContent.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--muted);">Extrayendo texto completo…<br><br><div class="spinner" style="display:inline-block; width:30px; height:30px; border:3px solid rgba(10,132,255,0.3); border-top-color:var(--accent); border-radius:50%; animation: spin 1s linear infinite;"></div></div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
     
     const full = await extractWithReadability(a.link);
-    if (full) {
+    if (full && full.length > 500) {
       a.content = full;
       if (isSaved) {
         const toSave = { ...a, sourceTitle: sourceTitle(a.sourceUrl), savedAt: new Date().toISOString() };
@@ -684,7 +680,13 @@ async function openArticle(a) {
         state.saved.set(a.id, toSave);
       }
     } else {
-      a.content = a.snippet; 
+      // SI READABILITY FALLA, USAMOS EL CONTENIDO ORIGINAL DEL RSS (content:encoded)
+      // El Español a veces lo mete completo aquí.
+      if (a.fullRssContent && a.fullRssContent.length > 200) {
+        a.content = a.fullRssContent;
+      } else {
+        a.content = a.snippet; 
+      }
     }
   }
 
@@ -1080,8 +1082,10 @@ function parseRssXml(xmlText, sourceUrl) {
     const dateStr = get('pubDate') || get('published') || get('updated');
     const date = dateStr ? new Date(dateStr) : new Date();
     const description = get('description') || get('summary') || get('content');
+    
+    // Guardamos el contenido completo del RSS por si falla Readability
     const contentEl = item.getElementsByTagName('content:encoded')[0];
-    const contentEncoded = contentEl ? (contentEl.textContent || '').trim() : description;
+    const fullRssContent = contentEl ? (contentEl.textContent || '').trim() : description;
 
     articles.push({
       id: link || (sourceUrl + '|' + title),
@@ -1089,8 +1093,9 @@ function parseRssXml(xmlText, sourceUrl) {
       title: stripHtml(title),
       link,
       date: isNaN(date) ? new Date().toISOString() : date.toISOString(),
-      snippet: stripHtml(contentEncoded).slice(0, 200),
-      content: contentEncoded || description,
+      snippet: stripHtml(fullRssContent).slice(0, 200),
+      fullRssContent: fullRssContent, // Guardamos el texto completo del RSS
+      content: fullRssContent // Inicialmente asignamos esto
     });
   });
 
@@ -1103,6 +1108,9 @@ async function extractWithReadability(url) {
     const res = await fetch(proxyUrl);
     if (!res.ok) return null;
     const html = await res.text();
+
+    // Si la respuesta del Worker es muy corta, probablemente sea un bloqueo.
+    if (html.length < 1000) return null;
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const reader = new Readability(doc, { charThreshold: 100 });
@@ -1163,7 +1171,6 @@ async function loadData() {
   let errorCount = 0;
   let processedCount = 0;
   
-  // Para el toast de nuevos artículos
   const oldArticleIds = new Set(state.articles.map(a => a.id));
   let newArticlesCount = 0;
 
