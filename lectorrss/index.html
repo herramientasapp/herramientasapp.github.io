@@ -38,7 +38,7 @@ main{flex:1;display:flex;overflow:hidden}
 @media(min-width:900px){#list{flex:none;width:430px;border-right:1px solid var(--border)}#reader{display:flex}#reader .back{display:none}}
 @media(max-width:899px){body.reading #list,body.reading header,body.reading #searchBar{display:none}body.reading #reader{display:flex}}
 .article{display:flex;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border);border-left:3px solid transparent;cursor:pointer}
-.article:hover{background:var(--bg)}.article.fav{border-left-color:#ffcc00}.article.read{opacity:.6}
+.article:hover{background:var(--bg)}.article.arch{border-left-color:#ffcc00}.article.read{opacity:.6}
 .thumb{width:56px;height:56px;border-radius:6px;object-fit:cover;flex:none}
 .article .body{flex:1;min-width:0}.title{font-weight:600;line-height:1.25;margin-bottom:3px}
 .meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
@@ -73,6 +73,12 @@ main{flex:1;display:flex;overflow:hidden}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
 .card.done{opacity:.6}.card .tx{white-space:pre-wrap;line-height:1.4;margin-bottom:8px;overflow-wrap:anywhere}.card .row{justify-content:flex-start}.card button{padding:5px 10px;font-size:12px}
 .pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer}.pr:hover{background:var(--bg)}
+.fold{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.fold>summary{padding:12px;cursor:pointer;font-weight:600;list-style:none}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:"▶ ";font-size:11px;color:var(--muted)}
+.fold[open]>summary::before{content:"▼ "}
+.fold .in{padding:0 12px 12px}
 .sw{position:relative;overflow:hidden;background:var(--bg)}
 .sw .sb{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:20px;color:#fff}
 .sw .sb span{visibility:hidden}
@@ -103,7 +109,7 @@ main{flex:1;display:flex;overflow:hidden}
     <div class="rhead">
       <button class="ic back" onclick="closeArt()" title="Volver">←</button>
       <button class="ic" id="bShare" onclick="shareArt()" title="Compartir"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></button>
-      <button class="ic" id="bFav" onclick="toggleFav(S.art.id)" title="Favorito (se guarda también sin conexión)">☆</button>
+      <button class="ic" id="bArch" onclick="toggleArch(S.art.id)" title="Leer más tarde" aria-label="Leer más tarde"><svg id="bArchIc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></button>
       <button class="ic" onclick="openTag()" title="Etiquetar">🏷️</button>
       <button class="ic" onclick="openPrompts()" title="Profundizar con IA">✨</button>
       <button class="ic" id="bRead" onclick="toggleRead(S.art.id)" title="Marcar leído / no leído">↺</button>
@@ -123,7 +129,7 @@ main{flex:1;display:flex;overflow:hidden}
   <div id="srcList"></div>
 </aside>
 
-<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v4.0</span></div>
+<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v5.0</span></div>
 
 <!-- Ajustes -->
 <div class="page" id="settings">
@@ -135,7 +141,12 @@ main{flex:1;display:flex;overflow:hidden}
     <h4>Lectura</h4>
     <label>Artículos a descargar por fuente</label><input type="number" id="cMax" min="10" max="200" onchange="saveCfg()">
     <p class="muted" style="margin-top:-8px">A mayor número, más tardará en actualizar.</p>
-    <label>Prompt de IA rápido (primero de la lista ✨)</label><textarea id="cQuick" onchange="saveCfg()"></textarea>
+    <h4>Prompts de IA</h4>
+    <details class="fold" id="promptsDet"><summary>✨ Editar prompts (<span id="pCount">0</span>)</summary><div class="in">
+      <p class="muted">El prompt marcado con ⚡ es el principal: aparece siempre el primero al pulsar ✨ en un artículo.</p>
+      <div id="promptEd"></div>
+      <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="sec" onclick="newPromptEd()">＋ Añadir prompt</button><button class="sec" onclick="restoreDefaultPrompts()">Recuperar los de serie</button></div>
+    </div></details>
     <h4>Fuentes</h4>
     <div class="row" style="justify-content:flex-start">
       <button class="sec" onclick="show('srcModal',newSrc())">＋ Añadir fuente</button>
@@ -184,15 +195,20 @@ main{flex:1;display:flex;overflow:hidden}
 
 <div class="ov" id="tagModal"><div class="modal">
   <h3>🏷️ Etiquetar artículo</h3>
-  <div id="artTags" class="row" style="justify-content:flex-start;margin-bottom:8px"></div><input id="tagIn" placeholder="Etiqueta (ej. Recetas)"><div id="tagList" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
+  <p class="muted" style="margin:0 0 6px">Etiquetas de este artículo (toca para quitar)</p>
+  <div id="tagCur" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
+  <input id="tagIn" placeholder="Nueva etiqueta (ej. Recetas)">
+  <p class="muted" style="margin:-6px 0 6px">Otras etiquetas existentes</p>
+  <div id="tagList" class="row" style="justify-content:flex-start;margin-bottom:12px"></div>
   <div class="row"><button class="sec" onclick="hide('tagModal')">Cancelar</button><button onclick="saveTag()">Guardar</button></div>
 </div></div>
 
 <div class="ov" id="tagEdModal"><div class="modal">
   <h3>🏷️ Editar etiqueta</h3>
-  <label>Nombre</label><input id="teName">
-  <p class="muted" style="margin-top:-6px">Si escribes el nombre de otra etiqueta que ya existe, se fusionan.</p>
-  <div class="row" style="justify-content:space-between"><button class="dan" onclick="delTagAll()">Eliminar</button>
+  <label>Nombre</label><input id="tEdName" maxlength="40">
+  <p class="muted" id="tEdInfo" style="margin-top:-6px"></p>
+  <div class="row" style="justify-content:space-between">
+    <button class="dan" onclick="delTag()">Eliminar</button>
     <div class="row"><button class="sec" onclick="hide('tagEdModal')">Cancelar</button><button onclick="saveTagEdit()">Guardar</button></div></div>
 </div></div>
 
@@ -206,7 +222,7 @@ main{flex:1;display:flex;overflow:hidden}
 
 <script>
 const $=id=>document.getElementById(id);
-const K={read:'rss_read_v1',favs:'rss_favs_v1',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1'};
+const K={read:'rss_read_v1',prompts2:'rss_prompts_v2',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1'};
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('No se pudo guardar: almacenamiento lleno')}}};
 const h=(t,p={},...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p)){if(a==='class')e.className=v;else if(a==='text')e.textContent=v;else if(a.startsWith('on'))e[a]=v;else e.setAttribute(a,v)}e.append(...k);return e};
 /* Capas (lector móvil, menú, ajustes, modales): el botón/gesto "atrás" las cierra en vez de salir de la app */
@@ -218,10 +234,27 @@ addEventListener('popstate',()=>{if(ign>0){ign--;return}const n=L.pop();if(n)clo
 const show=id=>{$(id).classList.add('show');lpush(id)},hide=id=>{$(id).classList.remove('show');lpop(id)};
 
 const _c=LS.get(K.cfg,{});
-const S={sources:[],articles:[],read:new Set(LS.get(K.read,[])),favs:new Set(LS.get(K.favs,[])),saved:new Map(),tags:new Set(),
-  view:'all',onlyFav:false,onlyUnread:false,tag:null,search:'',art:null,undo:null,failed:new Map(),collapsed:new Set(),
-  cfg:{quick:_c.quickAIPrompt||'Resume este artículo en 3 puntos clave con un tono directo:',max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16)}};
+const S={sources:[],articles:[],read:new Set(LS.get(K.read,[])),saved:new Map(),tags:new Set(),
+  view:'all',onlyUnread:false,tag:null,search:'',art:null,undo:null,failed:new Map(),collapsed:new Set(),
+  cfg:{max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16)}};
 const DEFAULT_PROMPTS=['Resume este artículo en 3 puntos clave.','Explícame este artículo como si tuviera 10 años.','Dame contraargumentos o críticas a esta noticia.','¿Cuáles son las implicaciones a largo plazo de lo que cuenta este artículo?','Extrae los datos más importantes y crea una tabla.'];
+/* Prompts de IA: lista única editable. 'main' = el principal (⚡), siempre el primero */
+const DEFAULT_QUICK='Resume este artículo en 3 puntos clave con un tono directo:';
+const uid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function loadPrompts(){
+  let p=LS.get(K.prompts2,null);
+  if(!p||!Array.isArray(p.list)){ // migración: prompt rápido + de serie + personalizados de versiones anteriores
+    const seen=new Set(),list=[];
+    [_c.quickAIPrompt||DEFAULT_QUICK,...DEFAULT_PROMPTS,...LS.get(K.prompts,[])].forEach(t=>{t=typeof t==='string'?t.trim():'';if(t&&!seen.has(t)){seen.add(t);list.push({id:uid(),text:t})}});
+    p={list,main:list[0]?.id||null};LS.set(K.prompts2,p);
+  }
+  p.list=p.list.filter(x=>x&&x.id&&typeof x.text==='string');
+  if(!p.list.some(x=>x.id===p.main))p.main=p.list[0]?.id||null;
+  return p;
+}
+S.prompts=loadPrompts();
+const savePrompts=()=>LS.set(K.prompts2,S.prompts);
+const orderedPrompts=()=>{const l=S.prompts.list,m=l.find(p=>p.id===S.prompts.main);return m?[m,...l.filter(p=>p!==m)]:[...l]};
 const PROXY_URL='https://rss-proxy.lector-rss.workers.dev';
 const CONCURRENCY=4; // pon 1 si algún día el worker se queja de peticiones en paralelo
 
@@ -341,7 +374,7 @@ async function discoverFeed(input){
 
 let loading=false,lastLoad=0;
 async function loadData(only){
-  if(loading)return;if(!navigator.onLine){setStatus('Sin conexión: mostrando la copia guardada.');return}loading=true;
+  if(loading)return;if(!S.sources.length){setStatus('Añade tu primera fuente con el botón ＋ del menú.');renderList();return}if(!navigator.onLine){setStatus('Sin conexión: mostrando la copia guardada.');return}loading=true;
   try{
     setStatus('Cargando fuentes…');setProgress(5);
     const list=Array.isArray(only)?only:S.sources;
@@ -360,7 +393,7 @@ async function loadData(only){
     list.forEach(s=>(fetched.get(s.url)||[]).forEach(a=>{if(!old.has(a.id))fresh++;take(a)}));
     S.articles.filter(a=>!fetched.has(a.sourceUrl)).forEach(take); // conserva lo anterior de fuentes que fallan o no se recargan
     S.articles=out.sort((a,b)=>new Date(b.date)-new Date(a.date));
-    loading=false;setProgress(100);updateTitle();renderSources();renderList();
+    setProgress(100);updateTitle();renderSources();renderList();
     setStatus(`Listo. ${out.length} artículos de ${S.sources.length} fuentes${err?` (${err} fallos)`:''}.`);
     if(fresh>0&&old.size>0)toast(`¡${fresh} artículos nuevos!`);
     lastLoad=Date.now();cachePut({id:'articles',list:S.articles,at:lastLoad}).catch(()=>{});
@@ -370,9 +403,9 @@ async function loadData(only){
 
 /* ---------- Vistas ---------- */
 function updateTitle(){
-  $('viewTitle').textContent=S.tag?'Etiqueta: '+S.tag:S.onlyFav?'Favoritos':S.view==='all'?'Todas las noticias':S.view==='saved'?'Guardados':srcTitle(S.view);
+  $('viewTitle').textContent=S.tag?'Etiqueta: '+S.tag:S.view==='all'?'Todas las noticias':S.view==='saved'?'Archivados':srcTitle(S.view);
 }
-function go(mode,fav,tag){S.view=mode;S.onlyFav=!!fav;S.tag=tag||null;updateTitle();renderSources();renderList(true);toggleDrawer();closeArt();$('list').scrollTop=0}
+function go(mode,tag){S.view=mode;S.tag=tag||null;updateTitle();renderSources();renderList(true);toggleDrawer();closeArt();$('list').scrollTop=0}
 function setDrawer(o){$('drawer').classList.toggle('open',o);$('overlay').classList.toggle('show',o)}
 function toggleDrawer(){const o=!$('drawer').classList.contains('open');setDrawer(o);o?lpush('drawer'):lpop('drawer')}
 function toggleSearch(){const b=$('searchBar'),o=b.style.display==='block';b.style.display=o?'none':'block';if(o){$('q').value='';S.search='';renderList(true)}else $('q').focus()}
@@ -382,12 +415,11 @@ function toggleUnread(){S.onlyUnread=!S.onlyUnread;$('fBtn').classList.toggle('o
 function renderSources(){
   const f=$('srcFilter').value.toLowerCase(),out=[];
   const item=(label,n,cls,fn,extra)=>h('div',{class:'src '+cls,onclick:fn},h('span',{class:'lbl',text:label}),n?h('span',{class:'count',text:n}):'',extra||'');
-  const fixed=(lbl,mode,n,fav)=>{if(f&&!lbl.toLowerCase().includes(f))return;out.push(item(lbl,n,S.view===mode&&S.onlyFav===fav&&!S.tag?'active':'',()=>go(mode,fav)))};
-  fixed('🗂️ Todas','all',S.articles.filter(a=>!S.read.has(a.id)).length,false);
-  fixed('⭐ Favoritos','all',S.favs.size,true);
-  fixed('💾 Guardados','saved',S.saved.size,false);
+  const fixed=(lbl,mode,n)=>{if(f&&!lbl.toLowerCase().includes(f))return;out.push(item(lbl,n,S.view===mode&&!S.tag?'active':'',()=>go(mode)))};
+  fixed('🗂️ Todas','all',S.articles.filter(a=>!S.read.has(a.id)).length);
+  fixed('🔖 Archivados','saved',S.saved.size);
   const tags=[...S.tags].filter(t=>!f||t.toLowerCase().includes(f));
-  if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>out.push(item(t,[...S.saved.values()].filter(a=>(a.tags||[]).includes(t)).length,S.tag===t?'active':'',()=>go('saved',false,t),h('button',{text:'⚙️',title:'Editar etiqueta',onclick:e=>{e.stopPropagation();editTag(t)}}))))}
+  if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>{const n=[...S.saved.values()].filter(a=>(a.tags||[]).includes(t)).length;out.push(item(t,n,S.tag===t?'active':'',()=>go('saved',t),h('button',{text:'⚙️',title:'Editar etiqueta',onclick:e=>{e.stopPropagation();editTag(t)}})))})}
   const cats={};S.sources.forEach(s=>(cats[s.category||'General']??=[]).push(s));
   Object.keys(cats).sort().forEach(cat=>{
     const ss=cats[cat].filter(s=>!f||(s.title||'').toLowerCase().includes(f)||cat.toLowerCase().includes(f));
@@ -397,7 +429,7 @@ function renderSources(){
     if(col)return;
     ss.forEach(s=>{
       const un=S.articles.filter(a=>a.sourceUrl===s.url&&!S.read.has(a.id)).length,bad=S.failed.has(s.url);
-      const el=item('📡 '+(s.title||s.url),0,(S.view===s.url&&!S.onlyFav&&!S.tag?'active ':'')+(bad?'failed':''),()=>go(s.url),null);
+      const el=item('📡 '+(s.title||s.url),0,(S.view===s.url&&!S.tag?'active ':'')+(bad?'failed':''),()=>go(s.url),null);
       if(bad)el.append(h('span',{class:'count',style:'background:var(--danger)',text:'⚠️',onclick:e=>{e.stopPropagation();toast(`${s.title}: ${S.failed.get(s.url)}`)}}));
       else if(un)el.append(h('span',{class:'count',text:un}));
       el.append(h('button',{text:'⚙️',title:'Editar fuente',onclick:e=>{e.stopPropagation();show('srcModal',editSrc(s))}}));
@@ -410,9 +442,7 @@ function renderSources(){
 function visible(){
   let it;
   if(S.view==='saved')it=[...S.saved.values()];
-  else if(S.onlyFav){const m=new Map(S.articles.map(a=>[a.id,a]));S.saved.forEach((a,id)=>{if(!m.has(id))m.set(id,a)});it=[...m.values()]}
   else it=S.articles.filter(a=>S.view==='all'||a.sourceUrl===S.view);
-  if(S.onlyFav)it=it.filter(a=>S.favs.has(a.id));
   if(S.tag)it=it.filter(a=>tagsOf(a).includes(S.tag));
   if(S.onlyUnread)it=it.filter(a=>!S.read.has(a.id));
   if(S.search)it=it.filter(a=>(a.title+' '+(a.snippet||'')).toLowerCase().includes(S.search));
@@ -420,34 +450,34 @@ function visible(){
 }
 function renderList(top){
   const l=$('list'),y=l.scrollTop,items=visible();
-  if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':S.sources.length?'No hay artículos.':'Aún no tienes fuentes. Abre el menú ☰ y pulsa ＋ para añadir la primera.'}));
+  if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':(!S.sources.length&&S.view!=='saved')?'Aún no tienes fuentes. Abre el menú ☰ y pulsa ＋ para añadir la primera.':'No hay artículos.'}));
   else l.replaceChildren(...items.map(row));
   l.scrollTop=top?0:y;
 }
 const swipeAct=(fn,msg)=>{fn();setStatus(msg,()=>{fn();setStatus('Acción deshecha.')})};
 function row(a){
-  const rd=S.read.has(a.id),fv=S.favs.has(a.id),th=a.thumb||thumbFrom(a.content);
-  const el=h('div',{class:'article'+(rd?' read':'')+(fv?' fav':'')},
+  const rd=S.read.has(a.id),fv=S.saved.has(a.id),th=a.thumb||thumbFrom(a.content);
+  const el=h('div',{class:'article'+(rd?' read':'')+(fv?' arch':'')},
     th?h('img',{class:'thumb',src:th,loading:'lazy',referrerpolicy:'no-referrer',onerror:function(){this.remove()}}):'',
     h('div',{class:'body'},
-      h('div',{class:'title',text:(fv?'⭐ ':'')+a.title}),
+      h('div',{class:'title',text:(fv?'🔖 ':'')+a.title}),
       h('div',{class:'meta'},h('span',{text:srcTitle(a.sourceUrl)}),h('span',{text:fmt(a.date)}),...tagsOf(a).map(t=>h('span',{class:'tag',text:t}))),
       h('div',{class:'snippet',text:a.snippet||''})));
-  // Gestos: → favorito (y guardado offline), ← leído/no leído. Se ve el color e icono al arrastrar.
-  const sL=h('span',{text:fv?'☆':'⭐'}),sR=h('span',{text:rd?'↺':'✓'}),sb=h('div',{class:'sb'},sL,sR),wrap=h('div',{class:'sw'},sb,el);
+  // Gestos: → leer más tarde (Archivados, disponible sin conexión), ← leído/no leído. Se ve el color e icono al arrastrar.
+  const sL=h('span',{text:fv?'Quitar de Archivados':'🔖 Leer más tarde',style:'font-size:14px;font-weight:600'}),sR=h('span',{text:rd?'↺':'✓'}),sb=h('div',{class:'sb'},sL,sR),wrap=h('div',{class:'sw'},sb,el);
   let x0=0,y0=0,dx=0,sw=false;
   el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;sw=false;el.style.transition='none'},{passive:true});
   el.addEventListener('touchmove',e=>{const mx=e.touches[0].clientX-x0,my=e.touches[0].clientY-y0;if(!sw&&Math.abs(mx)>10&&Math.abs(mx)>Math.abs(my))sw=true;
     if(sw){dx=mx;el.style.transform=`translateX(${dx}px)`;sb.style.background=dx>0?'#f5b400':'var(--accent)';sL.style.visibility=dx>0?'visible':'hidden';sR.style.visibility=dx>0?'hidden':'visible'}},{passive:true});
   el.addEventListener('touchend',()=>{el.style.transition='transform .2s';el.style.transform='';sb.style.background='';sL.style.visibility=sR.style.visibility='';if(!sw)return;
-    if(dx>70)swipeAct(()=>toggleFav(a.id),fv?'Quitado de favoritos.':'Añadido a favoritos (guardado sin conexión).');
+    if(dx>70)swipeArch(a.id);
     else if(dx<-70)swipeAct(()=>toggleRead(a.id),rd?'Marcado como no leído.':'Marcado como leído.')});
   el.onclick=()=>{if(!sw)openArticle(a)};
   return wrap;
 }
 
 /* ---------- Estado: leído / favorito (⭐ = también guardado sin conexión) ---------- */
-const persist=()=>{LS.set(K.read,[...S.read]);LS.set(K.favs,[...S.favs])};
+const persist=()=>{LS.set(K.read,[...S.read])};
 const refresh=()=>{renderSources();renderList();paintBar()};
 const findArt=id=>S.articles.find(a=>a.id===id)||S.saved.get(id);
 async function fillOffline(c){ // descarga el texto completo en segundo plano
@@ -455,18 +485,30 @@ async function fillOffline(c){ // descarga el texto completo en segundo plano
   const full=await extractWithReadability(c.link);
   if(full&&full.length>500&&S.saved.get(c.id)===c){c.content=full;dbPut(c).catch(()=>{})}
 }
-async function toggleFav(id){
-  const a=findArt(id);if(!a)return;
+async function toggleArch(id,force){ // Archivados = guardados sin conexión ("leer más tarde")
+  const a=findArt(id);if(!a)return false;
+  let added=false;
   try{
-    if(S.favs.has(id)){
-      S.favs.delete(id);const c=S.saved.get(id);
-      if(c&&!(c.tags||[]).length){await dbDel(id);S.saved.delete(id)}
+    if(S.saved.has(id)){
+      const c=S.saved.get(id);
+      if(!force&&(c.tags||[]).length&&!confirm('Este artículo tiene etiquetas y se perderán al quitarlo de Archivados. ¿Continuar?'))return false;
+      await dbDel(id);S.saved.delete(id);
     }else{
-      S.favs.add(id);
-      if(!S.saved.has(id)){const c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};await dbPut(c);S.saved.set(id,c);fillOffline(c)}
+      const c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};await dbPut(c);S.saved.set(id,c);added=true;fillOffline(c);
     }
-  }catch{toast('No se pudo guardar sin conexión')}
-  persist();calcTags();refresh();
+  }catch{toast('No se pudo guardar sin conexión');return false}
+  calcTags();refresh();
+  if(!force)setStatus(added?'Guardado en Archivados para leer más tarde.':'Quitado de Archivados.');
+  return true;
+}
+async function swipeArch(id){
+  const was=S.saved.has(id),snap=S.saved.get(id);
+  if(!await toggleArch(id))return;
+  setStatus(was?'Quitado de Archivados.':'Guardado en Archivados para leer más tarde.',async()=>{
+    if(was){try{S.saved.set(id,snap);await dbPut(snap);calcTags();refresh()}catch{toast('No se pudo deshacer')}}
+    else await toggleArch(id,true);
+    setStatus('Acción deshecha.');
+  });
 }
 function toggleRead(id){S.read.has(id)?S.read.delete(id):S.read.add(id);persist();refresh()}
 function markAllRead(){
@@ -481,7 +523,7 @@ let tok=0,listY=0;
 const mob=()=>matchMedia('(max-width:899px)').matches;
 function paintBar(){
   const a=S.art;if(!a)return;
-  $('bFav').textContent=S.favs.has(a.id)?'⭐':'☆';
+  {const ar=S.saved.has(a.id),b=$('bArch'),t=ar?'Quitar de Archivados':'Leer más tarde';$('bArchIc').setAttribute('fill',ar?'currentColor':'none');b.title=t;b.setAttribute('aria-label',t);b.style.color=ar?'var(--accent)':''}
   $('bRead').style.opacity=S.read.has(a.id)?1:.4;
   const l=safeUrl(a.link);l?$('bOrig').href=l:$('bOrig').removeAttribute('href');
 }
@@ -527,9 +569,40 @@ async function shareArt(){
 
 /* ---------- Etiquetas ---------- */
 function openTag(){
-  if(!S.art)return;$('tagIn').value='';renderArtTags();
-  $('tagList').replaceChildren(...[...S.tags].map(t=>h('span',{class:'tag',style:'cursor:pointer',text:t,onclick:()=>$('tagIn').value=t})));
+  if(!S.art)return;$('tagIn').value='';renderTagModal();
   show('tagModal');$('tagIn').focus();
+}
+function renderTagModal(){
+  const cur=tagsOf(S.art);
+  $('tagCur').replaceChildren(...(cur.length?cur.map(t=>h('span',{class:'tag',style:'cursor:pointer',title:'Quitar etiqueta',text:t+' ✕',onclick:()=>removeArtTag(t)})):[h('span',{class:'muted',text:'Sin etiquetas'})]));
+  $('tagList').replaceChildren(...[...S.tags].filter(t=>!cur.includes(t)).map(t=>h('span',{class:'tag',style:'cursor:pointer',text:t,onclick:()=>$('tagIn').value=t})));
+}
+async function removeArtTag(t){
+  const c=S.saved.get(S.art?.id);if(!c)return;
+  try{c.tags=(c.tags||[]).filter(x=>x!==t);await dbPut(c)}catch{toast('No se pudo quitar la etiqueta');return}
+  calcTags();renderTagModal();refresh();
+}
+/* Gestión de etiquetas (menú lateral ⚙️): renombrar, fusionar y eliminar */
+let tagEd=null;
+const tagCount=t=>[...S.saved.values()].filter(a=>(a.tags||[]).includes(t)).length;
+function editTag(t){tagEd=t;$('tEdName').value=t;const n=tagCount(t);$('tEdInfo').textContent=`Usada en ${n} artículo${n===1?'':'s'}. Si el nuevo nombre ya existe, se fusionarán.`;show('tagEdModal')}
+async function saveTagEdit(){
+  const old=tagEd,nn=$('tEdName').value.trim();
+  if(!old)return;if(!nn)return toast('Escribe un nombre');
+  if(nn===old){hide('tagEdModal');return}
+  if(S.tags.has(nn)&&!confirm(`Ya existe la etiqueta «${nn}». ¿Fusionar ambas?`))return;
+  try{for(const c of S.saved.values())if((c.tags||[]).includes(old)){c.tags=[...new Set(c.tags.map(x=>x===old?nn:x))];await dbPut(c)}}
+  catch{toast('No se pudo renombrar la etiqueta');return}
+  if(S.tag===old)S.tag=nn;
+  calcTags();hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta renombrada a «${nn}».`);
+}
+async function delTag(){
+  const t=tagEd;if(!t)return;const n=tagCount(t);
+  if(!confirm(`¿Eliminar la etiqueta «${t}»? Se quitará de ${n} artículo${n===1?'':'s'}; los artículos seguirán en Archivados.`))return;
+  try{for(const c of S.saved.values())if((c.tags||[]).includes(t)){c.tags=c.tags.filter(x=>x!==t);await dbPut(c)}}
+  catch{toast('No se pudo eliminar la etiqueta');return}
+  if(S.tag===t)S.tag=null;
+  calcTags();hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta «${t}» eliminada.`);
 }
 async function saveTag(){
   const t=$('tagIn').value.trim(),a=S.art;if(!t||!a)return;
@@ -538,48 +611,47 @@ async function saveTag(){
     if(!c){c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};S.saved.set(a.id,c)}
     c.tags=[...new Set([...(c.tags||[]),t])];await dbPut(c);
   }catch{toast('No se pudo guardar la etiqueta');return}
-  calcTags();hide('tagModal');setStatus('Etiqueta añadida (el artículo queda guardado).');refresh();
-}
-
-/* ---------- Gestión de etiquetas ---------- */
-let editingTag=null;
-function renderArtTags(){
-  const c=S.saved.get(S.art?.id);
-  $('artTags').replaceChildren(...((c&&c.tags)||[]).map(t=>h('span',{class:'tag',style:'cursor:pointer',title:'Quitar de este artículo',text:t+' ✕',onclick:()=>rmArtTag(t)})));
-}
-async function rmArtTag(t){
-  const c=S.saved.get(S.art?.id);if(!c)return;
-  c.tags=(c.tags||[]).filter(x=>x!==t);
-  try{await dbPut(c)}catch{toast('No se pudo quitar la etiqueta');return}
-  calcTags();renderArtTags();refresh();
-}
-async function retag(fn){ // aplica fn a las etiquetas de cada artículo guardado
-  try{for(const c of S.saved.values()){const nt=fn(c.tags||[]);if(nt){c.tags=nt;await dbPut(c)}}}catch{toast('No se pudo actualizar alguna etiqueta')}
-  calcTags();updateTitle();refresh();
-}
-function editTag(t){editingTag=t;$('teName').value=t;show('tagEdModal')}
-async function saveTagEdit(){
-  const o=editingTag,n=$('teName').value.trim();if(!n)return;
-  if(n!==o){await retag(l=>l.includes(o)?[...new Set(l.map(x=>x===o?n:x))]:null);if(S.tag===o)S.tag=n;setStatus(`Etiqueta renombrada a «${n}».`)}
-  hide('tagEdModal');updateTitle();refresh();
-}
-async function delTagAll(){
-  const o=editingTag;if(!confirm(`¿Eliminar la etiqueta «${o}» de todos los artículos? Los artículos no se borran.`))return;
-  await retag(l=>l.includes(o)?l.filter(x=>x!==o):null);
-  if(S.tag===o){S.tag=null;S.view='saved'}
-  hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta «${o}» eliminada.`);
+  calcTags();hide('tagModal');setStatus('Etiqueta añadida (el artículo queda en Archivados).');refresh();
 }
 
 /* ---------- Prompts de IA ---------- */
-const customPrompts=()=>LS.get(K.prompts,[]);
 function openPrompts(){if(!S.art)return;renderPrompts();show('aiModal')}
 function renderPrompts(){
   const use=p=>async()=>{const l=safeUrl(S.art.link)||S.art.link;await copy(`${p}\n\nArtículo: ${S.art.title}\nEnlace: ${l}`);hide('aiModal');toast('Prompt copiado')};
-  const rows=[['⚡ '+S.cfg.quick,0],...DEFAULT_PROMPTS.map(p=>[p,0])].map(([p])=>h('div',{class:'pr',onclick:use(p.replace(/^⚡ /,''))},h('span',{text:p})));
-  customPrompts().forEach((p,i)=>rows.push(h('div',{class:'pr',onclick:use(p)},h('span',{text:p}),h('span',{text:'🗑️',onclick:e=>{e.stopPropagation();const l=customPrompts();l.splice(i,1);LS.set(K.prompts,l);renderPrompts()}}))));
-  $('prompts').replaceChildren(...rows);
+  const l=orderedPrompts();
+  $('prompts').replaceChildren(...(l.length?l.map(p=>h('div',{class:'pr',onclick:use(p.text)},h('span',{text:(p.id===S.prompts.main?'⚡ ':'')+p.text}))):[h('p',{class:'muted',text:'No tienes prompts. Escribe uno arriba o edítalos en Ajustes.'})]));
 }
-function addPrompt(){const t=$('newPrompt').value.trim();if(!t)return;LS.set(K.prompts,[...customPrompts(),t]);$('newPrompt').value='';renderPrompts()}
+function addPrompt(){const t=$('newPrompt').value.trim();if(!t)return;const n={id:uid(),text:t};S.prompts.list.push(n);if(!S.prompts.main)S.prompts.main=n.id;savePrompts();$('newPrompt').value='';renderPrompts();renderPromptEd()}
+
+/* Editor de prompts (Ajustes, plegado de inicio) */
+let pEdit=null;
+function renderPromptEd(){
+  const l=orderedPrompts();$('pCount').textContent=l.length;
+  const pCard=(txt,onSave)=>{const ta=h('textarea');ta.value=txt;return h('div',{class:'card'},ta,h('div',{class:'row'},
+    h('button',{text:'Guardar',onclick:()=>{const t=ta.value.trim();if(!t)return toast('El prompt no puede estar vacío');onSave(t);pEdit=null;savePrompts();renderPromptEd()}}),
+    h('button',{class:'sec',text:'Cancelar',onclick:()=>{pEdit=null;renderPromptEd()}})))};
+  const rows=l.map(p=>{
+    if(pEdit===p.id)return pCard(p.text,t=>{p.text=t});
+    const main=p.id===S.prompts.main;
+    return h('div',{class:'card'},h('div',{class:'tx',text:p.text}),h('div',{class:'row'},
+      main?h('button',{text:'⚡ Principal',style:'cursor:default'}):h('button',{class:'sec',text:'☆ Hacer principal',onclick:()=>{S.prompts.main=p.id;savePrompts();renderPromptEd()}}),
+      h('button',{class:'sec',text:'✏️ Editar',onclick:()=>{pEdit=p.id;renderPromptEd()}}),
+      h('button',{class:'sec',style:'color:var(--danger);border-color:var(--danger)',text:'🗑 Borrar',onclick:()=>{
+        if(!confirm('¿Borrar este prompt?'))return;
+        S.prompts.list=S.prompts.list.filter(x=>x!==p);if(S.prompts.main===p.id)S.prompts.main=S.prompts.list[0]?.id||null;
+        savePrompts();renderPromptEd()}})));
+  });
+  if(pEdit==='new')rows.push(pCard('',t=>{const n={id:uid(),text:t};S.prompts.list.push(n);if(!S.prompts.main)S.prompts.main=n.id}));
+  if(!rows.length)rows.push(h('p',{class:'muted',text:'No hay prompts.'}));
+  $('promptEd').replaceChildren(...rows);
+}
+function newPromptEd(){pEdit='new';renderPromptEd()}
+function restoreDefaultPrompts(){
+  const have=new Set(S.prompts.list.map(p=>p.text)),add=DEFAULT_PROMPTS.filter(t=>!have.has(t));
+  if(!add.length)return toast('Ya tienes todos los de serie');
+  add.forEach(t=>S.prompts.list.push({id:uid(),text:t}));if(!S.prompts.main)S.prompts.main=S.prompts.list[0].id;
+  savePrompts();renderPromptEd();toast(add.length+' recuperado'+(add.length===1?'':'s'));
+}
 
 /* ---------- Fuentes: alta, edición, editor, OPML ---------- */
 let editing=null,origUrl='';
@@ -644,7 +716,7 @@ $('opml').onchange=async e=>{
 /* ---------- Copia de seguridad completa ---------- */
 async function exportBackup(){
   let arts=[];try{arts=await dbAll()}catch{}
-  const data={version:2,date:new Date().toISOString(),articles:arts,sources:S.sources,read:[...S.read],favs:[...S.favs],prompts:customPrompts(),ideas:LS.get(K.ideas,[]),cfg:{...S.cfg}};
+  const data={version:2,date:new Date().toISOString(),articles:arts,sources:S.sources,read:[...S.read],prompts:S.prompts.list.map(p=>p.text),ideas:LS.get(K.ideas,[]),cfg:{...S.cfg}};
   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   const a=h('a',{href:url,download:`mi_lector_backup_${new Date().toISOString().slice(0,10)}.json`});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   toast('Copia exportada');
@@ -657,9 +729,8 @@ $('imp').onchange=async e=>{
     if(!Array.isArray(d)&&d.version===2){
       if(Array.isArray(d.sources)){const have=new Set(S.sources.map(s=>s.url));d.sources.forEach(s=>{const u=safeUrl(s?.url);if(u&&!have.has(u)){S.sources.push({url:u,title:String(s.title||u),category:String(s.category||'General')});have.add(u)}});saveSources()}
       if(Array.isArray(d.read))d.read.forEach(x=>S.read.add(x));
-      if(Array.isArray(d.favs))d.favs.forEach(x=>S.favs.add(x));
       persist();
-      if(Array.isArray(d.prompts))LS.set(K.prompts,[...new Set([...customPrompts(),...d.prompts.filter(p=>typeof p==='string')])]);
+      if(Array.isArray(d.prompts)){const have=new Set(S.prompts.list.map(p=>p.text));d.prompts.forEach(t=>{t=typeof t==='string'?t.trim():'';if(t&&!have.has(t)){have.add(t);S.prompts.list.push({id:uid(),text:t})}});if(!S.prompts.main&&S.prompts.list[0])S.prompts.main=S.prompts.list[0].id;savePrompts();renderPromptEd()}
       if(Array.isArray(d.ideas)){const cur=LS.get(K.ideas,[]),ids=new Set(cur.map(i=>i.id));LS.set(K.ideas,[...cur,...d.ideas.filter(i=>i&&typeof i.text==='string'&&!ids.has(i.id))]);renderIdeas()}
     }
     S.saved=new Map((await dbAll()).map(x=>[x.id,x]));calcTags();refresh();toast('Copia importada');
@@ -672,12 +743,12 @@ function applyCfg(){
   const r=document.documentElement;
   S.cfg.theme==='auto'?r.removeAttribute('data-theme'):r.dataset.theme=S.cfg.theme;
   r.style.setProperty('--rs',S.cfg.font+'px');
-  $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;$('cQuick').value=S.cfg.quick;
+  $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;
 }
 function saveCfg(){
   S.cfg.theme=$('cTheme').value;S.cfg.font=+$('cFont').value||16;
-  S.cfg.max=Math.min(200,Math.max(10,parseInt($('cMax').value)||50));S.cfg.quick=$('cQuick').value.trim()||S.cfg.quick;
-  LS.set(K.cfg,{quickAIPrompt:S.cfg.quick,maxArticles:S.cfg.max,theme:S.cfg.theme});LS.set(K.font,S.cfg.font);applyCfg();
+  S.cfg.max=Math.min(200,Math.max(10,parseInt($('cMax').value)||50));
+  LS.set(K.cfg,{maxArticles:S.cfg.max,theme:S.cfg.theme});LS.set(K.font,S.cfg.font);applyCfg();
 }
 
 /* ---------- Ideas de mejora ---------- */
@@ -728,7 +799,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 (async()=>{
-  applyCfg();loadSources();renderIdeas();
+  applyCfg();loadSources();renderIdeas();renderPromptEd();
   document.querySelectorAll('button[title]').forEach(b=>b.setAttribute('aria-label',b.title));
   try{
     await openDB();S.saved=new Map((await dbAll()).map(x=>[x.id,x]));calcTags();
