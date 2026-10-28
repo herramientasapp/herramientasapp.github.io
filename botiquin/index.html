@@ -35,6 +35,10 @@ input[type=checkbox],input[type=radio]{width:auto;margin:0 6px 0 0}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .chip{padding:6px 12px;border-radius:20px;border:1px solid var(--b);background:var(--c);font-size:13px;cursor:pointer;user-select:none;min-height:32px}
 .chip.on{background:var(--a);color:#fff;border-color:var(--a)}
+.chip.pers{border-radius:6px;border-color:var(--w);color:var(--w)}
+.chip.pers.on{background:var(--w);color:#fff;border-color:var(--w)}
+.chip.pers.unassigned{border-color:var(--m);color:var(--m)}
+.chip.pers.unassigned.on{background:var(--m);color:#fff;border-color:var(--m)}
 .badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;vertical-align:middle}
 .badge.hay{background:rgba(31,138,76,.15);color:var(--ok)}
 .badge.pocas{background:rgba(180,83,9,.15);color:var(--w)}
@@ -60,6 +64,16 @@ input[type=checkbox],input[type=radio]{width:auto;margin:0 6px 0 0}
 .clitem input[type=checkbox]{margin-top:4px;flex-shrink:0;width:20px;height:20px}
 .clitem .txt{line-height:1.3}
 .clitem.done .txt{text-decoration:line-through;color:var(--m)}
+details.fold{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:10px}
+details.fold>summary{cursor:pointer;list-style:none;font-weight:700;display:flex;align-items:center;gap:8px;padding:0;user-select:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:'▸';display:inline-block;transition:transform .15s;color:var(--m);font-weight:400}
+details.fold[open]>summary::before{transform:rotate(90deg)}
+details.fold[open]>summary{margin-bottom:8px}
+.prompt-pre{white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:8px;font-size:12px;color:var(--m);max-height:80px;overflow:hidden;position:relative;margin-top:6px;line-height:1.35}
+.prompt-pre:after{content:'';position:absolute;bottom:0;left:0;right:0;height:26px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.print-ubi-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;color:var(--t);cursor:pointer}
+.print-ubi-row input[type=checkbox]{width:auto;margin:0;min-width:18px;min-height:18px}
 #print-area{display:none}
 @media print{
   @page{margin:1.2cm;size:A4}
@@ -87,10 +101,10 @@ input[type=checkbox],input[type=radio]{width:auto;margin:0 6px 0 0}
 <button data-a="tab" data-k="aju">Ajustes</button>
 </nav>
 <script>
-// ===== BOTIQUÍN v2 =====
-// - Fix: filtro por ubicación en Buscar (Q y UFILTER separados)
-// - Nuevo: checklists editables en Ajustes (con plantillas)
-// - DB v2: añade store "checklists" (migración transparente desde v1)
+// ===== BOTIQUÍN v3 =====
+// v3: filtro persona en Buscar, prompts IA (store nuevo), botón IA en fichas,
+//     búsqueda en notas, checklists plegados, impresión dinámica.
+// DB v3: añade store "prompts". Migración transparente.
 
 function $(s){return document.querySelector(s)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -101,13 +115,35 @@ function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\
 function fmtDate(s){if(!s)return'';try{var d=new Date(s+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}catch(e){return s}}
 function inDays(n){return dk(new Date(Date.now()+n*864e5))}
 
+var DEFAULT_PROMPT_TEXT=[
+'Actúa como un asistente farmacéutico experto y ayúdame a digitalizar el botiquín de mi casa. Te voy a compartir una o varias fotos con cajas de medicamentos y productos de primeros auxilios.',
+'',
+'Tu tarea es identificar cada uno de los productos visibles en las imágenes y extraer su información clave. Para cada medicamento o producto que identifiques, debes generar obligatoriamente una ficha utilizando exactamente la estructura que te muestro a continuación (separando cada producto con una línea horizontal `---`):',
+'',
+'### [Número]. [Nombre comercial del producto]',
+'* **Nombre comercial:** [Nombre que aparece en la caja]',
+'* **Principio activo:** [Componente principal o combinación de componentes]',
+'* **Otros nombres:** [Nombres genéricos comunes, marcas competidoras muy conocidas o variantes]',
+'* **Para qué sirve:** [Explicación muy breve, sencilla y directa de su indicación principal]',
+'* **Dosis / Presentación habitual:** [Formato, gramos/miligramos visibles o la pauta general habitual]',
+'* **Dato de interés:** [Consejos útiles de toma, alertas de seguridad como somnolencia, si requiere receta médica obligatoria en España o trucos de conservación]',
+'',
+'REGLAS ESTRICTAS DE FORMATO:',
+'1. No utilices introducciones largas ni comentarios de relleno antes de empezar el listado. Ve directo al grano.',
+'2. Cada bloque debe ser limpio y fácil de copiar y pegar en los campos de un formulario.',
+'3. Si un producto es de parafarmacia o material de cura (como gasas o cremas cosméticas), adáptalo indicando sus componentes principales en "Principio activo".',
+'4. Evita los párrafos largos en el apartado "Para qué sirve"; utiliza un lenguaje accesible para no profesionales de la medicina.',
+'',
+'Por favor, confirma que has entendido las instrucciones y queda a la espera de que te suba las fotos.'
+].join('\n');
+
 // ---------- DB ----------
-var DB_NAME='botiquin', DB_VER=2, db=null;
+var DB_NAME='botiquin', DB_VER=3, db=null;
 function openDB(){return new Promise(function(res,rej){
   var r=indexedDB.open(DB_NAME,DB_VER);
   r.onupgradeneeded=function(e){
     var d=e.target.result;
-    ['personas','ubicaciones','medicamentos','existencias','mejoras','checklists'].forEach(function(s){
+    ['personas','ubicaciones','medicamentos','existencias','mejoras','checklists','prompts'].forEach(function(s){
       if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'});
     });
   };
@@ -128,9 +164,10 @@ function dbDel(store,id){return new Promise(function(res,rej){
 })}
 
 // ---------- state ----------
-var ST={personas:[],ubicaciones:[],medicamentos:[],existencias:[],mejoras:[],checklists:[]};
+var ST={personas:[],ubicaciones:[],medicamentos:[],existencias:[],mejoras:[],checklists:[],prompts:[]};
 var CFG={}, CFG_KEY='botiquin1-cfg';
-var TAB='buscar', Q='', UFILTER='', CUR_CL=null;
+var TAB='buscar', Q='', UFILTER='', PFILTER='', CUR_CL=null;
+var PICK_PROMPT_MED=null;
 
 function loadCfg(){try{CFG=JSON.parse(localStorage.getItem(CFG_KEY)||'{}')}catch(e){CFG={}}}
 function saveCfg(){try{localStorage.setItem(CFG_KEY,JSON.stringify(CFG))}catch(e){}}
@@ -142,9 +179,11 @@ async function loadAll(){
   ST.existencias=await dbAll('existencias');
   ST.mejoras=await dbAll('mejoras');
   ST.checklists=await dbAll('checklists');
+  ST.prompts=await dbAll('prompts');
   ST.ubicaciones.sort(function(a,b){return (a.orden||99)-(b.orden||99)||a.nombre.localeCompare(b.nombre)});
   ST.medicamentos.sort(function(a,b){return a.nombre.localeCompare(b.nombre)});
   ST.checklists.sort(function(a,b){return a.nombre.localeCompare(b.nombre)});
+  ST.prompts.sort(function(a,b){return (a.titulo||'').localeCompare(b.titulo||'')});
 }
 async function ensureDefaults(){
   if(ST.ubicaciones.length===0){
@@ -156,12 +195,17 @@ async function ensureDefaults(){
     for(var i=0;i<defs.length;i++) await dbPut('ubicaciones',defs[i]);
     ST.ubicaciones=defs;
   }
+  if(ST.prompts.length===0){
+    await dbPut('prompts',{id:'prompt_default_photo',titulo:'Extraer información de la foto del medicamento',texto:DEFAULT_PROMPT_TEXT,creado:Date.now(),actualizado:Date.now()});
+    ST.prompts=await dbAll('prompts');
+  }
 }
 
 // ---------- lookups ----------
 function ubiName(id){var u=ST.ubicaciones.find(function(x){return x.id===id});return u?u.nombre:'(sin ubicación)'}
 function medOf(ex){return ex.medId?ST.medicamentos.find(function(m){return m.id===ex.medId})||null:null}
 function persName(id){var p=ST.personas.find(function(x){return x.id===id});return p?p.nombre:''}
+function persLabel(id){if(id==='__none__')return 'sin asignar';return persName(id)||''}
 function exName(ex){var m=medOf(ex);return m?m.nombre:(ex.nombreLibre||'(sin nombre)')}
 function cadEf(ex,med){
   var cad=ex.caducidad||'';
@@ -183,6 +227,38 @@ function findDuplicate(m){
 function clProgress(cl){
   var tot=cl.items.length, hec=cl.items.filter(function(i){return i.hecho}).length;
   return {tot:tot,hec:hec,pct:tot?Math.round(100*hec/tot):0};
+}
+
+// ---------- clipboard ----------
+async function copyToClipboard(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    try{await navigator.clipboard.writeText(text);return true;}catch(e){}
+  }
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';ta.style.top='0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){return false;}
+}
+function applyPromptVars(text,med){
+  if(!med)return text||'';
+  var map={'{medicamento}':med.nombre||'','{principioActivo}':med.principioActivo||'','{dosis}':med.dosis||'','{forma}':med.forma||'','{alias}':(med.alias||[]).join(', ')};
+  var r=text||'';
+  Object.keys(map).forEach(function(k){r=r.split(k).join(map[k])});
+  return r;
+}
+function medContextBlock(med){
+  if(!med)return '';
+  var lines=['','---','Medicamento: '+(med.nombre||'—')];
+  if(med.principioActivo)lines.push('Principio activo: '+med.principioActivo);
+  if(med.dosis)lines.push('Dosis: '+med.dosis);
+  if(med.forma)lines.push('Forma: '+med.forma);
+  if(med.alias&&med.alias.length)lines.push('Alias: '+med.alias.join(', '));
+  if(med.paraQue)lines.push('Para qué sirve: '+med.paraQue);
+  return lines.join('\n');
 }
 
 // ---------- init ----------
@@ -211,6 +287,7 @@ function render(){
     html=fn();
   }
   $('#v').innerHTML=html;
+  attachFoldListeners();
   [].forEach.call(document.querySelectorAll('nav button'),function(b){
     b.className=b.dataset.k===TAB?'on':'';
   });
@@ -221,41 +298,63 @@ function render(){
   }
   window.scrollTo(0,0);
 }
+function attachFoldListeners(){
+  [].forEach.call(document.querySelectorAll('details.fold'),function(d){
+    if(d.dataset.listening)return;
+    d.dataset.listening='1';
+    d.addEventListener('toggle',function(){
+      CFG['fold_'+d.dataset.fold]=d.open;saveCfg();
+    });
+  });
+}
 
 // ---------- BUSCAR ----------
 function vBuscar(){
   var h='<div class="hd">Buscar<small> · tu botiquín</small></div>';
-  h+='<div class="search"><input id="q" placeholder="Nombre, alias, principio, para qué…" value="'+esc(Q)+'"></div>';
+  h+='<div class="search"><input id="q" placeholder="Nombre, alias, principio, para qué, notas…" value="'+esc(Q)+'"></div>';
   h+='<div class="chips" id="chips">'+chipFiltros()+'</div>';
   h+='<div id="res">'+renderResultados()+'</div>';
   return h;
 }
 function chipFiltros(){
-  var h='<span class="chip '+(UFILTER===''?'on':'')+'" data-a="clearloc">Todas</span>';
+  var h='';
+  h+='<span class="chip '+(UFILTER===''?'on':'')+'" data-a="clearloc">📍 Todas</span>';
   ST.ubicaciones.forEach(function(u){
     h+='<span class="chip '+(UFILTER===u.id?'on':'')+'" data-a="filtroubi" data-k="'+u.id+'">'+esc(u.nombre)+'</span>';
   });
+  if(ST.personas.length>0){
+    h+='<span class="chip pers '+(PFILTER===''?'on':'')+'" data-a="clearpers">👥 Todas</span>';
+    ST.personas.forEach(function(p){
+      h+='<span class="chip pers '+(PFILTER===p.id?'on':'')+'" data-a="filtropers" data-k="'+p.id+'">'+esc(p.nombre)+'</span>';
+    });
+    h+='<span class="chip pers unassigned '+(PFILTER==='__none__'?'on':'')+'" data-a="filtropers" data-k="__none__">Sin asignar</span>';
+  }
   h+='<span class="chip" data-a="newmed">+ Medicamento</span>';
   h+='<span class="chip" data-a="newitem">+ Objeto</span>';
   return h;
 }
 function renderResultados(){
-  if(!Q&&!UFILTER){return vDashboard()}
+  if(!Q&&!UFILTER&&!PFILTER){return vDashboard()}
   var q=Q?norm(Q):'';
   var medHits={}, freeHits={};
   ST.existencias.forEach(function(ex){
     if(UFILTER&&ex.ubicacionId!==UFILTER)return;
+    var m0=ex.medId?medOf(ex):null;
+    if(PFILTER){
+      var pid=m0?(m0.recetadoA||''):'';
+      if(PFILTER==='__none__'){if(pid!=='')return;}
+      else{if(pid!==PFILTER)return;}
+    }
     if(ex.medId){
       var m=medOf(ex);
       if(!m){
-        // medicamento inexistente → tratar como libre
         if(q&&norm(ex.nombreLibre||'').indexOf(q)<0)return;
         var kx=(ex.nombreLibre||'(medicamento borrado)').toLowerCase();
         (freeHits[kx]=freeHits[kx]||[]).push(ex);
         return;
       }
       if(q){
-        var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis,m.pauta,m.forma].concat(m.alias||[]);
+        var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis,m.pauta,m.forma,m.notas].concat(m.alias||[]);
         if(!ss.some(function(s){return norm(s).indexOf(q)>=0}))return;
       }
       (medHits[m.id]=medHits[m.id]||[]).push(ex);
@@ -268,9 +367,15 @@ function renderResultados(){
   var medKeys=Object.keys(medHits), freeKeys=Object.keys(freeHits);
   if(!medKeys.length&&!freeKeys.length){
     var msg;
-    if(q&&UFILTER)msg='Sin resultados para «'+esc(Q)+'» en '+esc(ubiName(UFILTER));
+    var uName=UFILTER?ubiName(UFILTER):'';
+    var pName=PFILTER?persLabel(PFILTER):'';
+    if(q&&UFILTER&&PFILTER)msg='Sin resultados para «'+esc(Q)+'» en '+esc(uName)+' ('+esc(pName)+')';
+    else if(q&&UFILTER)msg='Sin resultados para «'+esc(Q)+'» en '+esc(uName);
+    else if(q&&PFILTER)msg='Sin resultados para «'+esc(Q)+'» de '+esc(pName);
     else if(q)msg='Sin resultados para «'+esc(Q)+'»';
+    else if(UFILTER&&PFILTER)msg='Nada en '+esc(uName)+' de '+esc(pName);
     else if(UFILTER)msg='Esta ubicación está vacía';
+    else if(PFILTER)msg='No hay medicación de '+esc(pName);
     else msg='Sin resultados';
     return '<div class="empty">'+msg+'.</div>';
   }
@@ -281,8 +386,9 @@ function renderResultados(){
   });
   medKeys.forEach(function(mid){
     var m=medOf({medId:mid});
-    h+='<div class="card click" data-a="vermed" data-k="'+mid+'">';
+    h+='<div class="card"><div class="click" data-a="vermed" data-k="'+mid+'">';
     h+='<b>'+esc(m.nombre)+'</b> '+(m.dosis?'<small>'+esc(m.dosis)+'</small>':'')+(m.forma?' · <small>'+esc(m.forma)+'</small>':'');
+    if(m.recetadoA&&persName(m.recetadoA))h+=' <span class="badge tipo">👤 '+esc(persName(m.recetadoA))+'</span>';
     if(m.alias&&m.alias.length)h+='<br><small>También: '+esc(m.alias.join(', '))+'</small>';
     if(m.paraQue)h+='<br><small>'+esc(m.paraQue)+'</small>';
     h+='<div class="row">';
@@ -290,6 +396,8 @@ function renderResultados(){
       h+='<span class="loc-tag">'+esc(ubiName(ex.ubicacionId))+' '+estBadge(ex.estado)+'</span>';
     });
     h+='</div></div>';
+    h+='<div class="row"><button class="sm ghost g" data-a="aiprompt" data-k="'+mid+'">🤖 Preguntar a IA</button></div>';
+    h+='</div>';
   });
   freeKeys.forEach(function(kk){
     var list=freeHits[kk];
@@ -388,11 +496,15 @@ function vMed(){
   if(!ST.medicamentos.length)return h+'<div class="empty">Aún no hay medicamentos.</div>';
   ST.medicamentos.forEach(function(m){
     var exs=ST.existencias.filter(function(e){return e.medId===m.id});
-    h+='<div class="card click" data-a="vermed" data-k="'+m.id+'">';
+    h+='<div class="card">';
+    h+='<div class="click" data-a="vermed" data-k="'+m.id+'">';
     h+='<b>'+esc(m.nombre)+'</b> '+(m.dosis?'<small>'+esc(m.dosis)+'</small>':'');
+    if(m.recetadoA&&persName(m.recetadoA))h+=' <span class="badge tipo">👤 '+esc(persName(m.recetadoA))+'</span>';
     if(m.alias&&m.alias.length)h+='<br><small>También: '+esc(m.alias.join(', '))+'</small>';
     if(m.principioActivo)h+='<br><small>'+esc(m.principioActivo)+(m.forma?' · '+esc(m.forma):'')+'</small>';
     h+='<div class="row"><small class="g">'+(exs.length?exs.length+' caja'+(exs.length===1?'':'s')+' en '+exs.map(function(e){return esc(ubiName(e.ubicacionId))}).filter(function(v,i,a){return a.indexOf(v)===i}).join(', '):'sin cajas registradas')+'</small><span>›</span></div>';
+    h+='</div>';
+    h+='<div class="row"><button class="sm ghost g" data-a="aiprompt" data-k="'+m.id+'">🤖 Preguntar a IA</button></div>';
     h+='</div>';
   });
   return h;
@@ -405,7 +517,8 @@ function vMedDet(id){
   var sub=[m.principioActivo,m.dosis,m.forma].filter(Boolean).join(' · ');
   if(sub)h+='<br><small>'+esc(sub)+'</small>';
   h+='</div>';
-  h+='<div class="row"><button class="ok g" data-a="addboxmed" data-k="'+id+'">+ Añadir caja</button><button data-a="editmed" data-k="'+id+'">Editar</button><button class="bad" data-a="delmed" data-k="'+id+'">Borrar</button></div>';
+  h+='<div class="row"><button class="ok g" data-a="addboxmed" data-k="'+id+'">+ Añadir caja</button><button data-a="aiprompt" data-k="'+id+'">🤖 IA</button></div>';
+  h+='<div class="row"><button class="g" data-a="editmed" data-k="'+id+'">Editar</button><button class="bad" data-a="delmed" data-k="'+id+'">Borrar</button></div>';
   h+='<div style="height:10px"></div>';
   if(m.alias&&m.alias.length){
     h+='<div class="card"><b>Otros nombres</b><br>'+m.alias.map(function(a){return '<span class="alias-tag">'+esc(a)+'</span>'}).join('')+'</div>';
@@ -494,8 +607,11 @@ function vAju(){
   });
   h+='</div>';
 
-  // Checklists
-  h+='<div class="card"><b>Checklists de botiquín</b><br><small>Listas reutilizables para preparar un botiquín: marca lo que ya tienes y lo que falta comprar. Al marcar un medicamento verás en qué ubicación lo tienes, para cogerlo de ahí.</small>';
+  // Checklists (plegable)
+  var openCL=CFG.fold_checklists!==false;
+  h+='<details class="fold" data-fold="checklists"'+(openCL?' open':'')+'>';
+  h+='<summary>📋 Checklists <small>('+ST.checklists.length+')</small></summary>';
+  h+='<small>Listas reutilizables para preparar un botiquín. Al marcar un medicamento verás en qué ubicación lo tienes.</small>';
   if(ST.checklists.length){
     ST.checklists.forEach(function(cl){
       var pr=clProgress(cl);
@@ -509,7 +625,25 @@ function vAju(){
   }
   h+='<div class="row" style="margin-top:10px"><button class="ok g" data-a="newcl">+ Nueva lista</button></div>';
   h+='<div class="inl" style="margin-top:8px"><select id="cltpl"><option value="">— plantilla —</option><option value="montana">Botiquín de montaña</option><option value="viaje">Botiquín de viaje</option><option value="coche">Botiquín de coche</option></select><button data-a="usetpl">Usar</button></div>';
-  h+='</div>';
+  h+='</details>';
+
+  // Prompts (plegable)
+  var openPR=CFG.fold_prompts!==false;
+  h+='<details class="fold" data-fold="prompts"'+(openPR?' open':'')+'>';
+  h+='<summary>🤖 Prompts IA <small>('+ST.prompts.length+')</small></summary>';
+  h+='<small>Prompts reutilizables. Puedes usar variables: <b>{medicamento}</b>, <b>{principioActivo}</b>, <b>{dosis}</b>, <b>{forma}</b>, <b>{alias}</b>.</small>';
+  if(ST.prompts.length){
+    ST.prompts.forEach(function(p){
+      h+='<div class="card" style="margin-top:10px;background:var(--bg)"><b>'+esc(p.titulo)+'</b>';
+      h+='<div class="prompt-pre">'+esc((p.texto||'').slice(0,200))+((p.texto||'').length>200?'…':'')+'</div>';
+      h+='<div class="row"><button class="ok sm g" data-a="copyprompt" data-k="'+p.id+'">📋 Copiar</button><button class="sm ghost" data-a="editprompt" data-k="'+p.id+'">Editar</button><button class="sm bad" data-a="delprompt" data-k="'+p.id+'">✕</button></div>';
+      h+='</div>';
+    });
+  }else{
+    h+='<br><small>Sin prompts. Añade uno nuevo.</small>';
+  }
+  h+='<div class="row" style="margin-top:10px"><button class="ok g" data-a="newprompt">+ Nuevo prompt</button></div>';
+  h+='</details>';
 
   // Copia de seguridad
   h+='<div class="card"><b>Copia de seguridad (JSON)</b><br><small>Los datos viven en este navegador. Exporta de vez en cuando o si cambias de dispositivo.</small>';
@@ -517,9 +651,26 @@ function vAju(){
   h+='<textarea id="jtxt" placeholder="Pega aquí un JSON para restaurar (sustituye todo)"></textarea>';
   h+='<div class="row"><button class="bad" data-a="restorejson">Restaurar desde texto</button></div></div>';
 
-  // Imprimir
-  h+='<div class="card"><b>Imprimir / PDF</b><br><small>Inventario agrupado por ubicación. En el móvil, guarda como PDF.</small>';
-  h+='<div class="row"><button data-a="printall">🖨 Imprimir inventario completo</button></div></div>';
+  // Imprimir dinámico
+  h+='<div class="card"><b>Imprimir / PDF</b><br><small>Selecciona ubicaciones y opcionalmente filtra por persona. En el móvil, guarda como PDF.</small>';
+  h+='<div class="sect-title">Ubicaciones</div>';
+  h+='<div class="row"><button class="sm g" data-a="printselall">Marcar todas</button><button class="sm g" data-a="printselnone">Desmarcar todas</button></div>';
+  if(!ST.ubicaciones.length){
+    h+='<small>No hay ubicaciones.</small>';
+  }else{
+    ST.ubicaciones.forEach(function(u){
+      var n=ST.existencias.filter(function(e){return e.ubicacionId===u.id}).length;
+      h+='<label class="print-ubi-row"><input type="checkbox" class="printubi" data-k="'+u.id+'" checked> '+esc(u.nombre)+' <small>('+n+')</small></label>';
+    });
+  }
+  h+='<label>Filtrar por persona<select id="printpers"><option value="">Todas las personas</option>';
+  ST.personas.forEach(function(p){
+    h+='<option value="'+p.id+'">'+esc(p.nombre)+'</option>';
+  });
+  h+='<option value="__none__">Sin asignar</option>';
+  h+='</select></label>';
+  h+='<div class="row" style="margin-top:12px"><button class="ok" style="width:100%" data-a="printsel">🖨 Imprimir selección</button></div>';
+  h+='</div>';
 
   // Mejoras
   h+='<div class="card"><b>Ideas y mejoras</b><br><small>Anota mejoras, fallos o ideas mientras usas la app.</small>';
@@ -541,7 +692,7 @@ function vAju(){
   }
   h+='</div>';
 
-  h+='<div class="card"><b>Acerca de</b><br><small>Botiquín v2 · Informativa. No sustituye al prospecto, al médico ni al farmacéutico.</small></div>';
+  h+='<div class="card"><b>Acerca de</b><br><small>Botiquín v3 · Informativa. No sustituye al prospecto, al médico ni al farmacéutico.</small></div>';
   return h;
 }
 
@@ -670,6 +821,45 @@ function readPersForm(){
   return FP;
 }
 
+// --- Prompt ---
+var FPrmt=null;
+function newPromptObj(){return {id:uid(),titulo:'',texto:'',creado:Date.now(),actualizado:Date.now()}}
+function openPromptForm(p,isNew){
+  FPrmt=p;
+  var h='<h3 style="margin:0 0 4px">'+(isNew?'Nuevo prompt':'Editar prompt')+'</h3>';
+  h+='<label>Título<input id="fprt" value="'+esc(p.titulo||'')+'" placeholder="Ej: Extraer info de foto"></label>';
+  h+='<label>Texto del prompt<textarea id="fprx" style="min-height:200px" placeholder="Pega aquí el prompt completo…">'+esc(p.texto||'')+'</textarea></label>';
+  h+='<small>Variables disponibles: <b>{medicamento}</b>, <b>{principioActivo}</b>, <b>{dosis}</b>, <b>{forma}</b>, <b>{alias}</b>. Se sustituyen al copiar desde una ficha de medicamento.</small>';
+  h+='<div class="row" style="margin-top:14px"><button class="ok g" data-a="saveprompt" data-k="'+(isNew?'new':'edit')+'">Guardar</button><button data-a="closemod">Cancelar</button></div>';
+  openMod(h);
+}
+function readPromptForm(){
+  FPrmt.titulo=$('#fprt').value.trim();
+  FPrmt.texto=$('#fprx').value;
+  FPrmt.actualizado=Date.now();
+  return FPrmt;
+}
+function openPromptPicker(medId){
+  var med=ST.medicamentos.find(function(x){return x.id===medId});
+  if(!med)return;
+  PICK_PROMPT_MED=med;
+  var h='<h3 style="margin:0 0 4px">🤖 Preguntar a la IA</h3>';
+  h+='<div class="hint">Medicamento: <b>'+esc(med.nombre)+'</b></div>';
+  h+='<small>Elige un prompt. Se copiará al portapapeles con los datos del medicamento añadidos al final.</small>';
+  if(!ST.prompts.length){
+    h+='<div class="empty">No hay prompts. Añádelos en Ajustes.</div>';
+  }else{
+    ST.prompts.forEach(function(p){
+      h+='<div class="card" style="margin-top:8px"><b>'+esc(p.titulo)+'</b>';
+      h+='<div class="prompt-pre">'+esc((p.texto||'').slice(0,200))+((p.texto||'').length>200?'…':'')+'</div>';
+      h+='<div class="row"><button class="ok sm" style="width:100%" data-a="copypromptmed" data-k="'+p.id+'">📋 Copiar</button></div>';
+      h+='</div>';
+    });
+  }
+  h+='<div class="row" style="margin-top:12px"><button data-a="closemod" style="width:100%">Cerrar</button></div>';
+  openMod(h);
+}
+
 // --- Añadir caja: elegir medicamento ---
 function openAddBoxChoice(ubiId){
   var h='<h3 style="margin:0 0 4px">Añadir a '+(ubiId?esc(ubiName(ubiId)):'una ubicación')+'</h3>';
@@ -682,7 +872,7 @@ function openAddBoxChoice(ubiId){
     var q=norm(iq.value);
     var res=ST.medicamentos.filter(function(m){
       if(!q)return true;
-      var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis].concat(m.alias||[]);
+      var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis,m.notas].concat(m.alias||[]);
       return ss.some(function(s){return norm(s).indexOf(q)>=0});
     }).slice(0,30);
     $('#pickres').innerHTML=res.map(function(m){
@@ -707,7 +897,7 @@ function pickMedication(cb){
     var q=norm(iq.value);
     var res=ST.medicamentos.filter(function(m){
       if(!q)return true;
-      var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis].concat(m.alias||[]);
+      var ss=[m.nombre,m.principioActivo,m.paraQue,m.dosis,m.notas].concat(m.alias||[]);
       return ss.some(function(s){return norm(s).indexOf(q)>=0});
     }).slice(0,30);
     $('#pmres').innerHTML=res.map(function(m){
@@ -834,15 +1024,25 @@ function buildPrintForUbi(ubiId){
   exs.sort(function(a,b){return exName(a).localeCompare(exName(b))});
   return printShell(u,exs);
 }
-function buildPrintAll(){
+function buildPrintSelection(ubiIds,persId){
   var h='';
-  ST.ubicaciones.forEach(function(u){
-    var exs=ST.existencias.filter(function(e){return e.ubicacionId===u.id});
+  ubiIds.forEach(function(uid){
+    var u=ST.ubicaciones.find(function(x){return x.id===uid});
+    if(!u)return;
+    var exs=ST.existencias.filter(function(e){
+      if(e.ubicacionId!==uid)return false;
+      if(persId){
+        var m=medOf(e);var mp=m?(m.recetadoA||''):'';
+        if(persId==='__none__'){if(mp!=='')return false;}
+        else{if(mp!==persId)return false;}
+      }
+      return true;
+    });
     if(!exs.length)return;
     exs.sort(function(a,b){return exName(a).localeCompare(exName(b))});
     h+='<div style="page-break-before:always">'+printShell(u,exs)+'</div>';
   });
-  if(!h)h='<div class="p-head"><h1>Inventario vacío</h1></div>';
+  if(!h)h='<div class="p-head"><h1>Sin elementos que imprimir</h1><div>Revisa la selección.</div></div>';
   return h;
 }
 function printShell(u,exs){
@@ -876,7 +1076,7 @@ function doPrint(html){$('#print-area').innerHTML=html;setTimeout(function(){win
 
 // ---------- export/import ----------
 function exportJSON(){
-  var data={v:2,app:'botiquin',ts:Date.now(),personas:ST.personas,ubicaciones:ST.ubicaciones,medicamentos:ST.medicamentos,existencias:ST.existencias,mejoras:ST.mejoras,checklists:ST.checklists,cfg:CFG};
+  var data={v:3,app:'botiquin',ts:Date.now(),personas:ST.personas,ubicaciones:ST.ubicaciones,medicamentos:ST.medicamentos,existencias:ST.existencias,mejoras:ST.mejoras,checklists:ST.checklists,prompts:ST.prompts,cfg:CFG};
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='botiquin-'+today()+'.json';
@@ -887,7 +1087,7 @@ async function importJSON(text){
   var data=JSON.parse(text);
   if(!data||!Array.isArray(data.medicamentos))throw new Error('JSON no válido');
   if(!confirm('Esto sustituye TODOS los datos actuales. ¿Continuar?'))return;
-  var stores=['personas','ubicaciones','medicamentos','existencias','mejoras','checklists'];
+  var stores=['personas','ubicaciones','medicamentos','existencias','mejoras','checklists','prompts'];
   for(var i=0;i<stores.length;i++){
     var s=stores[i];
     var olds=await dbAll(s);
@@ -896,8 +1096,10 @@ async function importJSON(text){
     for(var k=0;k<arr.length;k++) await dbPut(s,arr[k]);
   }
   CFG=data.cfg||CFG;saveCfg();
-  CUR_CL=null;
-  await loadAll();render();
+  CUR_CL=null;Q='';UFILTER='';PFILTER='';
+  await loadAll();
+  if(ST.prompts.length===0)await ensureDefaults();
+  render();
   alert('Datos restaurados.');
 }
 
@@ -908,11 +1110,47 @@ async function onClick(e){
   var a=t.dataset.a,k=t.dataset.k;
   try{
     // Navegación
-    if(a==='tab'){TAB=k;Q='';UFILTER='';CUR_CL=null;render();return}
+    if(a==='tab'){TAB=k;Q='';UFILTER='';PFILTER='';CUR_CL=null;render();return}
     if(a==='clearloc'){UFILTER='';render();return}
     if(a==='filtroubi'){UFILTER=k;render();return}
+    if(a==='clearpers'){PFILTER='';render();return}
+    if(a==='filtropers'){PFILTER=k;render();return}
     if(a==='verubi'){TAB='ubi';$('#v').innerHTML=vUbiDet(k);window.scrollTo(0,0);[].forEach.call(document.querySelectorAll('nav button'),function(b){b.className=b.dataset.k==='ubi'?'on':''});return}
     if(a==='vermed'){TAB='med';$('#v').innerHTML=vMedDet(k);window.scrollTo(0,0);[].forEach.call(document.querySelectorAll('nav button'),function(b){b.className=b.dataset.k==='med'?'on':''});return}
+
+    // IA
+    if(a==='aiprompt'){openPromptPicker(k);return}
+    if(a==='copypromptmed'){
+      var p=ST.prompts.find(function(x){return x.id===k});
+      if(!p||!PICK_PROMPT_MED)return;
+      var txt=applyPromptVars(p.texto,PICK_PROMPT_MED)+medContextBlock(PICK_PROMPT_MED);
+      var ok=await copyToClipboard(txt);
+      if(ok){closeMod();alert('✓ Copiado. Pégalo en tu IA favorita.');}
+      else{prompt('Copia manualmente:',txt);}
+      return;
+    }
+
+    // Prompt (desde Ajustes)
+    if(a==='newprompt'){openPromptForm(newPromptObj(),true);return}
+    if(a==='editprompt'){var pr=ST.prompts.find(function(x){return x.id===k});if(pr)openPromptForm(JSON.parse(JSON.stringify(pr)),false);return}
+    if(a==='delprompt'){
+      if(!confirm('¿Borrar este prompt?'))return;
+      await dbDel('prompts',k);await loadAll();render();return;
+    }
+    if(a==='saveprompt'){
+      var pp2=readPromptForm();
+      if(!pp2.titulo){alert('Pon un título.');return}
+      if(!pp2.texto.trim()){alert('Pon el texto del prompt.');return}
+      await dbPut('prompts',pp2);await loadAll();closeMod();render();return;
+    }
+    if(a==='copyprompt'){
+      var pr2=ST.prompts.find(function(x){return x.id===k});
+      if(!pr2)return;
+      var ok2=await copyToClipboard(pr2.texto);
+      if(ok2)alert('✓ Copiado.');
+      else prompt('Copia manualmente:',pr2.texto);
+      return;
+    }
 
     // Medicamento
     if(a==='newmed'){openMedForm(newMedObj(),true);return}
@@ -951,7 +1189,6 @@ async function onClick(e){
       var fallbackName=medToDel?medToDel.nombre:'(medicamento borrado)';
       var exs=ST.existencias.filter(function(x){return x.medId===k});
       for(var i=0;i<exs.length;i++) await dbDel('existencias',exs[i].id);
-      // Limpiar checklists: items que apuntaban a este med pasan a texto libre
       for(var j=0;j<ST.checklists.length;j++){
         var cl=ST.checklists[j],changed=false;
         cl.items.forEach(function(it){
@@ -1008,7 +1245,17 @@ async function onClick(e){
       await loadAll();render();return;
     }
     if(a==='printu'){doPrint(buildPrintForUbi(k));return}
-    if(a==='printall'){doPrint(buildPrintAll());return}
+
+    // Impresión dinámica
+    if(a==='printselall'){[].forEach.call(document.querySelectorAll('.printubi'),function(cb){cb.checked=true});return}
+    if(a==='printselnone'){[].forEach.call(document.querySelectorAll('.printubi'),function(cb){cb.checked=false});return}
+    if(a==='printsel'){
+      var ubiIds=[];
+      [].forEach.call(document.querySelectorAll('.printubi'),function(cb){if(cb.checked)ubiIds.push(cb.dataset.k)});
+      var persId=$('#printpers')?$('#printpers').value:'';
+      if(!ubiIds.length){alert('Marca al menos una ubicación.');return}
+      doPrint(buildPrintSelection(ubiIds,persId));return;
+    }
 
     // Persona
     if(a==='newpers'){openPersForm({id:uid(),nombre:'',notas:''},true);return}
@@ -1023,7 +1270,9 @@ async function onClick(e){
       for(var i=0;i<ST.medicamentos.length;i++){
         if(ST.medicamentos[i].recetadoA===k){ST.medicamentos[i].recetadoA='';await dbPut('medicamentos',ST.medicamentos[i])}
       }
-      await dbDel('personas',k);await loadAll();render();return;
+      await dbDel('personas',k);
+      if(PFILTER===k)PFILTER='';
+      await loadAll();render();return;
     }
 
     // Checklist
@@ -1118,14 +1367,15 @@ async function onClick(e){
       var abs=ST.mejoras.filter(function(x){return x.estado!=='hecha'});
       if(!abs.length){alert('No hay mejoras pendientes.');return}
       var t2=abs.map(function(x){return '- ['+new Date(x.ts).toLocaleDateString('es-ES')+'] '+x.texto}).join('\n');
-      try{await navigator.clipboard.writeText(t2);alert('Copiado ('+abs.length+')')}
-      catch(e){prompt('Copia manualmente:',t2)}
+      var okc=await copyToClipboard(t2);
+      if(okc)alert('Copiado ('+abs.length+')');
+      else prompt('Copia manualmente:',t2);
       return;
     }
 
     // Backup
     if(a==='export'){exportJSON();return}
-    if(a==='showjson'){$('#jtxt').value=JSON.stringify({v:2,app:'botiquin',personas:ST.personas,ubicaciones:ST.ubicaciones,medicamentos:ST.medicamentos,existencias:ST.existencias,mejoras:ST.mejoras,checklists:ST.checklists,cfg:CFG},null,2);return}
+    if(a==='showjson'){$('#jtxt').value=JSON.stringify({v:3,app:'botiquin',personas:ST.personas,ubicaciones:ST.ubicaciones,medicamentos:ST.medicamentos,existencias:ST.existencias,mejoras:ST.mejoras,checklists:ST.checklists,prompts:ST.prompts,cfg:CFG},null,2);return}
     if(a==='import'){
       var inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';
       inp.onchange=async function(){if(!inp.files[0])return;var txt4=await inp.files[0].text();try{await importJSON(txt4)}catch(er){alert('Error: '+er.message)}};
