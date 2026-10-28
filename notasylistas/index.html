@@ -1,9 +1,289 @@
-<!-- ... (continuación del HTML, no cierres la etiqueta style) ... -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Notario</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%234a9eff'/%3E%3Crect x='96' y='96' width='320' height='320' rx='36' fill='%23121212'/%3E%3Ccircle cx='168' cy='176' r='18' fill='%234a9eff'/%3E%3Ccircle cx='168' cy='256' r='18' fill='%234a9eff'/%3E%3Ccircle cx='168' cy='336' r='18' fill='%234a9eff'/%3E%3Crect x='212' y='166' width='164' height='20' rx='10' fill='%23e8e8e8'/%3E%3Crect x='212' y='246' width='164' height='20' rx='10' fill='%23e8e8e8'/%3E%3Crect x='212' y='326' width='110' height='20' rx='10' fill='%23e8e8e8'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f5f5f7; --surface: #ffffff; --surface-2: #ececef;
+  --text: #1a1a1a; --muted: #6b6b6b; --accent: #0066cc;
+  --danger: #cc3333; --border: #dcdce0;
+  --radius: 12px;
+  --topbar-h: 56px; --chips-h: 52px; --bottom-h: 110px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212; --surface: #1e1e1e; --surface-2: #2a2a2a;
+    --text: #e8e8e8; --muted: #9a9a9a; --accent: #4a9eff;
+    --danger: #ff6b6b; --border: #333;
+  }
+}
+html[data-theme="light"] {
+  --bg:#f5f5f7; --surface:#fff; --surface-2:#ececef; --text:#1a1a1a;
+  --muted:#6b6b6b; --accent:#0066cc; --danger:#cc3333; --border:#dcdce0;
+}
+html[data-theme="dark"] {
+  --bg:#121212; --surface:#1e1e1e; --surface-2:#2a2a2a; --text:#e8e8e8;
+  --muted:#9a9a9a; --accent:#4a9eff; --danger:#ff6b6b; --border:#333;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.4;
+  padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+}
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: calc(var(--topbar-h) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 12px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border-bottom: 1px solid var(--border); z-index: 10;
+}
+#search-wrap { flex: 1; }
+#search {
+  width: 100%; padding: 10px 14px; border-radius: 20px;
+  background: var(--surface-2); border: 1px solid transparent; outline: none;
+}
+#search:focus { border-color: var(--accent); background: var(--surface); }
+.btn-menu {
+  padding: 8px 14px; border-radius: 20px;
+  background: var(--surface-2); color: var(--text);
+  font-size: 14px; font-weight: 500; display: flex; gap: 6px; align-items: center;
+  flex-shrink: 0;
+}
+.btn-menu:hover { background: var(--border); }
+
+#tag-filter-bar {
+  position: fixed; top: calc(var(--topbar-h) + env(safe-area-inset-top));
+  left: 0; right: 0; height: 44px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  overflow-x: auto; z-index: 8;
+}
+#tag-filter-bar span { font-size: 14px; color: var(--muted); white-space: nowrap; }
+#tag-filter-bar .chip.active { background: var(--accent); color: white; }
+#tag-filter-bar .clear-filters { color: var(--danger); font-size: 14px; margin-left: auto; }
+
+#escenarios-bar {
+  position: fixed; 
+  top: calc(var(--topbar-h) + env(safe-area-inset-top));
+  left: 0; right: 0; height: var(--chips-h);
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  overflow-x: auto; overflow-y: hidden; z-index: 9; scrollbar-width: none;
+  transition: top 0.2s ease;
+}
+#tag-filter-bar:not(.hidden) ~ #escenarios-bar {
+  top: calc(var(--topbar-h) + 44px + env(safe-area-inset-top));
+}
+#escenarios-bar::-webkit-scrollbar { display: none; }
+.chips { display: flex; gap: 8px; padding: 10px 12px; align-items: center; height: 100%; white-space: nowrap; }
+.chip {
+  padding: 6px 14px; border-radius: 18px;
+  background: var(--surface-2); color: var(--text);
+  font-size: 14px; flex: 0 0 auto; border: 1px solid transparent;
+  user-select: none;
+}
+.chip:not(.active):hover { background: var(--border); }
+.chip.active { background: var(--accent); color: #fff; }
+.chip-add { font-weight: 600; }
+
+#main {
+  position: fixed;
+  top: calc(var(--topbar-h) + var(--chips-h) + env(safe-area-inset-top));
+  bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom));
+  left: 0; right: 0; overflow-y: auto; padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+#tag-filter-bar:not(.hidden) ~ #main {
+  top: calc(var(--topbar-h) + 44px + var(--chips-h) + env(safe-area-inset-top));
+}
+#items-list { display: flex; flex-direction: column; gap: 10px; }
+
+.item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 12px 8px;
+  display: flex; flex-direction: column; gap: 8px; position: relative;
+}
+.item.pinned { border-color: var(--accent); background: rgba(74, 158, 255, 0.05); }
+.item-header { display: flex; align-items: center; gap: 4px; justify-content: flex-end; height: 24px; }
+.item-btn {
+  width: 32px; height: 32px; font-size: 16px;
+  display: grid; place-items: center; border-radius: 50%; color: var(--muted);
+}
+.item-btn:hover { background: var(--surface-2); color: var(--text); }
+.pin-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pin-btn.on { color: var(--accent); }
+.pin-btn.on svg { fill: var(--accent); stroke: var(--accent); }
+
+.item-title {
+  font-size: 18px; font-weight: 600; outline: none; padding: 2px;
+  word-break: break-word; min-height: 1.4em;
+}
+.item-title:focus { background: var(--surface-2); border-radius: 6px; }
+.item-title:empty:before { content: attr(data-placeholder); color: var(--muted); font-weight: normal; }
+
+.item-body {
+  white-space: pre-wrap; word-break: break-word;
+  outline: none; min-height: 1.4em; padding: 2px; font-size: 15px;
+}
+.item-body:focus { background: var(--surface-2); border-radius: 6px; }
+.item-body:empty:before { content: attr(data-placeholder); color: var(--muted); font-style: italic; }
+
+.item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 2px; }
+.chk-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
+.chk-row .chk-text { flex: 1; outline: none; min-height: 1.4em; word-break: break-word; font-size: 15px; }
+.chk-row.done .chk-text { color: var(--muted); text-decoration: line-through; }
+.chk-del { color: var(--muted); font-size: 18px; opacity: 0; width: 24px; height: 24px; display: grid; place-items: center; }
+.chk-row:hover .chk-del, .chk-row:focus-within .chk-del { opacity: 1; }
+.chk-add { padding: 6px 2px; color: var(--accent); font-size: 14px; text-align: left; }
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tag-chip {
+  background: var(--surface-2); color: var(--muted); font-size: 12px;
+  padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px;
+  border: 1px solid var(--border); cursor: pointer;
+}
+.tag-chip:hover { background: var(--border); color: var(--text); }
+.tag-chip .tag-del { font-size: 14px; line-height: 1; opacity: 0.5; }
+.tag-chip .tag-del:hover { opacity: 1; color: var(--danger); }
+.tag-chip.active-filter { background: var(--accent); color: white; border-color: var(--accent); }
+.tag-chip.add-tag { border-style: dashed; }
+
+.item-footer {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--muted); padding-top: 4px;
+  border-top: 1px dashed var(--border); margin-top: 4px;
+}
+.item-footer .tag { background: var(--surface-2); padding: 2px 8px; border-radius: 10px; }
+.item-footer .spacer { flex: 1; }
+.item-footer .reset-btn { color: var(--accent); font-size: 12px; }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty p { margin: 6px 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+#bottom-area {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--bg); border-top: 1px solid var(--border); z-index: 10;
+  height: calc(var(--bottom-h) + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 8px;
+}
+.quick-capture { display: flex; gap: 8px; }
+#quick-input {
+  flex: 1; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 20px; padding: 10px 16px; outline: none;
+  font-size: 15px;
+}
+#quick-input:focus { border-color: var(--accent); }
+.btn-new-large {
+  background: var(--accent); color: white; border-radius: 20px;
+  padding: 12px; font-size: 16px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+.btn-new-large:active { transform: translateY(1px); }
+
+.snackbar {
+  position: fixed;
+  bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom) + 8px);
+  left: 12px; right: 12px; background: #222; color: #fff;
+  border-radius: 10px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px; z-index: 20;
+  animation: slideUp .18s ease-out;
+}
+.snackbar span { flex: 1; }
+.snackbar button { color: var(--accent); font-weight: 600; margin-left: auto; }
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+dialog {
+  border: none; border-radius: 16px;
+  background: var(--surface); color: var(--text);
+  padding: 0; max-width: 480px; width: calc(100% - 32px); max-height: 85vh;
+}
+dialog::backdrop { background: rgba(0,0,0,.6); }
+dialog form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+dialog h2 { margin: 0 0 4px; font-size: 18px; }
+dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row select { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); max-width: 60%; }
+.group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.btn-block { text-align: left; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; }
+.btn-block:hover { background: var(--border); }
+.btn-block.danger { color: var(--danger); }
+.btn-primary { padding: 12px 20px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.move-list { display: flex; flex-direction: column; gap: 6px; }
+.move-list button { text-align: left; padding: 12px; border-radius: 8px; background: var(--surface-2); }
+.trash-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.trash-item { padding: 10px; border-radius: 8px; background: var(--surface-2); display: flex; flex-direction: column; gap: 4px; }
+.trash-item .actions { display: flex; gap: 8px; margin-top: 4px; }
+.trash-item .actions button { color: var(--accent); font-size: 13px; }
+
+.esc-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--surface-2); border-radius: 8px; margin-bottom: 4px; }
+.esc-actions { display: flex; gap: 4px; }
+.esc-actions button { width: 28px; height: 28px; font-size: 14px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.esc-actions button:hover { background: var(--border); color: var(--text); }
+
+#editor-dialog {
+  width: 100%; height: 100%; max-width: 100%; max-height: 100%;
+  margin: 0; border-radius: 0; border: none;
+  background: var(--bg); padding-top: env(safe-area-inset-top);
+}
 @media (min-width: 700px) {
   #main { padding: 16px max(16px, calc((100vw - 720px) / 2)); }
   #bottom-area { padding: 8px max(12px, calc((100vw - 720px) / 2 + 12px)) calc(8px + env(safe-area-inset-bottom)); }
   .snackbar { left: max(12px, calc((100vw - 720px) / 2)); right: max(12px, calc((100vw - 720px) / 2)); }
+  #editor-dialog {
+    width: 600px; height: 90vh; max-height: 800px;
+    margin: auto; border-radius: 16px; padding-top: 0;
+  }
 }
+#editor-form { height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.editor-header { display: flex; justify-content: space-between; align-items: center; }
+.editor-header h2 { margin: 0; font-size: 18px; }
+.btn-close-editor { font-size: 20px; color: var(--muted); padding: 8px; }
+
+#edit-titulo {
+  font-size: 24px; font-weight: 600; border: none; background: transparent;
+  outline: none; padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+#edit-titulo::placeholder { color: var(--muted); font-weight: normal; }
+.editor-type { display: flex; gap: 8px; }
+.type-btn { padding: 6px 16px; border-radius: 16px; background: var(--surface-2); color: var(--muted); font-size: 14px; font-weight: 500; }
+.type-btn.active { background: var(--accent); color: white; }
+.editor-content-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+#edit-body {
+  width: 100%; min-height: 150px; resize: vertical; border: 1px solid var(--border);
+  background: var(--surface); border-radius: 10px; padding: 12px; font-size: 16px;
+  outline: none; line-height: 1.5;
+}
+#edit-body:focus { border-color: var(--accent); }
+#edit-checklist-wrap { display: flex; flex-direction: column; gap: 8px; }
+.edit-chk-row { display: flex; align-items: center; gap: 8px; }
+.edit-chk-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+.edit-chk-row input[type="text"] { flex: 1; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 10px; outline: none; }
+.edit-chk-row input[type="text"]:focus { border-color: var(--accent); }
+.edit-chk-del { color: var(--danger); font-size: 18px; padding: 4px; }
+.tags-editor { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.tag-item { background: var(--surface-2); padding: 4px 10px; border-radius: 12px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.tag-item button { color: var(--muted); font-size: 16px; line-height: 1; }
+.tag-item button:hover { color: var(--danger); }
+#edit-tag-input { border: none; background: transparent; outline: none; flex: 1; min-width: 100px; font-size: 14px; }
+.editor-footer { display: flex; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
+.btn-cancel { padding: 12px 20px; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -45,7 +325,6 @@
   <button id="snackbar-action" type="button">Deshacer</button>
 </div>
 
-<!-- Dialog Ajustes -->
 <dialog id="settings-dialog">
   <form method="dialog">
     <h2>Ajustes</h2>
@@ -90,7 +369,6 @@
   </form>
 </dialog>
 
-<!-- Dialog Menú Item -->
 <dialog id="item-menu-dialog">
   <form method="dialog">
     <h2 id="item-menu-title">Opciones</h2>
@@ -104,7 +382,6 @@
   </form>
 </dialog>
 
-<!-- Dialog Mover -->
 <dialog id="move-dialog">
   <form method="dialog">
     <h2>Mover a…</h2>
@@ -115,7 +392,6 @@
   </form>
 </dialog>
 
-<!-- Dialog Papelera -->
 <dialog id="trash-dialog">
   <form method="dialog">
     <h2>Papelera</h2>
@@ -126,7 +402,6 @@
   </form>
 </dialog>
 
-<!-- Dialog Editor Modal -->
 <dialog id="editor-dialog">
   <form method="dialog" id="editor-form">
     <div class="editor-header">
@@ -142,10 +417,8 @@
     </div>
 
     <div class="editor-content-area" id="editor-scroll">
-      <!-- Body para Nota -->
       <textarea id="edit-body" placeholder="Escribe aquí los detalles (retornos de carro permitidos)…"></textarea>
       
-      <!-- Checklist para Lista -->
       <div id="edit-checklist-wrap" class="hidden">
         <div id="edit-checklist"></div>
         <button type="button" class="btn-block" id="btn-edit-chk-add" style="text-align: center; color: var(--accent);">＋ Añadir ítem</button>
@@ -177,7 +450,6 @@
 <script>
 'use strict';
 
-// ===== DB =====
 const DB_NAME = 'notario_v3';
 const SCHEMA_VERSION = 1;
 const db = new Dexie(DB_NAME);
@@ -216,7 +488,6 @@ async function importData(payload) {
     await db.escenarios.clear();
     if (Array.isArray(payload.escenarios)) await db.escenarios.bulkAdd(payload.escenarios);
     if (Array.isArray(payload.items)) {
-      // Migración de seguridad: asegurar que items tengan titulo y tags
       const items = payload.items.map(it => ({
         ...it,
         titulo: it.titulo || '',
@@ -229,7 +500,6 @@ async function importData(payload) {
   });
 }
 
-// Operaciones DB
 async function createItem(data) {
   const now = Date.now();
   const item = { 
@@ -247,13 +517,8 @@ const hardDeleteItem = (id) => db.items.delete(id);
 
 async function listItems({ escenarioId = null, search = '', tags = [] } = {}) {
   let arr = await db.items.filter(i => i.deletedAt == null).toArray();
-  
   if (escenarioId != null) arr = arr.filter(i => i.escenarioId === escenarioId);
-  
-  if (tags.length > 0) {
-    arr = arr.filter(i => tags.every(t => (i.tags || []).includes(t)));
-  }
-
+  if (tags.length > 0) arr = arr.filter(i => tags.every(t => (i.tags || []).includes(t)));
   if (search.trim()) {
     const q = search.toLowerCase();
     arr = arr.filter(i =>
@@ -263,7 +528,6 @@ async function listItems({ escenarioId = null, search = '', tags = [] } = {}) {
       (i.checklist || []).some(c => (c.texto || '').toLowerCase().includes(q))
     );
   }
-  
   arr.sort((a, b) => a.pinned !== b.pinned ? (a.pinned ? -1 : 1) : b.updatedAt - a.updatedAt);
   return arr;
 }
@@ -282,14 +546,8 @@ async function createEscenario(nombre, emoji = '📁') {
   return e;
 }
 
-// ===== Estado =====
 const state = {
-  view: 'todos',
-  search: '',
-  activeTags: [],
-  pendingDelete: null,
-  items: [],
-  escenarios: []
+  view: 'todos', search: '', activeTags: [], pendingDelete: null, items: [], escenarios: []
 };
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -297,7 +555,6 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ===== Init =====
 (async function init() {
   await requestPersistence();
   await purgeOldTrash(30);
@@ -324,9 +581,7 @@ function applyTheme(t) {
   else document.documentElement.setAttribute('data-theme', t);
 }
 
-// ===== Bind UI =====
 function bindUI() {
-  // Ajustes
   $('#btn-settings').addEventListener('click', openSettings);
   $('#set-tema').addEventListener('change', (e) => {
     localStorage.setItem('tema', e.target.value);
@@ -347,7 +602,6 @@ function bindUI() {
   $('#btn-open-trash').addEventListener('click', openTrash);
   $('#btn-empty-trash').addEventListener('click', emptyTrash);
 
-  // Búsqueda y Filtros
   $('#search').addEventListener('input', debounce((e) => {
     state.search = e.target.value;
     renderItems();
@@ -358,7 +612,6 @@ function bindUI() {
     renderItems();
   });
 
-  // Bottom Area
   const quickInput = $('#quick-input');
   quickInput.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
@@ -379,7 +632,6 @@ function bindUI() {
   
   $('#btn-new-large').addEventListener('click', () => openEditor());
 
-  // Menú Item
   $('#menu-edit').addEventListener('click', () => {
     $('#item-menu-dialog').close();
     openEditor(menuTargetId);
@@ -388,10 +640,8 @@ function bindUI() {
   $('#menu-move').addEventListener('click', menuOpenMove);
   $('#menu-delete').addEventListener('click', menuDelete);
 
-  // Snackbar
   $('#snackbar-action').addEventListener('click', undoDelete);
 
-  // Atajos
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
@@ -399,11 +649,9 @@ function bindUI() {
     if (e.key === 'n') { e.preventDefault(); openEditor(); }
   });
   
-  // Setup Editor Modal
   bindEditorUI();
 }
 
-// ===== Render Base =====
 async function refresh() {
   state.escenarios = await listEscenarios();
   await renderChips();
@@ -434,7 +682,6 @@ async function renderTagFilters() {
   const bar = $('#tag-filter-bar');
   const list = $('#active-tags-list');
   list.innerHTML = '';
-  
   if (state.activeTags.length === 0) {
     bar.classList.add('hidden');
   } else {
@@ -453,39 +700,26 @@ async function renderTagFilters() {
 
 async function renderItems() {
   const escenarioId = state.view === 'todos' ? null : state.view;
-  state.items = await listItems({ 
-    escenarioId, 
-    search: state.search, 
-    tags: state.activeTags 
-  });
-  
+  state.items = await listItems({ escenarioId, search: state.search, tags: state.activeTags });
   const list = $('#items-list');
   list.innerHTML = '';
-  if (state.items.length === 0) { 
-    $('#empty-state').hidden = false; 
-    return; 
-  }
+  if (state.items.length === 0) { $('#empty-state').hidden = false; return; }
   $('#empty-state').hidden = true;
   for (const item of state.items) list.appendChild(renderItem(item));
 }
 
 function toggleFilterTag(tag) {
-  if (state.activeTags.includes(tag)) {
-    state.activeTags = state.activeTags.filter(t => t !== tag);
-  } else {
-    state.activeTags.push(tag);
-  }
+  if (state.activeTags.includes(tag)) state.activeTags = state.activeTags.filter(t => t !== tag);
+  else state.activeTags.push(tag);
   renderTagFilters();
   renderItems();
 }
 
-// ===== Render de un Item =====
 function renderItem(item) {
   const el = document.createElement('article');
   el.className = 'item' + (item.pinned ? ' pinned' : '');
   el.dataset.id = item.id;
 
-  // Header
   const header = document.createElement('div');
   header.className = 'item-header';
   
@@ -512,7 +746,6 @@ function renderItem(item) {
   
   el.appendChild(header);
 
-  // Título (inline)
   const titleEl = document.createElement('div');
   titleEl.className = 'item-title';
   titleEl.contentEditable = 'true';
@@ -528,7 +761,6 @@ function renderItem(item) {
   titleEl.addEventListener('blur', saveTitle);
   el.appendChild(titleEl);
 
-  // Cuerpo (inline)
   if (item.body !== undefined && item.body.trim() !== '') {
     const body = document.createElement('div');
     body.className = 'item-body';
@@ -546,7 +778,6 @@ function renderItem(item) {
     el.appendChild(body);
   }
 
-  // Checklist (inline)
   if (Array.isArray(item.checklist) && item.checklist.length > 0) {
     const ul = document.createElement('ul');
     ul.className = 'item-checklist';
@@ -609,7 +840,6 @@ function renderItem(item) {
     el.appendChild(ul);
   }
 
-  // Etiquetas
   const tagsRow = document.createElement('div');
   tagsRow.className = 'tags-row';
   const renderTagsInline = () => {
@@ -618,12 +848,10 @@ function renderItem(item) {
       const chip = document.createElement('div');
       chip.className = 'tag-chip' + (state.activeTags.includes(t) ? ' active-filter' : '');
       chip.innerHTML = `<span>${escapeHtml(t)}</span><span class="tag-del">×</span>`;
-      
       chip.addEventListener('click', (e) => {
         if (e.target.classList.contains('tag-del')) return;
         toggleFilterTag(t);
       });
-
       const delBtn = chip.querySelector('.tag-del');
       delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -631,11 +859,8 @@ function renderItem(item) {
         await updateItem(item.id, { tags: item.tags });
         renderTagsInline();
       });
-      
       tagsRow.appendChild(chip);
     }
-    
-    // Botón para añadir tag inline
     const addTagBtn = document.createElement('div');
     addTagBtn.className = 'tag-chip add-tag';
     addTagBtn.textContent = '＋';
@@ -656,7 +881,6 @@ function renderItem(item) {
   renderTagsInline();
   el.appendChild(tagsRow);
 
-  // Footer
   const footer = document.createElement('div');
   footer.className = 'item-footer';
   const esc = state.escenarios.find(e => e.id === item.escenarioId);
@@ -700,13 +924,7 @@ function humanDate(ts) {
   return d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
 }
 
-// ===== Lógica del Editor Modal =====
-let editorState = {
-  id: null,
-  tipo: 'nota', // 'nota' | 'lista'
-  checklist: [],
-  tags: [],
-};
+let editorState = { id: null, tipo: 'nota', checklist: [], tags: [] };
 
 function bindEditorUI() {
   const dialog = $('#editor-dialog');
@@ -714,12 +932,9 @@ function bindEditorUI() {
 
   $('#btn-close-editor').addEventListener('click', () => dialog.close());
   $('#btn-cancel-editor').addEventListener('click', () => dialog.close());
-  
-  // Type toggles
   $('#type-nota').addEventListener('click', () => setEditorType('nota'));
   $('#type-lista').addEventListener('click', () => setEditorType('lista'));
 
-  // Add checklist item
   $('#btn-edit-chk-add').addEventListener('click', () => {
     editorState.checklist.push({ id: uuid(), texto: '', hecho: false });
     renderEditorChecklist();
@@ -729,7 +944,6 @@ function bindEditorUI() {
     }, 0);
   });
 
-  // Tags input
   const tagInput = $('#edit-tag-input');
   tagInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -743,7 +957,6 @@ function bindEditorUI() {
     }
   });
 
-  // Save
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const titulo = $('#edit-titulo').value.trim();
@@ -751,23 +964,20 @@ function bindEditorUI() {
     const escenarioId = $('#edit-escenario').value;
     
     if (!titulo && !body.trim() && editorState.checklist.length === 0) {
-      dialog.close(); // Nada que guardar
+      dialog.close();
       return;
     }
 
     const data = {
       titulo,
-      body: editorState.tipo === 'nota' ? body : '', // Si es lista, no guardamos el texto grande (a menos que queramos notas extra)
+      body: editorState.tipo === 'nota' ? body : '',
       checklist: editorState.tipo === 'lista' ? editorState.checklist : [],
       tags: editorState.tags,
       escenarioId
     };
 
-    if (editorState.id) {
-      await updateItem(editorState.id, data);
-    } else {
-      await createItem(data);
-    }
+    if (editorState.id) await updateItem(editorState.id, data);
+    else await createItem(data);
     
     dialog.close();
     await refresh();
@@ -806,8 +1016,6 @@ async function openEditor(itemId = null, prefillTitle = '') {
     $('#editor-title').textContent = 'Nueva entrada';
     $('#edit-titulo').value = prefillTitle;
     $('#edit-body').value = '';
-    
-    // Default scenario based on current view
     $('#edit-escenario').value = state.view === 'todos' ? '' : state.view;
   }
 
@@ -815,10 +1023,8 @@ async function openEditor(itemId = null, prefillTitle = '') {
   renderEditorChecklist();
   renderEditorTags();
   populateEditorEscenarios();
-  
   dialog.showModal();
   
-  // Focus title or body
   setTimeout(() => {
     if (!$('#edit-titulo').value) $('#edit-titulo').focus();
     else $('#edit-body').focus();
@@ -842,7 +1048,6 @@ function renderEditorChecklist() {
   editorState.checklist.forEach((chk, index) => {
     const row = document.createElement('div');
     row.className = 'edit-chk-row';
-    
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = chk.hecho;
@@ -865,7 +1070,6 @@ function renderEditorChecklist() {
       renderEditorChecklist();
     });
     row.appendChild(del);
-
     wrap.appendChild(row);
   });
 }
@@ -873,10 +1077,7 @@ function renderEditorChecklist() {
 function renderEditorTags() {
   const container = $('#edit-tags-container');
   const input = $('#edit-tag-input');
-  
-  // Limpiar todo menos el input
   $$('.tag-item', container).forEach(el => el.remove());
-  
   for (const t of editorState.tags) {
     const el = document.createElement('div');
     el.className = 'tag-item';
@@ -893,7 +1094,6 @@ function renderEditorTags() {
   }
 }
 
-// ===== Acciones de Item =====
 async function togglePin(id) {
   const item = await db.items.get(id);
   if (!item) return;
@@ -944,7 +1144,6 @@ function menuOpenMove() {
   $('#move-dialog').showModal();
 }
 
-// ===== Undo =====
 function scheduleUndo(id) {
   if (state.pendingDelete?.timer) clearTimeout(state.pendingDelete.timer);
   const timer = setTimeout(() => { state.pendingDelete = null; hideSnackbar(); }, 5000);
@@ -969,7 +1168,6 @@ function showSnackbar(text, action = null) {
 }
 function hideSnackbar() { $('#snackbar').hidden = true; }
 
-// ===== Ajustes / Escenarios / Export =====
 function openSettings() {
   updateExportStatus();
   updateStorageStatus();
@@ -981,23 +1179,19 @@ async function renderSettingsEscenarios() {
   const list = $('#settings-escenarios-list');
   list.innerHTML = '';
   const escenarios = await listEscenarios();
-  
   if (escenarios.length === 0) {
     list.innerHTML = '<p class="muted small">No hay escenarios configurados.</p>';
     return;
   }
-
   for (const e of escenarios) {
     const row = document.createElement('div');
     row.className = 'esc-row';
-    
     const span = document.createElement('span');
     span.textContent = `${e.emoji || '📁'} ${e.nombre}`;
     row.appendChild(span);
 
     const actions = document.createElement('div');
     actions.className = 'esc-actions';
-
     const edit = document.createElement('button');
     edit.textContent = '✏️';
     edit.addEventListener('click', async () => {
@@ -1092,14 +1286,13 @@ async function importFile(e) {
     await importData(payload);
     await refresh();
     await renderSettingsEscenarios();
-    $('#settings-dialog').close(); // Cerrar menú de ajustes tras importar
+    $('#settings-dialog').close();
     showSnackbar('Importado correctamente');
   } catch (err) {
     alert('Error al importar: ' + err.message);
   }
 }
 
-// ===== Papelera =====
 async function openTrash() {
   const list = $('#trash-list');
   list.innerHTML = '';
