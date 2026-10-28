@@ -137,6 +137,7 @@ input, textarea, select { font: inherit; color: inherit; }
   outline: none; min-height: 1.4em; padding: 2px; font-size: 15px;
 }
 .item-body:focus { background: var(--surface-2); border-radius: 6px; }
+.item-body a, .item-title a { color: var(--accent); text-decoration: underline; }
 
 .item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 2px; }
@@ -278,7 +279,6 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 .tag-item button:hover { color: var(--danger); }
 #edit-tag-input { border: none; background: transparent; outline: none; flex: 1; min-width: 100px; font-size: 14px; }
 
-/* Contenedor de sugerencias de etiquetas */
 #tag-suggestions {
   display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
   padding: 8px; background: var(--bg); border-radius: 8px;
@@ -351,7 +351,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 
     <div class="group">
       <h3>Datos</h3>
-      <button type="button" class="btn-block" id="btn-export">Compartir copia de seguridad</button>
+      <button type="button" class="btn-block" id="btn-export">Descargar copia JSON</button>
       <button type="button" class="btn-block" id="btn-import">Importar JSON…</button>
       <input type="file" id="file-import" accept="application/json,.json" hidden>
       <p class="muted small" id="export-status"></p>
@@ -363,7 +363,8 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
       <button type="button" class="btn-block danger" id="btn-empty-trash">Vaciar papelera</button>
     </div>
 
-    <div class="dialog-footer">
+    <div class="dialog-footer" style="justify-content: space-between; align-items: center;">
+      <span class="muted small">Notario v3.0</span>
       <button type="submit" class="btn-primary">Cerrar</button>
     </div>
   </form>
@@ -440,7 +441,6 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
         <div class="tags-editor" id="edit-tags-container">
           <input type="text" id="edit-tag-input" placeholder="Añadir etiqueta y pulsar Enter…">
         </div>
-        <!-- Contenedor para sugerencias -->
         <div id="tag-suggestions"></div>
       </div>
 
@@ -532,7 +532,6 @@ async function listItems({ escenarioId = null, search = '', tags = [] } = {}) {
   let arr = await db.items.filter(i => i.deletedAt == null).toArray();
   if (escenarioId != null) arr = arr.filter(i => i.escenarioId === escenarioId);
   
-  // Filtro OR: el item debe tener AL MENOS UNA de las etiquetas seleccionadas
   if (tags.length > 0) {
     arr = arr.filter(i => tags.some(t => (i.tags || []).includes(t)));
   }
@@ -564,7 +563,6 @@ async function createEscenario(nombre, emoji = '📁') {
   return e;
 }
 
-// Obtener todas las etiquetas únicas para sugerencias
 async function getAllUniqueTags() {
   const items = await db.items.filter(i => i.deletedAt == null).toArray();
   const tagCounts = {};
@@ -580,6 +578,18 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Función para hacer enlaces clicables
+function linkifyAndEscape(text) {
+  if (!text) return '';
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map(part => {
+    if (part.match(urlRegex)) {
+      return `<a href="${escapeHtml(part)}" target="_blank" rel="noopener noreferrer">${escapeHtml(part)}</a>`;
+    }
+    return escapeHtml(part);
+  }).join('');
+}
 
 (async function init() {
   await requestPersistence();
@@ -624,7 +634,7 @@ function bindUI() {
     await renderSettingsEscenarios();
   });
   
-  $('#btn-export').addEventListener('click', exportShare);
+  $('#btn-export').addEventListener('click', exportDownload);
   
   $('#btn-import').addEventListener('click', () => $('#file-import').click());
   $('#file-import').addEventListener('change', importFile);
@@ -788,15 +798,16 @@ function renderItem(item) {
   titleEl.className = 'item-title';
   titleEl.contentEditable = 'true';
   titleEl.dataset.placeholder = 'Título';
-  titleEl.textContent = item.titulo || '';
+  titleEl.innerHTML = linkifyAndEscape(item.titulo);
   const saveTitle = debounce(async () => {
     const v = titleEl.innerText;
     if (v === item.titulo) return;
     item.titulo = v;
     await updateItem(item.id, { titulo: v });
+    titleEl.innerHTML = linkifyAndEscape(v);
   }, 500);
   titleEl.addEventListener('input', saveTitle);
-  titleEl.addEventListener('blur', saveTitle);
+  titleEl.addEventListener('blur', () => { saveTitle(); titleEl.innerHTML = linkifyAndEscape(item.titulo); });
   el.appendChild(titleEl);
 
   if (item.body !== undefined && item.body.trim() !== '') {
@@ -804,15 +815,16 @@ function renderItem(item) {
     body.className = 'item-body';
     body.contentEditable = 'true';
     body.dataset.placeholder = 'Nota vacía';
-    body.textContent = item.body || '';
+    body.innerHTML = linkifyAndEscape(item.body);
     const save = debounce(async () => {
       const v = body.innerText;
       if (v === item.body) return;
       item.body = v;
       await updateItem(item.id, { body: v });
+      body.innerHTML = linkifyAndEscape(v);
     }, 500);
     body.addEventListener('input', save);
-    body.addEventListener('blur', save);
+    body.addEventListener('blur', () => { save(); body.innerHTML = linkifyAndEscape(item.body); });
     el.appendChild(body);
   }
 
@@ -932,8 +944,6 @@ function renderItem(item) {
     footer.appendChild(tag);
   }
   
-  // Eliminamos la fecha humanDate. Solo dejamos el escenario y el botón reiniciar.
-
   const spacer = document.createElement('span');
   spacer.className = 'spacer';
   footer.appendChild(spacer);
@@ -979,7 +989,6 @@ function bindEditorUI() {
 
   const tagInput = $('#edit-tag-input');
   
-  // Sugerencias de etiquetas al escribir
   tagInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().toLowerCase();
     renderTagSuggestions(query);
@@ -998,7 +1007,6 @@ function bindEditorUI() {
     }
   });
 
-  // Cerrar sugerencias si se pierde el foco
   tagInput.addEventListener('blur', () => {
     setTimeout(() => renderTagSuggestions(''), 200);
   });
@@ -1070,7 +1078,6 @@ async function openEditor(itemId = null) {
   renderEditorTags();
   populateEditorEscenarios();
   
-  // Cargar todas las etiquetas únicas para las sugerencias
   allTags = await getAllUniqueTags();
   renderTagSuggestions('');
 
@@ -1145,12 +1152,10 @@ function renderEditorTags() {
   }
 }
 
-// Sugerencias de etiquetas
 function renderTagSuggestions(query) {
   const container = $('#tag-suggestions');
   container.innerHTML = '';
   
-  // Filtrar las etiquetas que no estén ya en editorState.tags
   const available = allTags.filter(t => 
     !editorState.tags.includes(t) && 
     (query === '' || t.includes(query))
@@ -1158,12 +1163,12 @@ function renderTagSuggestions(query) {
 
   if (available.length === 0) return;
 
-  available.slice(0, 10).forEach(t => { // Mostrar máximo 10
+  available.slice(0, 10).forEach(t => {
     const chip = document.createElement('div');
     chip.className = 'suggestion-chip';
     chip.textContent = t;
     chip.addEventListener('mousedown', (e) => {
-      e.preventDefault(); // Evita que el input pierda el foco
+      e.preventDefault();
       if (!editorState.tags.includes(t)) {
         editorState.tags.push(t);
         $('#edit-tag-input').value = '';
@@ -1324,46 +1329,15 @@ function updateExportStatus() {
     : 'Sin copias todavía.';
 }
 
-// Exportar usando el menú de compartir de Android
-async function exportShare() {
+// Simplificado para descargar únicamente
+async function exportDownload() {
   const data = await buildExport();
   const jsonString = JSON.stringify(data, null, 2);
-  const fileName = `notario-${new Date().toISOString().slice(0,10)}.json`;
-
-  // 1. Intentar usar la API nativa de compartir (móvil)
-  if (navigator.share) {
-    try {
-      const file = new File([jsonString], fileName, { type: 'application/json' });
-      // Verificamos si el navegador soporta compartir archivos
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Copia de Notario',
-          text: 'Copia de seguridad de mis notas'
-        });
-      } else {
-        // Si no soporta archivos, compartimos solo texto (el JSON)
-        await navigator.share({
-          title: 'Copia de Notario (Texto)',
-          text: jsonString
-        });
-      }
-      localStorage.setItem('lastExport', String(Date.now()));
-      updateExportStatus();
-      return; 
-    } catch (e) { 
-      if (e.name === 'AbortError') return; // El usuario canceló
-      console.warn('Error al compartir:', e);
-      // Si falla, cae al método de descarga
-    }
-  }
-  
-  // 2. Fallback: Descargar archivo
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = fileName;
+  a.download = `notario-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
