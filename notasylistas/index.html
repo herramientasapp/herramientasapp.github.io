@@ -62,7 +62,6 @@ input, textarea, select { font: inherit; color: inherit; }
   flex-shrink: 0; border: 1px solid transparent;
 }
 .btn-top:hover { background: var(--border); }
-.btn-top.active { background: var(--accent); color: white; }
 
 #tag-filter-bar {
   position: fixed; top: calc(var(--topbar-h) + env(safe-area-inset-top));
@@ -190,7 +189,6 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .btn-new-large:active { transform: translateY(1px); }
 
-/* Snackbar / Toast flotante */
 #snackbar {
   position: fixed;
   bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom) + 16px);
@@ -279,6 +277,19 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 .tag-item button { color: var(--muted); font-size: 16px; line-height: 1; }
 .tag-item button:hover { color: var(--danger); }
 #edit-tag-input { border: none; background: transparent; outline: none; flex: 1; min-width: 100px; font-size: 14px; }
+
+/* Contenedor de sugerencias de etiquetas */
+#tag-suggestions {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+  padding: 8px; background: var(--bg); border-radius: 8px;
+}
+.suggestion-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 4px 8px; border-radius: 12px; font-size: 12px; color: var(--muted);
+  cursor: pointer;
+}
+.suggestion-chip:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
 .editor-footer { display: flex; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
 .btn-cancel { padding: 12px 20px; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 600; }
 </style>
@@ -340,7 +351,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 
     <div class="group">
       <h3>Datos</h3>
-      <button type="button" class="btn-block" id="btn-export">Compartir o Descargar copia</button>
+      <button type="button" class="btn-block" id="btn-export">Compartir copia de seguridad</button>
       <button type="button" class="btn-block" id="btn-import">Importar JSON…</button>
       <input type="file" id="file-import" accept="application/json,.json" hidden>
       <p class="muted small" id="export-status"></p>
@@ -350,11 +361,6 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
       <h3>Papelera</h3>
       <button type="button" class="btn-block" id="btn-open-trash">Ver papelera</button>
       <button type="button" class="btn-block danger" id="btn-empty-trash">Vaciar papelera</button>
-    </div>
-    
-    <div class="group">
-      <h3>Estado</h3>
-      <p class="muted small" id="storage-status">Comprobando…</p>
     </div>
 
     <div class="dialog-footer">
@@ -434,6 +440,8 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
         <div class="tags-editor" id="edit-tags-container">
           <input type="text" id="edit-tag-input" placeholder="Añadir etiqueta y pulsar Enter…">
         </div>
+        <!-- Contenedor para sugerencias -->
+        <div id="tag-suggestions"></div>
       </div>
 
       <div class="group">
@@ -556,6 +564,14 @@ async function createEscenario(nombre, emoji = '📁') {
   return e;
 }
 
+// Obtener todas las etiquetas únicas para sugerencias
+async function getAllUniqueTags() {
+  const items = await db.items.filter(i => i.deletedAt == null).toArray();
+  const tagCounts = {};
+  items.forEach(i => (i.tags || []).forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
+  return Object.keys(tagCounts).sort();
+}
+
 const state = {
   view: 'todos', search: '', activeTags: [], pendingDelete: null, items: [], escenarios: []
 };
@@ -608,7 +624,6 @@ function bindUI() {
     await renderSettingsEscenarios();
   });
   
-  // Un solo botón unificado para Exportar/Compartir
   $('#btn-export').addEventListener('click', exportShare);
   
   $('#btn-import').addEventListener('click', () => $('#file-import').click());
@@ -916,9 +931,9 @@ function renderItem(item) {
     tag.textContent = `${esc.emoji || ''} ${esc.nombre}`.trim();
     footer.appendChild(tag);
   }
-  const date = document.createElement('span');
-  date.textContent = humanDate(item.updatedAt);
-  footer.appendChild(date);
+  
+  // Eliminamos la fecha humanDate. Solo dejamos el escenario y el botón reiniciar.
+
   const spacer = document.createElement('span');
   spacer.className = 'spacer';
   footer.appendChild(spacer);
@@ -941,16 +956,8 @@ function renderItem(item) {
   return el;
 }
 
-function humanDate(ts) {
-  const d = new Date(ts), now = new Date();
-  if (d.toDateString() === now.toDateString())
-    return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-  const diff = (now - d) / 86400000;
-  if (diff < 7) return d.toLocaleDateString('es', { weekday: 'short' });
-  return d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
-}
-
 let editorState = { id: null, tipo: 'nota', checklist: [], tags: [] };
+let allTags = [];
 
 function bindEditorUI() {
   const dialog = $('#editor-dialog');
@@ -971,6 +978,13 @@ function bindEditorUI() {
   });
 
   const tagInput = $('#edit-tag-input');
+  
+  // Sugerencias de etiquetas al escribir
+  tagInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    renderTagSuggestions(query);
+  });
+
   tagInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -979,8 +993,14 @@ function bindEditorUI() {
         editorState.tags.push(t);
         tagInput.value = '';
         renderEditorTags();
+        renderTagSuggestions('');
       }
     }
+  });
+
+  // Cerrar sugerencias si se pierde el foco
+  tagInput.addEventListener('blur', () => {
+    setTimeout(() => renderTagSuggestions(''), 200);
   });
 
   form.addEventListener('submit', async (e) => {
@@ -1049,6 +1069,11 @@ async function openEditor(itemId = null) {
   renderEditorChecklist();
   renderEditorTags();
   populateEditorEscenarios();
+  
+  // Cargar todas las etiquetas únicas para las sugerencias
+  allTags = await getAllUniqueTags();
+  renderTagSuggestions('');
+
   dialog.showModal();
   
   setTimeout(() => {
@@ -1118,6 +1143,36 @@ function renderEditorTags() {
     el.appendChild(del);
     container.insertBefore(el, input);
   }
+}
+
+// Sugerencias de etiquetas
+function renderTagSuggestions(query) {
+  const container = $('#tag-suggestions');
+  container.innerHTML = '';
+  
+  // Filtrar las etiquetas que no estén ya en editorState.tags
+  const available = allTags.filter(t => 
+    !editorState.tags.includes(t) && 
+    (query === '' || t.includes(query))
+  );
+
+  if (available.length === 0) return;
+
+  available.slice(0, 10).forEach(t => { // Mostrar máximo 10
+    const chip = document.createElement('div');
+    chip.className = 'suggestion-chip';
+    chip.textContent = t;
+    chip.addEventListener('mousedown', (e) => {
+      e.preventDefault(); // Evita que el input pierda el foco
+      if (!editorState.tags.includes(t)) {
+        editorState.tags.push(t);
+        $('#edit-tag-input').value = '';
+        renderEditorTags();
+        renderTagSuggestions('');
+      }
+    });
+    container.appendChild(chip);
+  });
 }
 
 async function togglePin(id) {
@@ -1199,8 +1254,6 @@ function showSnackbar(text, action = null) {
   $('#snackbar').classList.remove('hidden');
   
   if (snackbarTimer) clearTimeout(snackbarTimer);
-  // Si no hay acción (como el botón deshacer), se oculta a los 2.5 segundos.
-  // Si hay acción, se queda 5 segundos.
   const delay = action ? 5000 : 2500;
   snackbarTimer = setTimeout(hideSnackbar, delay);
 }
@@ -1211,7 +1264,6 @@ function hideSnackbar() {
 
 function openSettings() {
   updateExportStatus();
-  updateStorageStatus();
   renderSettingsEscenarios();
   $('#settings-dialog').showModal();
 }
@@ -1272,49 +1324,46 @@ function updateExportStatus() {
     : 'Sin copias todavía.';
 }
 
-async function updateStorageStatus() {
-  const el = $('#storage-status');
-  try {
-    let msg = '';
-    if (location.protocol === 'file:') {
-      msg = '⚠️ Abierto como archivo local (file://). Firefox bloquea IndexedDB aquí por seguridad. Para uso real, sírvelo por HTTP (ej: python -m http.server). ';
-    }
-    if (navigator.storage && navigator.storage.persisted) {
-      const p = await navigator.storage.persisted();
-      msg += p ? '✅ Almacenamiento persistente concedido.' : '⚠️ Almacenamiento no persistente.';
-    }
-    el.textContent = msg || 'Estado de almacenamiento no disponible.';
-  } catch { el.textContent = ''; }
-}
-
-// Unificamos Exportar y Compartir aquí
+// Exportar usando el menú de compartir de Android
 async function exportShare() {
   const data = await buildExport();
   const jsonString = JSON.stringify(data, null, 2);
-  const file = new File([jsonString], `notario-${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
+  const fileName = `notario-${new Date().toISOString().slice(0,10)}.json`;
 
-  // Intentar usar el menú nativo de compartir (móvil)
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  // 1. Intentar usar la API nativa de compartir (móvil)
+  if (navigator.share) {
     try {
-      await navigator.share({ 
-        files: [file], 
-        title: 'Copia de Notario', 
-        text: 'Copia de seguridad de mis notas' 
-      });
+      const file = new File([jsonString], fileName, { type: 'application/json' });
+      // Verificamos si el navegador soporta compartir archivos
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Copia de Notario',
+          text: 'Copia de seguridad de mis notas'
+        });
+      } else {
+        // Si no soporta archivos, compartimos solo texto (el JSON)
+        await navigator.share({
+          title: 'Copia de Notario (Texto)',
+          text: jsonString
+        });
+      }
       localStorage.setItem('lastExport', String(Date.now()));
       updateExportStatus();
       return; 
     } catch (e) { 
-      if (e.name === 'AbortError') return; // El usuario canceló el menú
+      if (e.name === 'AbortError') return; // El usuario canceló
+      console.warn('Error al compartir:', e);
+      // Si falla, cae al método de descarga
     }
   }
   
-  // Si falla o no está disponible (escritorio), descargamos el archivo
+  // 2. Fallback: Descargar archivo
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `notario-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1322,7 +1371,7 @@ async function exportShare() {
   
   localStorage.setItem('lastExport', String(Date.now()));
   updateExportStatus();
-  showSnackbar('Copia descargada (o compartida)');
+  showSnackbar('Copia descargada');
 }
 
 async function importFile(e) {
