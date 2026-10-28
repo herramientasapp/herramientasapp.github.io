@@ -13,7 +13,7 @@
   --text: #1a1a1a; --muted: #6b6b6b; --accent: #0066cc;
   --danger: #cc3333; --border: #dcdce0;
   --radius: 12px;
-  --topbar-h: 56px; --chips-h: 52px; --bottom-h: 110px;
+  --topbar-h: 56px; --chips-h: 52px; --bottom-h: 76px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -55,13 +55,14 @@ input, textarea, select { font: inherit; color: inherit; }
   background: var(--surface-2); border: 1px solid transparent; outline: none;
 }
 #search:focus { border-color: var(--accent); background: var(--surface); }
-.btn-menu {
-  padding: 8px 14px; border-radius: 20px;
+.btn-top {
+  padding: 8px 12px; border-radius: 20px;
   background: var(--surface-2); color: var(--text);
-  font-size: 14px; font-weight: 500; display: flex; gap: 6px; align-items: center;
-  flex-shrink: 0;
+  font-size: 14px; font-weight: 500; display: flex; gap: 4px; align-items: center;
+  flex-shrink: 0; border: 1px solid transparent;
 }
-.btn-menu:hover { background: var(--border); }
+.btn-top:hover { background: var(--border); }
+.btn-top.active { background: var(--accent); color: white; }
 
 #tag-filter-bar {
   position: fixed; top: calc(var(--topbar-h) + env(safe-area-inset-top));
@@ -70,7 +71,7 @@ input, textarea, select { font: inherit; color: inherit; }
   display: flex; align-items: center; padding: 0 12px; gap: 8px;
   overflow-x: auto; z-index: 8;
 }
-#tag-filter-bar span { font-size: 14px; color: var(--muted); white-space: nowrap; }
+#tag-filter-bar span.label { font-size: 14px; color: var(--muted); white-space: nowrap; }
 #tag-filter-bar .chip.active { background: var(--accent); color: white; }
 #tag-filter-bar .clear-filters { color: var(--danger); font-size: 14px; margin-left: auto; }
 
@@ -137,7 +138,6 @@ input, textarea, select { font: inherit; color: inherit; }
   outline: none; min-height: 1.4em; padding: 2px; font-size: 15px;
 }
 .item-body:focus { background: var(--surface-2); border-radius: 6px; }
-.item-body:empty:before { content: attr(data-placeholder); color: var(--muted); font-style: italic; }
 
 .item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 2px; }
@@ -152,12 +152,12 @@ input, textarea, select { font: inherit; color: inherit; }
 .tag-chip {
   background: var(--surface-2); color: var(--muted); font-size: 12px;
   padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px;
-  border: 1px solid var(--border); cursor: pointer;
+  border: 1px solid var(--border); cursor: pointer; transition: background 0.2s, color 0.2s;
 }
 .tag-chip:hover { background: var(--border); color: var(--text); }
 .tag-chip .tag-del { font-size: 14px; line-height: 1; opacity: 0.5; }
 .tag-chip .tag-del:hover { opacity: 1; color: var(--danger); }
-.tag-chip.active-filter { background: var(--accent); color: white; border-color: var(--accent); }
+.tag-chip.active-filter { background: var(--accent); color: white; border-color: var(--accent); font-weight: bold; }
 .tag-chip.add-tag { border-style: dashed; }
 
 .item-footer {
@@ -176,23 +176,17 @@ input, textarea, select { font: inherit; color: inherit; }
 
 #bottom-area {
   position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
   background: var(--bg); border-top: 1px solid var(--border); z-index: 10;
   height: calc(var(--bottom-h) + env(safe-area-inset-bottom));
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; justify-content: center;
 }
-.quick-capture { display: flex; gap: 8px; }
-#quick-input {
-  flex: 1; border: 1px solid var(--border); background: var(--surface);
-  border-radius: 20px; padding: 10px 16px; outline: none;
-  font-size: 15px;
-}
-#quick-input:focus { border-color: var(--accent); }
 .btn-new-large {
-  background: var(--accent); color: white; border-radius: 20px;
-  padding: 12px; font-size: 16px; font-weight: 600;
+  background: var(--accent); color: white; border-radius: 24px;
+  padding: 14px; font-size: 16px; font-weight: 600;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+  width: 100%; max-width: 600px; margin: 0 auto;
 }
 .btn-new-large:active { transform: translateY(1px); }
 
@@ -203,6 +197,7 @@ input, textarea, select { font: inherit; color: inherit; }
   border-radius: 10px; padding: 12px 16px;
   display: flex; align-items: center; gap: 12px; z-index: 20;
   animation: slideUp .18s ease-out;
+  max-width: 600px; margin: 0 auto;
 }
 .snackbar span { flex: 1; }
 .snackbar button { color: var(--accent); font-weight: 600; margin-left: auto; }
@@ -244,8 +239,6 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 }
 @media (min-width: 700px) {
   #main { padding: 16px max(16px, calc((100vw - 720px) / 2)); }
-  #bottom-area { padding: 8px max(12px, calc((100vw - 720px) / 2 + 12px)) calc(8px + env(safe-area-inset-bottom)); }
-  .snackbar { left: max(12px, calc((100vw - 720px) / 2)); right: max(12px, calc((100vw - 720px) / 2)); }
   #editor-dialog {
     width: 600px; height: 90vh; max-height: 800px;
     margin: auto; border-radius: 16px; padding-top: 0;
@@ -289,14 +282,15 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 <body>
 
 <header id="topbar">
-  <button id="btn-settings" class="btn-menu" aria-label="Ajustes">⚙ Ajustes</button>
+  <button id="btn-settings" class="btn-top" aria-label="Ajustes">⚙</button>
+  <button id="btn-tags-menu" class="btn-top" aria-label="Etiquetas">🏷️ Etiquetas</button>
   <div id="search-wrap">
     <input id="search" type="search" placeholder="Buscar…" autocomplete="off" inputmode="search">
   </div>
 </header>
 
 <div id="tag-filter-bar" class="hidden">
-  <span>Filtros:</span>
+  <span class="label">Filtros:</span>
   <div id="active-tags-list" style="display: flex; gap: 6px;"></div>
   <button class="clear-filters" id="btn-clear-filters">Limpiar</button>
 </div>
@@ -309,14 +303,11 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   <div id="items-list"></div>
   <div id="empty-state" class="empty" hidden>
     <p>No hay nada por aquí todavía.</p>
-    <p class="muted">Escribe abajo o pulsa el botón para empezar.</p>
+    <p class="muted">Pulsa el botón de abajo para empezar.</p>
   </div>
 </main>
 
 <section id="bottom-area">
-  <div class="quick-capture">
-    <input id="quick-input" type="text" placeholder="Captura rápida (Enter para guardar)…" autocomplete="off">
-  </div>
   <button id="btn-new-large" class="btn-new-large">＋ Nueva nota o lista</button>
 </section>
 
@@ -364,6 +355,17 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="dialog-footer">
+      <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="tags-dialog">
+  <form method="dialog">
+    <h2>Filtrar por etiquetas</h2>
+    <p class="muted small" style="margin-top:0;">Haz clic para marcar/desmarcar.</p>
+    <div id="all-tags-list" class="tags-row" style="gap: 8px; max-height: 50vh; overflow-y: auto; padding: 4px;"></div>
+    <div class="dialog-footer" style="margin-top: 16px;">
       <button type="submit" class="btn-primary">Cerrar</button>
     </div>
   </form>
@@ -583,6 +585,8 @@ function applyTheme(t) {
 
 function bindUI() {
   $('#btn-settings').addEventListener('click', openSettings);
+  $('#btn-tags-menu').addEventListener('click', openTagsDialog);
+  
   $('#set-tema').addEventListener('change', (e) => {
     localStorage.setItem('tema', e.target.value);
     applyTheme(e.target.value);
@@ -612,24 +616,6 @@ function bindUI() {
     renderItems();
   });
 
-  const quickInput = $('#quick-input');
-  quickInput.addEventListener('keydown', async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const text = quickInput.value.trim();
-      if (!text) return;
-      quickInput.value = '';
-      const escId = state.view === 'todos' ? '' : state.view;
-      await createItem({ titulo: text, escenarioId: escId });
-      await refresh();
-      showSnackbar('Nota rápida creada');
-    }
-  });
-  quickInput.addEventListener('click', () => {
-    openEditor(null, quickInput.value);
-    quickInput.value = '';
-  });
-  
   $('#btn-new-large').addEventListener('click', () => openEditor());
 
   $('#menu-edit').addEventListener('click', () => {
@@ -713,6 +699,34 @@ function toggleFilterTag(tag) {
   else state.activeTags.push(tag);
   renderTagFilters();
   renderItems();
+  // Re-render tags dialog if open to update UI
+  if ($('#tags-dialog').open) openTagsDialog(); 
+}
+
+async function openTagsDialog() {
+  const items = await db.items.filter(i => i.deletedAt == null).toArray();
+  const tagCounts = {};
+  items.forEach(i => (i.tags || []).forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
+  
+  const list = $('#all-tags-list');
+  list.innerHTML = '';
+  const sortedTags = Object.keys(tagCounts).sort();
+  
+  if (sortedTags.length === 0) {
+    list.innerHTML = '<p class="muted small">No hay etiquetas en tus notas todavía.</p>';
+  } else {
+    sortedTags.forEach(t => {
+      const isActive = state.activeTags.includes(t);
+      const chip = document.createElement('div');
+      chip.className = 'tag-chip' + (isActive ? ' active-filter' : '');
+      chip.style.fontSize = '14px';
+      chip.style.padding = '6px 12px';
+      chip.innerHTML = `${escapeHtml(t)} <span style="opacity:0.6; font-size:12px;">(${tagCounts[t]})</span>`;
+      chip.addEventListener('click', () => toggleFilterTag(t));
+      list.appendChild(chip);
+    });
+  }
+  if (!$('#tags-dialog').open) $('#tags-dialog').showModal();
 }
 
 function renderItem(item) {
@@ -848,10 +862,12 @@ function renderItem(item) {
       const chip = document.createElement('div');
       chip.className = 'tag-chip' + (state.activeTags.includes(t) ? ' active-filter' : '');
       chip.innerHTML = `<span>${escapeHtml(t)}</span><span class="tag-del">×</span>`;
+      
       chip.addEventListener('click', (e) => {
         if (e.target.classList.contains('tag-del')) return;
         toggleFilterTag(t);
       });
+
       const delBtn = chip.querySelector('.tag-del');
       delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -859,6 +875,7 @@ function renderItem(item) {
         await updateItem(item.id, { tags: item.tags });
         renderTagsInline();
       });
+      
       tagsRow.appendChild(chip);
     }
     const addTagBtn = document.createElement('div');
@@ -992,7 +1009,7 @@ function setEditorType(tipo) {
   $('#edit-checklist-wrap').classList.toggle('hidden', tipo !== 'lista');
 }
 
-async function openEditor(itemId = null, prefillTitle = '') {
+async function openEditor(itemId = null) {
   const dialog = $('#editor-dialog');
   
   if (itemId) {
@@ -1014,7 +1031,7 @@ async function openEditor(itemId = null, prefillTitle = '') {
     editorState.tags = [];
     
     $('#editor-title').textContent = 'Nueva entrada';
-    $('#edit-titulo').value = prefillTitle;
+    $('#edit-titulo').value = '';
     $('#edit-body').value = '';
     $('#edit-escenario').value = state.view === 'todos' ? '' : state.view;
   }
@@ -1159,12 +1176,18 @@ async function undoDelete() {
   await renderItems();
   hideSnackbar();
 }
+let snackbarTimer = null;
 function showSnackbar(text, action = null) {
   $('#snackbar-text').textContent = text;
   const btn = $('#snackbar-action');
   if (action) { btn.hidden = false; btn.textContent = action; }
   else { btn.hidden = true; }
   $('#snackbar').hidden = false;
+  
+  if (snackbarTimer) clearTimeout(snackbarTimer);
+  if (!action) {
+    snackbarTimer = setTimeout(hideSnackbar, 3000);
+  }
 }
 function hideSnackbar() { $('#snackbar').hidden = true; }
 
@@ -1236,7 +1259,7 @@ async function updateStorageStatus() {
   try {
     let msg = '';
     if (location.protocol === 'file:') {
-      msg = '⚠️ Abierto como archivo local (file://). Algunos navegadores limitan IndexedDB aquí. Para uso real, sírvelo por HTTP. ';
+      msg = '⚠️ Abierto como archivo local (file://). Firefox bloquea IndexedDB aquí por seguridad. Para uso real, sírvelo por HTTP (ej: python -m http.server). ';
     }
     if (navigator.storage && navigator.storage.persisted) {
       const p = await navigator.storage.persisted();
