@@ -190,18 +190,22 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .btn-new-large:active { transform: translateY(1px); }
 
-.snackbar {
+/* Snackbar / Toast flotante */
+#snackbar {
   position: fixed;
-  bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom) + 8px);
-  left: 12px; right: 12px; background: #222; color: #fff;
-  border-radius: 10px; padding: 12px 16px;
-  display: flex; align-items: center; gap: 12px; z-index: 20;
-  animation: slideUp .18s ease-out;
-  max-width: 600px; margin: 0 auto;
+  bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom) + 16px);
+  left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff;
+  border-radius: 24px; padding: 12px 24px;
+  display: flex; align-items: center; gap: 16px; z-index: 30;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  width: max-content; max-width: 90vw;
+  animation: slideUp .2s ease-out;
+  font-size: 14px;
 }
-.snackbar span { flex: 1; }
-.snackbar button { color: var(--accent); font-weight: 600; margin-left: auto; }
-@keyframes slideUp { from { transform: translateY(10px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+#snackbar button { color: var(--accent); font-weight: bold; margin-left: auto; }
+#snackbar.hidden { display: none !important; }
+@keyframes slideUp { from { transform: translate(-50%, 10px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
 
 dialog {
   border: none; border-radius: 16px;
@@ -218,7 +222,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 .btn-block { text-align: left; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; }
 .btn-block:hover { background: var(--border); }
 .btn-block.danger { color: var(--danger); }
-.btn-primary { padding: 12px 20px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; }
+.btn-primary { padding: 12px 20px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; text-align: center; }
 .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .move-list { display: flex; flex-direction: column; gap: 6px; }
 .move-list button { text-align: left; padding: 12px; border-radius: 8px; background: var(--surface-2); }
@@ -311,9 +315,9 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   <button id="btn-new-large" class="btn-new-large">＋ Nueva nota o lista</button>
 </section>
 
-<div id="snackbar" class="snackbar" hidden>
+<div id="snackbar" class="hidden">
   <span id="snackbar-text"></span>
-  <button id="snackbar-action" type="button">Deshacer</button>
+  <button id="snackbar-action" type="button" hidden>Deshacer</button>
 </div>
 
 <dialog id="settings-dialog">
@@ -336,8 +340,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 
     <div class="group">
       <h3>Datos</h3>
-      <button type="button" class="btn-block" id="btn-export-download">Descargar copia JSON</button>
-      <button type="button" class="btn-block" id="btn-export-share">Compartir a Drive…</button>
+      <button type="button" class="btn-block" id="btn-export">Compartir o Descargar copia</button>
       <button type="button" class="btn-block" id="btn-import">Importar JSON…</button>
       <input type="file" id="file-import" accept="application/json,.json" hidden>
       <p class="muted small" id="export-status"></p>
@@ -363,7 +366,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 <dialog id="tags-dialog">
   <form method="dialog">
     <h2>Filtrar por etiquetas</h2>
-    <p class="muted small" style="margin-top:0;">Haz clic para marcar/desmarcar.</p>
+    <p class="muted small" style="margin-top:0;">Marca las etiquetas que quieras ver (se muestran las notas que tengan al menos una).</p>
     <div id="all-tags-list" class="tags-row" style="gap: 8px; max-height: 50vh; overflow-y: auto; padding: 4px;"></div>
     <div class="dialog-footer" style="margin-top: 16px;">
       <button type="submit" class="btn-primary">Cerrar</button>
@@ -520,7 +523,12 @@ const hardDeleteItem = (id) => db.items.delete(id);
 async function listItems({ escenarioId = null, search = '', tags = [] } = {}) {
   let arr = await db.items.filter(i => i.deletedAt == null).toArray();
   if (escenarioId != null) arr = arr.filter(i => i.escenarioId === escenarioId);
-  if (tags.length > 0) arr = arr.filter(i => tags.every(t => (i.tags || []).includes(t)));
+  
+  // Filtro OR: el item debe tener AL MENOS UNA de las etiquetas seleccionadas
+  if (tags.length > 0) {
+    arr = arr.filter(i => tags.some(t => (i.tags || []).includes(t)));
+  }
+
   if (search.trim()) {
     const q = search.toLowerCase();
     arr = arr.filter(i =>
@@ -599,8 +607,10 @@ function bindUI() {
     await refresh();
     await renderSettingsEscenarios();
   });
-  $('#btn-export-download').addEventListener('click', exportDownload);
-  $('#btn-export-share').addEventListener('click', exportShare);
+  
+  // Un solo botón unificado para Exportar/Compartir
+  $('#btn-export').addEventListener('click', exportShare);
+  
   $('#btn-import').addEventListener('click', () => $('#file-import').click());
   $('#file-import').addEventListener('change', importFile);
   $('#btn-open-trash').addEventListener('click', openTrash);
@@ -699,7 +709,6 @@ function toggleFilterTag(tag) {
   else state.activeTags.push(tag);
   renderTagFilters();
   renderItems();
-  // Re-render tags dialog if open to update UI
   if ($('#tags-dialog').open) openTagsDialog(); 
 }
 
@@ -1176,20 +1185,29 @@ async function undoDelete() {
   await renderItems();
   hideSnackbar();
 }
+
 let snackbarTimer = null;
 function showSnackbar(text, action = null) {
   $('#snackbar-text').textContent = text;
   const btn = $('#snackbar-action');
-  if (action) { btn.hidden = false; btn.textContent = action; }
-  else { btn.hidden = true; }
-  $('#snackbar').hidden = false;
+  if (action) { 
+    btn.hidden = false; 
+    btn.textContent = action; 
+  } else { 
+    btn.hidden = true; 
+  }
+  $('#snackbar').classList.remove('hidden');
   
   if (snackbarTimer) clearTimeout(snackbarTimer);
-  if (!action) {
-    snackbarTimer = setTimeout(hideSnackbar, 3000);
-  }
+  // Si no hay acción (como el botón deshacer), se oculta a los 2.5 segundos.
+  // Si hay acción, se queda 5 segundos.
+  const delay = action ? 5000 : 2500;
+  snackbarTimer = setTimeout(hideSnackbar, delay);
 }
-function hideSnackbar() { $('#snackbar').hidden = true; }
+function hideSnackbar() { 
+  $('#snackbar').classList.add('hidden'); 
+  if (snackbarTimer) clearTimeout(snackbarTimer);
+}
 
 function openSettings() {
   updateExportStatus();
@@ -1269,9 +1287,30 @@ async function updateStorageStatus() {
   } catch { el.textContent = ''; }
 }
 
-async function exportDownload() {
+// Unificamos Exportar y Compartir aquí
+async function exportShare() {
   const data = await buildExport();
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const jsonString = JSON.stringify(data, null, 2);
+  const file = new File([jsonString], `notario-${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
+
+  // Intentar usar el menú nativo de compartir (móvil)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ 
+        files: [file], 
+        title: 'Copia de Notario', 
+        text: 'Copia de seguridad de mis notas' 
+      });
+      localStorage.setItem('lastExport', String(Date.now()));
+      updateExportStatus();
+      return; 
+    } catch (e) { 
+      if (e.name === 'AbortError') return; // El usuario canceló el menú
+    }
+  }
+  
+  // Si falla o no está disponible (escritorio), descargamos el archivo
+  const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1280,23 +1319,10 @@ async function exportDownload() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+  
   localStorage.setItem('lastExport', String(Date.now()));
   updateExportStatus();
-}
-
-async function exportShare() {
-  const data = await buildExport();
-  const file = new File([JSON.stringify(data, null, 2)], `notario-${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: 'Copia de Notario', text: 'Copia de seguridad de Notario' });
-      localStorage.setItem('lastExport', String(Date.now()));
-      updateExportStatus();
-      return;
-    } catch (e) { if (e.name === 'AbortError') return; }
-  }
-  showSnackbar('Compartir no disponible, descargando…');
-  await exportDownload();
+  showSnackbar('Copia descargada (o compartida)');
 }
 
 async function importFile(e) {
