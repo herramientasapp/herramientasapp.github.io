@@ -1,1 +1,1142 @@
+<!-- ... (continuación del HTML, no cierres la etiqueta style) ... -->
+@media (min-width: 700px) {
+  #main { padding: 16px max(16px, calc((100vw - 720px) / 2)); }
+  #bottom-area { padding: 8px max(12px, calc((100vw - 720px) / 2 + 12px)) calc(8px + env(safe-area-inset-bottom)); }
+  .snackbar { left: max(12px, calc((100vw - 720px) / 2)); right: max(12px, calc((100vw - 720px) / 2)); }
+}
+</style>
+</head>
+<body>
 
+<header id="topbar">
+  <button id="btn-settings" class="btn-menu" aria-label="Ajustes">⚙ Ajustes</button>
+  <div id="search-wrap">
+    <input id="search" type="search" placeholder="Buscar…" autocomplete="off" inputmode="search">
+  </div>
+</header>
+
+<div id="tag-filter-bar" class="hidden">
+  <span>Filtros:</span>
+  <div id="active-tags-list" style="display: flex; gap: 6px;"></div>
+  <button class="clear-filters" id="btn-clear-filters">Limpiar</button>
+</div>
+
+<nav id="escenarios-bar" aria-label="Escenarios">
+  <div class="chips" id="chips"></div>
+</nav>
+
+<main id="main">
+  <div id="items-list"></div>
+  <div id="empty-state" class="empty" hidden>
+    <p>No hay nada por aquí todavía.</p>
+    <p class="muted">Escribe abajo o pulsa el botón para empezar.</p>
+  </div>
+</main>
+
+<section id="bottom-area">
+  <div class="quick-capture">
+    <input id="quick-input" type="text" placeholder="Captura rápida (Enter para guardar)…" autocomplete="off">
+  </div>
+  <button id="btn-new-large" class="btn-new-large">＋ Nueva nota o lista</button>
+</section>
+
+<div id="snackbar" class="snackbar" hidden>
+  <span id="snackbar-text"></span>
+  <button id="snackbar-action" type="button">Deshacer</button>
+</div>
+
+<!-- Dialog Ajustes -->
+<dialog id="settings-dialog">
+  <form method="dialog">
+    <h2>Ajustes</h2>
+    <label class="row">
+      <span>Tema</span>
+      <select id="set-tema">
+        <option value="auto">Automático</option>
+        <option value="light">Claro</option>
+        <option value="dark">Oscuro</option>
+      </select>
+    </label>
+    
+    <div class="group">
+      <h3>Escenarios</h3>
+      <div id="settings-escenarios-list"></div>
+      <button type="button" class="btn-block" id="btn-add-escenario-settings">＋ Añadir escenario</button>
+    </div>
+
+    <div class="group">
+      <h3>Datos</h3>
+      <button type="button" class="btn-block" id="btn-export-download">Descargar copia JSON</button>
+      <button type="button" class="btn-block" id="btn-export-share">Compartir a Drive…</button>
+      <button type="button" class="btn-block" id="btn-import">Importar JSON…</button>
+      <input type="file" id="file-import" accept="application/json,.json" hidden>
+      <p class="muted small" id="export-status"></p>
+    </div>
+    
+    <div class="group">
+      <h3>Papelera</h3>
+      <button type="button" class="btn-block" id="btn-open-trash">Ver papelera</button>
+      <button type="button" class="btn-block danger" id="btn-empty-trash">Vaciar papelera</button>
+    </div>
+    
+    <div class="group">
+      <h3>Estado</h3>
+      <p class="muted small" id="storage-status">Comprobando…</p>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog Menú Item -->
+<dialog id="item-menu-dialog">
+  <form method="dialog">
+    <h2 id="item-menu-title">Opciones</h2>
+    <button type="button" class="btn-block" id="menu-edit">✏️ Editar completo</button>
+    <button type="button" class="btn-block" id="menu-pin">📌 Fijar/Desfijar</button>
+    <button type="button" class="btn-block" id="menu-move">📁 Mover a…</button>
+    <button type="button" class="btn-block danger" id="menu-delete">🗑 Eliminar</button>
+    <div class="dialog-footer">
+      <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog Mover -->
+<dialog id="move-dialog">
+  <form method="dialog">
+    <h2>Mover a…</h2>
+    <div id="move-list" class="move-list"></div>
+    <div class="dialog-footer">
+      <button type="submit" class="btn-primary">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog Papelera -->
+<dialog id="trash-dialog">
+  <form method="dialog">
+    <h2>Papelera</h2>
+    <div id="trash-list" class="trash-list"></div>
+    <div class="dialog-footer">
+      <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog Editor Modal -->
+<dialog id="editor-dialog">
+  <form method="dialog" id="editor-form">
+    <div class="editor-header">
+      <h2 id="editor-title">Nueva entrada</h2>
+      <button type="button" class="btn-close-editor" id="btn-close-editor">✕</button>
+    </div>
+    
+    <input type="text" id="edit-titulo" placeholder="Título (opcional)" autocomplete="off">
+    
+    <div class="editor-type">
+      <button type="button" class="type-btn active" id="type-nota">Nota</button>
+      <button type="button" class="type-btn" id="type-lista">Lista</button>
+    </div>
+
+    <div class="editor-content-area" id="editor-scroll">
+      <!-- Body para Nota -->
+      <textarea id="edit-body" placeholder="Escribe aquí los detalles (retornos de carro permitidos)…"></textarea>
+      
+      <!-- Checklist para Lista -->
+      <div id="edit-checklist-wrap" class="hidden">
+        <div id="edit-checklist"></div>
+        <button type="button" class="btn-block" id="btn-edit-chk-add" style="text-align: center; color: var(--accent);">＋ Añadir ítem</button>
+      </div>
+
+      <div class="group" style="margin-top: 10px;">
+        <h3>Etiquetas</h3>
+        <div class="tags-editor" id="edit-tags-container">
+          <input type="text" id="edit-tag-input" placeholder="Añadir etiqueta y pulsar Enter…">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Escenario</h3>
+        <select id="edit-escenario" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border);">
+          <option value="">🚫 Sin escenario</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="editor-footer">
+      <button type="button" class="btn-cancel" id="btn-cancel-editor">Cancelar</button>
+      <button type="submit" class="btn-primary" id="btn-save-editor">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+<script>
+'use strict';
+
+// ===== DB =====
+const DB_NAME = 'notario_v3';
+const SCHEMA_VERSION = 1;
+const db = new Dexie(DB_NAME);
+db.version(1).stores({
+  items: 'id, escenarioId, deletedAt, pinned, updatedAt, createdAt',
+  escenarios: 'id, orden, deletedAt'
+});
+
+function uuid() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+async function purgeOldTrash(days = 30) {
+  const cutoff = Date.now() - days * 24 * 3600 * 1000;
+  const old = await db.items.where('deletedAt').below(cutoff).and(x => x != null).toArray();
+  if (old.length) await db.items.bulkDelete(old.map(i => i.id));
+}
+
+async function buildExport() {
+  return {
+    app: 'notario', schemaVersion: SCHEMA_VERSION, exportedAt: Date.now(),
+    escenarios: await db.escenarios.toArray(),
+    items: await db.items.toArray()
+  };
+}
+
+async function importData(payload) {
+  if (!payload || typeof payload !== 'object') throw new Error('JSON inválido');
+  if (payload.app !== 'notario') throw new Error('Este archivo no es de Notario');
+  if (typeof payload.schemaVersion !== 'number' || payload.schemaVersion > SCHEMA_VERSION)
+    throw new Error('Versión no soportada: ' + payload.schemaVersion);
+  
+  await db.transaction('rw', db.items, db.escenarios, async () => {
+    await db.items.clear();
+    await db.escenarios.clear();
+    if (Array.isArray(payload.escenarios)) await db.escenarios.bulkAdd(payload.escenarios);
+    if (Array.isArray(payload.items)) {
+      // Migración de seguridad: asegurar que items tengan titulo y tags
+      const items = payload.items.map(it => ({
+        ...it,
+        titulo: it.titulo || '',
+        tags: Array.isArray(it.tags) ? it.tags : [],
+        body: it.body || '',
+        checklist: Array.isArray(it.checklist) ? it.checklist : []
+      }));
+      await db.items.bulkAdd(items);
+    }
+  });
+}
+
+// Operaciones DB
+async function createItem(data) {
+  const now = Date.now();
+  const item = { 
+    id: uuid(), titulo: '', tags: [], body: '', checklist: [], escenarioId: '', 
+    pinned: false, createdAt: now, updatedAt: now, deletedAt: null,
+    ...data 
+  };
+  await db.items.add(item);
+  return item;
+}
+const updateItem = (id, patch) => db.items.update(id, { ...patch, updatedAt: Date.now() });
+const softDeleteItem = (id) => db.items.update(id, { deletedAt: Date.now(), updatedAt: Date.now() });
+const restoreItem = (id) => db.items.update(id, { deletedAt: null, updatedAt: Date.now() });
+const hardDeleteItem = (id) => db.items.delete(id);
+
+async function listItems({ escenarioId = null, search = '', tags = [] } = {}) {
+  let arr = await db.items.filter(i => i.deletedAt == null).toArray();
+  
+  if (escenarioId != null) arr = arr.filter(i => i.escenarioId === escenarioId);
+  
+  if (tags.length > 0) {
+    arr = arr.filter(i => tags.every(t => (i.tags || []).includes(t)));
+  }
+
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    arr = arr.filter(i =>
+      (i.titulo || '').toLowerCase().includes(q) ||
+      (i.body || '').toLowerCase().includes(q) ||
+      (i.tags || []).some(t => t.toLowerCase().includes(q)) ||
+      (i.checklist || []).some(c => (c.texto || '').toLowerCase().includes(q))
+    );
+  }
+  
+  arr.sort((a, b) => a.pinned !== b.pinned ? (a.pinned ? -1 : 1) : b.updatedAt - a.updatedAt);
+  return arr;
+}
+
+async function listEscenarios() {
+  const arr = await db.escenarios.filter(e => e.deletedAt == null).toArray();
+  arr.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+  return arr;
+}
+
+async function createEscenario(nombre, emoji = '📁') {
+  const existing = await db.escenarios.toArray();
+  const orden = existing.reduce((m, e) => Math.max(m, e.orden || 0), 0) + 1;
+  const e = { id: uuid(), nombre, emoji, orden, createdAt: Date.now(), deletedAt: null };
+  await db.escenarios.add(e);
+  return e;
+}
+
+// ===== Estado =====
+const state = {
+  view: 'todos',
+  search: '',
+  activeTags: [],
+  pendingDelete: null,
+  items: [],
+  escenarios: []
+};
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ===== Init =====
+(async function init() {
+  await requestPersistence();
+  await purgeOldTrash(30);
+  initTheme();
+  bindUI();
+  await refresh();
+})();
+
+async function requestPersistence() {
+  try {
+    if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) {
+      await navigator.storage.persist();
+    }
+  } catch {}
+}
+
+function initTheme() {
+  const t = localStorage.getItem('tema') || 'auto';
+  applyTheme(t);
+  $('#set-tema').value = t;
+}
+function applyTheme(t) {
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+}
+
+// ===== Bind UI =====
+function bindUI() {
+  // Ajustes
+  $('#btn-settings').addEventListener('click', openSettings);
+  $('#set-tema').addEventListener('change', (e) => {
+    localStorage.setItem('tema', e.target.value);
+    applyTheme(e.target.value);
+  });
+  $('#btn-add-escenario-settings').addEventListener('click', async () => {
+    const nombre = prompt('Nombre del escenario:');
+    if (!nombre || !nombre.trim()) return;
+    const emoji = prompt('Emoji (opcional):', '📁') || '📁';
+    await createEscenario(nombre.trim(), emoji);
+    await refresh();
+    await renderSettingsEscenarios();
+  });
+  $('#btn-export-download').addEventListener('click', exportDownload);
+  $('#btn-export-share').addEventListener('click', exportShare);
+  $('#btn-import').addEventListener('click', () => $('#file-import').click());
+  $('#file-import').addEventListener('change', importFile);
+  $('#btn-open-trash').addEventListener('click', openTrash);
+  $('#btn-empty-trash').addEventListener('click', emptyTrash);
+
+  // Búsqueda y Filtros
+  $('#search').addEventListener('input', debounce((e) => {
+    state.search = e.target.value;
+    renderItems();
+  }, 120));
+  $('#btn-clear-filters').addEventListener('click', () => {
+    state.activeTags = [];
+    renderTagFilters();
+    renderItems();
+  });
+
+  // Bottom Area
+  const quickInput = $('#quick-input');
+  quickInput.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const text = quickInput.value.trim();
+      if (!text) return;
+      quickInput.value = '';
+      const escId = state.view === 'todos' ? '' : state.view;
+      await createItem({ titulo: text, escenarioId: escId });
+      await refresh();
+      showSnackbar('Nota rápida creada');
+    }
+  });
+  quickInput.addEventListener('click', () => {
+    openEditor(null, quickInput.value);
+    quickInput.value = '';
+  });
+  
+  $('#btn-new-large').addEventListener('click', () => openEditor());
+
+  // Menú Item
+  $('#menu-edit').addEventListener('click', () => {
+    $('#item-menu-dialog').close();
+    openEditor(menuTargetId);
+  });
+  $('#menu-pin').addEventListener('click', menuTogglePin);
+  $('#menu-move').addEventListener('click', menuOpenMove);
+  $('#menu-delete').addEventListener('click', menuDelete);
+
+  // Snackbar
+  $('#snackbar-action').addEventListener('click', undoDelete);
+
+  // Atajos
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
+    if (e.key === 'n') { e.preventDefault(); openEditor(); }
+  });
+  
+  // Setup Editor Modal
+  bindEditorUI();
+}
+
+// ===== Render Base =====
+async function refresh() {
+  state.escenarios = await listEscenarios();
+  await renderChips();
+  await renderTagFilters();
+  await renderItems();
+}
+
+async function renderChips() {
+  const wrap = $('#chips');
+  wrap.innerHTML = '';
+  const mk = (label, active, onClick, extraClass = '') => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (active ? ' active' : '') + (extraClass ? ' ' + extraClass : '');
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    wrap.appendChild(b);
+  };
+  mk('Todos', state.view === 'todos', () => { state.view = 'todos'; renderChips(); renderItems(); });
+  for (const e of state.escenarios) {
+    mk(`${e.emoji || '📁'} ${e.nombre}`, state.view === e.id, () => {
+      state.view = e.id; renderChips(); renderItems();
+    });
+  }
+  mk('＋ Escenario', false, () => $('#btn-settings').click(), 'chip-add');
+}
+
+async function renderTagFilters() {
+  const bar = $('#tag-filter-bar');
+  const list = $('#active-tags-list');
+  list.innerHTML = '';
+  
+  if (state.activeTags.length === 0) {
+    bar.classList.add('hidden');
+  } else {
+    bar.classList.remove('hidden');
+    for (const t of state.activeTags) {
+      const chip = document.createElement('div');
+      chip.className = 'chip active';
+      chip.style.fontSize = '12px';
+      chip.style.padding = '2px 8px';
+      chip.innerHTML = `${escapeHtml(t)} <span style="margin-left:4px; cursor:pointer;">×</span>`;
+      chip.addEventListener('click', () => toggleFilterTag(t));
+      list.appendChild(chip);
+    }
+  }
+}
+
+async function renderItems() {
+  const escenarioId = state.view === 'todos' ? null : state.view;
+  state.items = await listItems({ 
+    escenarioId, 
+    search: state.search, 
+    tags: state.activeTags 
+  });
+  
+  const list = $('#items-list');
+  list.innerHTML = '';
+  if (state.items.length === 0) { 
+    $('#empty-state').hidden = false; 
+    return; 
+  }
+  $('#empty-state').hidden = true;
+  for (const item of state.items) list.appendChild(renderItem(item));
+}
+
+function toggleFilterTag(tag) {
+  if (state.activeTags.includes(tag)) {
+    state.activeTags = state.activeTags.filter(t => t !== tag);
+  } else {
+    state.activeTags.push(tag);
+  }
+  renderTagFilters();
+  renderItems();
+}
+
+// ===== Render de un Item =====
+function renderItem(item) {
+  const el = document.createElement('article');
+  el.className = 'item' + (item.pinned ? ' pinned' : '');
+  el.dataset.id = item.id;
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'item-header';
+  
+  const pinBtn = document.createElement('button');
+  pinBtn.className = 'item-btn pin-btn' + (item.pinned ? ' on' : '');
+  pinBtn.title = item.pinned ? 'Desfijar' : 'Fijar';
+  pinBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1 1 1 0 0 1 1 1z"/></svg>`;
+  pinBtn.addEventListener('click', () => togglePin(item.id));
+  header.appendChild(pinBtn);
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'item-btn';
+  editBtn.textContent = '✏️';
+  editBtn.title = 'Editar todo';
+  editBtn.addEventListener('click', () => openEditor(item.id));
+  header.appendChild(editBtn);
+
+  const menuBtn = document.createElement('button');
+  menuBtn.className = 'item-btn';
+  menuBtn.textContent = '⋯';
+  menuBtn.title = 'Más';
+  menuBtn.addEventListener('click', () => openItemMenu(item.id));
+  header.appendChild(menuBtn);
+  
+  el.appendChild(header);
+
+  // Título (inline)
+  const titleEl = document.createElement('div');
+  titleEl.className = 'item-title';
+  titleEl.contentEditable = 'true';
+  titleEl.dataset.placeholder = 'Título';
+  titleEl.textContent = item.titulo || '';
+  const saveTitle = debounce(async () => {
+    const v = titleEl.innerText;
+    if (v === item.titulo) return;
+    item.titulo = v;
+    await updateItem(item.id, { titulo: v });
+  }, 500);
+  titleEl.addEventListener('input', saveTitle);
+  titleEl.addEventListener('blur', saveTitle);
+  el.appendChild(titleEl);
+
+  // Cuerpo (inline)
+  if (item.body !== undefined && item.body.trim() !== '') {
+    const body = document.createElement('div');
+    body.className = 'item-body';
+    body.contentEditable = 'true';
+    body.dataset.placeholder = 'Nota vacía';
+    body.textContent = item.body || '';
+    const save = debounce(async () => {
+      const v = body.innerText;
+      if (v === item.body) return;
+      item.body = v;
+      await updateItem(item.id, { body: v });
+    }, 500);
+    body.addEventListener('input', save);
+    body.addEventListener('blur', save);
+    el.appendChild(body);
+  }
+
+  // Checklist (inline)
+  if (Array.isArray(item.checklist) && item.checklist.length > 0) {
+    const ul = document.createElement('ul');
+    ul.className = 'item-checklist';
+    const renderChk = () => {
+      ul.innerHTML = '';
+      for (const chk of item.checklist) {
+        const li = document.createElement('li');
+        li.className = 'chk-row' + (chk.hecho ? ' done' : '');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!chk.hecho;
+        cb.addEventListener('change', async () => {
+          chk.hecho = cb.checked;
+          li.classList.toggle('done', chk.hecho);
+          await updateItem(item.id, { checklist: item.checklist });
+        });
+        li.appendChild(cb);
+
+        const span = document.createElement('span');
+        span.className = 'chk-text';
+        span.contentEditable = 'true';
+        span.textContent = chk.texto || '';
+        const saveChk = debounce(async () => {
+          const v = span.innerText;
+          if (v === chk.texto) return;
+          chk.texto = v;
+          await updateItem(item.id, { checklist: item.checklist });
+        }, 500);
+        span.addEventListener('input', saveChk);
+        span.addEventListener('blur', saveChk);
+        li.appendChild(span);
+
+        const del = document.createElement('button');
+        del.className = 'chk-del';
+        del.textContent = '×';
+        del.addEventListener('click', async () => {
+          item.checklist = item.checklist.filter(x => x.id !== chk.id);
+          await updateItem(item.id, { checklist: item.checklist });
+          renderChk();
+        });
+        li.appendChild(del);
+        ul.appendChild(li);
+      }
+      const addBtn = document.createElement('button');
+      addBtn.className = 'chk-add';
+      addBtn.textContent = '＋ Añadir ítem';
+      addBtn.addEventListener('click', () => {
+        item.checklist.push({ id: uuid(), texto: '', hecho: false });
+        updateItem(item.id, { checklist: item.checklist });
+        renderChk();
+        setTimeout(() => {
+          const rows = ul.querySelectorAll('.chk-text');
+          const last = rows[rows.length - 1];
+          if (last) { last.textContent = ''; last.focus(); }
+        }, 0);
+      });
+      ul.appendChild(addBtn);
+    };
+    renderChk();
+    el.appendChild(ul);
+  }
+
+  // Etiquetas
+  const tagsRow = document.createElement('div');
+  tagsRow.className = 'tags-row';
+  const renderTagsInline = () => {
+    tagsRow.innerHTML = '';
+    for (const t of (item.tags || [])) {
+      const chip = document.createElement('div');
+      chip.className = 'tag-chip' + (state.activeTags.includes(t) ? ' active-filter' : '');
+      chip.innerHTML = `<span>${escapeHtml(t)}</span><span class="tag-del">×</span>`;
+      
+      chip.addEventListener('click', (e) => {
+        if (e.target.classList.contains('tag-del')) return;
+        toggleFilterTag(t);
+      });
+
+      const delBtn = chip.querySelector('.tag-del');
+      delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        item.tags = item.tags.filter(x => x !== t);
+        await updateItem(item.id, { tags: item.tags });
+        renderTagsInline();
+      });
+      
+      tagsRow.appendChild(chip);
+    }
+    
+    // Botón para añadir tag inline
+    const addTagBtn = document.createElement('div');
+    addTagBtn.className = 'tag-chip add-tag';
+    addTagBtn.textContent = '＋';
+    addTagBtn.title = 'Añadir etiqueta';
+    addTagBtn.addEventListener('click', async () => {
+      const newTag = prompt('Nueva etiqueta:');
+      if (newTag && newTag.trim()) {
+        const cleanTag = newTag.trim().toLowerCase();
+        if (!item.tags.includes(cleanTag)) {
+          item.tags.push(cleanTag);
+          await updateItem(item.id, { tags: item.tags });
+          renderTagsInline();
+        }
+      }
+    });
+    tagsRow.appendChild(addTagBtn);
+  };
+  renderTagsInline();
+  el.appendChild(tagsRow);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'item-footer';
+  const esc = state.escenarios.find(e => e.id === item.escenarioId);
+  if (esc) {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = `${esc.emoji || ''} ${esc.nombre}`.trim();
+    footer.appendChild(tag);
+  }
+  const date = document.createElement('span');
+  date.textContent = humanDate(item.updatedAt);
+  footer.appendChild(date);
+  const spacer = document.createElement('span');
+  spacer.className = 'spacer';
+  footer.appendChild(spacer);
+
+  if (Array.isArray(item.checklist) && item.checklist.some(c => c.hecho)) {
+    const reset = document.createElement('button');
+    reset.className = 'reset-btn';
+    reset.textContent = '↺ Reiniciar';
+    reset.title = 'Desmarcar todos';
+    reset.addEventListener('click', async () => {
+      item.checklist.forEach(c => c.hecho = false);
+      await updateItem(item.id, { checklist: item.checklist });
+      await renderItems();
+      showSnackbar('Lista reiniciada');
+    });
+    footer.appendChild(reset);
+  }
+
+  el.appendChild(footer);
+  return el;
+}
+
+function humanDate(ts) {
+  const d = new Date(ts), now = new Date();
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  const diff = (now - d) / 86400000;
+  if (diff < 7) return d.toLocaleDateString('es', { weekday: 'short' });
+  return d.toLocaleDateString('es', { day: '2-digit', month: 'short' });
+}
+
+// ===== Lógica del Editor Modal =====
+let editorState = {
+  id: null,
+  tipo: 'nota', // 'nota' | 'lista'
+  checklist: [],
+  tags: [],
+};
+
+function bindEditorUI() {
+  const dialog = $('#editor-dialog');
+  const form = $('#editor-form');
+
+  $('#btn-close-editor').addEventListener('click', () => dialog.close());
+  $('#btn-cancel-editor').addEventListener('click', () => dialog.close());
+  
+  // Type toggles
+  $('#type-nota').addEventListener('click', () => setEditorType('nota'));
+  $('#type-lista').addEventListener('click', () => setEditorType('lista'));
+
+  // Add checklist item
+  $('#btn-edit-chk-add').addEventListener('click', () => {
+    editorState.checklist.push({ id: uuid(), texto: '', hecho: false });
+    renderEditorChecklist();
+    setTimeout(() => {
+      const inputs = $$('#edit-checklist input[type="text"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 0);
+  });
+
+  // Tags input
+  const tagInput = $('#edit-tag-input');
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const t = tagInput.value.trim().toLowerCase();
+      if (t && !editorState.tags.includes(t)) {
+        editorState.tags.push(t);
+        tagInput.value = '';
+        renderEditorTags();
+      }
+    }
+  });
+
+  // Save
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const titulo = $('#edit-titulo').value.trim();
+    const body = $('#edit-body').value;
+    const escenarioId = $('#edit-escenario').value;
+    
+    if (!titulo && !body.trim() && editorState.checklist.length === 0) {
+      dialog.close(); // Nada que guardar
+      return;
+    }
+
+    const data = {
+      titulo,
+      body: editorState.tipo === 'nota' ? body : '', // Si es lista, no guardamos el texto grande (a menos que queramos notas extra)
+      checklist: editorState.tipo === 'lista' ? editorState.checklist : [],
+      tags: editorState.tags,
+      escenarioId
+    };
+
+    if (editorState.id) {
+      await updateItem(editorState.id, data);
+    } else {
+      await createItem(data);
+    }
+    
+    dialog.close();
+    await refresh();
+  });
+}
+
+function setEditorType(tipo) {
+  editorState.tipo = tipo;
+  $('#type-nota').classList.toggle('active', tipo === 'nota');
+  $('#type-lista').classList.toggle('active', tipo === 'lista');
+  $('#edit-body').style.display = tipo === 'nota' ? 'block' : 'none';
+  $('#edit-checklist-wrap').classList.toggle('hidden', tipo !== 'lista');
+}
+
+async function openEditor(itemId = null, prefillTitle = '') {
+  const dialog = $('#editor-dialog');
+  
+  if (itemId) {
+    const item = await db.items.get(itemId);
+    if (!item) return;
+    editorState.id = item.id;
+    editorState.tipo = (item.checklist && item.checklist.length > 0) ? 'lista' : 'nota';
+    editorState.checklist = item.checklist ? JSON.parse(JSON.stringify(item.checklist)) : [];
+    editorState.tags = item.tags ? [...item.tags] : [];
+    
+    $('#editor-title').textContent = 'Editar entrada';
+    $('#edit-titulo').value = item.titulo || '';
+    $('#edit-body').value = item.body || '';
+    $('#edit-escenario').value = item.escenarioId || '';
+  } else {
+    editorState.id = null;
+    editorState.tipo = 'nota';
+    editorState.checklist = [];
+    editorState.tags = [];
+    
+    $('#editor-title').textContent = 'Nueva entrada';
+    $('#edit-titulo').value = prefillTitle;
+    $('#edit-body').value = '';
+    
+    // Default scenario based on current view
+    $('#edit-escenario').value = state.view === 'todos' ? '' : state.view;
+  }
+
+  setEditorType(editorState.tipo);
+  renderEditorChecklist();
+  renderEditorTags();
+  populateEditorEscenarios();
+  
+  dialog.showModal();
+  
+  // Focus title or body
+  setTimeout(() => {
+    if (!$('#edit-titulo').value) $('#edit-titulo').focus();
+    else $('#edit-body').focus();
+  }, 100);
+}
+
+function populateEditorEscenarios() {
+  const sel = $('#edit-escenario');
+  sel.innerHTML = '<option value="">🚫 Sin escenario</option>';
+  for (const e of state.escenarios) {
+    const opt = document.createElement('option');
+    opt.value = e.id;
+    opt.textContent = `${e.emoji || '📁'} ${e.nombre}`;
+    sel.appendChild(opt);
+  }
+}
+
+function renderEditorChecklist() {
+  const wrap = $('#edit-checklist');
+  wrap.innerHTML = '';
+  editorState.checklist.forEach((chk, index) => {
+    const row = document.createElement('div');
+    row.className = 'edit-chk-row';
+    
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = chk.hecho;
+    cb.addEventListener('change', () => { chk.hecho = cb.checked; });
+    row.appendChild(cb);
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = chk.texto;
+    inp.placeholder = 'Ítem...';
+    inp.addEventListener('input', (e) => { chk.texto = e.target.value; });
+    row.appendChild(inp);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'edit-chk-del';
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      editorState.checklist.splice(index, 1);
+      renderEditorChecklist();
+    });
+    row.appendChild(del);
+
+    wrap.appendChild(row);
+  });
+}
+
+function renderEditorTags() {
+  const container = $('#edit-tags-container');
+  const input = $('#edit-tag-input');
+  
+  // Limpiar todo menos el input
+  $$('.tag-item', container).forEach(el => el.remove());
+  
+  for (const t of editorState.tags) {
+    const el = document.createElement('div');
+    el.className = 'tag-item';
+    el.innerHTML = `<span>${escapeHtml(t)}</span>`;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      editorState.tags = editorState.tags.filter(x => x !== t);
+      renderEditorTags();
+    });
+    el.appendChild(del);
+    container.insertBefore(el, input);
+  }
+}
+
+// ===== Acciones de Item =====
+async function togglePin(id) {
+  const item = await db.items.get(id);
+  if (!item) return;
+  await updateItem(id, { pinned: !item.pinned });
+  await renderItems();
+}
+
+let menuTargetId = null;
+async function openItemMenu(id) {
+  menuTargetId = id;
+  const item = await db.items.get(id);
+  if (!item) return;
+  $('#item-menu-title').textContent = item.titulo ? item.titulo.slice(0, 40) : 'Opciones';
+  $('#menu-pin').textContent = item.pinned ? '📌 Desfijar' : '📌 Fijar';
+  $('#item-menu-dialog').showModal();
+}
+async function menuTogglePin() {
+  if (!menuTargetId) return;
+  await togglePin(menuTargetId);
+  $('#item-menu-dialog').close();
+}
+async function menuDelete() {
+  if (!menuTargetId) return;
+  const id = menuTargetId;
+  await softDeleteItem(id);
+  $('#item-menu-dialog').close();
+  await renderItems();
+  scheduleUndo(id);
+}
+function menuOpenMove() {
+  if (!menuTargetId) return;
+  $('#item-menu-dialog').close();
+  const id = menuTargetId;
+  const list = $('#move-list');
+  list.innerHTML = '';
+  const mk = (label, escId) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.addEventListener('click', async () => {
+      await updateItem(id, { escenarioId: escId });
+      $('#move-dialog').close();
+      await renderItems();
+    });
+    list.appendChild(b);
+  };
+  mk('🚫 Sin escenario', '');
+  for (const e of state.escenarios) mk(`${e.emoji || '📁'} ${e.nombre}`, e.id);
+  $('#move-dialog').showModal();
+}
+
+// ===== Undo =====
+function scheduleUndo(id) {
+  if (state.pendingDelete?.timer) clearTimeout(state.pendingDelete.timer);
+  const timer = setTimeout(() => { state.pendingDelete = null; hideSnackbar(); }, 5000);
+  state.pendingDelete = { id, timer };
+  showSnackbar('Eliminado', 'Deshacer');
+}
+async function undoDelete() {
+  if (!state.pendingDelete) return;
+  const { id, timer } = state.pendingDelete;
+  clearTimeout(timer);
+  state.pendingDelete = null;
+  await restoreItem(id);
+  await renderItems();
+  hideSnackbar();
+}
+function showSnackbar(text, action = null) {
+  $('#snackbar-text').textContent = text;
+  const btn = $('#snackbar-action');
+  if (action) { btn.hidden = false; btn.textContent = action; }
+  else { btn.hidden = true; }
+  $('#snackbar').hidden = false;
+}
+function hideSnackbar() { $('#snackbar').hidden = true; }
+
+// ===== Ajustes / Escenarios / Export =====
+function openSettings() {
+  updateExportStatus();
+  updateStorageStatus();
+  renderSettingsEscenarios();
+  $('#settings-dialog').showModal();
+}
+
+async function renderSettingsEscenarios() {
+  const list = $('#settings-escenarios-list');
+  list.innerHTML = '';
+  const escenarios = await listEscenarios();
+  
+  if (escenarios.length === 0) {
+    list.innerHTML = '<p class="muted small">No hay escenarios configurados.</p>';
+    return;
+  }
+
+  for (const e of escenarios) {
+    const row = document.createElement('div');
+    row.className = 'esc-row';
+    
+    const span = document.createElement('span');
+    span.textContent = `${e.emoji || '📁'} ${e.nombre}`;
+    row.appendChild(span);
+
+    const actions = document.createElement('div');
+    actions.className = 'esc-actions';
+
+    const edit = document.createElement('button');
+    edit.textContent = '✏️';
+    edit.addEventListener('click', async () => {
+      const nuevoNombre = prompt('Nombre del escenario:', e.nombre);
+      if (nuevoNombre === null) return;
+      const nuevoEmoji = prompt('Emoji:', e.emoji || '📁');
+      if (nuevoEmoji === null) return;
+      await db.escenarios.update(e.id, { nombre: nuevoNombre.trim() || e.nombre, emoji: nuevoEmoji.trim() || '📁' });
+      await refresh();
+      await renderSettingsEscenarios();
+    });
+    actions.appendChild(edit);
+
+    const del = document.createElement('button');
+    del.textContent = '🗑';
+    del.addEventListener('click', async () => {
+      if (!confirm(`¿Eliminar "${e.nombre}"? Los items pasarán a "Sin escenario".`)) return;
+      await db.transaction('rw', db.escenarios, db.items, async () => {
+        await db.escenarios.delete(e.id);
+        const items = await db.items.where('escenarioId').equals(e.id).toArray();
+        for (const item of items) await db.items.update(item.id, { escenarioId: '' });
+      });
+      if (state.view === e.id) state.view = 'todos';
+      await refresh();
+      await renderSettingsEscenarios();
+    });
+    actions.appendChild(del);
+    row.appendChild(actions);
+    list.appendChild(row);
+  }
+}
+
+function updateExportStatus() {
+  const last = localStorage.getItem('lastExport');
+  $('#export-status').textContent = last
+    ? 'Última copia: ' + new Date(parseInt(last, 10)).toLocaleString('es')
+    : 'Sin copias todavía.';
+}
+
+async function updateStorageStatus() {
+  const el = $('#storage-status');
+  try {
+    let msg = '';
+    if (location.protocol === 'file:') {
+      msg = '⚠️ Abierto como archivo local (file://). Algunos navegadores limitan IndexedDB aquí. Para uso real, sírvelo por HTTP. ';
+    }
+    if (navigator.storage && navigator.storage.persisted) {
+      const p = await navigator.storage.persisted();
+      msg += p ? '✅ Almacenamiento persistente concedido.' : '⚠️ Almacenamiento no persistente.';
+    }
+    el.textContent = msg || 'Estado de almacenamiento no disponible.';
+  } catch { el.textContent = ''; }
+}
+
+async function exportDownload() {
+  const data = await buildExport();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `notario-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  localStorage.setItem('lastExport', String(Date.now()));
+  updateExportStatus();
+}
+
+async function exportShare() {
+  const data = await buildExport();
+  const file = new File([JSON.stringify(data, null, 2)], `notario-${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Copia de Notario', text: 'Copia de seguridad de Notario' });
+      localStorage.setItem('lastExport', String(Date.now()));
+      updateExportStatus();
+      return;
+    } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  showSnackbar('Compartir no disponible, descargando…');
+  await exportDownload();
+}
+
+async function importFile(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    if (!confirm('Esto reemplazará TODOS los datos actuales. ¿Continuar?')) return;
+    await importData(payload);
+    await refresh();
+    await renderSettingsEscenarios();
+    $('#settings-dialog').close(); // Cerrar menú de ajustes tras importar
+    showSnackbar('Importado correctamente');
+  } catch (err) {
+    alert('Error al importar: ' + err.message);
+  }
+}
+
+// ===== Papelera =====
+async function openTrash() {
+  const list = $('#trash-list');
+  list.innerHTML = '';
+  const items = await db.items.filter(i => i.deletedAt != null).toArray();
+  items.sort((a, b) => b.deletedAt - a.deletedAt);
+  if (items.length === 0) {
+    list.innerHTML = '<p class="muted small">La papelera está vacía.</p>';
+  } else {
+    for (const it of items) {
+      const div = document.createElement('div');
+      div.className = 'trash-item';
+      const preview = it.titulo || it.body || (it.checklist || []).map(c => c.texto).join(', ').slice(0, 80) || '(vacío)';
+      div.innerHTML = `<strong>${escapeHtml(preview)}</strong>
+        <span class="muted small">Eliminado ${new Date(it.deletedAt).toLocaleDateString('es')}</span>`;
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const r = document.createElement('button');
+      r.textContent = 'Restaurar';
+      r.addEventListener('click', async () => { await restoreItem(it.id); await openTrash(); await renderItems(); });
+      const d = document.createElement('button');
+      d.textContent = 'Eliminar del todo';
+      d.addEventListener('click', async () => { await hardDeleteItem(it.id); await openTrash(); });
+      actions.append(r, d);
+      div.appendChild(actions);
+      list.appendChild(div);
+    }
+  }
+  $('#trash-dialog').showModal();
+}
+
+async function emptyTrash() {
+  if (!confirm('¿Vaciar la papelera definitivamente?')) return;
+  const items = await db.items.filter(i => i.deletedAt != null).toArray();
+  await db.items.bulkDelete(items.map(i => i.id));
+  showSnackbar('Papelera vaciada');
+  await renderItems();
+}
+</script>
+</body>
+</html>
