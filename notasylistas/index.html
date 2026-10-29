@@ -13,7 +13,7 @@
   --text: #1a1a1a; --muted: #6b6b6b; --accent: #0066cc;
   --danger: #cc3333; --border: #dcdce0;
   --radius: 12px;
-  --topbar-h: 56px; --chips-h: 52px; --bottom-h: 76px;
+  --topbar-h: 52px; --chips-h: 48px; --bottom-h: 72px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -34,7 +34,7 @@ html[data-theme="dark"] {
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
-  background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.4;
+  background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.35;
   padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden;
 }
@@ -45,34 +45,35 @@ input, textarea, select { font: inherit; color: inherit; }
 #topbar {
   position: fixed; top: 0; left: 0; right: 0;
   height: calc(var(--topbar-h) + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) 12px 0 12px;
-  display: flex; align-items: center; gap: 8px;
+  padding: env(safe-area-inset-top) 10px 0 10px;
+  display: flex; align-items: center; gap: 6px;
   background: var(--bg); border-bottom: 1px solid var(--border); z-index: 10;
 }
 #search-wrap { flex: 1; }
 #search {
-  width: 100%; padding: 10px 14px; border-radius: 20px;
+  width: 100%; padding: 8px 12px; border-radius: 18px;
   background: var(--surface-2); border: 1px solid transparent; outline: none;
+  font-size: 14px;
 }
 #search:focus { border-color: var(--accent); background: var(--surface); }
 .btn-top {
-  padding: 8px 12px; border-radius: 20px;
+  padding: 7px 10px; border-radius: 18px;
   background: var(--surface-2); color: var(--text);
-  font-size: 14px; font-weight: 500; display: flex; gap: 4px; align-items: center;
+  font-size: 13px; font-weight: 500; display: flex; gap: 4px; align-items: center;
   flex-shrink: 0; border: 1px solid transparent;
 }
 .btn-top:hover { background: var(--border); }
 
 #tag-filter-bar {
   position: fixed; top: calc(var(--topbar-h) + env(safe-area-inset-top));
-  left: 0; right: 0; height: 44px;
+  left: 0; right: 0; height: 40px;
   background: var(--surface); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  display: flex; align-items: center; padding: 0 10px; gap: 6px;
   overflow-x: auto; z-index: 8;
 }
-#tag-filter-bar span.label { font-size: 14px; color: var(--muted); white-space: nowrap; }
+#tag-filter-bar span.label { font-size: 12px; color: var(--muted); white-space: nowrap; }
 #tag-filter-bar .chip.active { background: var(--accent); color: white; }
-#tag-filter-bar .clear-filters { color: var(--danger); font-size: 14px; margin-left: auto; }
+#tag-filter-bar .clear-filters { color: var(--danger); font-size: 12px; margin-left: auto; }
 
 #escenarios-bar {
   position: fixed; 
@@ -83,14 +84,14 @@ input, textarea, select { font: inherit; color: inherit; }
   transition: top 0.2s ease;
 }
 #tag-filter-bar:not(.hidden) ~ #escenarios-bar {
-  top: calc(var(--topbar-h) + 44px + env(safe-area-inset-top));
+  top: calc(var(--topbar-h) + 40px + env(safe-area-inset-top));
 }
 #escenarios-bar::-webkit-scrollbar { display: none; }
-.chips { display: flex; gap: 8px; padding: 10px 12px; align-items: center; height: 100%; white-space: nowrap; }
+.chips { display: flex; gap: 6px; padding: 8px 10px; align-items: center; height: 100%; white-space: nowrap; }
 .chip {
-  padding: 6px 14px; border-radius: 18px;
+  padding: 5px 12px; border-radius: 16px;
   background: var(--surface-2); color: var(--text);
-  font-size: 14px; flex: 0 0 auto; border: 1px solid transparent;
+  font-size: 13px; flex: 0 0 auto; border: 1px solid transparent;
   user-select: none;
 }
 .chip:not(.active):hover { background: var(--border); }
@@ -101,28 +102,28 @@ input, textarea, select { font: inherit; color: inherit; }
   position: fixed;
   top: calc(var(--topbar-h) + var(--chips-h) + env(safe-area-inset-top));
   bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom));
-  left: 0; right: 0; overflow-y: auto; padding: 10px;
+  left: 0; right: 0; overflow-y: auto; padding: 8px;
   -webkit-overflow-scrolling: touch;
 }
 #tag-filter-bar:not(.hidden) ~ #main {
-  top: calc(var(--topbar-h) + 44px + var(--chips-h) + env(safe-area-inset-top));
+  top: calc(var(--topbar-h) + 40px + var(--chips-h) + env(safe-area-inset-top));
 }
-#items-list { display: flex; flex-direction: column; gap: 8px; }
+#items-list { display: flex; flex-direction: column; gap: 6px; }
 
 /* ===== Tarjetas compactas ===== */
 .item {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 8px 10px 8px;
-  display: flex; flex-direction: column; gap: 4px; position: relative;
+  border-radius: var(--radius); padding: 6px 8px 6px;
+  display: flex; flex-direction: column; gap: 3px; position: relative;
 }
 .item.pinned { border-color: var(--accent); background: rgba(74, 158, 255, 0.05); }
 
-.item-top { display: flex; gap: 4px; align-items: flex-start; }
+.item-top { display: flex; gap: 2px; align-items: flex-start; }
 .item-top .item-title { flex: 1; min-width: 0; }
-.item-actions { display: flex; gap: 0; flex-shrink: 0; margin-top: -2px; margin-right: -4px; }
+.item-actions { display: flex; gap: 0; flex-shrink: 0; margin-top: -3px; margin-right: -4px; }
 
 .item-btn {
-  width: 28px; height: 28px; font-size: 16px;
+  width: 26px; height: 26px; font-size: 15px;
   display: grid; place-items: center; border-radius: 50%; color: var(--muted);
   opacity: 0.55;
 }
@@ -133,77 +134,111 @@ input, textarea, select { font: inherit; color: inherit; }
 .item-btn:hover { background: var(--surface-2); color: var(--text); }
 .item-btn:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: -2px; }
 
-.pin-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pin-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .pin-btn.on { color: var(--accent); opacity: 1; }
 .pin-btn.on svg { fill: var(--accent); stroke: var(--accent); }
 
 .item-title {
-  font-size: 17px; font-weight: 600; outline: none; padding: 2px;
-  word-break: break-word; min-height: 1.4em;
+  font-size: 16px; font-weight: 600; outline: none; padding: 1px 2px;
+  word-break: break-word; min-height: 1.3em;
 }
 .item-title:focus { background: var(--surface-2); border-radius: 6px; }
 .item-title:empty:before { content: attr(data-placeholder); color: var(--muted); font-weight: normal; }
 
 .item-body {
   white-space: pre-wrap; word-break: break-word;
-  outline: none; min-height: 1.4em; padding: 2px; font-size: 15px;
+  outline: none; min-height: 1.3em; padding: 1px 2px; font-size: 14px;
 }
 .item-body:focus { background: var(--surface-2); border-radius: 6px; }
-.item-body a, .item-title a { color: var(--accent); text-decoration: underline; }
+.item-body a, .item-title a { color: var(--accent); text-decoration: underline; cursor: pointer; }
 
 .item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
-.chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 2px; }
-.chk-row input[type="checkbox"] { width: 19px; height: 19px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
-.chk-row .chk-text { flex: 1; outline: none; min-height: 1.4em; word-break: break-word; font-size: 15px; }
+.chk-row { display: flex; align-items: flex-start; gap: 6px; padding: 2px; }
+.chk-row input[type="checkbox"] { width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
+.chk-row .chk-text { flex: 1; outline: none; min-height: 1.3em; word-break: break-word; font-size: 14px; padding: 1px 0; }
 .chk-row.done .chk-text { color: var(--muted); text-decoration: line-through; }
-.chk-del { color: var(--muted); font-size: 18px; opacity: 0; width: 24px; height: 24px; display: grid; place-items: center; }
+.chk-del { color: var(--muted); font-size: 16px; opacity: 0; width: 22px; height: 22px; display: grid; place-items: center; }
 .chk-row:hover .chk-del, .chk-row:focus-within .chk-del { opacity: 1; }
 @media (hover: none) { .chk-del { opacity: 0.4; } }
-.chk-add { padding: 4px 2px; color: var(--accent); font-size: 13px; text-align: left; }
+.chk-add { padding: 2px; color: var(--accent); font-size: 12px; text-align: left; }
 
-.tags-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 1px; align-items: center; }
 .tag-chip {
   background: var(--surface-2); color: var(--muted); font-size: 11px;
-  padding: 3px 8px; border-radius: 11px; display: flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 10px; display: flex; align-items: center; gap: 3px;
   border: 1px solid var(--border); cursor: pointer; transition: background 0.2s, color 0.2s;
+  line-height: 1.5;
 }
 .tag-chip:hover { background: var(--border); color: var(--text); }
-.tag-chip .tag-del { font-size: 13px; line-height: 1; opacity: 0.5; }
+.tag-chip .tag-del { font-size: 12px; line-height: 1; opacity: 0.5; }
 .tag-chip .tag-del:hover { opacity: 1; color: var(--danger); }
 .tag-chip.active-filter { background: var(--accent); color: white; border-color: var(--accent); font-weight: bold; }
-.tag-chip.add-tag { border-style: dashed; }
+.tag-chip.add-tag { border-style: dashed; padding: 2px 9px; font-weight: 600; }
+
+.tag-picker-inline {
+  margin-top: 4px;
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tag-picker-inline input {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+  outline: none;
+}
+.tag-picker-inline input:focus { border-color: var(--accent); }
+.tag-sugg-box { display: flex; flex-wrap: wrap; gap: 4px; }
+.sugg-chip {
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.sugg-chip:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.sugg-chip.create { color: var(--accent); border-color: var(--accent); font-weight: 600; }
 
 .item-footer {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; color: var(--muted); padding-top: 4px;
-  border-top: 1px dashed var(--border); margin-top: 2px;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: var(--muted); padding-top: 3px;
+  border-top: 1px dashed var(--border); margin-top: 1px;
 }
-.item-footer .tag { background: var(--surface-2); padding: 1px 8px; border-radius: 10px; }
+.item-footer .tag { background: var(--surface-2); padding: 1px 7px; border-radius: 9px; }
 .item-footer .spacer { flex: 1; }
-.item-footer .reset-btn { color: var(--accent); font-size: 11px; padding: 2px 4px; }
+.item-footer .reset-btn { color: var(--accent); font-size: 10.5px; padding: 1px 3px; }
 .progress-badge {
-  font-size: 11px; padding: 1px 7px; border-radius: 9px;
+  font-size: 10.5px; padding: 1px 6px; border-radius: 8px;
   background: var(--surface-2); color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .progress-badge.complete { background: rgba(74, 158, 255, 0.15); color: var(--accent); font-weight: 600; }
 
-.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.empty p { margin: 6px 0; }
+.empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty p { margin: 5px 0; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 
 #bottom-area {
   position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   background: var(--bg); border-top: 1px solid var(--border); z-index: 10;
   height: calc(var(--bottom-h) + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; justify-content: center;
 }
 .btn-new-large {
-  background: var(--accent); color: white; border-radius: 24px;
-  padding: 14px; font-size: 16px; font-weight: 600;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent); color: white; border-radius: 22px;
+  padding: 12px; font-size: 15px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
   width: 100%; max-width: 600px; margin: 0 auto;
 }
@@ -214,7 +249,7 @@ input, textarea, select { font: inherit; color: inherit; }
   bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom) + 16px);
   left: 50%; transform: translateX(-50%);
   background: #333; color: #fff;
-  border-radius: 24px; padding: 12px 24px;
+  border-radius: 24px; padding: 11px 22px;
   display: flex; align-items: center; gap: 16px; z-index: 30;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   width: max-content; max-width: 90vw;
@@ -231,36 +266,51 @@ dialog {
   padding: 0; max-width: 480px; width: calc(100% - 32px); max-height: 85vh;
 }
 dialog::backdrop { background: rgba(0,0,0,.6); }
-dialog form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-dialog h2 { margin: 0 0 4px; font-size: 18px; }
-dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+dialog form { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+dialog h2 { margin: 0 0 4px; font-size: 17px; }
+dialog h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .row select, .row input[type="text"] { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); max-width: 60%; outline: none; }
 .row input[type="text"]:focus { border-color: var(--accent); }
-.group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
-.btn-block { text-align: left; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; }
+.group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.btn-block { text-align: left; padding: 11px 13px; background: var(--surface-2); border-radius: 10px; font-size: 14px; }
 .btn-block:hover { background: var(--border); }
 .btn-block.danger { color: var(--danger); }
-.btn-primary { padding: 12px 20px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; text-align: center; }
+.btn-primary { padding: 11px 18px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; text-align: center; font-size: 14px; }
 .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .move-list { display: flex; flex-direction: column; gap: 6px; }
-.move-list button { text-align: left; padding: 12px; border-radius: 8px; background: var(--surface-2); }
+.move-list button { text-align: left; padding: 11px; border-radius: 8px; background: var(--surface-2); }
 .trash-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
 .trash-item { padding: 10px; border-radius: 8px; background: var(--surface-2); display: flex; flex-direction: column; gap: 4px; }
 .trash-item .actions { display: flex; gap: 8px; margin-top: 4px; }
 .trash-item .actions button { color: var(--accent); font-size: 13px; }
 
-.esc-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--surface-2); border-radius: 8px; margin-bottom: 4px; }
-.esc-actions { display: flex; gap: 4px; }
-.esc-actions button { width: 28px; height: 28px; font-size: 14px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.esc-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: var(--surface-2); border-radius: 8px; margin-bottom: 4px; gap: 6px; }
+.esc-row > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.esc-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.esc-actions button { width: 26px; height: 26px; font-size: 13px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
 .esc-actions button:hover { background: var(--border); color: var(--text); }
+.esc-actions button:disabled { opacity: 0.3; cursor: default; }
+
+.tags-manage-list {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 50vh; overflow-y: auto;
+}
+.tag-manage-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; background: var(--surface-2); border-radius: 8px; gap: 8px;
+}
+.tag-manage-row .tag-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 14px;
+}
 
 /* ===== Emoji picker ===== */
 .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
-  gap: 4px;
-  max-height: 180px;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 3px;
+  max-height: 170px;
   overflow-y: auto;
   padding: 6px;
   background: var(--bg);
@@ -268,8 +318,8 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   border: 1px solid var(--border);
 }
 .emoji-btn {
-  font-size: 22px;
-  padding: 6px 0;
+  font-size: 20px;
+  padding: 5px 0;
   border-radius: 8px;
   text-align: center;
   transition: background 0.15s, transform 0.1s;
@@ -286,64 +336,66 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   background: var(--bg); padding-top: env(safe-area-inset-top);
 }
 @media (min-width: 700px) {
-  #main { padding: 12px max(16px, calc((100vw - 720px) / 2)); }
+  #main { padding: 10px max(16px, calc((100vw - 720px) / 2)); }
   #editor-dialog {
     width: 600px; height: 90vh; max-height: 800px;
     margin: auto; border-radius: 16px; padding-top: 0;
   }
 }
-#editor-form { height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+#editor-form { height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px; }
 .editor-header { display: flex; justify-content: space-between; align-items: center; }
-.editor-header h2 { margin: 0; font-size: 18px; }
-.btn-close-editor { font-size: 20px; color: var(--muted); padding: 8px; }
+.editor-header h2 { margin: 0; font-size: 17px; }
+.btn-close-editor { font-size: 20px; color: var(--muted); padding: 6px; }
 
 #edit-titulo {
-  font-size: 24px; font-weight: 600; border: none; background: transparent;
+  font-size: 22px; font-weight: 600; border: none; background: transparent;
   outline: none; padding: 8px 0; border-bottom: 1px solid var(--border);
 }
 #edit-titulo::placeholder { color: var(--muted); font-weight: normal; }
-.editor-type { display: flex; gap: 8px; }
-.type-btn { padding: 6px 16px; border-radius: 16px; background: var(--surface-2); color: var(--muted); font-size: 14px; font-weight: 500; }
+.editor-type { display: flex; gap: 6px; }
+.type-btn { padding: 5px 14px; border-radius: 14px; background: var(--surface-2); color: var(--muted); font-size: 13px; font-weight: 500; }
 .type-btn.active { background: var(--accent); color: white; }
-.editor-content-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+.editor-content-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
 #edit-body {
-  width: 100%; min-height: 150px; resize: vertical; border: 1px solid var(--border);
-  background: var(--surface); border-radius: 10px; padding: 12px; font-size: 16px;
-  outline: none; line-height: 1.5;
+  width: 100%; min-height: 150px; resize: none;
+  border: 1px solid var(--border);
+  background: var(--surface); border-radius: 10px; padding: 12px; font-size: 15px;
+  outline: none; line-height: 1.5; overflow: hidden;
+  transition: height 0.05s;
 }
 #edit-body:focus { border-color: var(--accent); }
-#edit-checklist-wrap { display: flex; flex-direction: column; gap: 8px; }
+#edit-checklist-wrap { display: flex; flex-direction: column; gap: 6px; }
 .edit-chk-row { display: flex; align-items: center; gap: 8px; }
-.edit-chk-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
-.edit-chk-row input[type="text"] { flex: 1; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 10px; outline: none; }
+.edit-chk-row input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); }
+.edit-chk-row input[type="text"] { flex: 1; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 9px; outline: none; font-size: 14px; }
 .edit-chk-row input[type="text"]:focus { border-color: var(--accent); }
-.edit-chk-del { color: var(--danger); font-size: 18px; padding: 4px; }
-.tags-editor { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
-.tag-item { background: var(--surface-2); padding: 4px 10px; border-radius: 12px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
-.tag-item button { color: var(--muted); font-size: 16px; line-height: 1; }
+.edit-chk-del { color: var(--danger); font-size: 17px; padding: 4px; }
+.tags-editor { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.tag-item { background: var(--surface-2); padding: 3px 9px; border-radius: 11px; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+.tag-item button { color: var(--muted); font-size: 15px; line-height: 1; }
 .tag-item button:hover { color: var(--danger); }
 #edit-tag-input { border: none; background: transparent; outline: none; flex: 1; min-width: 100px; font-size: 14px; }
 
 #tag-suggestions {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
-  padding: 8px; background: var(--bg); border-radius: 8px;
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;
+  padding: 7px; background: var(--bg); border-radius: 8px;
 }
 .suggestion-chip {
   background: var(--surface); border: 1px solid var(--border);
-  padding: 4px 8px; border-radius: 12px; font-size: 12px; color: var(--muted);
+  padding: 3px 8px; border-radius: 11px; font-size: 11px; color: var(--muted);
   cursor: pointer;
 }
 .suggestion-chip:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
-.editor-footer { display: flex; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
-.btn-cancel { padding: 12px 20px; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 600; }
+.editor-footer { display: flex; gap: 10px; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border); }
+.btn-cancel { padding: 11px 18px; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14px; }
 </style>
 </head>
 <body>
 
 <header id="topbar">
   <button id="btn-settings" class="btn-top" aria-label="Ajustes">⚙</button>
-  <button id="btn-tags-menu" class="btn-top" aria-label="Etiquetas">🏷️ Etiquetas</button>
+  <button id="btn-tags-menu" class="btn-top" aria-label="Etiquetas">🏷️</button>
   <div id="search-wrap">
     <input id="search" type="search" placeholder="Buscar…" autocomplete="off" inputmode="search" aria-label="Buscar">
   </div>
@@ -351,7 +403,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 
 <div id="tag-filter-bar" class="hidden">
   <span class="label">Filtros:</span>
-  <div id="active-tags-list" style="display: flex; gap: 6px;"></div>
+  <div id="active-tags-list" style="display: flex; gap: 5px;"></div>
   <button class="clear-filters" id="btn-clear-filters">Limpiar</button>
 </div>
 
@@ -395,6 +447,11 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="group">
+      <h3>Etiquetas</h3>
+      <button type="button" class="btn-block" id="btn-manage-tags">🏷️ Gestionar etiquetas…</button>
+    </div>
+
+    <div class="group">
       <h3>Datos</h3>
       <button type="button" class="btn-block" id="btn-export">Descargar copia JSON</button>
       <button type="button" class="btn-block" id="btn-import">Importar JSON…</button>
@@ -409,7 +466,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="dialog-footer" style="justify-content: space-between; align-items: center;">
-      <span class="muted small">Gestor de notas v4.0</span>
+      <span class="muted small">Gestor de notas v4.1</span>
       <button type="submit" class="btn-primary">Cerrar</button>
     </div>
   </form>
@@ -437,12 +494,23 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   </form>
 </dialog>
 
+<dialog id="tags-manage-dialog">
+  <form method="dialog">
+    <h2>Gestionar etiquetas</h2>
+    <p class="muted small" style="margin-top:0;">Renombra o elimina etiquetas de todas tus notas a la vez.</p>
+    <div id="tags-manage-list" class="tags-manage-list"></div>
+    <div class="dialog-footer" style="margin-top: 12px;">
+      <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="tags-dialog">
   <form method="dialog">
     <h2>Filtrar por etiquetas</h2>
     <p class="muted small" style="margin-top:0;">Marca las etiquetas que quieras ver (se muestran las notas que tengan al menos una).</p>
-    <div id="all-tags-list" class="tags-row" style="gap: 8px; max-height: 50vh; overflow-y: auto; padding: 4px;"></div>
-    <div class="dialog-footer" style="margin-top: 16px;">
+    <div id="all-tags-list" class="tags-row" style="gap: 6px; max-height: 50vh; overflow-y: auto; padding: 4px;"></div>
+    <div class="dialog-footer" style="margin-top: 12px;">
       <button type="submit" class="btn-primary">Cerrar</button>
     </div>
   </form>
@@ -496,14 +564,14 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="editor-content-area" id="editor-scroll">
-      <textarea id="edit-body" placeholder="Detalles…" rows="6"></textarea>
+      <textarea id="edit-body" placeholder="Detalles… (la caja crece sola al escribir)" rows="4"></textarea>
       
       <div id="edit-checklist-wrap" class="hidden">
         <div id="edit-checklist"></div>
         <button type="button" class="btn-block" id="btn-edit-chk-add" style="text-align: center; color: var(--accent);">＋ Añadir ítem</button>
       </div>
 
-      <div class="group" style="margin-top: 10px;">
+      <div class="group" style="margin-top: 8px;">
         <h3>Etiquetas</h3>
         <div class="tags-editor" id="edit-tags-container">
           <input type="text" id="edit-tag-input" placeholder="Añadir etiqueta y pulsar Enter…">
@@ -513,7 +581,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 
       <div class="group">
         <h3>Escenario</h3>
-        <select id="edit-escenario" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border);">
+        <select id="edit-escenario" style="width: 100%; padding: 11px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border);">
           <option value="">🚫 Sin escenario</option>
         </select>
       </div>
@@ -530,7 +598,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 <script>
 'use strict';
 
-const DB_NAME = 'notario_v3';  // se mantiene para no perder datos previos
+const DB_NAME = 'notario_v3';
 const SCHEMA_VERSION = 1;
 const db = new Dexie(DB_NAME);
 db.version(1).stores({
@@ -638,11 +706,48 @@ async function createEscenario(nombre, emoji = '📁') {
   return e;
 }
 
+async function moveEscenario(id, direction) {
+  const list = await listEscenarios();
+  const idx = list.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= list.length) return;
+  const arr = [...list];
+  [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+  await db.transaction('rw', db.escenarios, async () => {
+    for (let i = 0; i < arr.length; i++) {
+      await db.escenarios.update(arr[i].id, { orden: i + 1 });
+    }
+  });
+  await refresh();
+  await renderSettingsEscenarios();
+}
+
 async function getAllUniqueTags() {
   const items = await db.items.filter(i => i.deletedAt == null).toArray();
   const tagCounts = {};
   items.forEach(i => (i.tags || []).forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
   return Object.keys(tagCounts).sort();
+}
+
+async function renameTagEverywhere(oldTag, newTag) {
+  if (!newTag || newTag === oldTag) return;
+  const items = await db.items.toArray();
+  for (const it of items) {
+    if (Array.isArray(it.tags) && it.tags.includes(oldTag)) {
+      const newTags = [...new Set(it.tags.map(t => t === oldTag ? newTag : t))];
+      await db.items.update(it.id, { tags: newTags });
+    }
+  }
+}
+
+async function deleteTagEverywhere(tag) {
+  const items = await db.items.toArray();
+  for (const it of items) {
+    if (Array.isArray(it.tags) && it.tags.includes(tag)) {
+      await db.items.update(it.id, { tags: it.tags.filter(t => t !== tag) });
+    }
+  }
 }
 
 const state = {
@@ -668,6 +773,22 @@ function linkifyAndEscape(text) {
     }
     return escapeHtml(part);
   }).join('');
+}
+
+function bindClickableLinks(el) {
+  el.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (a && a.href && el.contains(a)) {
+      e.preventDefault();
+      window.open(a.href, '_blank', 'noopener,noreferrer');
+    }
+  });
+}
+
+function autoGrowTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(150, el.scrollHeight) + 'px';
 }
 
 (async function init() {
@@ -705,7 +826,6 @@ function bindUI() {
     applyTheme(e.target.value);
   });
   
-  // Escenario dialog (crear/editar)
   $('#btn-add-escenario-settings').addEventListener('click', () => openEscenarioDialog());
   $('#btn-esc-cancel').addEventListener('click', () => $('#escenario-dialog').close());
   $('#esc-emoji-custom').addEventListener('input', (e) => {
@@ -729,9 +849,9 @@ function bindUI() {
     await refresh();
     if ($('#settings-dialog').open) await renderSettingsEscenarios();
   });
-  
+
+  $('#btn-manage-tags').addEventListener('click', openTagsManage);
   $('#btn-export').addEventListener('click', exportDownload);
-  
   $('#btn-import').addEventListener('click', () => $('#file-import').click());
   $('#file-import').addEventListener('change', importFile);
   $('#btn-open-trash').addEventListener('click', openTrash);
@@ -806,7 +926,7 @@ async function renderTagFilters() {
     for (const t of state.activeTags) {
       const chip = document.createElement('div');
       chip.className = 'chip active';
-      chip.style.fontSize = '12px';
+      chip.style.fontSize = '11px';
       chip.style.padding = '2px 8px';
       chip.innerHTML = `${escapeHtml(t)} <span style="margin-left:4px; cursor:pointer;">×</span>`;
       chip.addEventListener('click', () => toggleFilterTag(t));
@@ -863,9 +983,9 @@ async function openTagsDialog() {
       const isActive = state.activeTags.includes(t);
       const chip = document.createElement('div');
       chip.className = 'tag-chip' + (isActive ? ' active-filter' : '');
-      chip.style.fontSize = '14px';
-      chip.style.padding = '6px 12px';
-      chip.innerHTML = `${escapeHtml(t)} <span style="opacity:0.6; font-size:12px;">(${tagCounts[t]})</span>`;
+      chip.style.fontSize = '13px';
+      chip.style.padding = '5px 10px';
+      chip.innerHTML = `${escapeHtml(t)} <span style="opacity:0.6; font-size:11px;">(${tagCounts[t]})</span>`;
       chip.addEventListener('click', () => toggleFilterTag(t));
       list.appendChild(chip);
     });
@@ -873,12 +993,74 @@ async function openTagsDialog() {
   if (!$('#tags-dialog').open) $('#tags-dialog').showModal();
 }
 
+async function openTagsManage() {
+  const list = $('#tags-manage-list');
+  list.innerHTML = '';
+  const items = await db.items.filter(i => i.deletedAt == null).toArray();
+  const counts = {};
+  items.forEach(i => (i.tags || []).forEach(t => counts[t] = (counts[t] || 0) + 1));
+  const tags = Object.keys(counts).sort();
+  
+  if (tags.length === 0) {
+    list.innerHTML = '<p class="muted small">No hay etiquetas todavía.</p>';
+  } else {
+    tags.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'tag-manage-row';
+      const nameEl = document.createElement('span');
+      nameEl.className = 'tag-name';
+      nameEl.innerHTML = `<strong>${escapeHtml(t)}</strong> <span class="muted small">(${counts[t]})</span>`;
+      row.appendChild(nameEl);
+      
+      const actions = document.createElement('div');
+      actions.className = 'esc-actions';
+      const edit = document.createElement('button');
+      edit.textContent = '✏️';
+      edit.title = 'Renombrar';
+      edit.setAttribute('aria-label', 'Renombrar etiqueta');
+      edit.addEventListener('click', async () => {
+        const nuevo = prompt(`Renombrar "${t}" a:`, t);
+        if (nuevo === null) return;
+        const clean = nuevo.trim().toLowerCase();
+        if (!clean || clean === t) return;
+        await renameTagEverywhere(t, clean);
+        if (state.activeTags.includes(t)) {
+          state.activeTags = [...new Set(state.activeTags.map(x => x === t ? clean : x))];
+          renderTagFilters();
+        }
+        await refresh();
+        await openTagsManage();
+      });
+      actions.appendChild(edit);
+      
+      const del = document.createElement('button');
+      del.textContent = '🗑';
+      del.title = 'Eliminar';
+      del.setAttribute('aria-label', 'Eliminar etiqueta');
+      del.addEventListener('click', async () => {
+        if (!confirm(`¿Eliminar la etiqueta "${t}" de todas las notas?`)) return;
+        await deleteTagEverywhere(t);
+        if (state.activeTags.includes(t)) {
+          state.activeTags = state.activeTags.filter(x => x !== t);
+          renderTagFilters();
+        }
+        await refresh();
+        await openTagsManage();
+      });
+      actions.appendChild(del);
+      
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+  }
+  if (!$('#tags-manage-dialog').open) $('#tags-manage-dialog').showModal();
+}
+
 function renderItem(item) {
   const el = document.createElement('article');
   el.className = 'item' + (item.pinned ? ' pinned' : '');
   el.dataset.id = item.id;
 
-  // Fila superior: título + acciones (pin, menú)
   const top = document.createElement('div');
   top.className = 'item-top';
 
@@ -887,7 +1069,7 @@ function renderItem(item) {
   titleEl.contentEditable = 'true';
   titleEl.dataset.placeholder = 'Título';
   titleEl.innerHTML = linkifyAndEscape(item.titulo);
-  // FIX cursor: guardar en silencio durante input; re-render sólo al blur
+  bindClickableLinks(titleEl);
   const saveTitle = debounce(async () => {
     const v = titleEl.innerText;
     if (v === item.titulo) return;
@@ -928,13 +1110,13 @@ function renderItem(item) {
   top.appendChild(actions);
   el.appendChild(top);
 
-  // Cuerpo
   if (item.body !== undefined && item.body.trim() !== '') {
     const body = document.createElement('div');
     body.className = 'item-body';
     body.contentEditable = 'true';
     body.dataset.placeholder = 'Nota vacía';
     body.innerHTML = linkifyAndEscape(item.body);
+    bindClickableLinks(body);
     const saveBody = debounce(async () => {
       const v = body.innerText;
       if (v === item.body) return;
@@ -954,7 +1136,7 @@ function renderItem(item) {
     el.appendChild(body);
   }
 
-  // Checklist
+  let updateProgressBadge = () => {};
   if (Array.isArray(item.checklist) && item.checklist.length > 0) {
     const ul = document.createElement('ul');
     ul.className = 'item-checklist';
@@ -1028,7 +1210,6 @@ function renderItem(item) {
     el.appendChild(ul);
   }
 
-  // Etiquetas
   const tagsRow = document.createElement('div');
   tagsRow.className = 'tags-row';
   const renderTagsInline = () => {
@@ -1057,23 +1238,12 @@ function renderItem(item) {
     addTagBtn.className = 'tag-chip add-tag';
     addTagBtn.textContent = '＋';
     addTagBtn.title = 'Añadir etiqueta';
-    addTagBtn.addEventListener('click', async () => {
-      const newTag = prompt('Nueva etiqueta:');
-      if (newTag && newTag.trim()) {
-        const cleanTag = newTag.trim().toLowerCase();
-        if (!item.tags.includes(cleanTag)) {
-          item.tags.push(cleanTag);
-          await updateItem(item.id, { tags: item.tags });
-          renderTagsInline();
-        }
-      }
-    });
+    addTagBtn.addEventListener('click', () => showInlineTagPicker(tagsRow, item, renderTagsInline));
     tagsRow.appendChild(addTagBtn);
   };
   renderTagsInline();
   el.appendChild(tagsRow);
 
-  // Footer: escenario, progreso, reset
   const footer = document.createElement('div');
   footer.className = 'item-footer';
   const esc = state.escenarios.find(e => e.id === item.escenarioId);
@@ -1084,21 +1254,18 @@ function renderItem(item) {
     footer.appendChild(tag);
   }
 
-  // Progreso checklist
   let progEl = null;
   if (Array.isArray(item.checklist) && item.checklist.length > 0) {
     progEl = document.createElement('span');
     progEl.className = 'progress-badge';
     footer.appendChild(progEl);
-    var updateProgressBadge = () => {
+    updateProgressBadge = () => {
       const total = item.checklist.length;
       const done = item.checklist.filter(c => c.hecho).length;
       progEl.textContent = `${done}/${total}`;
       progEl.classList.toggle('complete', done === total && total > 0);
     };
     updateProgressBadge();
-  } else {
-    var updateProgressBadge = () => {};
   }
 
   const spacer = document.createElement('span');
@@ -1123,6 +1290,97 @@ function renderItem(item) {
   return el;
 }
 
+async function showInlineTagPicker(tagsRow, item, rerenderTags) {
+  // Remove any existing pickers
+  document.querySelectorAll('.tag-picker-inline').forEach(el => el.remove());
+
+  const container = document.createElement('div');
+  container.className = 'tag-picker-inline';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Nueva etiqueta…';
+  input.autocomplete = 'off';
+  container.appendChild(input);
+
+  const suggBox = document.createElement('div');
+  suggBox.className = 'tag-sugg-box';
+  container.appendChild(suggBox);
+
+  tagsRow.after(container);
+
+  const allTags = await getAllUniqueTags();
+
+  const renderSugg = (q) => {
+    suggBox.innerHTML = '';
+    const existing = new Set(item.tags || []);
+    const available = allTags.filter(t => !existing.has(t) && (!q || t.includes(q)));
+    available.slice(0, 14).forEach(t => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'sugg-chip';
+      chip.textContent = t;
+      chip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        addTag(t);
+      });
+      suggBox.appendChild(chip);
+    });
+    if (q && !existing.has(q)) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'sugg-chip create';
+      chip.textContent = `＋ Crear "${q}"`;
+      chip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        addTag(q);
+      });
+      suggBox.appendChild(chip);
+    }
+    if (suggBox.children.length === 0) {
+      suggBox.innerHTML = '<span class="muted small">Sin sugerencias</span>';
+    }
+  };
+
+  const addTag = async (t) => {
+    t = (t || '').trim().toLowerCase();
+    if (!t) return;
+    if (!item.tags.includes(t)) {
+      item.tags.push(t);
+      await updateItem(item.id, { tags: item.tags });
+      rerenderTags();
+    }
+    input.value = '';
+    renderSugg('');
+    input.focus();
+  };
+
+  const cleanup = () => {
+    container.remove();
+  };
+
+  input.addEventListener('input', () => renderSugg(input.value.trim().toLowerCase()));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag(input.value);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+    }
+  });
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (!container.contains(document.activeElement)) {
+        cleanup();
+      }
+    }, 150);
+  });
+
+  renderSugg('');
+  input.focus();
+}
+
 let editorState = { id: null, tipo: 'nota', checklist: [], tags: [] };
 let allTags = [];
 
@@ -1142,6 +1400,11 @@ function bindEditorUI() {
       const inputs = $$('#edit-checklist input[type="text"]');
       if (inputs.length) inputs[inputs.length - 1].focus();
     }, 0);
+  });
+
+  $('#edit-body').addEventListener('input', (e) => autoGrowTextarea(e.target));
+  window.addEventListener('resize', () => {
+    if (dialog.open) autoGrowTextarea($('#edit-body'));
   });
 
   const tagInput = $('#edit-tag-input');
@@ -1202,6 +1465,9 @@ function setEditorType(tipo) {
   $('#type-lista').classList.toggle('active', tipo === 'lista');
   $('#edit-body').style.display = tipo === 'nota' ? 'block' : 'none';
   $('#edit-checklist-wrap').classList.toggle('hidden', tipo !== 'lista');
+  if (tipo === 'nota') {
+    requestAnimationFrame(() => autoGrowTextarea($('#edit-body')));
+  }
 }
 
 async function openEditor(itemId = null) {
@@ -1229,25 +1495,27 @@ async function openEditor(itemId = null) {
     $('#editor-title').textContent = 'Nueva entrada';
     $('#edit-titulo').value = '';
     $('#edit-body').value = '';
-    // FIX: heredar escenario activo de la vista actual
     desiredEsc = state.view === 'todos' ? '' : state.view;
   }
 
   setEditorType(editorState.tipo);
   renderEditorChecklist();
   renderEditorTags();
-  populateEditorEscenarios();          // ← primero rellenar
-  $('#edit-escenario').value = desiredEsc;  // ← luego asignar (antes se perdía)
+  populateEditorEscenarios();
+  $('#edit-escenario').value = desiredEsc;
   
   allTags = await getAllUniqueTags();
   renderTagSuggestions('');
 
   dialog.showModal();
   
-  setTimeout(() => {
-    if (!$('#edit-titulo').value) $('#edit-titulo').focus();
-    else $('#edit-body').focus();
-  }, 100);
+  requestAnimationFrame(() => {
+    autoGrowTextarea($('#edit-body'));
+    setTimeout(() => {
+      if (!$('#edit-titulo').value) $('#edit-titulo').focus();
+      else $('#edit-body').focus();
+    }, 80);
+  });
 }
 
 function populateEditorEscenarios() {
@@ -1326,7 +1594,7 @@ function renderTagSuggestions(query) {
 
   if (available.length === 0) return;
 
-  available.slice(0, 10).forEach(t => {
+  available.slice(0, 12).forEach(t => {
     const chip = document.createElement('div');
     chip.className = 'suggestion-chip';
     chip.textContent = t;
@@ -1430,7 +1698,6 @@ function hideSnackbar() {
   if (snackbarTimer) clearTimeout(snackbarTimer);
 }
 
-// ===== Selector de escenario (emoji picker) =====
 let escEditing = { id: null, emoji: '📁' };
 
 function renderEmojiPicker(selected) {
@@ -1491,7 +1758,7 @@ async function renderSettingsEscenarios() {
     list.innerHTML = '<p class="muted small">No hay escenarios configurados.</p>';
     return;
   }
-  for (const e of escenarios) {
+  escenarios.forEach((e, idx) => {
     const row = document.createElement('div');
     row.className = 'esc-row';
     const span = document.createElement('span');
@@ -1500,6 +1767,23 @@ async function renderSettingsEscenarios() {
 
     const actions = document.createElement('div');
     actions.className = 'esc-actions';
+    
+    const up = document.createElement('button');
+    up.textContent = '↑';
+    up.title = 'Subir';
+    up.setAttribute('aria-label', 'Subir escenario');
+    up.disabled = idx === 0;
+    up.addEventListener('click', () => moveEscenario(e.id, 'up'));
+    actions.appendChild(up);
+
+    const down = document.createElement('button');
+    down.textContent = '↓';
+    down.title = 'Bajar';
+    down.setAttribute('aria-label', 'Bajar escenario');
+    down.disabled = idx === escenarios.length - 1;
+    down.addEventListener('click', () => moveEscenario(e.id, 'down'));
+    actions.appendChild(down);
+
     const edit = document.createElement('button');
     edit.textContent = '✏️';
     edit.title = 'Editar';
@@ -1525,7 +1809,7 @@ async function renderSettingsEscenarios() {
     actions.appendChild(del);
     row.appendChild(actions);
     list.appendChild(row);
-  }
+  });
 }
 
 function updateExportStatus() {
