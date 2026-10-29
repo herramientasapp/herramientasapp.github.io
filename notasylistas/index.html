@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Notario</title>
+<title>Gestor de notas</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%234a9eff'/%3E%3Crect x='96' y='96' width='320' height='320' rx='36' fill='%23121212'/%3E%3Ccircle cx='168' cy='176' r='18' fill='%234a9eff'/%3E%3Ccircle cx='168' cy='256' r='18' fill='%234a9eff'/%3E%3Ccircle cx='168' cy='336' r='18' fill='%234a9eff'/%3E%3Crect x='212' y='166' width='164' height='20' rx='10' fill='%23e8e8e8'/%3E%3Crect x='212' y='246' width='164' height='20' rx='10' fill='%23e8e8e8'/%3E%3Crect x='212' y='326' width='110' height='20' rx='10' fill='%23e8e8e8'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -101,32 +101,44 @@ input, textarea, select { font: inherit; color: inherit; }
   position: fixed;
   top: calc(var(--topbar-h) + var(--chips-h) + env(safe-area-inset-top));
   bottom: calc(var(--bottom-h) + env(safe-area-inset-bottom));
-  left: 0; right: 0; overflow-y: auto; padding: 12px;
+  left: 0; right: 0; overflow-y: auto; padding: 10px;
   -webkit-overflow-scrolling: touch;
 }
 #tag-filter-bar:not(.hidden) ~ #main {
   top: calc(var(--topbar-h) + 44px + var(--chips-h) + env(safe-area-inset-top));
 }
-#items-list { display: flex; flex-direction: column; gap: 10px; }
+#items-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* ===== Tarjetas compactas ===== */
 .item {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 12px 8px;
-  display: flex; flex-direction: column; gap: 8px; position: relative;
+  border-radius: var(--radius); padding: 8px 10px 8px;
+  display: flex; flex-direction: column; gap: 4px; position: relative;
 }
 .item.pinned { border-color: var(--accent); background: rgba(74, 158, 255, 0.05); }
-.item-header { display: flex; align-items: center; gap: 4px; justify-content: flex-end; height: 24px; }
+
+.item-top { display: flex; gap: 4px; align-items: flex-start; }
+.item-top .item-title { flex: 1; min-width: 0; }
+.item-actions { display: flex; gap: 0; flex-shrink: 0; margin-top: -2px; margin-right: -4px; }
+
 .item-btn {
-  width: 32px; height: 32px; font-size: 16px;
+  width: 28px; height: 28px; font-size: 16px;
   display: grid; place-items: center; border-radius: 50%; color: var(--muted);
+  opacity: 0.55;
+}
+@media (hover: hover) {
+  .item-btn { opacity: 0.3; transition: opacity .15s; }
+  .item:hover .item-btn, .item:focus-within .item-btn { opacity: 1; }
 }
 .item-btn:hover { background: var(--surface-2); color: var(--text); }
-.pin-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.pin-btn.on { color: var(--accent); }
+.item-btn:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.pin-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pin-btn.on { color: var(--accent); opacity: 1; }
 .pin-btn.on svg { fill: var(--accent); stroke: var(--accent); }
 
 .item-title {
-  font-size: 18px; font-weight: 600; outline: none; padding: 2px;
+  font-size: 17px; font-weight: 600; outline: none; padding: 2px;
   word-break: break-word; min-height: 1.4em;
 }
 .item-title:focus { background: var(--surface-2); border-radius: 6px; }
@@ -139,35 +151,42 @@ input, textarea, select { font: inherit; color: inherit; }
 .item-body:focus { background: var(--surface-2); border-radius: 6px; }
 .item-body a, .item-title a { color: var(--accent); text-decoration: underline; }
 
-.item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 2px; }
-.chk-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
+.item-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.chk-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 2px; }
+.chk-row input[type="checkbox"] { width: 19px; height: 19px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
 .chk-row .chk-text { flex: 1; outline: none; min-height: 1.4em; word-break: break-word; font-size: 15px; }
 .chk-row.done .chk-text { color: var(--muted); text-decoration: line-through; }
 .chk-del { color: var(--muted); font-size: 18px; opacity: 0; width: 24px; height: 24px; display: grid; place-items: center; }
 .chk-row:hover .chk-del, .chk-row:focus-within .chk-del { opacity: 1; }
-.chk-add { padding: 6px 2px; color: var(--accent); font-size: 14px; text-align: left; }
+@media (hover: none) { .chk-del { opacity: 0.4; } }
+.chk-add { padding: 4px 2px; color: var(--accent); font-size: 13px; text-align: left; }
 
-.tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tags-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
 .tag-chip {
-  background: var(--surface-2); color: var(--muted); font-size: 12px;
-  padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px;
+  background: var(--surface-2); color: var(--muted); font-size: 11px;
+  padding: 3px 8px; border-radius: 11px; display: flex; align-items: center; gap: 4px;
   border: 1px solid var(--border); cursor: pointer; transition: background 0.2s, color 0.2s;
 }
 .tag-chip:hover { background: var(--border); color: var(--text); }
-.tag-chip .tag-del { font-size: 14px; line-height: 1; opacity: 0.5; }
+.tag-chip .tag-del { font-size: 13px; line-height: 1; opacity: 0.5; }
 .tag-chip .tag-del:hover { opacity: 1; color: var(--danger); }
 .tag-chip.active-filter { background: var(--accent); color: white; border-color: var(--accent); font-weight: bold; }
 .tag-chip.add-tag { border-style: dashed; }
 
 .item-footer {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--muted); padding-top: 4px;
-  border-top: 1px dashed var(--border); margin-top: 4px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted); padding-top: 4px;
+  border-top: 1px dashed var(--border); margin-top: 2px;
 }
-.item-footer .tag { background: var(--surface-2); padding: 2px 8px; border-radius: 10px; }
+.item-footer .tag { background: var(--surface-2); padding: 1px 8px; border-radius: 10px; }
 .item-footer .spacer { flex: 1; }
-.item-footer .reset-btn { color: var(--accent); font-size: 12px; }
+.item-footer .reset-btn { color: var(--accent); font-size: 11px; padding: 2px 4px; }
+.progress-badge {
+  font-size: 11px; padding: 1px 7px; border-radius: 9px;
+  background: var(--surface-2); color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.progress-badge.complete { background: rgba(74, 158, 255, 0.15); color: var(--accent); font-weight: 600; }
 
 .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
 .empty p { margin: 6px 0; }
@@ -216,7 +235,8 @@ dialog form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 dialog h2 { margin: 0 0 4px; font-size: 18px; }
 dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.row select { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); max-width: 60%; }
+.row select, .row input[type="text"] { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); max-width: 60%; outline: none; }
+.row input[type="text"]:focus { border-color: var(--accent); }
 .group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .btn-block { text-align: left; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; }
 .btn-block:hover { background: var(--border); }
@@ -235,13 +255,38 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 .esc-actions button { width: 28px; height: 28px; font-size: 14px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
 .esc-actions button:hover { background: var(--border); color: var(--text); }
 
+/* ===== Emoji picker ===== */
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.emoji-btn {
+  font-size: 22px;
+  padding: 6px 0;
+  border-radius: 8px;
+  text-align: center;
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+}
+.emoji-btn:hover { background: var(--surface-2); }
+.emoji-btn:active { transform: scale(0.95); }
+.emoji-btn.selected { background: var(--accent); }
+.emoji-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 #editor-dialog {
   width: 100%; height: 100%; max-width: 100%; max-height: 100%;
   margin: 0; border-radius: 0; border: none;
   background: var(--bg); padding-top: env(safe-area-inset-top);
 }
 @media (min-width: 700px) {
-  #main { padding: 16px max(16px, calc((100vw - 720px) / 2)); }
+  #main { padding: 12px max(16px, calc((100vw - 720px) / 2)); }
   #editor-dialog {
     width: 600px; height: 90vh; max-height: 800px;
     margin: auto; border-radius: 16px; padding-top: 0;
@@ -300,7 +345,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   <button id="btn-settings" class="btn-top" aria-label="Ajustes">⚙</button>
   <button id="btn-tags-menu" class="btn-top" aria-label="Etiquetas">🏷️ Etiquetas</button>
   <div id="search-wrap">
-    <input id="search" type="search" placeholder="Buscar…" autocomplete="off" inputmode="search">
+    <input id="search" type="search" placeholder="Buscar…" autocomplete="off" inputmode="search" aria-label="Buscar">
   </div>
 </header>
 
@@ -364,8 +409,30 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="dialog-footer" style="justify-content: space-between; align-items: center;">
-      <span class="muted small">Notario v3.0</span>
+      <span class="muted small">Gestor de notas v4.0</span>
       <button type="submit" class="btn-primary">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="escenario-dialog">
+  <form method="dialog" id="escenario-form">
+    <h2 id="escenario-dialog-title">Nuevo escenario</h2>
+    <label class="row">
+      <span>Nombre</span>
+      <input type="text" id="esc-nombre" placeholder="Ej. Estudio, Casa…" autocomplete="off" required maxlength="40">
+    </label>
+    <div class="group">
+      <h3>Icono</h3>
+      <div class="emoji-grid" id="emoji-grid" role="radiogroup" aria-label="Selector de icono"></div>
+      <label class="row" style="margin-top: 4px;">
+        <span class="muted small">Otro emoji</span>
+        <input type="text" id="esc-emoji-custom" placeholder="✏️" maxlength="8" style="width: 70px; text-align: center; padding: 8px;">
+      </label>
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn-cancel" id="btn-esc-cancel">Cancelar</button>
+      <button type="submit" class="btn-primary">Guardar</button>
     </div>
   </form>
 </dialog>
@@ -418,7 +485,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
   <form method="dialog" id="editor-form">
     <div class="editor-header">
       <h2 id="editor-title">Nueva entrada</h2>
-      <button type="button" class="btn-close-editor" id="btn-close-editor">✕</button>
+      <button type="button" class="btn-close-editor" id="btn-close-editor" aria-label="Cerrar">✕</button>
     </div>
     
     <input type="text" id="edit-titulo" placeholder="Título (opcional)" autocomplete="off">
@@ -429,7 +496,7 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
     </div>
 
     <div class="editor-content-area" id="editor-scroll">
-      <textarea id="edit-body" placeholder="Escribe aquí los detalles (retornos de carro permitidos)…"></textarea>
+      <textarea id="edit-body" placeholder="Detalles…" rows="6"></textarea>
       
       <div id="edit-checklist-wrap" class="hidden">
         <div id="edit-checklist"></div>
@@ -463,13 +530,21 @@ dialog h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transfor
 <script>
 'use strict';
 
-const DB_NAME = 'notario_v3';
+const DB_NAME = 'notario_v3';  // se mantiene para no perder datos previos
 const SCHEMA_VERSION = 1;
 const db = new Dexie(DB_NAME);
 db.version(1).stores({
   items: 'id, escenarioId, deletedAt, pinned, updatedAt, createdAt',
   escenarios: 'id, orden, deletedAt'
 });
+
+const EMOJIS = [
+  '📁','📂','📚','📖','📝','✏️','📓','📒','📔','📕',
+  '💼','🏠','🛒','✈️','💡','🎯','🎵','🏋️','🍔','💰',
+  '📅','🎨','🧪','🔧','❤️','⭐','🔥','🎉','🌱','🌍',
+  '🏆','💊','🎮','📷','🎬','🧠','🔍','⚙️','🚀','🎓',
+  '💻','📱','☕','🍕','🐾','🌸','☀️','🌙','⚡','💧'
+];
 
 function uuid() {
   if (crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -492,7 +567,7 @@ async function buildExport() {
 
 async function importData(payload) {
   if (!payload || typeof payload !== 'object') throw new Error('JSON inválido');
-  if (payload.app !== 'notario') throw new Error('Este archivo no es de Notario');
+  if (payload.app !== 'notario') throw new Error('Este archivo no es del Gestor de notas');
   if (typeof payload.schemaVersion !== 'number' || payload.schemaVersion > SCHEMA_VERSION)
     throw new Error('Versión no soportada: ' + payload.schemaVersion);
   
@@ -576,10 +651,14 @@ const state = {
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const debounce = (fn, ms) => {
+  let t;
+  const wrapped = (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  wrapped.cancel = () => clearTimeout(t);
+  return wrapped;
+};
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// Función para hacer enlaces clicables
 function linkifyAndEscape(text) {
   if (!text) return '';
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -625,13 +704,30 @@ function bindUI() {
     localStorage.setItem('tema', e.target.value);
     applyTheme(e.target.value);
   });
-  $('#btn-add-escenario-settings').addEventListener('click', async () => {
-    const nombre = prompt('Nombre del escenario:');
-    if (!nombre || !nombre.trim()) return;
-    const emoji = prompt('Emoji (opcional):', '📁') || '📁';
-    await createEscenario(nombre.trim(), emoji);
+  
+  // Escenario dialog (crear/editar)
+  $('#btn-add-escenario-settings').addEventListener('click', () => openEscenarioDialog());
+  $('#btn-esc-cancel').addEventListener('click', () => $('#escenario-dialog').close());
+  $('#esc-emoji-custom').addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    if (v) {
+      escEditing.emoji = [...v][0] || '📁';
+      renderEmojiPicker(escEditing.emoji);
+    }
+  });
+  $('#escenario-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = $('#esc-nombre').value.trim();
+    if (!nombre) return;
+    const emoji = escEditing.emoji || '📁';
+    if (escEditing.id) {
+      await db.escenarios.update(escEditing.id, { nombre, emoji });
+    } else {
+      await createEscenario(nombre, emoji);
+    }
+    $('#escenario-dialog').close();
     await refresh();
-    await renderSettingsEscenarios();
+    if ($('#settings-dialog').open) await renderSettingsEscenarios();
   });
   
   $('#btn-export').addEventListener('click', exportDownload);
@@ -696,7 +792,7 @@ async function renderChips() {
       state.view = e.id; renderChips(); renderItems();
     });
   }
-  mk('＋ Escenario', false, () => $('#btn-settings').click(), 'chip-add');
+  mk('＋ Escenario', false, () => openEscenarioDialog(), 'chip-add');
 }
 
 async function renderTagFilters() {
@@ -719,14 +815,28 @@ async function renderTagFilters() {
   }
 }
 
+let lastViewKey = '';
 async function renderItems() {
+  const viewKey = state.view + '|' + state.activeTags.join(',') + '|' + state.search;
+  const main = $('#main');
+  const prevScroll = main.scrollTop;
+  const sameView = (viewKey === lastViewKey);
+  lastViewKey = viewKey;
+
   const escenarioId = state.view === 'todos' ? null : state.view;
   state.items = await listItems({ escenarioId, search: state.search, tags: state.activeTags });
   const list = $('#items-list');
   list.innerHTML = '';
-  if (state.items.length === 0) { $('#empty-state').hidden = false; return; }
+  if (state.items.length === 0) {
+    $('#empty-state').hidden = false;
+    if (sameView) main.scrollTop = prevScroll;
+    return;
+  }
   $('#empty-state').hidden = true;
   for (const item of state.items) list.appendChild(renderItem(item));
+  
+  if (sameView) main.scrollTop = prevScroll;
+  else main.scrollTop = 0;
 }
 
 function toggleFilterTag(tag) {
@@ -768,66 +878,83 @@ function renderItem(item) {
   el.className = 'item' + (item.pinned ? ' pinned' : '');
   el.dataset.id = item.id;
 
-  const header = document.createElement('div');
-  header.className = 'item-header';
-  
-  const pinBtn = document.createElement('button');
-  pinBtn.className = 'item-btn pin-btn' + (item.pinned ? ' on' : '');
-  pinBtn.title = item.pinned ? 'Desfijar' : 'Fijar';
-  pinBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1 1 1 0 0 1 1 1z"/></svg>`;
-  pinBtn.addEventListener('click', () => togglePin(item.id));
-  header.appendChild(pinBtn);
-
-  const editBtn = document.createElement('button');
-  editBtn.className = 'item-btn';
-  editBtn.textContent = '✏️';
-  editBtn.title = 'Editar todo';
-  editBtn.addEventListener('click', () => openEditor(item.id));
-  header.appendChild(editBtn);
-
-  const menuBtn = document.createElement('button');
-  menuBtn.className = 'item-btn';
-  menuBtn.textContent = '⋯';
-  menuBtn.title = 'Más';
-  menuBtn.addEventListener('click', () => openItemMenu(item.id));
-  header.appendChild(menuBtn);
-  
-  el.appendChild(header);
+  // Fila superior: título + acciones (pin, menú)
+  const top = document.createElement('div');
+  top.className = 'item-top';
 
   const titleEl = document.createElement('div');
   titleEl.className = 'item-title';
   titleEl.contentEditable = 'true';
   titleEl.dataset.placeholder = 'Título';
   titleEl.innerHTML = linkifyAndEscape(item.titulo);
+  // FIX cursor: guardar en silencio durante input; re-render sólo al blur
   const saveTitle = debounce(async () => {
     const v = titleEl.innerText;
     if (v === item.titulo) return;
     item.titulo = v;
     await updateItem(item.id, { titulo: v });
-    titleEl.innerHTML = linkifyAndEscape(v);
   }, 500);
   titleEl.addEventListener('input', saveTitle);
-  titleEl.addEventListener('blur', () => { saveTitle(); titleEl.innerHTML = linkifyAndEscape(item.titulo); });
-  el.appendChild(titleEl);
+  titleEl.addEventListener('blur', async () => {
+    saveTitle.cancel();
+    const v = titleEl.innerText;
+    if (v !== item.titulo) {
+      item.titulo = v;
+      await updateItem(item.id, { titulo: v });
+    }
+    titleEl.innerHTML = linkifyAndEscape(item.titulo);
+  });
+  top.appendChild(titleEl);
 
+  const actions = document.createElement('div');
+  actions.className = 'item-actions';
+
+  const pinBtn = document.createElement('button');
+  pinBtn.className = 'item-btn pin-btn' + (item.pinned ? ' on' : '');
+  pinBtn.title = item.pinned ? 'Desfijar' : 'Fijar';
+  pinBtn.setAttribute('aria-label', item.pinned ? 'Desfijar' : 'Fijar');
+  pinBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1 1 1 0 0 1 1 1z"/></svg>`;
+  pinBtn.addEventListener('click', () => togglePin(item.id));
+  actions.appendChild(pinBtn);
+
+  const menuBtn = document.createElement('button');
+  menuBtn.className = 'item-btn';
+  menuBtn.textContent = '⋯';
+  menuBtn.title = 'Más';
+  menuBtn.setAttribute('aria-label', 'Más opciones');
+  menuBtn.addEventListener('click', () => openItemMenu(item.id));
+  actions.appendChild(menuBtn);
+
+  top.appendChild(actions);
+  el.appendChild(top);
+
+  // Cuerpo
   if (item.body !== undefined && item.body.trim() !== '') {
     const body = document.createElement('div');
     body.className = 'item-body';
     body.contentEditable = 'true';
     body.dataset.placeholder = 'Nota vacía';
     body.innerHTML = linkifyAndEscape(item.body);
-    const save = debounce(async () => {
+    const saveBody = debounce(async () => {
       const v = body.innerText;
       if (v === item.body) return;
       item.body = v;
       await updateItem(item.id, { body: v });
-      body.innerHTML = linkifyAndEscape(v);
     }, 500);
-    body.addEventListener('input', save);
-    body.addEventListener('blur', () => { save(); body.innerHTML = linkifyAndEscape(item.body); });
+    body.addEventListener('input', saveBody);
+    body.addEventListener('blur', async () => {
+      saveBody.cancel();
+      const v = body.innerText;
+      if (v !== item.body) {
+        item.body = v;
+        await updateItem(item.id, { body: v });
+      }
+      body.innerHTML = linkifyAndEscape(item.body);
+    });
     el.appendChild(body);
   }
 
+  // Checklist
   if (Array.isArray(item.checklist) && item.checklist.length > 0) {
     const ul = document.createElement('ul');
     ul.className = 'item-checklist';
@@ -843,6 +970,7 @@ function renderItem(item) {
           chk.hecho = cb.checked;
           li.classList.toggle('done', chk.hecho);
           await updateItem(item.id, { checklist: item.checklist });
+          updateProgressBadge();
         });
         li.appendChild(cb);
 
@@ -857,16 +985,25 @@ function renderItem(item) {
           await updateItem(item.id, { checklist: item.checklist });
         }, 500);
         span.addEventListener('input', saveChk);
-        span.addEventListener('blur', saveChk);
+        span.addEventListener('blur', async () => {
+          saveChk.cancel();
+          const v = span.innerText;
+          if (v !== chk.texto) {
+            chk.texto = v;
+            await updateItem(item.id, { checklist: item.checklist });
+          }
+        });
         li.appendChild(span);
 
         const del = document.createElement('button');
         del.className = 'chk-del';
         del.textContent = '×';
+        del.setAttribute('aria-label', 'Eliminar ítem');
         del.addEventListener('click', async () => {
           item.checklist = item.checklist.filter(x => x.id !== chk.id);
           await updateItem(item.id, { checklist: item.checklist });
           renderChk();
+          updateProgressBadge();
         });
         li.appendChild(del);
         ul.appendChild(li);
@@ -878,6 +1015,7 @@ function renderItem(item) {
         item.checklist.push({ id: uuid(), texto: '', hecho: false });
         updateItem(item.id, { checklist: item.checklist });
         renderChk();
+        updateProgressBadge();
         setTimeout(() => {
           const rows = ul.querySelectorAll('.chk-text');
           const last = rows[rows.length - 1];
@@ -890,6 +1028,7 @@ function renderItem(item) {
     el.appendChild(ul);
   }
 
+  // Etiquetas
   const tagsRow = document.createElement('div');
   tagsRow.className = 'tags-row';
   const renderTagsInline = () => {
@@ -897,7 +1036,7 @@ function renderItem(item) {
     for (const t of (item.tags || [])) {
       const chip = document.createElement('div');
       chip.className = 'tag-chip' + (state.activeTags.includes(t) ? ' active-filter' : '');
-      chip.innerHTML = `<span>${escapeHtml(t)}</span><span class="tag-del">×</span>`;
+      chip.innerHTML = `<span>${escapeHtml(t)}</span><span class="tag-del" role="button" aria-label="Quitar etiqueta">×</span>`;
       
       chip.addEventListener('click', (e) => {
         if (e.target.classList.contains('tag-del')) return;
@@ -934,6 +1073,7 @@ function renderItem(item) {
   renderTagsInline();
   el.appendChild(tagsRow);
 
+  // Footer: escenario, progreso, reset
   const footer = document.createElement('div');
   footer.className = 'item-footer';
   const esc = state.escenarios.find(e => e.id === item.escenarioId);
@@ -943,7 +1083,24 @@ function renderItem(item) {
     tag.textContent = `${esc.emoji || ''} ${esc.nombre}`.trim();
     footer.appendChild(tag);
   }
-  
+
+  // Progreso checklist
+  let progEl = null;
+  if (Array.isArray(item.checklist) && item.checklist.length > 0) {
+    progEl = document.createElement('span');
+    progEl.className = 'progress-badge';
+    footer.appendChild(progEl);
+    var updateProgressBadge = () => {
+      const total = item.checklist.length;
+      const done = item.checklist.filter(c => c.hecho).length;
+      progEl.textContent = `${done}/${total}`;
+      progEl.classList.toggle('complete', done === total && total > 0);
+    };
+    updateProgressBadge();
+  } else {
+    var updateProgressBadge = () => {};
+  }
+
   const spacer = document.createElement('span');
   spacer.className = 'spacer';
   footer.appendChild(spacer);
@@ -1017,7 +1174,7 @@ function bindEditorUI() {
     const body = $('#edit-body').value;
     const escenarioId = $('#edit-escenario').value;
     
-    if (!titulo && !body.trim() && editorState.checklist.length === 0) {
+    if (!titulo && !body.trim() && editorState.checklist.length === 0 && editorState.tags.length === 0) {
       dialog.close();
       return;
     }
@@ -1035,6 +1192,7 @@ function bindEditorUI() {
     
     dialog.close();
     await refresh();
+    showSnackbar('Guardado');
   });
 }
 
@@ -1048,6 +1206,7 @@ function setEditorType(tipo) {
 
 async function openEditor(itemId = null) {
   const dialog = $('#editor-dialog');
+  let desiredEsc = '';
   
   if (itemId) {
     const item = await db.items.get(itemId);
@@ -1060,7 +1219,7 @@ async function openEditor(itemId = null) {
     $('#editor-title').textContent = 'Editar entrada';
     $('#edit-titulo').value = item.titulo || '';
     $('#edit-body').value = item.body || '';
-    $('#edit-escenario').value = item.escenarioId || '';
+    desiredEsc = item.escenarioId || '';
   } else {
     editorState.id = null;
     editorState.tipo = 'nota';
@@ -1070,13 +1229,15 @@ async function openEditor(itemId = null) {
     $('#editor-title').textContent = 'Nueva entrada';
     $('#edit-titulo').value = '';
     $('#edit-body').value = '';
-    $('#edit-escenario').value = state.view === 'todos' ? '' : state.view;
+    // FIX: heredar escenario activo de la vista actual
+    desiredEsc = state.view === 'todos' ? '' : state.view;
   }
 
   setEditorType(editorState.tipo);
   renderEditorChecklist();
   renderEditorTags();
-  populateEditorEscenarios();
+  populateEditorEscenarios();          // ← primero rellenar
+  $('#edit-escenario').value = desiredEsc;  // ← luego asignar (antes se perdía)
   
   allTags = await getAllUniqueTags();
   renderTagSuggestions('');
@@ -1123,6 +1284,7 @@ function renderEditorChecklist() {
     del.type = 'button';
     del.className = 'edit-chk-del';
     del.textContent = '×';
+    del.setAttribute('aria-label', 'Eliminar ítem');
     del.addEventListener('click', () => {
       editorState.checklist.splice(index, 1);
       renderEditorChecklist();
@@ -1143,6 +1305,7 @@ function renderEditorTags() {
     const del = document.createElement('button');
     del.type = 'button';
     del.textContent = '×';
+    del.setAttribute('aria-label', 'Quitar etiqueta');
     del.addEventListener('click', () => {
       editorState.tags = editorState.tags.filter(x => x !== t);
       renderEditorTags();
@@ -1267,6 +1430,53 @@ function hideSnackbar() {
   if (snackbarTimer) clearTimeout(snackbarTimer);
 }
 
+// ===== Selector de escenario (emoji picker) =====
+let escEditing = { id: null, emoji: '📁' };
+
+function renderEmojiPicker(selected) {
+  const grid = $('#emoji-grid');
+  grid.innerHTML = '';
+  EMOJIS.forEach(emoji => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'emoji-btn' + (emoji === selected ? ' selected' : '');
+    b.textContent = emoji;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', emoji === selected ? 'true' : 'false');
+    b.addEventListener('click', () => {
+      escEditing.emoji = emoji;
+      $('#esc-emoji-custom').value = '';
+      renderEmojiPicker(emoji);
+    });
+    grid.appendChild(b);
+  });
+}
+
+function openEscenarioDialog(escId = null) {
+  const dialog = $('#escenario-dialog');
+  if (escId) {
+    const esc = state.escenarios.find(e => e.id === escId);
+    if (!esc) return;
+    escEditing = { id: esc.id, emoji: esc.emoji || '📁' };
+    $('#escenario-dialog-title').textContent = 'Editar escenario';
+    $('#esc-nombre').value = esc.nombre || '';
+    if (EMOJIS.includes(escEditing.emoji)) {
+      $('#esc-emoji-custom').value = '';
+    } else {
+      $('#esc-emoji-custom').value = escEditing.emoji;
+    }
+    renderEmojiPicker(escEditing.emoji);
+  } else {
+    escEditing = { id: null, emoji: '📁' };
+    $('#escenario-dialog-title').textContent = 'Nuevo escenario';
+    $('#esc-nombre').value = '';
+    $('#esc-emoji-custom').value = '';
+    renderEmojiPicker('📁');
+  }
+  dialog.showModal();
+  setTimeout(() => $('#esc-nombre').focus(), 60);
+}
+
 function openSettings() {
   updateExportStatus();
   renderSettingsEscenarios();
@@ -1292,19 +1502,15 @@ async function renderSettingsEscenarios() {
     actions.className = 'esc-actions';
     const edit = document.createElement('button');
     edit.textContent = '✏️';
-    edit.addEventListener('click', async () => {
-      const nuevoNombre = prompt('Nombre del escenario:', e.nombre);
-      if (nuevoNombre === null) return;
-      const nuevoEmoji = prompt('Emoji:', e.emoji || '📁');
-      if (nuevoEmoji === null) return;
-      await db.escenarios.update(e.id, { nombre: nuevoNombre.trim() || e.nombre, emoji: nuevoEmoji.trim() || '📁' });
-      await refresh();
-      await renderSettingsEscenarios();
-    });
+    edit.title = 'Editar';
+    edit.setAttribute('aria-label', 'Editar escenario');
+    edit.addEventListener('click', () => openEscenarioDialog(e.id));
     actions.appendChild(edit);
 
     const del = document.createElement('button');
     del.textContent = '🗑';
+    del.title = 'Eliminar';
+    del.setAttribute('aria-label', 'Eliminar escenario');
     del.addEventListener('click', async () => {
       if (!confirm(`¿Eliminar "${e.nombre}"? Los items pasarán a "Sin escenario".`)) return;
       await db.transaction('rw', db.escenarios, db.items, async () => {
@@ -1329,7 +1535,6 @@ function updateExportStatus() {
     : 'Sin copias todavía.';
 }
 
-// Simplificado para descargar únicamente
 async function exportDownload() {
   const data = await buildExport();
   const jsonString = JSON.stringify(data, null, 2);
@@ -1337,7 +1542,7 @@ async function exportDownload() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `notario-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `gestor-notas-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1386,7 +1591,11 @@ async function openTrash() {
       r.addEventListener('click', async () => { await restoreItem(it.id); await openTrash(); await renderItems(); });
       const d = document.createElement('button');
       d.textContent = 'Eliminar del todo';
-      d.addEventListener('click', async () => { await hardDeleteItem(it.id); await openTrash(); });
+      d.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar definitivamente? Esta acción no se puede deshacer.')) return;
+        await hardDeleteItem(it.id);
+        await openTrash();
+      });
       actions.append(r, d);
       div.appendChild(actions);
       list.appendChild(div);
