@@ -8,7 +8,7 @@ main{max-width:760px;margin:0 auto;padding:12px}h1{font-size:20px;margin:6px 0 1
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}.m{color:var(--m);font-size:13px}
 button,select,input,textarea{font:inherit;color:var(--t);background:var(--c);border:1px solid var(--b);border-radius:8px;padding:8px}
 button{cursor:pointer}button.p{background:var(--p);color:#fff;border-color:var(--p)}button.d{color:var(--r)}button.s{padding:4px 8px;font-size:13px}
-label{display:block;margin:8px 0;font-size:13px;color:var(--m)}label input,label select,label textarea{display:block;width:100%;margin-top:2px}label input[type=checkbox]{display:inline-block;width:auto}
+label{display:block;margin:8px 0;font-size:13px;color:var(--m)}label input,label select,label textarea{display:block;width:100%;margin-top:2px}label input[type=checkbox],label input[type=radio]{display:inline-block;width:auto}
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--c);border-top:1px solid var(--b);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
 nav button{flex:1;border:0;border-radius:0;padding:14px 2px;background:none;font-size:13px}nav button.on{color:var(--p);font-weight:700}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.R{background:var(--r)}.O{background:var(--o)}.G{background:var(--g)}
@@ -22,7 +22,7 @@ tr.wr td{color:var(--o);font-weight:600}tr.best td{background:rgba(22,163,74,.18
 </style></head><body><main id="app"></main><nav id="nav"></nav><div id="mod"></div><div id="mod2"></div>
 <script>
 /* ===== 1. UTILIDADES ===== */
-const APP_VERSION='2.2',SCHEMA=3,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
+const APP_VERSION='2.3',SCHEMA=4,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const EUR=new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}),NUM=new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
@@ -41,6 +41,7 @@ categorias:['Suministros','Telecomunicaciones','Seguros','Suscripciones','Impues
 contratos:[],recibos:[],repostajes:[],gastos:[],planes:[],ideas:[],ajustes:defAj(),lastBackup:null}}
 const IDEAS_21=['Previsión de pagos de los próximos 12 meses','Exportar informes a CSV','Optimizar la potencia contratada','Tarifas PVPC con datos horarios','Comparativas de gas y agua','Excedentes solares y bono social'];
 const IDEAS_22=['Aviso de consumo de agua anómalo (posibles fugas) frente a la media','Consumo de agua por mes natural estimado (reparto diario de cada factura)','Comparar el consumo de agua con el mismo periodo del año anterior','Facturas de agua con cuota fija y tramos para detectar subidas de tarifa'];
+const IDEAS_23=['Pagos periódicos sin contrato (IBI, IRPF, ITV): repetir cada año y avisar en Inicio','Filtro por contrato y por concepto también en Informes → Resumen','Gráfico de evolución anual por concepto (IBI de cada inmueble, comunidad…)'];
 const defAj=()=>({rojo:15,naranja:60,rec:[30,7],bak:30,catGas:'Vehículo',impElec:5.11269632,iva:21,umbral:5});
 /* Migración automática. Antes de migrar se guarda (si no existe) una copia del JSON original en mis_servicios_prev_v<esquema anterior>. */
 function migrate(d){const v0=d.version=d.version||1;
@@ -50,6 +51,7 @@ function migrate(d){const v0=d.version=d.version||1;
   IDEAS_21.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}})}
  if(!d.seed22){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').trim().toLowerCase()));
   IDEAS_22.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed22=1}
+ if(!d.seed23){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i.texto||'').toLowerCase()));IDEAS_23.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed23=1}
  d.version=SCHEMA;return Object.assign(def(),d)}
 function load(){try{const r=localStorage.getItem(KEY);return r?migrate(JSON.parse(r)):def()}catch(e){return def()}}
 let S=load();
@@ -69,7 +71,7 @@ function modal(title,fields,vals,ok,host){
   if(f.t==='select'){const L=f.oo?f.oo(vals):f.o;dk[f.k]=JSON.stringify(L);i=`<select id="${pre}${f.k}">${oh(L,v)}</select>`}
   else if(f.t==='check')i=`<input type="checkbox" id="${pre}${f.k}"${v?' checked':''}>`;
   else if(f.t==='area')i=`<textarea id="${pre}${f.k}" rows="4">${esc(v)}</textarea>`;
-  else i=`<input id="${pre}${f.k}" type="${f.t||'text'}" ${f.t==='number'?'step="any"':''} value="${esc(v)}">`;
+  else i=`<input id="${pre}${f.k}" type="${f.t||'text'}" ${f.t==='number'?'step="any"':''} ${f.dl?`list="dl_${pre}${f.k}" autocomplete="off"`:''} value="${esc(v)}">${f.dl?`<datalist id="dl_${pre}${f.k}">${f.dl().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}`;
   return`<label id="L_${pre}${f.k}">${f.l}<span class="rq"></span>${i}</label>`}).join('');
  $(H).innerHTML=`<div class="ov"><div class="card"><h2>${title}</h2>${h}<div class="row sp"><button onclick="$('${H}').innerHTML=''">Cancelar</button><button class="p" id="${pre}ok">Guardar</button></div></div></div>`;
  const rd=()=>{const o={};for(const f of fields){if(f.t==='html')continue;const e=$('#'+pre+f.k);o[f.k]=f.t==='check'?e.checked:e.value}return o};
@@ -92,32 +94,32 @@ const ask=m=>confirm(m);
 const meses=['mensual','bimestral','trimestral','semestral','anual'];
 const SERV=[['ninguno','ninguno'],['electricidad','electricidad'],['agua','agua'],['gas','gas'],['internet','internet'],['movil','móvil'],['otro','otro']];
 const unitFor=c=>({electricidad:'kWh',agua:'m³',gas:'kWh'})[c?.tipoSuministro]||null;
-const contrList=c=>S.contratos.filter(x=>x.tipoImporte==='variable'&&(!c.fa||x.asociado===c.fa)&&(!c.fs||(x.tipoSuministro||'ninguno')===c.fs)).sort((a,b)=>(a.estado==='cancelado')-(b.estado==='cancelado'));
+const contrList=c=>S.contratos.filter(x=>(!c.fa||x.asociado===c.fa)&&(!c.fs||(x.tipoSuministro||'ninguno')===c.fs)).sort((a,b)=>(a.estado==='cancelado')-(b.estado==='cancelado')||String(a.nombre).localeCompare(String(b.nombre),'es'));
 const FIELDS={
 contratos:()=>[{k:'nombre',l:'Nombre',r:1},{k:'proveedor',l:'Proveedor'},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},
-{k:'importe',l:'Importe (€)',t:'number'},{k:'periodicidad',l:'Periodicidad',t:'select',o:meses,d:'mensual'},{k:'tipoImporte',l:'Tipo de importe',t:'select',o:['fijo','variable']},
+{k:'importe',l:'Importe (€)',t:'number'},{k:'periodicidad',l:'Periodicidad',t:'select',o:meses,d:'mensual'},{k:'tipoImporte',l:'Tipo de importe (variable = cada vez pagas una cantidad distinta)',t:'select',o:['fijo','variable']},{k:'contarPor',l:'En informes, este contrato cuenta por',t:'select',o:[['fijo','Su importe fijo (estimado)'],['facturas','Las facturas reales que registre']],d:'fijo',vis:c=>c.tipoImporte==='fijo'},
 {k:'tipoSuministro',l:'Tipo de servicio',t:'select',o:SERV},{k:'tar',t:'html',h:tarBlock,vis:c=>esElec(c.tipoSuministro,c.asociado)},{k:'proxCobro',l:'Próximo cobro',t:'date'},{k:'inicio',l:'Fecha de inicio',t:'date'},
 {k:'vence',l:'Vencimiento / renovación',t:'date'},{k:'renovAuto',l:'Renovación automática',t:'check'},{k:'renMeses',l:'Periodo de renovación (meses)',t:'number',d:12},
 {k:'preaviso',l:'Preaviso (días)',t:'number',d:30},{k:'finPerm',l:'Fin de permanencia',t:'date'},{k:'pago',l:'Forma de pago'},{k:'nContrato',l:'Nº contrato / póliza'},
 {k:'telefono',l:'Teléfono de atención'},{k:'linea',l:'Móvil: nº de línea'},{k:'usuaria',l:'Móvil: persona usuaria'},{k:'documento',l:'Dónde está el documento'},{k:'notas',l:'Notas',t:'area'},
 {k:'estado',l:'Estado',t:'select',o:['activo','en revisión','cancelado']}],
-recibos:()=>{const E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c),TS=c=>gc(c.contrato)?.tipoSuministro,PER=c=>EC(c)||TS(c)==='agua'||TS(c)==='gas',CON=c=>TS(c)==='agua';return[
+recibos:()=>{const E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c),TS=c=>gc(c.contrato)?.tipoSuministro,PER=c=>EC(c)||TS(c)==='agua'||TS(c)==='gas',CON=c=>TS(c)==='agua',CS=c=>NE(c)&&(TS(c)==='agua'||TS(c)==='gas');return[
 {k:'fa',l:'Asociado (filtra los contratos)',t:'select',oo:()=>[['','Todos'],...aOpts()]},{k:'fs',l:'Tipo de servicio (filtra los contratos)',t:'select',o:[['','Todos'],...SERV]},
-{k:'contrato',l:'Contrato',t:'select',oo:c=>{const l=contrList(c);return l.length?l.map(x=>[x.id,x.nombre+' · '+an(x.asociado)+(x.estado==='cancelado'?' (cancelado)':'')]):[['','— Ningún contrato variable con este filtro —']]},chg:(c,set)=>{const u=unitFor(gc(c.contrato));if(u)set('unidad',u)},r:1},
+{k:'contrato',l:'Contrato',t:'select',oo:c=>{const l=contrList(c);return l.length?l.map(x=>[x.id,x.nombre+' · '+an(x.asociado)+(x.estado==='cancelado'?' (cancelado)':'')]):[['','— Ningún contrato variable con este filtro —']]},chg:(c,set)=>{const u=unitFor(gc(c.contrato));if(u)set('unidad',u);const e=$('#rinfo');if(e)e.innerHTML=recInfo(c.contrato)},r:1},{k:'rinfo',t:'html',h:()=>`<div class="m" id="rinfo" style="margin:-2px 0 8px">${recInfo(TMP.rc)}</div>`},
 {k:'conDatos',l:'Voy a introducir los datos de consumo eléctrico (si lo desmarcas, el recibo se guarda igual pero no cuenta en los cálculos de consumo)',t:'check',d:true,vis:E},
 {k:'desde',l:'Periodo desde',t:'date',r:PER},{k:'hasta',l:'Periodo hasta',t:'date',r:PER},
 {k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'importe',l:'Importe (€)',t:'number',r:1},
 {k:'kwh1',l:'Consumo punta P1 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh2',l:'Consumo llano P2 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh3',l:'Consumo valle P3 (kWh)',t:'number',r:EC,vis:EC},
-{k:'consumo',l:'Consumo',t:'number',r:CON,vis:NE},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:NE},{k:'notas',l:'Notas',t:'area'}]},
+{k:'consumo',l:'Consumo',t:'number',r:CON,vis:CS},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:CS},{k:'notas',l:'Notas',t:'area'}]},
 repostajes:()=>[{k:'coche',l:'Coche',t:'select',o:aOpts(null,'vehiculo'),r:1},{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'litros',l:'Litros',t:'number',r:1},{k:'importe',l:'Importe (€)',t:'number',r:1},
 {k:'ppl',l:'€/litro (vacío = calculado)',t:'number'},{k:'km',l:'Kilómetros (cuentakilómetros)',t:'number'},{k:'lleno',l:'Depósito lleno',t:'check',d:true},{k:'notas',l:'Notas',t:'area'}],
-gastos:()=>[{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'desc',l:'Descripción',r:1},{k:'importe',l:'Importe (€)',t:'number',r:1},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},{k:'notas',l:'Notas',t:'area'}]};
+gastos:()=>[{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'desc',l:'Descripción',r:1},{k:'concepto',l:'Concepto (opcional: IBI, IRPF, derrama…)',dl:()=>concList()},{k:'importe',l:'Importe (€)',t:'number',r:1},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},{k:'notas',l:'Notas',t:'area'}]};
 function edit(kind,id,dup){
- const list=S[kind],cur=id?list.find(x=>x.id===id):null,vals=cur?{...cur}:{};
- if((kind==='recibos'&&!S.contratos.some(c=>c.tipoImporte==='variable'))||(kind==='repostajes'&&!S.asociados.some(a=>a.tipo==='vehiculo'))){alert('Primero crea un contrato variable / un coche (asociado de tipo vehículo).');return}
- if(kind==='recibos'){const f=ui.tab==='gastos'&&!cur?ui.gf:{a:'',s:''};let c0=cur?gc(cur.contrato):contrList({fa:f.a,fs:f.s})[0];
+ const list=S[kind],cur=id?list.find(x=>x.id===id):null,vals=cur?{...cur}:{};if(dup&&vals.fecha)vals.fecha=today();
+ if((kind==='recibos'&&!S.contratos.length)||(kind==='repostajes'&&!S.asociados.some(a=>a.tipo==='vehiculo'))){alert('Primero crea un contrato / un coche (asociado de tipo vehículo).');return}
+ if(kind==='recibos'){const f=ui.tab==='gastos'&&!cur?ui.gf:{a:'',s:'',k:''},pre=ui.pre||(!cur&&f.k)||'';ui.pre=null;let c0=cur?gc(cur.contrato):(pre&&gc(pre))||contrList({fa:f.a,fs:f.s})[0];
   if(cur){vals.fa=c0?.asociado||'';vals.fs=c0?.tipoSuministro||'ninguno'}
-  else{vals.fa=f.a||'';vals.fs=f.s||'';if(!c0&&(f.a||f.s)){vals.fa='';vals.fs='';c0=contrList({})[0]}if(c0){vals.contrato=c0.id;const u=unitFor(c0);if(u)vals.unidad=u}}}
+  else{vals.fa=f.a||'';vals.fs=f.s||'';if(pre&&gc(pre)){vals.fa='';vals.fs=''}else if(!c0&&(f.a||f.s)){vals.fa='';vals.fs='';c0=contrList({})[0]}if(c0){vals.contrato=c0.id;const u=unitFor(c0);if(u)vals.unidad=u}}TMP.rc=c0?.id||''}
  else if(!cur&&ui.tab==='gastos'){const f=ui.gf;if(kind==='repostajes'&&A(f.a)?.tipo==='vehiculo')vals.coche=f.a;if(kind==='gastos'){if(f.a)vals.asociado=f.a;if(f.c)vals.categoria=f.c}}
  if(kind==='contratos')TMP.tar=JSON.parse(JSON.stringify(cur?.tarifas||[]));
  modal((cur&&!dup?'Editar':'Nuevo')+' registro',FIELDS[kind](),vals,o=>{
@@ -132,10 +134,11 @@ function edit(kind,id,dup){
     else{o.kwh1=o.kwh2=o.kwh3=null;o.consumo=null;o.unidad='kWh'}}
    else if(cur){['kwh1','kwh2','kwh3','conDatos'].forEach(k=>delete cur[k])}}
   if(cur&&!dup)Object.assign(cur,o);else list.push({id:uid(),...o,aviso:false});
+  if(kind==='recibos'){const c=gc(o.contrato);if(c&&c.tipoImporte!=='variable'&&c.contarPor===undefined){c.contarPor=ask('«'+c.nombre+'» es un contrato de importe fijo y en informes se cuenta por su importe fijo estimado.\n\n¿Contarlo a partir de ahora por las facturas reales que registres?\n\nAceptar = facturas reales · Cancelar = seguir con el importe fijo')?'facturas':'fijo'}}
   if(save())go();else return false})}
 function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
 /* ===== 6. PANTALLAS ===== */
-const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'recibos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:''};
+const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'todos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:'',k:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:'',pre:null,ex:{a:'',c:'',k:'',n:'',q:'',g:'mes',dim:'aso',est:1}};
 const TABS=[['inicio','Inicio'],['contratos','Contratos'],['gastos','Gastos'],['informes','Informes'],['mas','Más']];
 function go(t,s){if(t){ui.tab=t;ui.sub=s||''}
  $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('');
@@ -147,7 +150,7 @@ function inicio(){const act=S.contratos.filter(c=>c.estado==='activo'),m=act.red
  const old=!S.lastBackup||diff(today(),S.lastBackup)>S.ajustes.bak;
  return`<h1>Mis servicios</h1>${old&&(S.contratos.length||S.gastos.length)?'<div class="card warn">⚠️ La copia de seguridad es antigua o no existe. Ve a Más → Copia de seguridad.</div>':''}
 <div class="card"><div class="m">Contratos fijos activos</div><b style="font-size:22px">${eur(m)}/mes</b> <span class="m">· ${eur(m*12)}/año</span></div>
-<div class="row"><button onclick="edit('recibos')">+ Recibo</button><button onclick="edit('repostajes')">+ Repostaje</button><button onclick="edit('gastos')">+ Gasto suelto</button></div>
+<div class="row"><button onclick="edit('recibos')">+ Factura</button><button onclick="edit('repostajes')">+ Repostaje</button><button onclick="edit('gastos')">+ Gasto suelto</button></div>
 <h2>Qué vigilar</h2>${w.length?w.map(([c,i])=>watchRow(c,i)).join(''):'<div class="card m">Nada que vigilar. Añade contratos con fecha de vencimiento.</div>'}`}
 function contratos(){const q=ui.q.toLowerCase();
  const l=S.contratos.filter(c=>(!q||(c.nombre+c.proveedor).toLowerCase().includes(q))&&(!ui.fa||c.asociado===ui.fa)&&(!ui.fe||c.estado===ui.fe));
@@ -155,11 +158,11 @@ function contratos(){const q=ui.q.toLowerCase();
 <select onchange="ui.fa=this.value;go()"><option value="">Todos</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.fa===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>
 <select onchange="ui.fe=this.value;go()">${['','activo','en revisión','cancelado'].map(e=>`<option value="${e}"${ui.fe===e?' selected':''}>${e||'Cualquier estado'}</option>`).join('')}</select>
 <button class="p" onclick="edit('contratos')">+ Nuevo</button></div>
-${l.length?l.map(c=>{const i=c.estado==='activo'?info(c):null;return`<div class="card"><div class="row sp"><b>${i?`<span class="dot ${i.sem}"></span>`:''}${esc(c.nombre)}</b><span>${c.tipoImporte==='variable'?'variable':eur(c.importe)+' / '+c.periodicidad}</span></div>
+${l.length?l.map(c=>{const i=c.estado==='activo'?info(c):null;return`<div class="card"><div class="row sp"><b>${i?`<span class="dot ${i.sem}"></span>`:''}${esc(c.nombre)}</b><span>${c.tipoImporte==='variable'?'variable':eur(c.importe)+' / '+c.periodicidad+(c.contarPor==='facturas'?' · por facturas':'')}</span></div>
 <div class="m">${esc(c.proveedor)} · ${esc(c.categoria)} · ${esc(an(c.asociado))} · ${c.estado}${i?` · vence ${fd(i.v)} · límite ${fd(i.lim)}`:''}${c.aviso?' · aviso gestionado':''}</div>
 ${c.documento?`<div class="m">📄 ${esc(c.documento)}</div>`:''}
 ${isElecC(c)?`<div class="m">⚡ ${(c.tarifas||[]).length} tarifa(s)</div>`:''}
-<div class="row" style="margin-top:6px"><button class="s" onclick="edit('contratos','${c.id}')">Editar</button><button class="s" onclick="edit('contratos','${c.id}',1)">Duplicar</button>
+<div class="row" style="margin-top:6px"><button class="s p" onclick="addRec('${c.id}')">+ Factura</button><button class="s" onclick="verFact('${c.id}')">Facturas (${S.recibos.filter(r=>r.contrato===c.id).length})</button><button class="s" onclick="expK('${c.id}')">Informe</button></div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('contratos','${c.id}')">Editar</button><button class="s" onclick="edit('contratos','${c.id}',1)">Duplicar</button>
 <button class="s" onclick="renew('${c.id}')">Renovado</button><button class="s" onclick="gest('${c.id}')">${c.aviso?'Quitar aviso':'Aviso gestionado'}</button>
 <button class="s" onclick="cancel('${c.id}')">Cancelar</button><button class="s" onclick="icsOne('${c.id}')">📅</button><button class="s d" onclick="del('contratos','${c.id}')">Borrar</button></div></div>`}).join(''):'<div class="card m">No hay contratos con estos filtros.</div>'}`}
 const gc=id=>S.contratos.find(c=>c.id===id);
@@ -168,12 +171,14 @@ function renew(id){const c=gc(id);if(!c.vence){alert('Indica primero la fecha de
 function gest(id){const c=gc(id);c.aviso=!c.aviso;save();go()}
 function cancel(id){if(ask('¿Cancelar el contrato? Se conserva el histórico.')){const c=gc(id);c.estado='cancelado';c.fechaCancel=today();save();go()}}
 /* --- Gastos --- */
-function gastos(){const g=ui.gv,tb=[['recibos','Recibos'],['repostajes','Gasolina'],['gastos','Sueltos']];
- const l=S[g].filter(r=>gfl(g,r)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
- const txt={recibos:recTxt,repostajes:r=>`${esc(an(r.coche))} · ${NUM.format(r.litros)} L · ${NUM.format(r.ppl||0)} €/L${r.km?' · '+NUM.format(r.km)+' km':''}`,gastos:r=>`${esc(r.desc)} · ${esc(r.categoria)} · ${esc(an(r.asociado))}`};
- return`<h1>Gastos</h1><div class="tabs">${tb.map(([k,v])=>`<button class="${g===k?'on':''}" onclick="ui.gv='${k}';go()">${v}</button>`).join('')}</div>
-<button class="p" onclick="edit('${g}')">+ Añadir</button><div class="card np"><div class="row"><select onchange="ui.gf.a=this.value;go()"><option value="">Todos los asociados</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.gf.a===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>${g==='recibos'?`<select onchange="ui.gf.s=this.value;go()"><option value="">Todos los servicios</option>${SERV.map(([k,l])=>`<option value="${k}"${ui.gf.s===k?' selected':''}>${l}</option>`).join('')}</select>`:''}<select onchange="ui.gf.c=this.value;go()"><option value="">Todas las categorías</option>${S.categorias.map(c=>`<option${ui.gf.c===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="row"><label>Desde<input type="date" value="${ui.gf.d1}" onchange="ui.gf.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.gf.d2}" onchange="ui.gf.d2=this.value;go()"></label></div><div class="row"><input placeholder="Buscar…" value="${esc(ui.gf.q)}" onchange="ui.gf.q=this.value;go()"><button class="s" onclick="ui.gf={a:'',c:'',s:'',d1:'',d2:'',q:''};go()">Limpiar</button></div></div><div class="m">${l.length} registros · ${eur(l.reduce((t,r)=>t+r.importe,0))}</div>${g==='repostajes'?fuel():''}
-${l.length?l.map(r=>`<div class="card"><div class="row sp"><b>${eur(r.importe)}</b><span class="m">${fd(r.fecha)}</span></div><div class="m">${txt[g](r)}</div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('${g}','${r.id}')">Editar</button><button class="s d" onclick="del('${g}','${r.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Aún no hay registros.</div>'}`}
+function gastos(){const g=ui.gv,tb=[['todos','Todos'],['recibos','Facturas'],['repostajes','Gasolina'],['gastos','Sueltos']],ks=g==='todos'?['recibos','repostajes','gastos']:[g],fr=g==='recibos'||g==='todos';
+ const l=ks.flatMap(k=>S[k].filter(r=>gfl(k,r)).map(r=>({k,r}))).sort((a,b)=>(b.r.fecha||'').localeCompare(a.r.fecha||''));
+ const txt={recibos:recTxt,repostajes:r=>`${esc(an(r.coche))} · ${NUM.format(r.litros||0)} L · ${NUM.format(r.ppl||0)} €/L${r.km?' · '+NUM.format(r.km)+' km':''}`,gastos:r=>`${esc(r.desc)}${r.concepto?' · '+esc(r.concepto):''} · ${esc(r.categoria)} · ${esc(an(r.asociado))}`},TG={recibos:'Factura',repostajes:'Gasolina',gastos:'Suelto'},
+ cs=S.contratos.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),'es'));
+ return`<h1>Gastos</h1><div class="tabs" style="flex-wrap:wrap">${tb.map(([k,v])=>`<button class="${g===k?'on':''}" onclick="ui.gv='${k}';go()">${v}</button>`).join('')}</div>
+<button class="p" onclick="${g==='todos'?'addChooser()':`edit('${g}')`}">+ Añadir</button><div class="card np"><div class="row"><select onchange="ui.gf.a=this.value;go()"><option value="">Todos los asociados</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.gf.a===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>${fr?`<select onchange="ui.gf.k=this.value;go()"><option value="">Todos los contratos</option>${cs.map(c=>`<option value="${c.id}"${ui.gf.k===c.id?' selected':''}>${esc(c.nombre)} · ${esc(an(c.asociado))}</option>`).join('')}</select><select onchange="ui.gf.s=this.value;go()"><option value="">Todos los servicios</option>${SERV.map(([k,v])=>`<option value="${k}"${ui.gf.s===k?' selected':''}>${v}</option>`).join('')}</select>`:''}<select onchange="ui.gf.c=this.value;go()"><option value="">Todas las categorías</option>${S.categorias.map(c=>`<option${ui.gf.c===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div>
+<div class="row"><label>Desde<input type="date" value="${ui.gf.d1}" onchange="ui.gf.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.gf.d2}" onchange="ui.gf.d2=this.value;go()"></label></div><div class="row"><input placeholder="Buscar…" value="${esc(ui.gf.q)}" onchange="ui.gf.q=this.value;go()"><button class="s" onclick="ui.gf={a:'',c:'',s:'',d1:'',d2:'',q:'',k:''};go()">Limpiar</button></div></div><div class="m">${l.length} registros · ${eur(l.reduce((t,x)=>t+(x.r.importe||0),0))}</div>${g==='repostajes'?fuel():''}
+${l.length?l.map(({k,r})=>`<div class="card"><div class="row sp"><b>${eur(r.importe)}</b><span class="m">${g==='todos'?TG[k]+' · ':''}${fd(r.fecha)}</span></div><div class="m">${txt[k](r)}</div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('${k}','${r.id}')">Editar</button><button class="s" onclick="edit('${k}','${r.id}',1)">Duplicar</button><button class="s d" onclick="del('${k}','${r.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Aún no hay registros.</div>'}`}
 function fuelStats(coche){const l=S.repostajes.filter(r=>r.coche===coche).sort((a,b)=>a.fecha.localeCompare(b.fecha)||(a.km||0)-(b.km||0));
  let prev=null,lit=0,eu=0,km=0;
  for(const r of l){if(prev)lit+=r.litros,eu+=r.importe;
@@ -182,12 +187,16 @@ function fuelStats(coche){const l=S.repostajes.filter(r=>r.coche===coche).sort((
  return{cons:km?lit/km*100:null,e100:km?eu/km*100:null,ppl:tl?te/tl:null}}
 function fuel(){return S.asociados.filter(a=>a.tipo==='vehiculo').map(a=>{const s=fuelStats(a.id);return`<div class="card"><b>${esc(a.nombre)}</b><div class="m">Consumo: ${s.cons?NUM.format(s.cons)+' L/100 km':'sin datos suficientes'} · ${s.e100?NUM.format(s.e100)+' €/100 km':'sin datos suficientes'} · Precio medio: ${s.ppl?NUM.format(s.ppl)+' €/L':'sin datos'}</div></div>`}).join('')}
 /* --- Informes --- */
-function items(d1,d2){const days=diff(d2,d1)+1,out=[],mk=(part,fecha,importe,aso,cat)=>out.push({part,fecha,importe,aso,cat});
- S.contratos.filter(c=>c.tipoImporte!=='variable'&&(c.estado!=='cancelado'||c.fechaCancel)).forEach(c=>{const a=c.inicio&&c.inicio>d1?c.inicio:d1,b=c.fechaCancel&&c.fechaCancel<d2?c.fechaCancel:d2,n=diff(b,a)+1;if(n>0)mk('fix',d1,eq(c)*12/365.25*n,c.asociado,c.categoria)});
- S.recibos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>{const c=gc(r.contrato);mk('var',r.fecha,r.importe,c?.asociado,c?.categoria)});
- S.repostajes.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk('gas',r.fecha,r.importe,r.coche,S.ajustes.catGas));
- S.gastos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk('sue',r.fecha,r.importe,r.asociado,r.categoria));return out}
-const PN={fix:'Contratos fijos',var:'Recibos variables',gas:'Gasolina',sue:'Gastos sueltos'};
+function fixSeg(c,d1,d2){const a=c.inicio&&c.inicio>d1?c.inicio:d1,b=c.fechaCancel&&c.fechaCancel<d2?c.fechaCancel:d2,out=[];let s=a;
+ while(s<=b){const d=P(s),eom=ISO(new Date(d.getFullYear(),d.getMonth()+1,0)),e=eom<b?eom:b;out.push([s,eq(c)*12/365.25*(diff(e,s)+1)]);s=addD(e,1)}return out}
+function movs(d1,d2){const out=[],mk=o=>out.push(o);
+ S.contratos.filter(c=>c.tipoImporte!=='variable'&&c.contarPor!=='facturas'&&(c.estado!=='cancelado'||c.fechaCancel)).forEach(c=>fixSeg(c,d1,d2).forEach(([f,v])=>mk({part:'fix',fecha:f,importe:v,aso:c.asociado,cat:c.categoria,k:c.id,etq:c.nombre,origen:'Contrato fijo (estimado)',est:1,desc:'',txt:[c.nombre,c.proveedor,c.notas].join(' ')})));
+ S.recibos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>{const c=gc(r.contrato);if(c&&c.tipoImporte!=='variable'&&c.contarPor!=='facturas')return;mk({part:'var',fecha:r.fecha,importe:r.importe,aso:c?.asociado,cat:c?.categoria,k:r.contrato,etq:c?.nombre||'—',origen:'Factura',kind:'recibos',id:r.id,desc:r.notas||'',txt:[c?.nombre,c?.proveedor,r.notas].join(' ')})});
+ S.repostajes.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk({part:'gas',fecha:r.fecha,importe:r.importe,aso:r.coche,cat:S.ajustes.catGas,etq:'Gasolina',origen:'Gasolina',kind:'repostajes',id:r.id,desc:r.notas||'',txt:'gasolina '+(r.notas||'')}));
+ S.gastos.filter(r=>r.fecha>=d1&&r.fecha<=d2).forEach(r=>mk({part:'sue',fecha:r.fecha,importe:r.importe,aso:r.asociado,cat:r.categoria,etq:r.concepto||'(sin concepto)',origen:'Gasto suelto',kind:'gastos',id:r.id,desc:r.desc||'',txt:[r.desc,r.concepto,r.notas].join(' ')}));
+ return out}
+const items=(d1,d2)=>movs(d1,d2);
+const PN={fix:'Contratos fijos (estimado)',var:'Facturas de contratos',gas:'Gasolina',sue:'Gastos sueltos'};
 function sum(a,k){const m={};a.forEach(x=>m[x[k]]=(m[x[k]]||0)+x.importe);return m}
 function infRes(){const it=items(ui.d1,ui.d2).filter(x=>ui.pf[x.part]),tot=sum(it,'part');
  const tbl=(m,f)=>`<table>${Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(f?f(k):k)}</td><td class="n">${eur(v)}</td></tr>`).join('')||'<tr><td class="m">Sin datos</td></tr>'}</table>`;
@@ -204,14 +213,15 @@ ${ui.comb?`<tr><td><b>Total combinado</b></td><td class="n"><b>${eur(Object.valu
 <h2>Por asociado</h2><div class="card">${tbl(sum(it,'aso'),an)}</div><h2>Por categoría</h2><div class="card">${tbl(sum(it,'cat'))}</div><h2>Por mes (sin contratos fijos)</h2><div class="card">${svg}</div>`}
 /* --- Más --- */
 function mas(){const s=ui.sub;if(s)return SUB[s]();
- return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}</p>`}
+ return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['imp','Importar datos (JSON)'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}</p>`}
 const back=`<button onclick="go('mas')">‹ Más</button>`;
 const SUB={
 aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Editar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
 cat:()=>`${back}<h1>Categorías</h1><button class="p" onclick="addCat()">+ Añadir</button>${S.categorias.map((c,i)=>`<div class="card row sp"><span>${esc(c)} <span class="m">(${catUse(c)} usos${c===S.ajustes.catGas?' · gasolina':''})</span></span><span><button class="s" onclick="renCat(${i})">Editar</button><button class="s d" onclick="delCat(${i})">Eliminar</button></span></div>`).join('')}`,
 borrar:()=>`${back}<h1>Borrar datos de esta app</h1><div class="card warn"><p>Se borrarán contratos, recibos, gastos y ajustes de <b>Mis servicios</b> en este navegador. No se puede deshacer y no afecta a otras apps.</p><button class="p" onclick="exportJ();go('mas','borrar')">1. Descargar copia de seguridad ahora</button><label>2. Escribe BORRAR para confirmar<input id="bq" autocomplete="off" oninput="$('#bb').disabled=this.value.trim()!=='BORRAR'"></label><button class="d" id="bb" disabled onclick="wipe()">Borrar todo</button></div>`,
 ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bak',l:'Aviso copia antigua (días)',t:'number',r:1},{k:'catGas',l:'Categoría para gasolina',t:'select',o:S.categorias},{k:'impElec',l:'Impuesto eléctrico (%)',t:'number',r:1},{k:'iva',l:'IVA (%)',t:'number',r:1},{k:'umbral',l:'Umbral de desviación real/teórico (%)',t:'number',r:1}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak,catGas:a.catGas,impElec:a.impElec,iva:a.iva,umbral:a.umbral},o=>{S.ajustes=Object.assign({},S.ajustes,{rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak,catGas:o.catGas,impElec:o.impElec,iva:o.iva,umbral:o.umbral});save();go('mas')})});return back},
-bak:()=>`${back}<h1>Copia de seguridad</h1><div class="card"><p class="m">Última copia: ${fd(S.lastBackup)}</p><button class="p" onclick="exportJ()">Exportar JSON</button><p><input type="file" accept=".json,application/json" onchange="importJ(this.files[0])"></p><p class="m">Importar sustituye los datos actuales.</p></div>`,
+bak:()=>`${back}<h1>Copia de seguridad</h1><div class="card"><p class="m">Última copia: ${fd(S.lastBackup)}</p><button class="p" onclick="exportJ()">Exportar JSON</button><p><button onclick="go('mas','imp')">Importar JSON…</button></p></div>`,
+imp:()=>`${back}<h1>Importar datos (JSON)</h1><div class="card"><p class="m">Elige un archivo exportado desde «Mis servicios» (Más → Copia de seguridad).</p><label style="color:var(--t)"><input type="radio" name="impm" value="fusion" checked> <b>Fusionar</b>: añade solo lo que no tengas. No borra ni modifica nada de lo actual.</label><label style="color:var(--t)"><input type="radio" name="impm" value="reemplazar"> <b>Reemplazar</b>: sustituye todos los datos actuales por los del archivo.</label><button class="p" onclick="$('#impf').click()">Elegir archivo JSON…</button><input type="file" id="impf" accept=".json,application/json" style="display:none" onchange="importJ(this.files[0]);this.value=''"></div><p class="m">«Fusionar» reconoce lo repetido por su identificador interno, así que funciona bien con copias de esta misma app (por ejemplo, la de otro dispositivo).</p>`,
 ics:()=>`${back}<h1>Exportar al calendario</h1><div class="card"><p class="m">Eventos de día completo con límite de aviso y vencimiento, con dos alarmas.</p><button class="p" onclick="icsAll()">Descargar .ics de todos los contratos activos</button></div>`,
 ideas:()=>{const q=ui.idq.toLowerCase(),l=S.ideas.filter(i=>(ui.idf==='todas'||(ui.idf==='pend'?i.estado==='pendiente':i.estado==='implementada'))&&(!q||i.texto.toLowerCase().includes(q)));
  return`${back}<h1>Ideas de mejora</h1><div class="row"><button class="p" onclick="ideaEd()">+ Idea</button><button onclick="copyPend()">Copiar pendientes</button></div>
@@ -239,8 +249,9 @@ function delCat(i){const o=S.categorias[i],n=catUse(o),otras=S.categorias.filter
 async function wipe(){try{Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios')).forEach(k=>localStorage.removeItem(k))}catch(e){}
  try{const dbs=indexedDB.databases?await indexedDB.databases():[{name:'mis_servicios'}];await Promise.all(dbs.filter(d=>d.name&&d.name.startsWith('mis_servicios')).map(d=>new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=r})))}catch(e){}
  S=def();alert('Datos de la app borrados.');location.reload()}
-function gfl(g,r){const f=ui.gf,c=g==='recibos'?gc(r.contrato):null,aso=g==='recibos'?c?.asociado:g==='repostajes'?r.coche:r.asociado,cat=g==='recibos'?c?.categoria:g==='repostajes'?S.ajustes.catGas:r.categoria;
- return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&(!f.s||g!=='recibos'||(c?.tipoSuministro||'ninguno')===f.s)&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
+function gfl(g,r){const f=ui.gf,rc=g==='recibos',c=rc?gc(r.contrato):null,aso=rc?c?.asociado:g==='repostajes'?r.coche:r.asociado,cat=rc?c?.categoria:g==='repostajes'?S.ajustes.catGas:r.categoria,
+ sOk=!f.s||(rc?(c?.tipoSuministro||'ninguno')===f.s:ui.gv!=='todos'),kOk=!f.k||(rc?r.contrato===f.k:ui.gv!=='todos');
+ return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&sOk&&kOk&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.concepto,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
 function setP(k){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),F=(a,b)=>{ui.d1=ISO(a);ui.d2=ISO(b)};ui.per=k;
  if(k==='mes')F(new Date(y,m,1),new Date(y,m+1,0));else if(k==='mesant')F(new Date(y,m-1,1),new Date(y,m,0));else if(k==='tri'){const q=Math.floor(m/3)*3;F(new Date(y,q,1),new Date(y,q+3,0))}
  else if(k==='ano')F(new Date(y,0,1),new Date(y,11,31));else if(k==='anoant')F(new Date(y-1,0,1),new Date(y-1,11,31));else{ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
@@ -288,8 +299,9 @@ function recTxt(r){const c=gc(r.contrato),n=esc(c?.nombre||'—')+' · ';
  if(isElecC(c)){if(r.conDatos===false)return n+'⏳ pendiente de datos de consumo (excluido de los cálculos)';
   if(num(r.kwh1)&&num(r.kwh2)&&num(r.kwh3))return n+`P1 ${NUM.format(r.kwh1)} · P2 ${NUM.format(r.kwh2)} · P3 ${NUM.format(r.kwh3)} kWh`+(r.desde&&r.hasta?` · ${fd(r.desde)}–${fd(r.hasta)}`:'');
   return n+(r.consumo?NUM.format(r.consumo)+' '+r.unidad+' · ':'')+'sin desglose de franjas'}
- const pr=r.desde&&r.hasta?` · ${fd(r.desde)}–${fd(r.hasta)}`:'',pu=r.consumo>0&&r.importe?` · ${NUM.format(r.importe/r.consumo)} €/${r.unidad||'ud'}`:'';
- return n+(r.consumo?NUM.format(r.consumo)+' '+(r.unidad||''):'sin consumo')+pr+pu}
+ const nm=esc(c?.nombre||'—')+' · '+esc(an(c?.asociado))+(c&&c.tipoImporte!=='variable'&&c.contarPor!=='facturas'?' · ⚠️ no cuenta en informes (contrato en modo importe fijo)':''),
+  p=[r.consumo?NUM.format(r.consumo)+' '+(r.unidad||''):(unitFor(c)?'sin consumo':''),r.desde&&r.hasta?fd(r.desde)+'–'+fd(r.hasta):'',r.consumo>0&&r.importe?NUM.format(r.importe/r.consumo)+' €/'+(r.unidad||'ud'):''].filter(Boolean);
+ return nm+(p.length?' · '+p.join(' · '):'')}
 /* --- Tarifas del contrato (editor dentro del formulario del contrato) --- */
 const TMP={tar:[]};
 const TAR_F=[{k:'desde',l:'Vigente desde',t:'date',r:1},{k:'pot1',l:'Potencia contratada P1 punta (kW)',t:'number',r:1},{k:'pot2',l:'Potencia contratada P2 valle (kW)',t:'number',r:1},
@@ -309,7 +321,7 @@ function tarDel(i){if(ask('¿Borrar esta tarifa?')){TMP.tar.splice(i,1);refTar()
 /* --- Informes: segmentado, selector de periodo --- */
 const perSel=()=>`<div class="tabs" style="flex-wrap:wrap">${[['mes','Este mes'],['mesant','Mes anterior'],['tri','Trimestre'],['ano','Año'],['12m','12 meses'],['anoant','Año anterior']].map(([k,l])=>`<button class="${ui.per===k?'on':''}" onclick="setP('${k}')">${l}</button>`).join('')}</div>${['mes','mesant','tri','ano','anoant'].includes(ui.per)?`<div class="row"><button onclick="shiftP(-1)">◀</button><button onclick="shiftP(1)">▶</button></div>`:''}<div class="row"><label>Desde<input type="date" value="${ui.d1}" onchange="ui.d1=this.value;ui.per='';go()"></label><label>Hasta<input type="date" value="${ui.d2}" onchange="ui.d2=this.value;ui.per='';go()"></label></div>`;
 function setIV(k){ui.iv=k;if((k==='ele'||k==='agua')&&!ui['init_'+k]){ui['init_'+k]=1;ui.per='12m';ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
-function informes(){return`<h1>Informes</h1><div class="tabs np" style="flex-wrap:wrap">${[['res','Resumen'],['ele','Electricidad'],['agua','Agua y gas'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='ele'?infEle():ui.iv==='agua'?infAgua():ui.iv==='cmp'?infCmp():infRes()}`}
+function informes(){return`<h1>Informes</h1><div class="tabs np" style="flex-wrap:wrap">${[['res','Resumen'],['exp','Explorar'],['ele','Electricidad'],['agua','Agua y gas'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='exp'?infExp():ui.iv==='ele'?infEle():ui.iv==='agua'?infAgua():ui.iv==='cmp'?infCmp():infRes()}`}
 /* --- Gráficos SVG (colores por variables CSS) --- */
 const lg=(c,t)=>`<span class="lg"><i style="background:${c}"></i>${t}</span>`;
 const svgWrap=(n,h,inner,lab)=>`<div style="overflow-x:auto"><svg width="${Math.max(320,n*46+16)}" height="${h}" role="img" aria-label="${esc(lab)}">${inner}</svg></div>`;
@@ -431,15 +443,66 @@ function planCard(p){const dd=diff(today(),p.fecha),old=dd>90,n=/^https?:\/\//.t
 function planesHtml(){const cs=[...new Set(S.planes.map(p=>p.compania))].sort((a,b)=>String(a).localeCompare(String(b),'es'));if(ui.cf&&!cs.includes(ui.cf))ui.cf='';
  const l=S.planes.filter(p=>!ui.cf||p.compania===ui.cf);
  return`<h2 class="np">Planes de compañías</h2><div class="card np"><div class="row"><button class="p" onclick="planEd()">+ Plan</button><button onclick="planAll(1)">Marcar todas</button><button onclick="planAll(0)">Marcar ninguna</button><select onchange="ui.cf=this.value;go()"><option value="">Todas las compañías</option>${cs.map(c=>`<option value="${esc(c)}"${ui.cf===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="m">${S.planes.filter(p=>p.inc).length} de ${S.planes.length} planes incluidos en el informe.</div></div>${l.map(planCard).join('')||'<div class="card m np">Sin planes. Añade los precios publicados por cada compañía.</div>'}`}
+/* ===== 6c. FACTURAS POR CONTRATO, CONCEPTOS Y EXPLORAR ===== */
+const concList=()=>[...new Set(['IBI','IRPF','Derrama','ITV','Tasa de basuras','Impuesto de circulación',...S.gastos.map(g=>g.concepto).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es'));
+const recInfo=id=>{const c=gc(id);if(!c)return'';const f=c.tipoImporte==='variable'?'Importe variable':'Importe fijo: '+eur(c.importe)+' / '+c.periodicidad,m=c.tipoImporte==='variable'?'':c.contarPor==='facturas'?' · en informes cuenta por facturas':c.contarPor==='fijo'?' · ⚠️ en informes sigue contando el importe fijo (cámbialo en el contrato)':' · al guardar te preguntaré cómo contarlo en informes';return esc(an(c.asociado))+' · '+esc(c.categoria||'')+' · '+f+m};
+function addRec(id){ui.pre=id;edit('recibos')}
+function verFact(id){ui.gv='recibos';ui.gf={a:'',c:'',s:'',d1:'',d2:'',q:'',k:id};go('gastos')}
+function expK(id){Object.assign(ui.ex,{a:'',c:'',k:id,n:'',q:''});ui.iv='exp';go('informes')}
+function addChooser(){$('#mod').innerHTML=`<div class="ov"><div class="card"><h2>¿Qué quieres añadir?</h2><button class="p" style="display:block;width:100%;margin:6px 0" onclick="closeM();edit('recibos')">Factura de un contrato</button><button style="display:block;width:100%;margin:6px 0" onclick="closeM();edit('gastos')">Gasto suelto (IBI, IRPF, derrama…)</button><button style="display:block;width:100%;margin:6px 0" onclick="closeM();edit('repostajes')">Repostaje</button><button style="display:block;width:100%;margin:6px 0" onclick="closeM()">Cancelar</button></div></div>`}
+const MN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const exPK=(f,g)=>g==='ano'?f.slice(0,4):g==='tri'?f.slice(0,4)+'-T'+(Math.floor((+f.slice(5,7)-1)/3)+1):f.slice(0,7);
+const exPL=(k,g)=>g==='ano'?k:g==='tri'?k.slice(5)+' '+k.slice(2,4):MN[+k.slice(5,7)-1]+' '+k.slice(2,4);
+function exList(d1,d2){const x=ui.ex,q=x.q.toLowerCase();
+ return movs(d1,d2).filter(e=>(x.est||!e.est)&&(!x.a||e.aso===x.a)&&(!x.c||e.cat===x.c)&&(!x.k||e.k===x.k)&&(!x.n||(e.kind==='gastos'&&e.etq===x.n))&&(!q||[e.txt,e.etq,an(e.aso),e.cat].join(' ').toLowerCase().includes(q)))}
+function infExp(){const x=ui.ex,L=exList(ui.d1,ui.d2),tot=L.reduce((s,e)=>s+e.importe,0),est=L.filter(e=>e.est).reduce((s,e)=>s+e.importe,0),per=[];
+ for(let d=new Date(P(ui.d1).getFullYear(),P(ui.d1).getMonth(),1);ISO(d)<=ui.d2;d.setMonth(d.getMonth()+1)){const k=exPK(ISO(d),x.g);if(!per.includes(k))per.push(k)}
+ const M={},C={};L.forEach(e=>{const k=exPK(e.fecha,x.g);M[k]=(M[k]||0)+e.importe;C[k]=(C[k]||0)+1});
+ const prev=exList(addM(ui.d1,-12),addM(ui.d2,-12)).reduce((s,e)=>s+e.importe,0),dv=tot-prev,DN={aso:'Asociado',cat:'Categoría',etq:'Concepto / contrato'},UN={mes:'mes',tri:'trimestre',ano:'año'},G={};
+ L.forEach(e=>{const k=x.dim==='aso'?an(e.aso):x.dim==='cat'?(e.cat||'—'):e.etq;G[k]=(G[k]||0)+e.importe});
+ const kp=(l,v,s)=>`<div class="card" style="margin:0"><div class="m">${l}</div><b>${v}</b>${s?`<div class="m">${s}</div>`:''}</div>`,
+ sel=(k,l,o)=>`<label style="margin:0">${l}<select onchange="ui.ex.${k}=this.value;go()">${o.map(([v,t])=>`<option value="${esc(v)}"${x[k]===v?' selected':''}>${esc(t)}</option>`).join('')}</select></label>`,
+ concs=[...new Set(S.gastos.map(g=>g.concepto).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')),
+ det=L.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)),bars=per.map(k=>({l:exPL(k,x.g),v:M[k]||0})),
+ titulo=[x.a?an(x.a):'',x.c,x.k?gc(x.k)?.nombre:'',x.n].filter(Boolean).join(' · ')||'Todo';
+ return`<div class="card np"><div class="row">${sel('a','Asociado',[['','Todos'],...S.asociados.map(a=>[a.id,a.nombre])])}${sel('c','Categoría',[['','Todas'],...S.categorias.map(c=>[c,c])])}</div>
+<div class="row">${sel('k','Contrato',[['','Todos'],...S.contratos.map(c=>[c.id,c.nombre+' · '+an(c.asociado)])])}${sel('n','Concepto (gastos sueltos)',[['','Todos'],...concs.map(c=>[c,c])])}</div>
+<div class="row"><input placeholder="Buscar…" value="${esc(x.q)}" onchange="ui.ex.q=this.value;go()"><button class="s" onclick="Object.assign(ui.ex,{a:'',c:'',k:'',n:'',q:''});go()">Limpiar filtros</button></div>
+${perSel()}
+<div class="tabs">${[['mes','Por mes'],['tri','Por trimestre'],['ano','Por año']].map(([k,l])=>`<button class="${x.g===k?'on':''}" onclick="ui.ex.g='${k}';go()">${l}</button>`).join('')}</div>
+<div class="row">${sel('dim','Desglose por',Object.entries(DN))}<label style="margin:0;color:var(--t)"><input type="checkbox" ${x.est?'checked':''} onchange="ui.ex.est=this.checked?1:0;go()"> Incluir estimaciones de contratos fijos</label></div>
+<div class="row"><button onclick="exCsv()">Exportar CSV</button><button onclick="print()">Imprimir / PDF</button></div></div>
+<h2>${esc(titulo)} · ${fd(ui.d1)} – ${fd(ui.d2)}</h2>
+<div class="kp">${kp('Total',eur(tot),est?'incluye '+eur(est)+' estimados':'')}${kp('Movimientos',L.length)}${kp('Media por '+UN[x.g],eur(per.length?tot/per.length:0))}${kp('Mismo periodo año anterior',eur(prev),prev?sg(dv)+' ('+sgp(dv/prev*100)+')':'')}</div>
+<h2>Por ${UN[x.g]}</h2><div class="card" style="overflow-x:auto"><table><tr><th>Periodo</th><th class="n">Importe</th><th class="n">Mov.</th></tr>${per.map(k=>`<tr><td>${exPL(k,x.g)}</td><td class="n">${eur(M[k])}</td><td class="n">${C[k]||0}</td></tr>`).join('')}<tr><td><b>Total</b></td><td class="n"><b>${eur(tot)}</b></td><td class="n">${L.length}</td></tr></table>${bars.length?svgBars1(bars,'var(--p)','Importe por periodo',v=>Math.round(v)):''}</div>
+<h2>Desglose por ${DN[x.dim].toLowerCase()}</h2><div class="card"><table>${Object.entries(G).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${eur(v)}</td><td class="n m">${tot?NUM.format(v/tot*100)+' %':''}</td></tr>`).join('')||'<tr><td class="m">Sin datos</td></tr>'}</table></div>
+<h2>Detalle (${det.length})</h2><div class="card" style="overflow-x:auto;font-size:13px"><table>${det.slice(0,300).map(e=>`<tr${e.est?' style="color:var(--m);font-style:italic"':''}><td>${fd(e.fecha)}</td><td>${esc(e.etq)}${e.est?' (est.)':''}<br><span class="m">${esc(an(e.aso))} · ${esc(e.cat||'—')}${e.desc?' · '+esc(e.desc):''}</span></td><td class="n">${eur(e.importe)}</td><td class="np">${e.kind?`<button class="s" onclick="edit('${e.kind}','${e.id}')">✎</button>`:''}</td></tr>`).join('')||'<tr><td class="m">Sin movimientos</td></tr>'}</table></div>${det.length>300?'<div class="m">Se muestran los 300 más recientes; el CSV incluye todos.</div>':''}<div class="m">Las estimaciones de contratos fijos se reparten por días dentro de cada mes. Un contrato fijo marcado «por facturas» cuenta solo sus facturas reales.</div>`}
+function exCsv(){const L=exList(ui.d1,ui.d2).sort((a,b)=>a.fecha.localeCompare(b.fecha)),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',n=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',');
+ const rows=[['Fecha','Origen','Concepto/contrato','Descripción','Asociado','Categoría','Importe','Estimado']].concat(L.map(e=>[e.fecha,e.origen,e.etq,e.desc||'',an(e.aso),e.cat||'',n(e.importe),e.est?'sí':'no']));
+ dl('informe_'+ui.d1+'_'+ui.d2+'.csv','\ufeff'+rows.map(r=>r.map((v,i)=>i===6?v:q(v)).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+
 /* ===== 7. COPIA DE SEGURIDAD ===== */
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
 function exportJ(){S.lastBackup=today();save();dl(`mis_servicios_${today()}.json`,JSON.stringify({app:'mis_servicios',...S,exportado:new Date().toISOString()},null,1),'application/json');go('mas','bak')}
-function importJ(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);
- if(d&&d.app==='mis_servicios'&&typeof d.version==='number'&&d.version>SCHEMA){alert('Esta copia es de una versión más reciente de la app (esquema '+d.version+'). Actualiza la app para importarla.');return}
- if(d.app!=='mis_servicios'||typeof d.version!=='number'||d.version>SCHEMA||!['asociados','categorias','contratos','recibos','repostajes','gastos'].every(k=>Array.isArray(d[k]))||(d.version>=3&&!Array.isArray(d.planes)))throw 0;
- if(!ask('Importar SUSTITUYE todos los datos actuales. ¿Continuar?'))return;
- if(ask('¿Descargar antes una copia de los datos actuales?'))dl(`mis_servicios_antes_${today()}.json`,JSON.stringify({app:'mis_servicios',...S}),'application/json');
- delete d.app;S=migrate(d);if(save())go('mas','bak')}catch(e){alert('Archivo no válido: no es una copia de Mis servicios.')}};r.readAsText(f)}
+function importJ(f){if(!f)return;const mode=(document.querySelector('input[name=impm]:checked')||{}).value||'reemplazar',r=new FileReader();
+ r.onerror=()=>alert('No se pudo leer el archivo.');
+ r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){alert('Archivo no válido: no es un JSON.');return}
+  if(!d||d.app!=='mis_servicios'||typeof d.version!=='number'){alert('Archivo no válido: no es una copia de Mis servicios.');return}
+  if(d.version>SCHEMA){alert('Esta copia es de una versión más reciente de la app (esquema '+d.version+'). Actualiza la app para importarla.');return}
+  if(!['asociados','categorias','contratos','recibos','repostajes','gastos'].every(k=>Array.isArray(d[k]))||(d.version>=3&&!Array.isArray(d.planes))){alert('Archivo no válido: faltan datos.');return}
+  if(mode==='fusion'){mergeJ(d);return}
+  if(!ask('Importar SUSTITUYE todos los datos actuales por los del archivo. ¿Continuar?'))return;
+  if(ask('¿Descargar antes una copia de los datos actuales?'))dl('mis_servicios_antes_de_importar_'+today()+'.json',JSON.stringify({app:'mis_servicios',...S}),'application/json');
+  try{delete d.app;S=migrate(d);if(save())go('mas','bak')}catch(e){alert('No se pudo importar: '+e.message)}};
+ r.readAsText(f)}
+function mergeJ(d){const cols=[['asociados','asociados'],['contratos','contratos'],['recibos','facturas'],['repostajes','repostajes'],['gastos','gastos sueltos'],['planes','planes'],['ideas','ideas']],add={};
+ cols.forEach(([k])=>{const ya=new Set((S[k]||[]).map(x=>x.id));add[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>x&&x.id&&!ya.has(x.id))});
+ const cats=d.categorias.filter(c=>c&&!S.categorias.some(x=>String(x).toLowerCase()===String(c).toLowerCase())),
+ res=cols.filter(([k])=>add[k].length).map(([k,n])=>add[k].length+' '+n).concat(cats.length?[cats.length+' categorías']:[]).join(', ');
+ if(!res){alert('No hay nada nuevo que añadir: todo lo del archivo ya está en tu app.');return}
+ if(!ask('Se añadirán: '+res+'.\nNo se borra ni se modifica nada de lo que ya tienes. ¿Continuar?'))return;
+ cols.forEach(([k])=>{S[k]=(S[k]||[]).concat(add[k])});S.categorias=S.categorias.concat(cats);
+ if(save()){alert('Importado: '+res+'.');go('mas','imp')}}
 /* ===== 8. CALENDARIO (.ics) ===== */
 function icsBuild(cs){const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mis servicios//ES','CALSCALE:GREGORIAN'],st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z',t=s=>s.replace(/-/g,''),x=s=>String(s).replace(/[\\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');
  cs.forEach(c=>{const i=info(c);if(!i)return;[['Límite de aviso',i.lim],['Vencimiento',i.v]].forEach(([n,f])=>{L.push('BEGIN:VEVENT',`UID:${uid()}@mis-servicios`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${t(f)}`,`DTEND;VALUE=DATE:${t(addD(f,1))}`,`SUMMARY:${x(n+': '+c.nombre)}`);
