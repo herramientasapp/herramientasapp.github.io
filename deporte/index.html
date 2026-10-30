@@ -4,87 +4,167 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>Deporte</title>
+<title>Deporte v2.0.0</title>
 <style>
+  :root {
+    --bg-main: #0b1220;
+    --bg-card: #151f33;
+    --bg-card-alt: #0e1728;
+    --bg-header: rgba(11,18,32,.94);
+    --border-color: #26344f;
+    --border-subtle: #1e2c46;
+    --text-main: #e8eefb;
+    --text-muted: #93a3bd;
+    --text-dim: #6b7c99;
+    --primary: #2563eb;
+    --primary-hover: #3b82f6;
+    --accent: #7dd3fc;
+    --danger-bg: #3b1016;
+    --danger-border: #7f1d1d;
+    --danger-text: #fca5a5;
+    --grid-hour-height: 40px;
+    --chip-bg: #0e1728;
+    --chip-border: #26344f;
+    --chip-text: #c3d0e6;
+  }
+
+  [data-theme="light"] {
+    --bg-main: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-card-alt: #f8fafc;
+    --bg-header: rgba(255,255,255,.94);
+    --border-color: #cbd5e1;
+    --border-subtle: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-dim: #94a3b8;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --accent: #0284c7;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #dc2626;
+    --chip-bg: #f1f5f9;
+    --chip-border: #cbd5e1;
+    --chip-text: #334155;
+  }
+
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{background:#0b1220;color:#e8eefb;font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:30px}
-  .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(11,18,32,.94);backdrop-filter:blur(8px);border-bottom:1px solid #1c2942}
+  html,body{margin:0;padding:0;background:var(--bg-main);color:var(--text-main);font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:30px;transition:background-color .2s,color .2s}
+  
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg-header);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-color)}
   .topbar h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px;flex:1}
-  .icon-btn{background:#151f33;border:1px solid #26344f;color:#e8eefb;width:36px;height:36px;border-radius:10px;font-size:20px;line-height:1;cursor:pointer;flex:0 0 auto}
-  .wrap{padding:14px;max-width:760px;margin:0 auto}
-  .card{background:#151f33;border:1px solid #26344f;border-radius:14px;padding:14px;margin-bottom:12px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #26344f;background:#1c2942;color:#e8eefb;padding:11px 14px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+  
+  .icon-btn{background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-main);width:36px;height:36px;border-radius:10px;font-size:18px;display:inline-flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;flex:0 0 auto}
+  .icon-btn:active{transform:scale(.95)}
+  
+  .wrap{padding:14px;max-width:850px;margin:0 auto}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;margin-bottom:12px}
+  
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-color);background:var(--bg-card-alt);color:var(--text-main);padding:10px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
   .btn:active{transform:scale(.985)}
-  .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb);border-color:#2563eb;color:#fff}
+  .btn-primary{background:linear-gradient(180deg,var(--primary-hover),var(--primary));border-color:var(--primary);color:#fff}
   .btn-block{width:100%}
-  .btn-big{padding:18px;font-size:17px}
-  .btn-danger{background:#3b1016;border-color:#7f1d1d;color:#fca5a5}
-  .btn-sm{padding:7px 10px;font-size:13px;border-radius:9px}
+  .btn-big{padding:16px;font-size:16px}
+  .btn-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+  
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-  .tile{background:#151f33;border:1px solid #26344f;border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+  .tile{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
   .tile:active{transform:scale(.985)}
   .tile .ti{font-size:21px;line-height:1.1}
   .tile .tt{font-weight:650}
-  .tile .ts{font-size:11.5px;color:#93a3bd}
-  .lbl{display:block;font-size:12px;color:#93a3bd;margin:0 0 5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
-  .input{width:100%;background:#0e1728;border:1px solid #26344f;color:#e8eefb;border-radius:11px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none}
-  .input:focus{border-color:#3b82f6}
+  .tile .ts{font-size:11.5px;color:var(--text-muted)}
+  
+  .lbl{display:block;font-size:11.5px;color:var(--text-muted);margin:0 0 5px;font-weight:650;letter-spacing:.3px;text-transform:uppercase}
+  .input{width:100%;background:var(--bg-card-alt);border:1px solid var(--border-color);color:var(--text-main);border-radius:11px;padding:10px 12px;font-size:14.5px;font-family:inherit;outline:none}
+  .input:focus{border-color:var(--primary-hover)}
   select.input{appearance:none}
-  textarea.input{min-height:70px;resize:vertical}
+  textarea.input{min-height:80px;resize:vertical}
   .field{margin-bottom:12px}
   .row{display:flex;gap:10px}
   .row>*{flex:1;min-width:0}
+  
   .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{background:#0e1728;border:1px solid #26344f;color:#c3d0e6;border-radius:999px;padding:8px 13px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600}
-  .chip.sel{background:#1d4ed8;border-color:#3b82f6;color:#fff}
-  .item{display:flex;gap:11px;align-items:center;padding:11px 12px;background:#151f33;border:1px solid #26344f;border-radius:12px;margin-bottom:8px;cursor:pointer}
-  .item:active{background:#1a2740}
+  .chip{background:var(--chip-bg);border:1px solid var(--chip-border);color:var(--chip-text);border-radius:999px;padding:7px 12px;font-size:13.5px;cursor:pointer;font-family:inherit;font-weight:600}
+  .chip.sel{background:var(--primary);border-color:var(--primary-hover);color:#fff}
+  
+  .item{display:flex;gap:11px;align-items:center;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px;cursor:pointer}
+  .item:active{filter:brightness(.95)}
   .item .ico{font-size:20px;width:26px;text-align:center;flex:0 0 auto}
   .grow{flex:1;min-width:0}
   .t1{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .t2{font-size:12.5px;color:#93a3bd;margin-top:1px}
-  .muted{color:#93a3bd}
+  .t2{font-size:12px;color:var(--text-muted);margin-top:1px}
+  .muted{color:var(--text-muted)}
   .center{text-align:center}
-  .sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#93a3bd;font-weight:700;margin:16px 0 8px}
-  .empty{color:#6b7c99;text-align:center;padding:22px 10px;font-size:14px}
+  .sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);font-weight:700;margin:16px 0 8px}
+  .empty{color:var(--text-dim);text-align:center;padding:18px 10px;font-size:13.5px}
 
-  /* CALENDARIO */
-  .cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-  .cal-nav .lbl-sem{flex:1;text-align:center;font-weight:650;font-size:15px}
-  .cal-tools{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .dia{background:#151f33;border:1px solid #26344f;border-radius:14px;margin-bottom:9px;overflow:hidden}
-  .dia.hoy{border-color:#3b82f6;box-shadow:0 0 0 1px rgba(59,130,246,.35) inset}
-  .dia-head{display:flex;align-items:center;gap:9px;padding:9px 12px;background:#12203a;border-bottom:1px solid #1e2c46}
-  .dia.hoy .dia-head{background:#14294a}
-  .dname{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:#93a3bd;font-weight:700}
-  .dnum{font-weight:700;font-size:15px}
-  .dia.hoy .dname,.dia.hoy .dnum{color:#93c5fd}
-  .badge-hoy{font-size:10.5px;background:#1d4ed8;color:#fff;border-radius:999px;padding:2px 8px;font-weight:700;letter-spacing:.4px}
-  .add{margin-left:auto;background:#1c2942;border:1px solid #2c3d5c;color:#93c5fd;width:29px;height:29px;border-radius:9px;font-size:17px;line-height:1;cursor:pointer;flex:0 0 auto}
-  .planes{padding:8px 9px 9px}
-  .plan{display:flex;gap:9px;align-items:flex-start;background:#0e1728;border:1px solid #223050;border-radius:10px;padding:8px 10px;margin-bottom:6px;cursor:pointer}
-  .plan:last-child{margin-bottom:0}
-  .plan:active{background:#16223a}
-  .pico{font-size:16px;line-height:1.3;flex:0 0 auto}
-  .ptxt{flex:1;min-width:0}
-  .ptxt b{font-weight:600;font-size:14px}
-  .ptxt .dur{font-size:12px;color:#7dd3fc;margin-left:7px}
-  .ptxt .nota{display:block;font-size:12px;color:#93a3bd;margin-top:2px;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .vacio-dia{font-size:12.5px;color:#5b6c88;padding:2px 2px 4px}
+  /* CALENDARIO - VISTA SEMANAL EN TABLA (GRID DE HORAS Y DÍAS) */
+  .cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .cal-nav .lbl-sem{flex:1;text-align:center;font-weight:650;font-size:14.5px}
+  
+  .week-grid-container{width:100%;overflow-x:auto;background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;position:relative}
+  .week-grid{display:grid;grid-template-columns:50px repeat(7, minmax(85px, 1fr));min-width:650px}
+  
+  .grid-header{position:sticky;top:0;z-index:10;background:var(--bg-card-alt);border-bottom:1px solid var(--border-color);text-align:center;padding:8px 4px;font-weight:700;font-size:12px}
+  .grid-header.corner{position:sticky;left:0;z-index:11;background:var(--bg-card-alt);border-right:1px solid var(--border-color)}
+  .grid-header .dname{color:var(--text-muted);font-size:10px;text-transform:uppercase}
+  .grid-header .dnum{font-size:14px;color:var(--text-main)}
+  .grid-header.hoy{background:rgba(37,99,235,.15);color:var(--primary-hover)}
+  .grid-header.hoy .dnum{color:var(--primary-hover)}
+  
+  .time-col{position:sticky;left:0;z-index:9;background:var(--bg-card-alt);border-right:1px solid var(--border-color);color:var(--text-muted);font-size:11px;font-weight:600;text-align:center}
+  .hour-cell{height:var(--grid-hour-height);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:center}
+  
+  .day-col{position:relative;border-right:1px solid var(--border-subtle)}
+  .day-col:last-child{border-right:none}
+  .day-col .hour-slot{height:var(--grid-hour-height);border-bottom:1px solid var(--border-subtle);cursor:pointer}
+  .day-col .hour-slot:hover{background:rgba(255,255,255,.03)}
 
-  /* CHECKLIST */
-  .chk{display:flex;align-items:center;gap:10px;background:#0e1728;border:1px solid #223050;border-radius:11px;padding:10px 11px;margin-bottom:7px}
-  .chk .box{width:22px;height:22px;border-radius:7px;border:2px solid #3b4d6e;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex:0 0 auto}
-  .chk.on .box{background:#2563eb;border-color:#3b82f6}
-  .chk.on .txt{text-decoration:line-through;color:#6b7c99}
-  .chk .txt{flex:1;min-width:0}
-  .mini{background:none;border:none;color:#5b6c88;font-size:15px;padding:4px 5px;cursor:pointer;line-height:1}
+  .grid-event{position:absolute;left:2px;right:2px;border-radius:6px;padding:3px 5px;font-size:11px;line-height:1.2;overflow:hidden;cursor:pointer;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.2);border-left:3px solid rgba(0,0,0,.3);color:#fff}
+  .grid-event .ev-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .grid-event .ev-time{font-size:9.5px;opacity:.9}
+
+  /* COLORS POR TIPO */
+  .bg-senderismo{background:#059669}
+  .bg-paseo{background:#0284c7}
+  .bg-gimnasio{background:#7c3aed}
+  .bg-otro{background:#d97706}
+  .bg-natacion{background:#2563eb}
+  .bg-running{background:#dc2626}
+
+  /* CHECKLIST COMPACTO */
+  .chk-compact{display:flex;align-items:center;gap:8px;background:var(--bg-card-alt);border:1px solid var(--border-subtle);border-radius:8px;padding:6px 9px;margin-bottom:5px;font-size:13.5px}
+  .chk-compact .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;flex:0 0 auto;cursor:pointer}
+  .chk-compact.on .box{background:var(--primary);border-color:var(--primary)}
+  .chk-compact.on .txt{text-decoration:line-through;color:var(--text-dim)}
+  .chk-compact .txt{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini{background:none;border:none;color:var(--text-muted);font-size:14px;padding:2px 4px;cursor:pointer;line-height:1}
+  .mini:hover{color:var(--text-main)}
+
+  /* RESUMEN COMPACTO */
+  .res-card{padding:10px 12px;margin-bottom:8px}
+  .res-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:6px}
+  .res-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;background:var(--bg-card-alt);padding:8px;border-radius:8px;border:1px solid var(--border-subtle)}
+  .m-box{display:flex;flex-direction:column}
+  .m-lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;font-weight:600}
+  .m-val{font-size:13.5px;font-weight:700;color:var(--text-main)}
+
+  /* DETAILS PLEGABLES */
+  details.sec-fold{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  details.sec-fold summary{padding:12px 14px;font-weight:650;font-size:14px;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;outline:none;background:var(--bg-card)}
+  details.sec-fold summary::-webkit-details-marker{display:none}
+  details.sec-fold summary::after{content:'›';font-size:18px;transition:transform .2s;color:var(--text-muted)}
+  details.sec-fold[open] summary::after{transform:rotate(90deg)}
+  details.sec-fold summary:hover{background:var(--bg-card-alt)}
+  .fold-body{padding:12px 14px;border-top:1px solid var(--border-color);background:var(--bg-card)}
 
   /* MODAL */
-  .overlay{position:fixed;inset:0;background:rgba(4,8,16,.72);z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+  .overlay{position:fixed;inset:0;background:rgba(4,8,16,.75);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0}
   @media(min-width:600px){.overlay{align-items:center;padding:20px}}
-  .modal{background:#131e33;border:1px solid #26344f;border-radius:18px 18px 0 0;padding:18px;width:100%;max-width:520px;max-height:92vh;overflow:auto}
+  .modal{background:var(--bg-card);border:1px solid var(--border-color);border-radius:18px 18px 0 0;padding:18px;width:100%;max-width:520px;max-height:92vh;overflow:auto;color:var(--text-main)}
   @media(min-width:600px){.modal{border-radius:18px}}
   .modal h2{margin:0 0 14px;font-size:17px}
   .modal-actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
@@ -92,12 +172,8 @@
 
   .up{color:#4ade80;font-weight:600}
   .down{color:#f87171;font-weight:600}
-  .metric{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14px;border-top:1px solid #1e2c46}
-  .metric:first-child{border-top:none}
-  .metric .v{font-variant-numeric:tabular-nums;font-weight:600}
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1d4ed8;color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.45)}
-  .hist-tipo{display:inline-block;font-size:12px;color:#93a3bd}
-  a{color:#7dd3fc}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .badge-imp{background:var(--primary);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
 </style>
 </head>
 <body>
@@ -120,12 +196,14 @@ function addDays(d,n){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDa
 function hoyKey(){ return dateKey(new Date()); }
 function fmtFecha(k){ if(!k) return '—'; return parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}); }
 function fmtFechaCorta(k){ return parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
+
 function inicioSemana(d, ini){
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const dow = x.getDay();
   const diff = (ini === 'domingo') ? dow : (dow + 6) % 7;
   return addDays(x, -diff);
 }
+
 function toast(msg){
   const t = document.createElement('div');
   t.className = 'toast';
@@ -137,7 +215,7 @@ function toast(msg){
 /* =====================================================================
    INDEXEDDB
    ===================================================================== */
-const DB_NAME = 'deporte', DB_VER = 1;
+const DB_NAME = 'deporte_v2', DB_VER = 1;
 let db = null;
 
 function openDB(){
@@ -146,19 +224,21 @@ function openDB(){
     r.onupgradeneeded = ev => {
       const d = ev.target.result;
       const mk = (n,opt={}) => { if(!d.objectStoreNames.contains(n)) d.createObjectStore(n,opt); };
-      mk('tipos',       {keyPath:'id'});
-      mk('variantes',   {keyPath:'id', autoIncrement:true});
-      mk('actividades', {keyPath:'id', autoIncrement:true});
-      mk('planes',      {keyPath:'id', autoIncrement:true});
-      mk('checklist',   {keyPath:'id', autoIncrement:true});
-      mk('checkEstado', {keyPath:'id'});
-      mk('peso',        {keyPath:'id', autoIncrement:true});
-      mk('prefs',       {keyPath:'k'});
+      mk('tipos',          {keyPath:'id'});
+      mk('subcategorias',  {keyPath:'id', autoIncrement:true});
+      mk('actividades',    {keyPath:'id', autoIncrement:true});
+      mk('planes',         {keyPath:'id', autoIncrement:true});
+      mk('checklist',      {keyPath:'id', autoIncrement:true});
+      mk('checkEstado',    {keyPath:'id'});
+      mk('peso',           {keyPath:'id', autoIncrement:true});
+      mk('prefs',          {keyPath:'k'});
+      mk('ideas',          {keyPath:'id', autoIncrement:true});
     };
     r.onsuccess = () => { db = r.result; res(db); };
     r.onerror = () => rej(r.error);
   });
 }
+
 function req(r){ return new Promise((res,rej)=>{ r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); }); }
 const dbAll   = s     => req(db.transaction(s).objectStore(s).getAll());
 const dbGet   = (s,k) => req(db.transaction(s).objectStore(s).get(k));
@@ -170,12 +250,23 @@ const dbClear = s     => req(db.transaction(s,'readwrite').objectStore(s).clear(
    DATOS DE FÁBRICA
    ===================================================================== */
 const TIPOS_BASE = [
-  {id:'senderismo', nombre:'Senderismo', icono:'🥾', visible:1, orden:1},
-  {id:'paseo',      nombre:'Paseo',      icono:'🚶', visible:1, orden:2},
-  {id:'gimnasio',   nombre:'Gimnasio',   icono:'🏋️', visible:1, orden:3},
-  {id:'otro',       nombre:'Otro',       icono:'✨', visible:1, orden:4},
-  {id:'natacion',   nombre:'Natación',   icono:'🏊', visible:0, orden:5},
-  {id:'running',    nombre:'Running',    icono:'🏃', visible:0, orden:6},
+  {id:'senderismo', nombre:'Senderismo', icono:'🥾', visible:1, orden:1, color:'bg-senderismo'},
+  {id:'paseo',      nombre:'Paseo',      icono:'🚶', visible:1, orden:2, color:'bg-paseo'},
+  {id:'gimnasio',   nombre:'Gimnasio',   icono:'🏋️', visible:1, orden:3, color:'bg-gimnasio'},
+  {id:'otro',       nombre:'Otro',       icono:'✨', visible:1, orden:4, color:'bg-otro'},
+  {id:'natacion',   nombre:'Natación',   icono:'🏊', visible:0, orden:5, color:'bg-natacion'},
+  {id:'running',    nombre:'Running',    icono:'🏃', visible:0, orden:6, color:'bg-running'},
+];
+
+const SUBCATS_BASE = [
+  {tipo_id:'gimnasio', nombre:'Fitness / Pesas'},
+  {tipo_id:'gimnasio', nombre:'Spinning'},
+  {tipo_id:'gimnasio', nombre:'Pilates / Yoga'},
+  {tipo_id:'gimnasio', nombre:'Actividad Dirigida'},
+  {tipo_id:'senderismo', nombre:'Montaña'},
+  {tipo_id:'senderismo', nombre:'Media Montaña'},
+  {tipo_id:'paseo', nombre:'Urbano'},
+  {tipo_id:'paseo', nombre:'Parque'}
 ];
 
 const CHECK_FABRICA = {
@@ -183,61 +274,52 @@ const CHECK_FABRICA = {
     imprescindible:['Agua','Botas','Chubasquero','Comida','Móvil cargado','Botiquín'],
     opcional:['Bastones','Gorra','Crema solar','Cámara']
   },
-  paseo:{
-    imprescindible:['Calzado cómodo'],
-    opcional:['Agua','Auriculares']
-  },
-  gimnasio:{
-    imprescindible:['Ropa deporte','Toalla','Candado','Botella agua'],
-    opcional:['Auriculares','Guantes','Gomas']
-  },
+  paseo:{ imprescindible:['Calzado cómodo'], opcional:['Agua','Auriculares'] },
+  gimnasio:{ imprescindible:['Ropa deporte','Toalla','Candado','Botella agua'], opcional:['Auriculares','Guantes'] },
   otro:{ imprescindible:[], opcional:[] },
-  natacion:{
-    imprescindible:['Bañador','Gafas','Gorro','Toalla','Chanclas'],
-    opcional:['Secador','Tapones']
-  },
-  running:{
-    imprescindible:['Zapatillas','Ropa técnica'],
-    opcional:['Auriculares','Gel']
-  }
+  natacion:{ imprescindible:['Bañador','Gafas','Gorro','Toalla'], opcional:['Secador','Tapones'] },
+  running:{ imprescindible:['Zapatillas','Ropa técnica'], opcional:['Auriculares','Gel'] }
 };
 
 /* Campos específicos por tipo de actividad */
 const CAMPOS_POR_TIPO = {
-  senderismo:['distancia_km','desnivel_m','peso_mochila_kg','con_quien','ruta','wikiloc'],
+  senderismo:['distancia_km','desnivel_m','con_quien','ruta','wikiloc'],
   paseo:['distancia_km'],
-  gimnasio:['tipo_sesion'],
+  gimnasio:[],
   natacion:['distancia_m'],
   running:['distancia_km'],
   otro:['descripcion','distancia_km']
 };
+
 const CAMPO_DEF = {
-  distancia_km:    {label:'Distancia (km)',      type:'number', step:'0.01'},
-  desnivel_m:      {label:'Desnivel (m)',        type:'number', step:'1'},
-  peso_mochila_kg: {label:'Peso mochila (kg)',   type:'number', step:'0.1'},
-  con_quien:       {label:'Con quién',           type:'text'},
-  ruta:            {label:'Nombre de ruta',      type:'text'},
-  wikiloc:         {label:'Enlace Wikiloc',      type:'url'},
-  tipo_sesion:     {label:'Tipo de sesión',      type:'select', opciones:['fuerza','cardio','mixto','dirigida']},
-  distancia_m:     {label:'Distancia (m)',       type:'number', step:'1'},
-  descripcion:     {label:'Descripción',         type:'text'}
+  distancia_km: {label:'Distancia (km)', type:'number', step:'0.01'},
+  desnivel_m:   {label:'Desnivel (m)', type:'number', step:'1'},
+  con_quien:    {label:'Con quién', type:'text'},
+  ruta:         {label:'Nombre de ruta', type:'text'},
+  wikiloc:      {label:'Enlace Wikiloc', type:'url'},
+  distancia_m:  {label:'Distancia (m)', type:'number', step:'1'},
+  descripcion:  {label:'Descripción', type:'text'}
 };
 
 /* =====================================================================
-   ESTADO
+   ESTADO GLOBAL
    ===================================================================== */
 const S = {
-  screen:'inicio',
-  tipos:[], variantes:[], prefs:{},
-  form:null,
-  calOffset:0,
-  chkTipo:'senderismo',
-  hist:{tipo:'', desde:'', hasta:''},
-  resumenRango:'semana',
-  resumenDesde:'', resumenHasta:'',
-  pesoForm:{fecha:hoyKey(), kg:''},
-  pesoCache:[],
-  planForm:null
+  screen: 'inicio',
+  theme: 'dark',
+  tipos: [],
+  subcategorias: [],
+  prefs: {},
+  form: null,
+  calOffset: 0,
+  chkTipo: 'senderismo',
+  hist: {tipo:'', desde:'', hasta:''},
+  resumenRango: 'semana',
+  resumenDesde: '', resumenHasta: '',
+  pesoForm: {fecha: hoyKey(), kg:''},
+  pesoCache: [],
+  planForm: null,
+  nuevaIdeaText: ''
 };
 
 /* =====================================================================
@@ -247,6 +329,8 @@ async function seed(){
   const ya = await dbGet('prefs','seeded');
   if(ya) return;
   for(const t of TIPOS_BASE) await dbPut('tipos', {...t});
+  for(const sc of SUBCATS_BASE) await dbPut('subcategorias', {...sc});
+  
   let orden = 0;
   for(const tipo of Object.keys(CHECK_FABRICA)){
     for(const seccion of ['imprescindible','opcional']){
@@ -255,36 +339,58 @@ async function seed(){
       }
     }
   }
-  await dbPut('prefs', {k:'semanaInicio',      v:'lunes'});
-  await dbPut('prefs', {k:'calendarioVista',   v:'compacta'});
-  await dbPut('prefs', {k:'calendarioOcultos', v:[]});
-  await dbPut('prefs', {k:'seeded',            v:1});
+  await dbPut('prefs', {k:'semanaInicio', v:'lunes'});
+  await dbPut('prefs', {k:'theme', v:'dark'});
+  await dbPut('prefs', {k:'seeded', v:1});
+
+  // Idea de ejemplo
+  await dbPut('ideas', {
+    texto: "Modificar vista del calendario a tabla semanal completa.\nImplementar subcategorías en gimnasio y modo claro.",
+    fecha: hoyKey(),
+    implementado: true
+  });
 }
 
 async function loadState(){
-  S.tipos    = (await dbAll('tipos')).sort((a,b)=>a.orden-b.orden);
-  S.variantes = await dbAll('variantes');
+  S.tipos = (await dbAll('tipos')).sort((a,b)=>a.orden-b.orden);
+  S.subcategorias = await dbAll('subcategorias');
   const p = {};
   (await dbAll('prefs')).forEach(x => p[x.k] = x.v);
   S.prefs = p;
+  S.theme = p.theme || 'dark';
+  document.documentElement.setAttribute('data-theme', S.theme);
 }
+
 async function setPref(k,v){
   await dbPut('prefs', {k, v});
   S.prefs[k] = v;
 }
-const tipoDe = id => S.tipos.find(t => t.id === id) || {nombre:'—', icono:'•'};
+
+function toggleTheme(){
+  const next = S.theme === 'dark' ? 'light' : 'dark';
+  S.theme = next;
+  setPref('theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  render();
+}
+
+const tipoDe = id => S.tipos.find(t => t.id === id) || {nombre:'—', icono:'•', color:'bg-otro'};
 const prefInicio = () => S.prefs.semanaInicio || 'lunes';
-const prefVista  = () => S.prefs.calendarioVista || 'compacta';
-const prefOcultosCal = () => Array.isArray(S.prefs.calendarioOcultos) ? S.prefs.calendarioOcultos : [];
 
 /* =====================================================================
-   NAVEGACIÓN
+   NAVEGACIÓN Y TOPBAR
    ===================================================================== */
 function go(screen){ S.screen = screen; render(); window.scrollTo(0,0); }
+
 function topbar(titulo){
   return `<header class="topbar">
     ${S.screen === 'inicio' ? '' : '<button class="icon-btn" data-action="atras" aria-label="Volver">‹</button>'}
     <h1>${esc(titulo)}</h1>
+    <div class="topbar-actions">
+      <button class="icon-btn" data-action="toggle-theme" title="Cambiar Modo Claro/Oscuro">
+        ${S.theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+    </div>
   </header>`;
 }
 
@@ -314,13 +420,14 @@ async function render(){
 function itemActividad(a){
   const t = tipoDe(a.tipo_id);
   const extra = [];
+  if(a.subcategoria) extra.push(a.subcategoria);
   if(a.duracion_min) extra.push(a.duracion_min + ' min');
   const km = a.distancia_km != null ? a.distancia_km : (a.distancia_m != null ? (a.distancia_m/1000) : null);
   if(km) extra.push(fmtNum(km,2) + ' km');
   return `<div class="item" data-action="ver-act" data-id="${a.id}">
     <div class="ico">${t.icono}</div>
     <div class="grow">
-      <div class="t1">${esc(t.nombre)}${a.variante ? ' · ' + esc(a.variante) : ''}</div>
+      <div class="t1">${esc(t.nombre)}${a.subcategoria ? ' · ' + esc(a.subcategoria) : ''}</div>
       <div class="t2">${fmtFecha(a.fecha)}${extra.length ? ' · ' + extra.join(' · ') : ''}</div>
     </div>
   </div>`;
@@ -339,7 +446,7 @@ async function viewInicio(){
     <div class="tiles">
       <div class="tile" data-action="go" data-screen="calendario">
         <div class="ti">🗓️</div><div class="tt">Calendario</div>
-        <div class="ts">Planifica la semana</div>
+        <div class="ts">Vista semana clásica</div>
       </div>
       <div class="tile" data-action="go" data-screen="checklist">
         <div class="ti">🎒</div><div class="tt">Checklist</div>
@@ -347,7 +454,7 @@ async function viewInicio(){
       </div>
       <div class="tile" data-action="go" data-screen="resumen">
         <div class="ti">📊</div><div class="tt">Resumen</div>
-        <div class="ts">Evolución por periodo</div>
+        <div class="ts">Estadísticas compactas</div>
       </div>
       <div class="tile" data-action="go" data-screen="peso">
         <div class="ti">⚖️</div><div class="tt">Peso</div>
@@ -374,21 +481,14 @@ function nuevoForm(){
     id:null,
     tipo_id: primero ? primero.id : 'senderismo',
     fecha: hoyKey(),
-    variante:'', duracion_min:'', notas:'',
-    distancia_km:'', desnivel_m:'', peso_mochila_kg:'', con_quien:'',
-    ruta:'', wikiloc:'', tipo_sesion:'', distancia_m:'', descripcion:''
+    subcategoria:'', duracion_min:'', notas:'',
+    distancia_km:'', desnivel_m:'', con_quien:'',
+    ruta:'', wikiloc:'', distancia_m:'', descripcion:''
   };
 }
 
 function campoHTML(c, valor){
   const d = CAMPO_DEF[c];
-  if(d.type === 'select'){
-    return `<div class="field"><label class="lbl">${d.label}</label>
-      <select class="input" data-field="${c}">
-        <option value="">—</option>
-        ${d.opciones.map(o => `<option value="${o}" ${valor === o ? 'selected' : ''}>${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('')}
-      </select></div>`;
-  }
   return `<div class="field"><label class="lbl">${d.label}</label>
     <input class="input" type="${d.type}" ${d.step ? `step="${d.step}"` : ''}
       ${d.type === 'number' ? 'inputmode="decimal"' : ''}
@@ -399,12 +499,14 @@ async function viewActividad(){
   if(!S.form) S.form = nuevoForm();
   const f = S.form;
   const tiposVis = S.tipos.filter(t => t.visible);
-  const vars = S.variantes.filter(v => v.tipo_id === f.tipo_id).map(v => v.nombre);
+  
+  // Subcategorías registradas para este tipo
+  const subcats = S.subcategorias.filter(s => s.tipo_id === f.tipo_id);
 
   return topbar(f.id ? 'Editar actividad' : 'Registrar actividad') + `
   <div class="wrap">
     <div class="card">
-      <label class="lbl">Tipo</label>
+      <label class="lbl">Categoría Principal</label>
       <div class="chips">
         ${tiposVis.map(t => `<button class="chip ${t.id === f.tipo_id ? 'sel' : ''}"
             data-action="form-tipo" data-id="${t.id}">${t.icono} ${esc(t.nombre)}</button>`).join('')}
@@ -422,10 +524,15 @@ async function viewActividad(){
       </div>
 
       <div class="field">
-        <label class="lbl">Variante</label>
-        <input class="input" data-field="variante" list="dl-variantes" value="${esc(f.variante)}"
-               placeholder="opcional, autocompleta al escribir">
-        <datalist id="dl-variantes">${vars.map(v => `<option value="${esc(v)}">`).join('')}</datalist>
+        <label class="lbl">Subcategoría</label>
+        ${subcats.length ? `
+          <select class="input" data-field="subcategoria">
+            <option value="">-- Seleccionar --</option>
+            ${subcats.map(s => `<option value="${esc(s.nombre)}" ${f.subcategoria === s.nombre ? 'selected' : ''}>${esc(s.nombre)}</option>`).join('')}
+          </select>
+        ` : `
+          <input class="input" data-field="subcategoria" value="${esc(f.subcategoria)}" placeholder="Escribe o configura en ajustes">
+        `}
       </div>
 
       <div class="field">
@@ -441,7 +548,7 @@ async function viewActividad(){
 
     <div class="card">
       <label class="lbl">Notas</label>
-      <textarea class="input" data-field="notas" placeholder="opcional">${esc(f.notas)}</textarea>
+      <textarea class="input" data-field="notas" placeholder="Observaciones opcionales">${esc(f.notas)}</textarea>
     </div>
 
     <button class="btn btn-primary btn-block btn-big" data-action="guardar-act">Guardar</button>
@@ -455,23 +562,17 @@ async function guardarActividad(){
   const obj = {
     tipo_id: f.tipo_id,
     fecha: f.fecha,
-    variante: (f.variante || '').trim(),
+    subcategoria: (f.subcategoria || '').trim(),
     duracion_min: f.duracion_min === '' ? null : num(f.duracion_min),
     notas: (f.notas || '').trim()
   };
   for(const c of (CAMPOS_POR_TIPO[f.tipo_id] || [])){
     const d = CAMPO_DEF[c];
-    if(d.type === 'number') obj[c] = f[c] === '' ? null : num(f[c]);
+    if(d && d.type === 'number') obj[c] = f[c] === '' ? null : num(f[c]);
     else obj[c] = (f[c] || '').trim();
   }
   if(f.id) obj.id = f.id;
   await dbPut('actividades', obj);
-
-  /* variante nueva: se crea sola, nunca se borra */
-  const v = obj.variante;
-  if(v && !S.variantes.some(x => x.tipo_id === obj.tipo_id && x.nombre.toLowerCase() === v.toLowerCase())){
-    await dbPut('variantes', {tipo_id: obj.tipo_id, nombre: v});
-  }
 
   S.form = null;
   toast(f.id ? 'Actividad actualizada' : 'Actividad registrada');
@@ -479,109 +580,124 @@ async function guardarActividad(){
 }
 
 /* =====================================================================
-   3. CALENDARIO SEMANAL  (inicio por defecto: lunes · vista: compacta)
+   3. CALENDARIO SEMANAL (TABLA TIPO HOJA DE HORARIOS)
    ===================================================================== */
 const DIAS_LUN = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DIAS_DOM = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 async function viewCalendario(){
   const ini = prefInicio();
-  const vista = prefVista();
-  const ocultosCal = prefOcultosCal();
-
   const base  = inicioSemana(new Date(), ini);
   const start = addDays(base, S.calOffset * 7);
   const dias  = Array.from({length:7}, (_,i) => addDays(start, i));
   const kHoy  = hoyKey();
 
   const planes = await dbAll('planes');
-
-  /* Tipos visibles en el calendario: visibles globalmente y no ocultos aquí */
-  const visiblesCal = new Set(
-    S.tipos.filter(t => t.visible && !ocultosCal.includes(t.id)).map(t => t.id)
-  );
-
-  const porDia = {};
-  for(const p of planes){
-    if(!visiblesCal.has(p.tipo_id)) continue;      /* se conservan, pero no se muestran */
-    (porDia[p.fecha] = porDia[p.fecha] || []).push(p);
-  }
-  for(const k in porDia){
-    porDia[k].sort((a,b) => (a.duracion_min||0) - (b.duracion_min||0) || a.id - b.id);
-  }
-
   const nombres = (ini === 'domingo') ? DIAS_DOM : DIAS_LUN;
+
   const kIni = dateKey(dias[0]), kFin = dateKey(dias[6]);
   const esActual = S.calOffset === 0;
-
   const etiqueta = `${fmtFechaCorta(kIni)} – ${fmtFechaCorta(kFin)} ${parseKey(kFin).getFullYear()}`;
 
-  const filas = dias.map((d,i) => {
-    const k = dateKey(d);
-    const esHoy = (k === kHoy);
-    const lista = porDia[k] || [];
+  // Filtrar planes de la semana vista
+  const planesSemana = planes.filter(p => p.fecha >= kIni && p.fecha <= kFin);
 
-    const tarjetas = lista.map(p => {
-      const t = tipoDe(p.tipo_id);
-      const titulo = p.variante ? esc(p.variante) : esc(t.nombre);
-      if(vista === 'compacta'){
-        return `<div class="plan" data-action="plan-editar" data-id="${p.id}">
-          <span class="pico">${t.icono}</span>
-          <span class="ptxt"><b>${titulo}</b></span>
-        </div>`;
-      }
-      return `<div class="plan" data-action="plan-editar" data-id="${p.id}">
-        <span class="pico">${t.icono}</span>
-        <span class="ptxt">
-          <b>${titulo}</b>${p.duracion_min ? `<span class="dur">${p.duracion_min} min</span>` : ''}
-          ${p.nota ? `<span class="nota">${esc(p.nota)}</span>` : ''}
-        </span>
+  // Generar columnas de la tabla de la semana
+  const gridHeaders = `
+    <div class="grid-header corner">Hora</div>
+    ${dias.map((d,i) => {
+      const k = dateKey(d);
+      const esHoy = (k === kHoy);
+      return `<div class="grid-header ${esHoy ? 'hoy' : ''}">
+        <div class="dname">${nombres[i]}</div>
+        <div class="dnum">${d.getDate()}</div>
       </div>`;
-    }).join('');
+    }).join('')}
+  `;
 
-    return `<div class="dia ${esHoy ? 'hoy' : ''}">
-      <div class="dia-head">
-        <span class="dname">${nombres[i]}</span>
-        <span class="dnum">${d.getDate()}</span>
-        ${esHoy ? '<span class="badge-hoy">HOY</span>' : ''}
-        <button class="add" data-action="plan-nuevo" data-fecha="${k}" aria-label="Añadir plan">＋</button>
-      </div>
-      <div class="planes">
-        ${tarjetas || '<div class="vacio-dia">Sin planes</div>'}
-      </div>
-    </div>`;
-  }).join('');
+  // Construir franjas horarias
+  const horas = Array.from({length:15}, (_,i) => i + 7); // De 07:00 a 21:00
+
+  let gridBody = '';
+  // Columna de horas
+  let timeCol = `<div class="time-col">`;
+  horas.forEach(h => {
+    timeCol += `<div class="hour-cell">${pad(h)}:00</div>`;
+  });
+  timeCol += `</div>`;
+
+  // Columnas por cada día
+  let daysCols = '';
+  dias.forEach(d => {
+    const k = dateKey(d);
+    const planesDia = planesSemana.filter(p => p.fecha === k);
+
+    let slotsHTML = '';
+    horas.forEach(h => {
+      slotsHTML += `<div class="hour-slot" data-action="plan-nuevo-slot" data-fecha="${k}" data-hora="${h}"></div>`;
+    });
+
+    // Colocar eventos dentro del día posicionados por hora
+    let evsHTML = '';
+    planesDia.forEach(p => {
+      const t = tipoDe(p.tipo_id);
+      const horaInicio = p.hora ? parseInt(p.hora.split(':')[0]) : 9;
+      const minInicio = p.hora ? parseInt(p.hora.split(':')[1]) : 0;
+      
+      // Calcular posición vertical top y height
+      const offsetHoras = Math.max(0, horaInicio - 7);
+      const topPx = (offsetHoras * 40) + ((minInicio / 60) * 40);
+      const durMin = p.duracion_min || 60;
+      const heightPx = Math.max(26, (durMin / 60) * 40);
+
+      evsHTML += `<div class="grid-event ${t.color || 'bg-otro'}" style="top:${topPx}px;height:${heightPx}px;"
+                       data-action="plan-editar" data-id="${p.id}">
+        <div class="ev-title">${t.icono} ${esc(p.subcategoria || t.nombre)}</div>
+        <div class="ev-time">${pad(horaInicio)}:${pad(minInicio)} (${durMin}m)</div>
+      </div>`;
+    });
+
+    daysCols += `<div class="day-col">${slotsHTML}${evsHTML}</div>`;
+  });
+
+  gridBody = timeCol + daysCols;
 
   return topbar('Calendario') + `
   <div class="wrap">
     <div class="cal-nav">
-      <button class="icon-btn" data-action="sem-prev" aria-label="Semana anterior">‹</button>
+      <button class="icon-btn" data-action="sem-prev">‹</button>
       <div class="lbl-sem">${etiqueta}${esActual ? '<div class="muted" style="font-size:11.5px;font-weight:600">Esta semana</div>' : ''}</div>
-      <button class="icon-btn" data-action="sem-next" aria-label="Semana siguiente">›</button>
+      <button class="icon-btn" data-action="sem-next">›</button>
     </div>
 
-    <div class="cal-tools">
+    <div class="cal-tools" style="display:flex;gap:8px;margin-bottom:10px;">
       <button class="chip" data-action="sem-hoy">Hoy</button>
       <button class="chip" data-action="copiar-semana">Copiar semana pasada</button>
-      <button class="chip" data-action="cal-config">⚙ Configurar</button>
+      <button class="chip" data-action="plan-nuevo">＋ Planificar</button>
     </div>
 
-    ${filas}
+    <div class="week-grid-container">
+      <div class="week-grid">
+        ${gridHeaders}
+        ${gridBody}
+      </div>
+    </div>
   </div>`;
 }
 
-function abrirPlanModal(plan, fecha){
+function abrirPlanModal(plan, fecha, hora){
+  const defaultHora = hora ? `${pad(hora)}:00` : '09:00';
   S.planForm = plan
     ? {...plan}
-    : {id:null, fecha: fecha || hoyKey(), tipo_id: (S.tipos.find(t => t.visible) || {id:'senderismo'}).id,
-       variante:'', duracion_min:'', nota:''};
+    : {id:null, fecha: fecha || hoyKey(), hora: defaultHora, tipo_id: (S.tipos.find(t => t.visible) || {id:'senderismo'}).id,
+       subcategoria:'', duracion_min:60, nota:''};
 
   const f = S.planForm;
   const tiposVis = S.tipos.filter(t => t.visible);
-  const vars = S.variantes.filter(v => v.tipo_id === f.tipo_id).map(v => v.nombre);
+  const subcats = S.subcategorias.filter(s => s.tipo_id === f.tipo_id);
 
   showModal(`
-    <h2>${f.id ? 'Editar plan' : 'Nuevo plan'}</h2>
+    <h2>${f.id ? 'Editar actividad programada' : 'Planificar actividad'}</h2>
 
     <div class="field">
       <label class="lbl">Tipo</label>
@@ -590,25 +706,37 @@ function abrirPlanModal(plan, fecha){
       </select>
     </div>
 
-    <div class="field">
-      <label class="lbl">Día</label>
-      <input class="input" type="date" data-plan="fecha" value="${esc(f.fecha)}">
+    <div class="row">
+      <div class="field">
+        <label class="lbl">Día</label>
+        <input class="input" type="date" data-plan="fecha" value="${esc(f.fecha)}">
+      </div>
+      <div class="field">
+        <label class="lbl">Hora de inicio</label>
+        <input class="input" type="time" data-plan="hora" value="${esc(f.hora || '09:00')}">
+      </div>
     </div>
 
     <div class="field">
-      <label class="lbl">Variante</label>
-      <input class="input" data-plan="variante" list="dl-plan-vars" value="${esc(f.variante || '')}" placeholder="opcional">
-      <datalist id="dl-plan-vars">${vars.map(v => `<option value="${esc(v)}">`).join('')}</datalist>
+      <label class="lbl">Subcategoría</label>
+      ${subcats.length ? `
+        <select class="input" data-plan="subcategoria">
+          <option value="">-- Ninguna --</option>
+          ${subcats.map(s => `<option value="${esc(s.nombre)}" ${f.subcategoria === s.nombre ? 'selected' : ''}>${esc(s.nombre)}</option>`).join('')}
+        </select>
+      ` : `
+        <input class="input" data-plan="subcategoria" value="${esc(f.subcategoria || '')}" placeholder="Opcional">
+      `}
     </div>
 
     <div class="field">
-      <label class="lbl">Duración estimada (min)</label>
-      <input class="input" type="number" inputmode="numeric" data-plan="duracion_min" value="${esc(f.duracion_min ?? '')}">
+      <label class="lbl">Duración (minutos)</label>
+      <input class="input" type="number" step="15" inputmode="numeric" data-plan="duracion_min" value="${esc(f.duracion_min ?? 60)}">
     </div>
 
     <div class="field">
-      <label class="lbl">Nota corta</label>
-      <input class="input" data-plan="nota" value="${esc(f.nota || '')}" placeholder="opcional">
+      <label class="lbl">Nota</label>
+      <input class="input" data-plan="nota" value="${esc(f.nota || '')}" placeholder="Comentario opcional">
     </div>
 
     <div class="modal-actions">
@@ -626,16 +754,13 @@ async function guardarPlan(){
   const obj = {
     tipo_id: f.tipo_id,
     fecha: f.fecha,
-    variante: (f.variante || '').trim(),
-    duracion_min: f.duracion_min === '' || f.duracion_min == null ? null : num(f.duracion_min),
+    hora: f.hora || '09:00',
+    subcategoria: (f.subcategoria || '').trim(),
+    duracion_min: f.duracion_min === '' || f.duracion_min == null ? 60 : num(f.duracion_min),
     nota: (f.nota || '').trim()
   };
   if(f.id) obj.id = f.id;
   await dbPut('planes', obj);
-
-  if(obj.variante && !S.variantes.some(x => x.tipo_id === obj.tipo_id && x.nombre.toLowerCase() === obj.variante.toLowerCase())){
-    await dbPut('variantes', {tipo_id: obj.tipo_id, nombre: obj.variante});
-  }
 
   cerrarModal();
   S.planForm = null;
@@ -653,66 +778,21 @@ async function copiarSemanaPasada(){
 
   const planes = await dbAll('planes');
   const previos = planes.filter(p => p.fecha >= kIni && p.fecha <= kFin);
-  if(!previos.length){ toast('La semana pasada no tiene planes'); return; }
-
-  const yaHay = planes.some(p => p.fecha >= kIniAct && p.fecha <= kFinAct);
-  if(yaHay && !confirm('La semana actual ya tiene planes. ¿Añadir igualmente los de la semana anterior?')) return;
+  if(!previos.length){ toast('La semana pasada no tiene actividades'); return; }
 
   for(const p of previos){
     const nuevoDia = dateKey(addDays(parseKey(p.fecha), 7));
     await dbPut('planes', {
-      tipo_id: p.tipo_id, fecha: nuevoDia,
-      variante: p.variante || '', duracion_min: p.duracion_min ?? null, nota: p.nota || ''
+      tipo_id: p.tipo_id, fecha: nuevoDia, hora: p.hora || '09:00',
+      subcategoria: p.subcategoria || '', duracion_min: p.duracion_min || 60, nota: p.nota || ''
     });
   }
-  toast(previos.length + ' planes copiados');
+  toast(previos.length + ' actividades copiadas');
   render();
 }
 
-function abrirConfigCalendario(){
-  const ini = prefInicio();
-  const vista = prefVista();
-  const ocultos = prefOcultosCal();
-  const visiblesGlobal = S.tipos.filter(t => t.visible);
-
-  showModal(`
-    <h2>Configurar calendario</h2>
-
-    <div class="field">
-      <label class="lbl">Empezar la semana en</label>
-      <select class="input" data-pref="semanaInicio">
-        <option value="lunes"   ${ini === 'lunes' ? 'selected' : ''}>Lunes</option>
-        <option value="domingo" ${ini === 'domingo' ? 'selected' : ''}>Domingo</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label class="lbl">Vista</label>
-      <select class="input" data-pref="calendarioVista">
-        <option value="compacta"  ${vista === 'compacta' ? 'selected' : ''}>Compacta (icono y variante)</option>
-        <option value="detallada" ${vista === 'detallada' ? 'selected' : ''}>Detallada (también duración y nota)</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label class="lbl">Tipos mostrados en el calendario</label>
-      ${visiblesGlobal.length ? visiblesGlobal.map(t => `
-        <label class="chk" style="cursor:pointer">
-          <span class="box" style="border:none;background:none;font-size:17px">${t.icono}</span>
-          <span class="txt">${esc(t.nombre)}</span>
-          <input type="checkbox" data-cal-tipo="${t.id}" ${ocultos.includes(t.id) ? '' : 'checked'} style="width:20px;height:20px;accent-color:#2563eb">
-        </label>`).join('') : '<div class="muted">No hay tipos visibles.</div>'}
-      <div class="muted" style="font-size:12px;margin-top:6px">Independiente de la visibilidad global. Los planes de tipos ocultos se conservan.</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-primary" data-action="modal-close">Listo</button>
-    </div>
-  `);
-}
-
 /* =====================================================================
-   4. CHECKLIST
+   4. CHECKLIST (DISEÑO COMPACTO Y DENSO)
    ===================================================================== */
 async function viewChecklist(){
   const tiposVis = S.tipos.filter(t => t.visible);
@@ -731,42 +811,42 @@ async function viewChecklist(){
 
   const bloque = (seccion, titulo) => {
     const its = items.filter(i => i.seccion === seccion);
-    return `<div class="card">
-      <div class="sec-title" style="margin-top:0">${titulo}</div>
+    return `<div class="card" style="padding:10px 12px">
+      <div class="sec-title" style="margin:2px 0 8px">${titulo} (${its.filter(x=>est[x.id]).length}/${its.length})</div>
       ${its.length ? its.map(i => `
-        <div class="chk ${est[i.id] ? 'on' : ''}">
+        <div class="chk-compact ${est[i.id] ? 'on' : ''}">
           <span class="box" data-action="chk-toggle" data-id="${i.id}">${est[i.id] ? '✓' : ''}</span>
           <span class="txt" data-action="chk-toggle" data-id="${i.id}">${esc(i.texto)}</span>
-          <button class="mini" data-action="chk-mover" data-id="${i.id}" title="Mover de sección">⇅</button>
-          <button class="mini" data-action="chk-renombrar" data-id="${i.id}" title="Renombrar">✎</button>
-          <button class="mini" data-action="chk-borrar" data-id="${i.id}" title="Borrar">✕</button>
-        </div>`).join('') : '<div class="empty" style="padding:10px">Sin ítems.</div>'}
-      <button class="btn btn-sm" style="margin-top:8px" data-action="chk-add" data-seccion="${seccion}">＋ Añadir ítem</button>
+          <button class="mini" data-action="chk-mover" data-id="${i.id}" title="Cambiar sección">⇅</button>
+          <button class="mini" data-action="chk-renombrar" data-id="${i.id}" title="Editar">✎</button>
+          <button class="mini" data-action="chk-borrar" data-id="${i.id}" title="Eliminar">✕</button>
+        </div>`).join('') : '<div class="empty" style="padding:6px">Sin elementos.</div>'}
+      <button class="btn btn-sm" style="margin-top:6px;width:100%" data-action="chk-add" data-seccion="${seccion}">＋ Añadir</button>
     </div>`;
   };
 
   return topbar('Checklist') + `
   <div class="wrap">
-    <div class="chips" style="margin-bottom:14px">
+    <div class="chips" style="margin-bottom:12px">
       ${tiposVis.map(t => `<button class="chip ${t.id === S.chkTipo ? 'sel' : ''}"
           data-action="chk-tipo" data-id="${t.id}">${t.icono} ${esc(t.nombre)}</button>`).join('')}
     </div>
 
-    ${bloque('imprescindible','Imprescindible')}
-    ${bloque('opcional','Opcional')}
+    ${bloque('imprescindible','Imprescindibles')}
+    ${bloque('opcional','Opcionales')}
 
-    <button class="btn btn-block" data-action="chk-reset">↺ Reiniciar (desmarcar todo)</button>
+    <button class="btn btn-block" style="margin-top:10px" data-action="chk-reset">↺ Desmarcar todo</button>
   </div>`;
 }
 
 /* =====================================================================
-   5. RESUMEN
+   5. RESUMEN COMPACTO (METRICAS RELEVANTES POR TIPO)
    ===================================================================== */
 const RANGOS = [
-  ['semana','Semana'], ['2semanas','2 semanas'], ['mes','Mes'],
-  ['trimestre','Trimestre'], ['semestre','Semestre'], ['año','Año'], ['personalizado','Personalizado']
+  ['semana','Semana'], ['2semanas','2 sem'], ['mes','Mes'],
+  ['trimestre','Trimestre'], ['año','Año'], ['personalizado','Personalizar']
 ];
-const DIAS_RANGO = {semana:7, '2semanas':14, mes:30, trimestre:91, semestre:182, año:365};
+const DIAS_RANGO = {semana:7, '2semanas':14, mes:30, trimestre:91, año:365};
 
 function rangoActual(){
   const hoy = new Date();
@@ -793,47 +873,43 @@ function totalesPorTipo(acts, tiposVis){
   return r;
 }
 
-function delta(cur, prev){
-  if(prev === 0 && cur === 0) return '<span class="muted">—</span>';
-  if(prev === 0) return '<span class="up">nuevo</span>';
-  const p = ((cur - prev) / prev) * 100;
-  const cls = p > 0 ? 'up' : (p < 0 ? 'down' : 'muted');
-  const arrow = p > 0 ? '↑' : (p < 0 ? '↓' : '=');
-  return `<span class="${cls}">${arrow} ${fmtNum(Math.abs(p),0)}%</span>`;
-}
-
 async function viewResumen(){
   const tiposVis = S.tipos.filter(t => t.visible);
   const acts = await dbAll('actividades');
 
   const {desde, hasta} = rangoActual();
-  const nDias = Math.round((hasta - desde) / 86400000) + 1;
-  const desdePrev = addDays(desde, -nDias);
-  const hastaPrev = addDays(desde, -1);
-
   const kD = dateKey(desde), kH = dateKey(hasta);
-  const kDP = dateKey(desdePrev), kHP = dateKey(hastaPrev);
+  const enRango = acts.filter(a => a.fecha >= kD && a.fecha <= kH);
+  const tot = totalesPorTipo(enRango, tiposVis);
 
-  const enRango  = acts.filter(a => a.fecha >= kD && a.fecha <= kH);
-  const enPrev   = acts.filter(a => a.fecha >= kDP && a.fecha <= kHP);
+  const tarjetas = tiposVis.map(t => {
+    const a = tot[t.id];
+    let camposHTML = `<div class="m-box"><span class="m-lbl">Sesiones</span><span class="m-val">${a.n}</span></div>`;
+    
+    if(a.min > 0) {
+      camposHTML += `<div class="m-box"><span class="m-lbl">Tiempo</span><span class="m-val">${a.min} min</span></div>`;
+    }
 
-  const tot  = totalesPorTipo(enRango, tiposVis);
-  const prev = totalesPorTipo(enPrev, tiposVis);
+    // Mostrar distancia/desnivel SOLO en categorías donde aplica
+    if(t.id === 'senderismo' || t.id === 'running' || t.id === 'natacion' || t.id === 'paseo' || t.id === 'otro'){
+      if(a.km > 0) camposHTML += `<div class="m-box"><span class="m-lbl">Distancia</span><span class="m-val">${fmtNum(a.km,1)} km</span></div>`;
+    }
 
-  const bloques = tiposVis.map(t => {
-    const a = tot[t.id], b = prev[t.id];
-    return `<div class="card">
-      <div style="font-weight:650;margin-bottom:8px">${t.icono} ${esc(t.nombre)}</div>
-      <div class="metric"><span>Actividades</span><span class="v">${a.n} ${delta(a.n, b.n)}</span></div>
-      <div class="metric"><span>Distancia</span><span class="v">${fmtNum(a.km,2)} km ${delta(a.km, b.km)}</span></div>
-      <div class="metric"><span>Desnivel</span><span class="v">${fmtNum(a.desn,0)} m ${delta(a.desn, b.desn)}</span></div>
-      <div class="metric"><span>Duración</span><span class="v">${fmtNum(a.min,0)} min ${delta(a.min, b.min)}</span></div>
+    if(t.id === 'senderismo'){
+      if(a.desn > 0) camposHTML += `<div class="m-box"><span class="m-lbl">Desnivel</span><span class="m-val">${fmtNum(a.desn,0)} m</span></div>`;
+    }
+
+    return `<div class="card res-card">
+      <div class="res-head">${t.icono} ${esc(t.nombre)}</div>
+      <div class="res-metrics">
+        ${camposHTML}
+      </div>
     </div>`;
   }).join('');
 
   return topbar('Resumen') + `
   <div class="wrap">
-    <div class="chips" style="margin-bottom:14px">
+    <div class="chips" style="margin-bottom:12px">
       ${RANGOS.map(([k,l]) => `<button class="chip ${S.resumenRango === k ? 'sel' : ''}"
           data-action="resumen-rango" data-id="${k}">${l}</button>`).join('')}
     </div>
@@ -847,11 +923,11 @@ async function viewResumen(){
       </div>
     </div>` : ''}
 
-    <div class="muted center" style="font-size:13px;margin-bottom:12px">
-      ${fmtFecha(kD)} – ${fmtFecha(kH)} · comparado con ${fmtFecha(kDP)} – ${fmtFecha(kHP)}
+    <div class="muted center" style="font-size:12px;margin-bottom:10px">
+      Mostrando del ${fmtFecha(kD)} al ${fmtFecha(kH)}
     </div>
 
-    ${bloques || '<div class="empty">No hay tipos visibles.</div>'}
+    ${tarjetas || '<div class="empty">Sin tipos de actividad seleccionados.</div>'}
   </div>`;
 }
 
@@ -866,22 +942,21 @@ async function viewPeso(){
   return topbar('Peso') + `
   <div class="wrap">
     <div class="card">
-      <div class="sec-title" style="margin-top:0">Registro semanal</div>
+      <div class="sec-title" style="margin-top:0">Registro de Peso</div>
       <div class="row">
         <div class="field" style="margin:0"><label class="lbl">Fecha</label>
           <input class="input" type="date" data-peso="fecha" value="${esc(f.fecha)}"></div>
         <div class="field" style="margin:0"><label class="lbl">Peso (kg)</label>
           <input class="input" type="number" step="0.1" inputmode="decimal" data-peso="kg" value="${esc(f.kg)}"></div>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:12px" data-action="peso-guardar">Guardar</button>
-      <div class="muted" style="font-size:12px;margin-top:8px">Una entrada por semana: si ya existe, se sobrescribe.</div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px" data-action="peso-guardar">Guardar Peso</button>
     </div>
 
     <div class="card">
       <div class="sec-title" style="margin-top:0">Evolución</div>
       ${entradas.length >= 2
-        ? '<canvas id="pesoCanvas" style="width:100%;height:180px;display:block"></canvas>'
-        : '<div class="empty">Añade al menos dos registros para ver la gráfica.</div>'}
+        ? '<canvas id="pesoCanvas" style="width:100%;height:160px;display:block"></canvas>'
+        : '<div class="empty">Introduce al menos 2 datos para ver el gráfico.</div>'}
     </div>
 
     <div class="sec-title">Historial</div>
@@ -905,7 +980,7 @@ function drawPesoChart(){
 
   const dpr = window.devicePixelRatio || 1;
   const w = cv.clientWidth || 300;
-  const h = 180;
+  const h = 160;
   cv.width = Math.round(w * dpr);
   cv.height = Math.round(h * dpr);
   const ctx = cv.getContext('2d');
@@ -913,41 +988,36 @@ function drawPesoChart(){
   ctx.clearRect(0,0,w,h);
 
   const kgs = datos.map(d => d.kg);
-  const min = Math.min(...kgs) - 0.6;
-  const max = Math.max(...kgs) + 0.6;
-  const padX = 34, padY = 20;
+  const min = Math.min(...kgs) - 0.5;
+  const max = Math.max(...kgs) + 0.5;
+  const padX = 35, padY = 20;
 
   const X = i => padX + (w - padX*2) * (i / (datos.length - 1));
   const Y = kg => h - padY - (h - padY*2) * ((kg - min) / ((max - min) || 1));
 
-  /* rejilla */
-  ctx.strokeStyle = '#1e2c46';
+  ctx.strokeStyle = S.theme === 'dark' ? '#1e2c46' : '#cbd5e1';
   ctx.lineWidth = 1;
   for(let i=0;i<=3;i++){
     const y = padY + (h - padY*2) * (i/3);
     ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(w-padX, y); ctx.stroke();
   }
 
-  /* etiquetas */
-  ctx.fillStyle = '#6b7c99';
+  ctx.fillStyle = S.theme === 'dark' ? '#93a3bd' : '#475569';
   ctx.font = '10px system-ui,sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText(fmtNum(max,1), padX-6, padY+3);
   ctx.fillText(fmtNum(min,1), padX-6, h-padY+3);
 
-  /* línea */
-  ctx.strokeStyle = '#3b82f6';
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   datos.forEach((d,i) => { const x = X(i), y = Y(d.kg); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
   ctx.stroke();
 
-  /* puntos */
-  ctx.fillStyle = '#7dd3fc';
+  ctx.fillStyle = '#0284c7';
   datos.forEach((d,i) => {
     ctx.beginPath();
-    ctx.arc(X(i), Y(d.kg), 3, 0, Math.PI*2);
+    ctx.arc(X(i), Y(d.kg), 3.5, 0, Math.PI*2);
     ctx.fill();
   });
 }
@@ -956,7 +1026,7 @@ function drawPesoChart(){
    7. HISTÓRICO
    ===================================================================== */
 async function viewHistorico(){
-  const todas = await dbAll('actividades');   /* incluye tipos ocultos */
+  const todas = await dbAll('actividades');
   const f = S.hist;
 
   let lista = todas.slice();
@@ -965,16 +1035,14 @@ async function viewHistorico(){
   if(f.hasta) lista = lista.filter(a => a.fecha <= f.hasta);
   lista.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || (b.id - a.id));
 
-  const soloSenderismo = f.tipo === 'senderismo';
-
   return topbar('Histórico') + `
   <div class="wrap">
     <div class="card">
       <div class="field">
         <label class="lbl">Tipo</label>
         <select class="input" data-filtro="tipo" data-rerender="1">
-          <option value="">Todos (incluye ocultos)</option>
-          ${S.tipos.map(t => `<option value="${t.id}" ${f.tipo === t.id ? 'selected' : ''}>${t.icono} ${esc(t.nombre)}${t.visible ? '' : ' (oculto)'}</option>`).join('')}
+          <option value="">Todos los tipos</option>
+          ${S.tipos.map(t => `<option value="${t.id}" ${f.tipo === t.id ? 'selected' : ''}>${t.icono} ${esc(t.nombre)}</option>`).join('')}
         </select>
       </div>
       <div class="row">
@@ -983,143 +1051,180 @@ async function viewHistorico(){
         <div class="field" style="margin:0"><label class="lbl">Hasta</label>
           <input class="input" type="date" data-filtro="hasta" data-rerender="1" value="${esc(f.hasta)}"></div>
       </div>
-      <button class="btn btn-sm" style="margin-top:10px" data-action="hist-limpiar">Limpiar filtros</button>
     </div>
 
-    <div class="muted" style="font-size:13px;margin-bottom:10px">${lista.length} actividades</div>
+    <div class="muted" style="font-size:12.5px;margin-bottom:10px">${lista.length} registros encontrados</div>
 
     ${lista.length ? lista.map(a => {
       const t = tipoDe(a.tipo_id);
       const partes = [];
+      if(a.subcategoria) partes.push(a.subcategoria);
       if(a.duracion_min) partes.push(a.duracion_min + ' min');
       if(a.distancia_km) partes.push(fmtNum(a.distancia_km,2) + ' km');
       if(a.distancia_m)  partes.push(fmtNum(a.distancia_m,0) + ' m');
       if(a.desnivel_m)   partes.push(fmtNum(a.desnivel_m,0) + ' m desn.');
-      if(a.tipo_sesion)  partes.push(a.tipo_sesion);
       return `<div class="item" data-action="ver-act" data-id="${a.id}">
         <div class="ico">${t.icono}</div>
         <div class="grow">
-          <div class="t1">${esc(t.nombre)}${a.variante ? ' · ' + esc(a.variante) : ''}</div>
+          <div class="t1">${esc(t.nombre)}${a.subcategoria ? ' · ' + esc(a.subcategoria) : ''}</div>
           <div class="t2">${fmtFecha(a.fecha)}${partes.length ? ' · ' + partes.join(' · ') : ''}</div>
-          ${soloSenderismo && a.ruta ? `<div class="t2">🗺️ ${esc(a.ruta)}${a.wikiloc ? ` · <a href="${esc(a.wikiloc)}" target="_blank" rel="noopener">Wikiloc</a>` : ''}</div>` : ''}
+          ${a.ruta ? `<div class="t2">🗺️ ${esc(a.ruta)}</div>` : ''}
         </div>
-        ${!t.visible ? '<span class="hist-tipo">oculto</span>' : ''}
       </div>`;
     }).join('') : '<div class="empty">Sin resultados.</div>'}
   </div>`;
 }
 
 /* =====================================================================
-   8. AJUSTES
+   8. AJUSTES (TODAS LAS SECCIONES PLEGABLES <details>)
    ===================================================================== */
 async function viewAjustes(){
   const ini = prefInicio();
-  const vista = prefVista();
-  const ocultos = prefOcultosCal();
+  const ideas = (await dbAll('ideas')).reverse();
 
   return topbar('Ajustes') + `
   <div class="wrap">
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Visibilidad de tipos</div>
-      ${S.tipos.map(t => `
-        <label class="chk" style="cursor:pointer">
-          <span class="box" style="border:none;background:none;font-size:17px">${t.icono}</span>
-          <span class="txt">${esc(t.nombre)}</span>
-          <input type="checkbox" data-tipo-visible="${t.id}" ${t.visible ? 'checked' : ''}
-                 style="width:20px;height:20px;accent-color:#2563eb">
-        </label>`).join('')}
-      <div class="muted" style="font-size:12px;margin-top:8px">
-        Ocultar un tipo no borra nada: ni historial, ni checklist, ni planes.
+
+    <!-- SECCIÓN 1: VISIBILIDAD DE CATEGORÍAS -->
+    <details class="sec-fold">
+      <summary>Categorías Principales</summary>
+      <div class="fold-body">
+        ${S.tipos.map(t => `
+          <label class="chk-compact" style="cursor:pointer;margin-bottom:8px">
+            <span class="txt">${t.icono} ${esc(t.nombre)}</span>
+            <input type="checkbox" data-tipo-visible="${t.id}" ${t.visible ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary)">
+          </label>`).join('')}
       </div>
+    </details>
+
+    <!-- SECCIÓN 2: SUBCATEGORÍAS EDITABLES -->
+    <details class="sec-fold">
+      <summary>Gestión de Subcategorías (Gimnasio, etc.)</summary>
+      <div class="fold-body">
+        <div class="muted" style="font-size:12px;margin-bottom:10px">Añade o elimina opciones para los desplegables de actividad.</div>
+        ${S.tipos.filter(t=>t.visible).map(t => {
+          const subs = S.subcategorias.filter(s => s.tipo_id === t.id);
+          return `<div style="margin-bottom:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px">${t.icono} ${esc(t.nombre)}</div>
+            ${subs.map(s => `
+              <div class="chk-compact">
+                <span class="txt">${esc(s.nombre)}</span>
+                <button class="mini" data-action="subcat-borrar" data-id="${s.id}">✕</button>
+              </div>`).join('')}
+            <button class="btn btn-sm" style="margin-top:4px" data-action="subcat-add" data-tipo="${t.id}">＋ Añadir subcategoría</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </details>
+
+    <!-- SECCIÓN 3: PREFERENCIAS DEL CALENDARIO -->
+    <details class="sec-fold">
+      <summary>Configuración del Calendario</summary>
+      <div class="fold-body">
+        <div class="field">
+          <label class="lbl">Primer día de la semana</label>
+          <select class="input" data-pref="semanaInicio">
+            <option value="lunes" ${ini === 'lunes' ? 'selected' : ''}>Lunes</option>
+            <option value="domingo" ${ini === 'domingo' ? 'selected' : ''}>Domingo</option>
+          </select>
+        </div>
+      </div>
+    </details>
+
+    <!-- SECCIÓN 4: IDEAS DE MEJORA -->
+    <details class="sec-fold">
+      <summary>Ideas de mejora de la App</summary>
+      <div class="fold-body">
+        <div class="field">
+          <label class="lbl">Nueva idea o Nota</label>
+          <textarea class="input" id="inputIdea" placeholder="Escribe aquí tus ideas de mejora..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" data-action="idea-guardar">Guardar Idea</button>
+
+        <div style="margin-top:14px">
+          ${ideas.map(i => `
+            <div class="card" style="padding:10px;margin-bottom:8px;background:var(--bg-card-alt)">
+              <div style="white-space:pre-wrap;font-size:13.5px">${esc(i.texto)}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                <span style="font-size:11px;color:var(--text-muted)">${fmtFecha(i.fecha)}</span>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-sm" data-action="idea-copiar" data-id="${i.id}">Copiar</button>
+                  <button class="btn btn-sm ${i.implementado ? 'btn-primary' : ''}" data-action="idea-toggle" data-id="${i.id}">
+                    ${i.implementado ? '✓ Listo' : 'Marcar listo'}
+                  </button>
+                  <button class="mini" data-action="idea-borrar" data-id="${i.id}">✕</button>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </details>
+
+    <!-- SECCIÓN 5: GESTIÓN DE DATOS -->
+    <details class="sec-fold">
+      <summary>Copia de Seguridad y Datos</summary>
+      <div class="fold-body">
+        <button class="btn btn-block" data-action="exportar">⬇ Exportar Copia JSON</button>
+        <button class="btn btn-block" style="margin-top:8px" data-action="importar">⬆ Importar Copia JSON</button>
+        <input type="file" id="fileImport" accept="application/json,.json" hidden>
+        <button class="btn btn-danger btn-block" style="margin-top:12px" data-action="borrar-todo">Borrar Todos los Datos</button>
+      </div>
+    </details>
+
+    <!-- PIE CON LA VERSIÓN ACTUAL -->
+    <div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">
+      Versión Actual: <b>v2.0.0</b>
     </div>
 
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Calendario</div>
-      <div class="field">
-        <label class="lbl">Empezar la semana en</label>
-        <select class="input" data-pref="semanaInicio">
-          <option value="lunes"   ${ini === 'lunes' ? 'selected' : ''}>Lunes</option>
-          <option value="domingo" ${ini === 'domingo' ? 'selected' : ''}>Domingo</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="lbl">Vista por defecto</label>
-        <select class="input" data-pref="calendarioVista">
-          <option value="compacta"  ${vista === 'compacta' ? 'selected' : ''}>Compacta</option>
-          <option value="detallada" ${vista === 'detallada' ? 'selected' : ''}>Detallada</option>
-        </select>
-      </div>
-      <label class="lbl">Tipos mostrados en el calendario</label>
-      ${S.tipos.filter(t => t.visible).map(t => `
-        <label class="chk" style="cursor:pointer">
-          <span class="box" style="border:none;background:none;font-size:17px">${t.icono}</span>
-          <span class="txt">${esc(t.nombre)}</span>
-          <input type="checkbox" data-cal-tipo="${t.id}" ${ocultos.includes(t.id) ? '' : 'checked'}
-                 style="width:20px;height:20px;accent-color:#2563eb">
-        </label>`).join('')}
-    </div>
-
-    <div class="card">
-      <div class="sec-title" style="margin-top:0">Datos</div>
-      <button class="btn btn-block" data-action="exportar">⬇ Exportar JSON</button>
-      <button class="btn btn-block" style="margin-top:9px" data-action="importar">⬆ Importar JSON</button>
-      <input type="file" id="fileImport" accept="application/json,.json" hidden>
-      <button class="btn btn-danger btn-block" style="margin-top:9px" data-action="borrar-todo">Borrar todo</button>
-      <div class="muted" style="font-size:12px;margin-top:9px">Solo almacenamiento local en el dispositivo. Sin sincronización.</div>
-    </div>
   </div>`;
 }
 
 async function exportarJSON(){
   const datos = {};
-  for(const s of ['tipos','variantes','actividades','planes','checklist','checkEstado','peso','prefs']){
+  for(const s of ['tipos','subcategorias','actividades','planes','checklist','checkEstado','peso','prefs','ideas']){
     datos[s] = await dbAll(s);
   }
   datos.exportado = new Date().toISOString();
-  datos.version = 1;
+  datos.version = "2.0.0";
   const blob = new Blob([JSON.stringify(datos,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'deporte-' + hoyKey() + '.json';
+  a.download = 'deporte-v2-' + hoyKey() + '.json';
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 1500);
-  toast('JSON exportado');
+  toast('Copia exportada');
 }
 
 async function importarJSON(file){
   try{
     const txt = await file.text();
     const d = JSON.parse(txt);
-    for(const s of ['tipos','variantes','actividades','planes','checklist','checkEstado','peso','prefs']){
+    for(const s of ['tipos','subcategorias','actividades','planes','checklist','checkEstado','peso','prefs','ideas']){
       if(!Array.isArray(d[s])) continue;
       await dbClear(s);
       for(const it of d[s]) await dbPut(s, it);
     }
     await dbPut('prefs', {k:'seeded', v:1});
-    S.form = null;
-    toast('Datos importados');
+    toast('Datos importados correctamente');
     render();
   }catch(err){
-    alert('No se pudo importar el JSON: ' + err.message);
+    alert('Error al importar el archivo: ' + err.message);
   }
 }
 
 async function borrarTodo(){
-  if(!confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) return;
-  if(!confirm('Confirma de nuevo: se perderán actividades, planes, checklists y peso.')) return;
-  for(const s of ['tipos','variantes','actividades','planes','checklist','checkEstado','peso','prefs']){
+  if(!confirm('¿Eliminar TODOS los datos registrados?')) return;
+  for(const s of ['tipos','subcategorias','actividades','planes','checklist','checkEstado','peso','prefs','ideas']){
     await dbClear(s);
   }
-  S.form = null;
-  S.calOffset = 0;
   await seed();
-  toast('Todo borrado');
+  toast('Datos borrados');
   go('inicio');
 }
 
 /* =====================================================================
-   MODAL
+   MODAL AUXILIAR
    ===================================================================== */
 function showModal(html){
   $('#modal-root').innerHTML = `<div class="overlay"><div class="modal">${html}</div></div>`;
@@ -1130,11 +1235,10 @@ function cerrarModal(){
 }
 
 /* =====================================================================
-   EVENTOS
+   MANEJO DE EVENTOS DE ENTRADA Y ACCIONES
    ===================================================================== */
 document.addEventListener('input', e => {
   const t = e.target;
-
   if(t.dataset.field && S.form){ S.form[t.dataset.field] = t.value; return; }
   if(t.dataset.peso && S.pesoForm){ S.pesoForm[t.dataset.peso] = t.value; return; }
   if(t.dataset.plan && S.planForm){ S.planForm[t.dataset.plan] = t.value; return; }
@@ -1143,73 +1247,31 @@ document.addEventListener('input', e => {
 
 document.addEventListener('change', e => {
   const t = e.target;
-
-  /* Preferencias del calendario / ajustes */
-  if(t.dataset.pref){
-    setPref(t.dataset.pref, t.value).then(render);
-    return;
-  }
-
-  /* Tipos visibles en el calendario */
-  if(t.dataset.calTipo){
-    const id = t.dataset.calTipo;
-    const ocultos = prefOcultosCal().slice();
-    const i = ocultos.indexOf(id);
-    if(t.checked){ if(i >= 0) ocultos.splice(i,1); }
-    else { if(i < 0) ocultos.push(id); }
-    setPref('calendarioOcultos', ocultos).then(render);
-    return;
-  }
-
-  /* Visibilidad global de tipos */
+  if(t.dataset.pref){ setPref(t.dataset.pref, t.value).then(render); return; }
   if(t.dataset.tipoVisible){
     const tipo = S.tipos.find(x => x.id === t.dataset.tipoVisible);
     if(tipo){ tipo.visible = t.checked ? 1 : 0; dbPut('tipos', tipo).then(render); }
     return;
   }
-
-  /* Filtros del histórico */
-  if(t.dataset.filtro && t.dataset.rerender){
-    S.hist[t.dataset.filtro] = t.value;
-    render();
-    return;
-  }
-
-  /* Re-render del modal de plan al cambiar el tipo */
-  if(t.dataset.plan && t.dataset.rerender === 'modal'){
-    abrirPlanModal(S.planForm);
-    return;
-  }
-
-  /* Importar */
-  if(t.id === 'fileImport'){
-    if(t.files && t.files[0]) importarJSON(t.files[0]);
-  }
+  if(t.dataset.filtro && t.dataset.rerender){ S.hist[t.dataset.filtro] = t.value; render(); return; }
+  if(t.dataset.plan && t.dataset.rerender === 'modal'){ abrirPlanModal(S.planForm); return; }
+  if(t.id === 'fileImport' && t.files && t.files[0]){ importarJSON(t.files[0]); }
 });
 
 document.addEventListener('click', async e => {
-  /* Cierre del modal al tocar el fondo */
-  if(e.target.classList && e.target.classList.contains('overlay')){
-    cerrarModal();
-    return;
-  }
+  if(e.target.classList && e.target.classList.contains('overlay')){ cerrarModal(); return; }
 
   const el = e.target.closest('[data-action]');
   if(!el) return;
   const a = el.dataset.action;
 
   switch(a){
-
-    /* ---------- navegación ---------- */
+    case 'toggle-theme': toggleTheme(); break;
     case 'atras':        go('inicio'); break;
     case 'go':           go(el.dataset.screen); break;
 
-    /* ---------- actividad ---------- */
-    case 'nueva-act':
-      S.form = nuevoForm();
-      go('actividad');
-      break;
-
+    /* REGISTRO DE ACTIVIDAD */
+    case 'nueva-act': S.form = nuevoForm(); go('actividad'); break;
     case 'ver-act': {
       const act = await dbGet('actividades', Number(el.dataset.id));
       if(!act) return;
@@ -1221,61 +1283,43 @@ document.addEventListener('click', async e => {
       go('actividad');
       break;
     }
-
-    case 'form-tipo':
-      S.form.tipo_id = el.dataset.id;
-      render();
-      break;
-
-    case 'form-fecha': {
-      const d = addDays(new Date(), Number(el.dataset.dia));
-      S.form.fecha = dateKey(d);
-      render();
-      break;
-    }
-
-    case 'guardar-act':   await guardarActividad(); break;
-
+    case 'form-tipo': S.form.tipo_id = el.dataset.id; S.form.subcategoria = ''; render(); break;
+    case 'form-fecha': S.form.fecha = dateKey(addDays(new Date(), Number(el.dataset.dia))); render(); break;
+    case 'guardar-act': await guardarActividad(); break;
     case 'borrar-act':
       if(confirm('¿Borrar esta actividad?')){
         await dbDel('actividades', S.form.id);
         S.form = null;
-        toast('Actividad borrada');
+        toast('Actividad eliminada');
         go('inicio');
       }
       break;
 
-    /* ---------- calendario ---------- */
+    /* CALENDARIO */
     case 'sem-prev':  S.calOffset--; render(); break;
     case 'sem-next':  S.calOffset++; render(); break;
     case 'sem-hoy':   S.calOffset = 0; render(); break;
-
-    case 'plan-nuevo': abrirPlanModal(null, el.dataset.fecha); break;
-
+    case 'plan-nuevo': abrirPlanModal(null, hoyKey(), 9); break;
+    case 'plan-nuevo-slot': abrirPlanModal(null, el.dataset.fecha, parseInt(el.dataset.hora)); break;
     case 'plan-editar': {
       const p = await dbGet('planes', Number(el.dataset.id));
       if(p) abrirPlanModal(p);
       break;
     }
-
     case 'plan-guardar': await guardarPlan(); break;
-
     case 'plan-borrar':
-      if(confirm('¿Borrar este plan?')){
+      if(confirm('¿Borrar este evento programado?')){
         await dbDel('planes', S.planForm.id);
         cerrarModal();
-        toast('Plan borrado');
+        toast('Evento borrado');
         render();
       }
       break;
-
     case 'copiar-semana': await copiarSemanaPasada(); break;
-    case 'cal-config':    abrirConfigCalendario(); break;
-    case 'modal-close':   cerrarModal(); render(); break;
+    case 'modal-close':   cerrarModal(); break;
 
-    /* ---------- checklist ---------- */
+    /* CHECKLIST */
     case 'chk-tipo': S.chkTipo = el.dataset.id; render(); break;
-
     case 'chk-toggle': {
       const id = Number(el.dataset.id);
       const cur = await dbGet('checkEstado', id);
@@ -1283,7 +1327,6 @@ document.addEventListener('click', async e => {
       render();
       break;
     }
-
     case 'chk-mover': {
       const it = await dbGet('checklist', Number(el.dataset.id));
       it.seccion = it.seccion === 'imprescindible' ? 'opcional' : 'imprescindible';
@@ -1291,10 +1334,9 @@ document.addEventListener('click', async e => {
       render();
       break;
     }
-
     case 'chk-renombrar': {
       const it = await dbGet('checklist', Number(el.dataset.id));
-      const nuevo = prompt('Nuevo nombre:', it.texto);
+      const nuevo = prompt('Editar texto:', it.texto);
       if(nuevo && nuevo.trim()){
         it.texto = nuevo.trim();
         await dbPut('checklist', it);
@@ -1302,17 +1344,15 @@ document.addEventListener('click', async e => {
       }
       break;
     }
-
     case 'chk-borrar': {
       const id = Number(el.dataset.id);
-      if(confirm('¿Borrar este ítem?')){
+      if(confirm('¿Borrar ítem?')){
         await dbDel('checklist', id);
         await dbDel('checkEstado', id);
         render();
       }
       break;
     }
-
     case 'chk-add': {
       const texto = prompt('Nuevo ítem:');
       if(texto && texto.trim()){
@@ -1323,7 +1363,6 @@ document.addEventListener('click', async e => {
       }
       break;
     }
-
     case 'chk-reset': {
       const items = (await dbAll('checklist')).filter(i => i.tipo_id === S.chkTipo);
       for(const it of items) await dbPut('checkEstado', {id: it.id, marcado: false});
@@ -1332,60 +1371,92 @@ document.addEventListener('click', async e => {
       break;
     }
 
-    /* ---------- resumen ---------- */
-    case 'resumen-rango':
-      S.resumenRango = el.dataset.id;
-      render();
-      break;
+    /* RESUMEN */
+    case 'resumen-rango': S.resumenRango = el.dataset.id; render(); break;
 
-    /* ---------- peso ---------- */
+    /* PESO */
     case 'peso-guardar': {
       const kg = num(S.pesoForm.kg);
       if(!kg){ toast('Introduce el peso'); return; }
       const fecha = S.pesoForm.fecha || hoyKey();
-      const semana = dateKey(inicioSemana(parseKey(fecha), 'lunes'));
-      const todas = await dbAll('peso');
-      const existente = todas.find(p => {
-        const s = p.semana || dateKey(inicioSemana(parseKey(p.fecha), 'lunes'));
-        return s === semana;
-      });
-      if(existente) await dbPut('peso', {...existente, fecha, kg, semana});
-      else await dbPut('peso', {fecha, kg, semana});
+      await dbPut('peso', {fecha, kg});
       S.pesoForm = {fecha: hoyKey(), kg:''};
       toast('Peso guardado');
       render();
       break;
     }
-
     case 'peso-editar': {
       const p = await dbGet('peso', Number(el.dataset.id));
       if(p){ S.pesoForm = {fecha: p.fecha, kg: p.kg}; render(); window.scrollTo(0,0); }
       break;
     }
-
     case 'peso-borrar':
-      if(confirm('¿Borrar este registro de peso?')){
+      if(confirm('¿Eliminar registro de peso?')){
         await dbDel('peso', Number(el.dataset.id));
         render();
       }
       break;
 
-    /* ---------- histórico ---------- */
-    case 'hist-limpiar':
-      S.hist = {tipo:'', desde:'', hasta:''};
+    /* SUBCATEGORÍAS EN AJUSTES */
+    case 'subcat-add': {
+      const nom = prompt('Nombre de la subcategoría:');
+      if(nom && nom.trim()){
+        await dbPut('subcategorias', {tipo_id: el.dataset.tipo, nombre: nom.trim()});
+        toast('Subcategoría añadida');
+        render();
+      }
+      break;
+    }
+    case 'subcat-borrar': {
+      await dbDel('subcategorias', Number(el.dataset.id));
+      toast('Subcategoría borrada');
       render();
       break;
+    }
 
-    /* ---------- ajustes / datos ---------- */
+    /* IDEAS DE MEJORA EN AJUSTES */
+    case 'idea-guardar': {
+      const txt = $('#inputIdea').value;
+      if(txt && txt.trim()){
+        await dbPut('ideas', {texto: txt.trim(), fecha: hoyKey(), implementado: false});
+        toast('Idea guardada');
+        render();
+      } else {
+        toast('Escribe alguna idea');
+      }
+      break;
+    }
+    case 'idea-copiar': {
+      const item = await dbGet('ideas', Number(el.dataset.id));
+      if(item){
+        navigator.clipboard.writeText(item.texto);
+        toast('Texto copiado al portapapeles');
+      }
+      break;
+    }
+    case 'idea-toggle': {
+      const item = await dbGet('ideas', Number(el.dataset.id));
+      if(item){
+        item.implementado = !item.implementado;
+        await dbPut('ideas', item);
+        render();
+      }
+      break;
+    }
+    case 'idea-borrar': {
+      await dbDel('ideas', Number(el.dataset.id));
+      render();
+      break;
+    }
+
+    /* GESTIÓN GLOBAL */
     case 'exportar':   await exportarJSON(); break;
     case 'importar':   document.getElementById('fileImport').click(); break;
     case 'borrar-todo': await borrarTodo(); break;
   }
 });
 
-/* =====================================================================
-   ARRANQUE
-   ===================================================================== */
+/* ARRANQUE DE LA APLICACIÓN */
 (async function init(){
   await openDB();
   await seed();
