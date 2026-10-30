@@ -22,7 +22,7 @@ tr.wr td{color:var(--o);font-weight:600}tr.best td{background:rgba(22,163,74,.18
 </style></head><body><main id="app"></main><nav id="nav"></nav><div id="mod"></div><div id="mod2"></div>
 <script>
 /* ===== 1. UTILIDADES ===== */
-const APP_VERSION='2.1',SCHEMA=3,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
+const APP_VERSION='2.2',SCHEMA=3,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const EUR=new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}),NUM=new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
@@ -40,6 +40,7 @@ function def(){return{version:SCHEMA,asociados:[['Casa 1','casa'],['Casa 2','cas
 categorias:['Suministros','Telecomunicaciones','Seguros','Suscripciones','Impuestos y tasas','Vehículo','Mantenimiento hogar','Otros','Gimnasio','Comunidad de vecinos'],
 contratos:[],recibos:[],repostajes:[],gastos:[],planes:[],ideas:[],ajustes:defAj(),lastBackup:null}}
 const IDEAS_21=['Previsión de pagos de los próximos 12 meses','Exportar informes a CSV','Optimizar la potencia contratada','Tarifas PVPC con datos horarios','Comparativas de gas y agua','Excedentes solares y bono social'];
+const IDEAS_22=['Aviso de consumo de agua anómalo (posibles fugas) frente a la media','Consumo de agua por mes natural estimado (reparto diario de cada factura)','Comparar el consumo de agua con el mismo periodo del año anterior','Facturas de agua con cuota fija y tramos para detectar subidas de tarifa'];
 const defAj=()=>({rojo:15,naranja:60,rec:[30,7],bak:30,catGas:'Vehículo',impElec:5.11269632,iva:21,umbral:5});
 /* Migración automática. Antes de migrar se guarda (si no existe) una copia del JSON original en mis_servicios_prev_v<esquema anterior>. */
 function migrate(d){const v0=d.version=d.version||1;
@@ -47,6 +48,8 @@ function migrate(d){const v0=d.version=d.version||1;
  d.ajustes=Object.assign(defAj(),d.ajustes);
  if(v0<3){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').trim().toLowerCase()));
   IDEAS_21.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}})}
+ if(!d.seed22){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').trim().toLowerCase()));
+  IDEAS_22.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed22=1}
  d.version=SCHEMA;return Object.assign(def(),d)}
 function load(){try{const r=localStorage.getItem(KEY);return r?migrate(JSON.parse(r)):def()}catch(e){return def()}}
 let S=load();
@@ -60,10 +63,10 @@ function info(c){const v=vence(c);if(!v)return null;const lim=addD(v,-(c.preavis
 /* ===== 4. FORMULARIOS GENÉRICOS ===== */
 function modal(title,fields,vals,ok,host){
  /* Campos opcionales: vis(valoresActuales)->bool para mostrar/ocultar; r puede ser función; t:'html' con h() para bloques propios. host '#mod2' = capa superior. */
- const H=host||'#mod',pre=host?'g_':'f_';
+ const H=host||'#mod',pre=host?'g_':'f_',dk={},prev={},oh=(L,v)=>L.map(o=>{const[a,b]=Array.isArray(o)?o:[o,o];return`<option value="${esc(a)}"${a==v?' selected':''}>${esc(b)}</option>`}).join('');
  const h=fields.map(f=>{const v=vals[f.k]??f.d??'';let i;
   if(f.t==='html')return`<div id="L_${pre}${f.k}">${f.h()}</div>`;
-  if(f.t==='select')i=`<select id="${pre}${f.k}">${f.o.map(o=>{const[a,b]=Array.isArray(o)?o:[o,o];return`<option value="${esc(a)}"${a==v?' selected':''}>${esc(b)}</option>`}).join('')}</select>`;
+  if(f.t==='select'){const L=f.oo?f.oo(vals):f.o;dk[f.k]=JSON.stringify(L);i=`<select id="${pre}${f.k}">${oh(L,v)}</select>`}
   else if(f.t==='check')i=`<input type="checkbox" id="${pre}${f.k}"${v?' checked':''}>`;
   else if(f.t==='area')i=`<textarea id="${pre}${f.k}" rows="4">${esc(v)}</textarea>`;
   else i=`<input id="${pre}${f.k}" type="${f.t||'text'}" ${f.t==='number'?'step="any"':''} value="${esc(v)}">`;
@@ -71,7 +74,11 @@ function modal(title,fields,vals,ok,host){
  $(H).innerHTML=`<div class="ov"><div class="card"><h2>${title}</h2>${h}<div class="row sp"><button onclick="$('${H}').innerHTML=''">Cancelar</button><button class="p" id="${pre}ok">Guardar</button></div></div></div>`;
  const rd=()=>{const o={};for(const f of fields){if(f.t==='html')continue;const e=$('#'+pre+f.k);o[f.k]=f.t==='check'?e.checked:e.value}return o};
  const reqOf=(f,c)=>typeof f.r==='function'?f.r(c):f.r;
- const ref=()=>{const c=rd();for(const f of fields){const w=$('#L_'+pre+f.k),vis=!f.vis||f.vis(c);w.style.display=vis?'':'none';const q=w.querySelector('.rq');if(q)q.textContent=vis&&reqOf(f,c)?' *':''}};
+ const ref=()=>{let c=rd();
+  for(const f of fields){if(!f.oo)continue;const el=$('#'+pre+f.k),L=f.oo(c),k=JSON.stringify(L);if(dk[f.k]!==k){dk[f.k]=k;el.innerHTML=oh(L,el.value)}}
+  c=rd();
+  for(const f of fields){if(!f.chg)continue;const v=c[f.k];if(prev[f.k]!==undefined&&prev[f.k]!==v)f.chg(c,(k2,x)=>{const e=$('#'+pre+k2);if(e)e.value=x});prev[f.k]=v}
+  c=rd();for(const f of fields){const w=$('#L_'+pre+f.k),vis=!f.vis||f.vis(c);w.style.display=vis?'':'none';const q=w.querySelector('.rq');if(q)q.textContent=vis&&reqOf(f,c)?' *':''}};
  $(H).oninput=ref;$(H).onchange=ref;
  $('#'+pre+'ok').onclick=()=>{const c=rd(),o={};for(const f of fields){if(f.t==='html')continue;if(f.vis&&!f.vis(c))continue;
   const e=$('#'+pre+f.k);let v=f.t==='check'?e.checked:e.value.trim();
@@ -83,28 +90,39 @@ const closeM=()=>{$('#mod').innerHTML=''};
 const ask=m=>confirm(m);
 /* ===== 5. CRUD GENÉRICO ===== */
 const meses=['mensual','bimestral','trimestral','semestral','anual'];
+const SERV=[['ninguno','ninguno'],['electricidad','electricidad'],['agua','agua'],['gas','gas'],['internet','internet'],['movil','móvil'],['otro','otro']];
+const unitFor=c=>({electricidad:'kWh',agua:'m³',gas:'kWh'})[c?.tipoSuministro]||null;
+const contrList=c=>S.contratos.filter(x=>x.tipoImporte==='variable'&&(!c.fa||x.asociado===c.fa)&&(!c.fs||(x.tipoSuministro||'ninguno')===c.fs)).sort((a,b)=>(a.estado==='cancelado')-(b.estado==='cancelado'));
 const FIELDS={
 contratos:()=>[{k:'nombre',l:'Nombre',r:1},{k:'proveedor',l:'Proveedor'},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},
 {k:'importe',l:'Importe (€)',t:'number'},{k:'periodicidad',l:'Periodicidad',t:'select',o:meses,d:'mensual'},{k:'tipoImporte',l:'Tipo de importe',t:'select',o:['fijo','variable']},
-{k:'tipoSuministro',l:'Tipo de servicio',t:'select',o:[['ninguno','ninguno'],['electricidad','electricidad'],['agua','agua'],['gas','gas'],['internet','internet'],['movil','móvil'],['otro','otro']]},{k:'tar',t:'html',h:tarBlock,vis:c=>esElec(c.tipoSuministro,c.asociado)},{k:'proxCobro',l:'Próximo cobro',t:'date'},{k:'inicio',l:'Fecha de inicio',t:'date'},
+{k:'tipoSuministro',l:'Tipo de servicio',t:'select',o:SERV},{k:'tar',t:'html',h:tarBlock,vis:c=>esElec(c.tipoSuministro,c.asociado)},{k:'proxCobro',l:'Próximo cobro',t:'date'},{k:'inicio',l:'Fecha de inicio',t:'date'},
 {k:'vence',l:'Vencimiento / renovación',t:'date'},{k:'renovAuto',l:'Renovación automática',t:'check'},{k:'renMeses',l:'Periodo de renovación (meses)',t:'number',d:12},
 {k:'preaviso',l:'Preaviso (días)',t:'number',d:30},{k:'finPerm',l:'Fin de permanencia',t:'date'},{k:'pago',l:'Forma de pago'},{k:'nContrato',l:'Nº contrato / póliza'},
 {k:'telefono',l:'Teléfono de atención'},{k:'linea',l:'Móvil: nº de línea'},{k:'usuaria',l:'Móvil: persona usuaria'},{k:'documento',l:'Dónde está el documento'},{k:'notas',l:'Notas',t:'area'},
 {k:'estado',l:'Estado',t:'select',o:['activo','en revisión','cancelado']}],
-recibos:()=>{const E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c);return[{k:'contrato',l:'Contrato',t:'select',o:S.contratos.filter(c=>c.tipoImporte==='variable').map(c=>[c.id,c.nombre]),r:1},
+recibos:()=>{const E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c),TS=c=>gc(c.contrato)?.tipoSuministro,PER=c=>EC(c)||TS(c)==='agua'||TS(c)==='gas',CON=c=>TS(c)==='agua';return[
+{k:'fa',l:'Asociado (filtra los contratos)',t:'select',oo:()=>[['','Todos'],...aOpts()]},{k:'fs',l:'Tipo de servicio (filtra los contratos)',t:'select',o:[['','Todos'],...SERV]},
+{k:'contrato',l:'Contrato',t:'select',oo:c=>{const l=contrList(c);return l.length?l.map(x=>[x.id,x.nombre+' · '+an(x.asociado)+(x.estado==='cancelado'?' (cancelado)':'')]):[['','— Ningún contrato variable con este filtro —']]},chg:(c,set)=>{const u=unitFor(gc(c.contrato));if(u)set('unidad',u)},r:1},
 {k:'conDatos',l:'Voy a introducir los datos de consumo eléctrico (si lo desmarcas, el recibo se guarda igual pero no cuenta en los cálculos de consumo)',t:'check',d:true,vis:E},
-{k:'desde',l:'Periodo desde',t:'date',r:EC},{k:'hasta',l:'Periodo hasta',t:'date',r:EC},
+{k:'desde',l:'Periodo desde',t:'date',r:PER},{k:'hasta',l:'Periodo hasta',t:'date',r:PER},
 {k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'importe',l:'Importe (€)',t:'number',r:1},
 {k:'kwh1',l:'Consumo punta P1 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh2',l:'Consumo llano P2 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh3',l:'Consumo valle P3 (kWh)',t:'number',r:EC,vis:EC},
-{k:'consumo',l:'Consumo',t:'number',vis:NE},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:NE},{k:'notas',l:'Notas',t:'area'}]},
+{k:'consumo',l:'Consumo',t:'number',r:CON,vis:NE},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:NE},{k:'notas',l:'Notas',t:'area'}]},
 repostajes:()=>[{k:'coche',l:'Coche',t:'select',o:aOpts(null,'vehiculo'),r:1},{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'litros',l:'Litros',t:'number',r:1},{k:'importe',l:'Importe (€)',t:'number',r:1},
 {k:'ppl',l:'€/litro (vacío = calculado)',t:'number'},{k:'km',l:'Kilómetros (cuentakilómetros)',t:'number'},{k:'lleno',l:'Depósito lleno',t:'check',d:true},{k:'notas',l:'Notas',t:'area'}],
 gastos:()=>[{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'desc',l:'Descripción',r:1},{k:'importe',l:'Importe (€)',t:'number',r:1},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},{k:'notas',l:'Notas',t:'area'}]};
 function edit(kind,id,dup){
  const list=S[kind],cur=id?list.find(x=>x.id===id):null,vals=cur?{...cur}:{};
- if(!FIELDS[kind]().find(f=>f.t==='select'&&!f.o.length)===false&&kind!=='contratos'){alert('Primero crea un contrato variable / un coche (asociado de tipo vehículo).');return}
+ if((kind==='recibos'&&!S.contratos.some(c=>c.tipoImporte==='variable'))||(kind==='repostajes'&&!S.asociados.some(a=>a.tipo==='vehiculo'))){alert('Primero crea un contrato variable / un coche (asociado de tipo vehículo).');return}
+ if(kind==='recibos'){const f=ui.tab==='gastos'&&!cur?ui.gf:{a:'',s:''};let c0=cur?gc(cur.contrato):contrList({fa:f.a,fs:f.s})[0];
+  if(cur){vals.fa=c0?.asociado||'';vals.fs=c0?.tipoSuministro||'ninguno'}
+  else{vals.fa=f.a||'';vals.fs=f.s||'';if(!c0&&(f.a||f.s)){vals.fa='';vals.fs='';c0=contrList({})[0]}if(c0){vals.contrato=c0.id;const u=unitFor(c0);if(u)vals.unidad=u}}}
+ else if(!cur&&ui.tab==='gastos'){const f=ui.gf;if(kind==='repostajes'&&A(f.a)?.tipo==='vehiculo')vals.coche=f.a;if(kind==='gastos'){if(f.a)vals.asociado=f.a;if(f.c)vals.categoria=f.c}}
  if(kind==='contratos')TMP.tar=JSON.parse(JSON.stringify(cur?.tarifas||[]));
  modal((cur&&!dup?'Editar':'Nuevo')+' registro',FIELDS[kind](),vals,o=>{
+  delete o.fa;delete o.fs;
+  if(kind==='recibos'&&o.desde&&o.hasta&&o.hasta<o.desde){alert('El periodo «hasta» no puede ser anterior a «desde».');return false}
   if(kind==='repostajes'&&!o.ppl&&o.litros)o.ppl=o.importe/o.litros;
   if(kind==='contratos'&&esElec(o.tipoSuministro,o.asociado)){o.tarifas=TMP.tar.slice().sort((a,b)=>a.desde.localeCompare(b.desde));
    if(!o.tarifas.length)setTimeout(()=>alert('Aviso: este contrato eléctrico no tiene tarifas. Añade al menos una para poder calcular el importe teórico.'),50)}
@@ -117,7 +135,7 @@ function edit(kind,id,dup){
   if(save())go();else return false})}
 function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
 /* ===== 6. PANTALLAS ===== */
-const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'recibos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',d1:'',d2:'',q:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{}};
+const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'recibos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{fix:1,var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:''};
 const TABS=[['inicio','Inicio'],['contratos','Contratos'],['gastos','Gastos'],['informes','Informes'],['mas','Más']];
 function go(t,s){if(t){ui.tab=t;ui.sub=s||''}
  $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('');
@@ -133,7 +151,7 @@ function inicio(){const act=S.contratos.filter(c=>c.estado==='activo'),m=act.red
 <h2>Qué vigilar</h2>${w.length?w.map(([c,i])=>watchRow(c,i)).join(''):'<div class="card m">Nada que vigilar. Añade contratos con fecha de vencimiento.</div>'}`}
 function contratos(){const q=ui.q.toLowerCase();
  const l=S.contratos.filter(c=>(!q||(c.nombre+c.proveedor).toLowerCase().includes(q))&&(!ui.fa||c.asociado===ui.fa)&&(!ui.fe||c.estado===ui.fe));
- return`<h1>Contratos</h1><div class="row"><input placeholder="Buscar…" value="${esc(ui.q)}" oninput="ui.q=this.value;go();$('#app input').focus()">
+ return`<h1>Contratos</h1><div class="row"><input placeholder="Buscar…" value="${esc(ui.q)}" oninput="ui.q=this.value;go();rf()">
 <select onchange="ui.fa=this.value;go()"><option value="">Todos</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.fa===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>
 <select onchange="ui.fe=this.value;go()">${['','activo','en revisión','cancelado'].map(e=>`<option value="${e}"${ui.fe===e?' selected':''}>${e||'Cualquier estado'}</option>`).join('')}</select>
 <button class="p" onclick="edit('contratos')">+ Nuevo</button></div>
@@ -145,6 +163,7 @@ ${isElecC(c)?`<div class="m">⚡ ${(c.tarifas||[]).length} tarifa(s)</div>`:''}
 <button class="s" onclick="renew('${c.id}')">Renovado</button><button class="s" onclick="gest('${c.id}')">${c.aviso?'Quitar aviso':'Aviso gestionado'}</button>
 <button class="s" onclick="cancel('${c.id}')">Cancelar</button><button class="s" onclick="icsOne('${c.id}')">📅</button><button class="s d" onclick="del('contratos','${c.id}')">Borrar</button></div></div>`}).join(''):'<div class="card m">No hay contratos con estos filtros.</div>'}`}
 const gc=id=>S.contratos.find(c=>c.id===id);
+const rf=()=>{const e=$('#app input');if(e){e.focus();const n=e.value.length;e.setSelectionRange(n,n)}};
 function renew(id){const c=gc(id);if(!c.vence){alert('Indica primero la fecha de vencimiento.');return}c.vence=addM(vence(c)||c.vence,c.renMeses||12);c.aviso=false;save();go()}
 function gest(id){const c=gc(id);c.aviso=!c.aviso;save();go()}
 function cancel(id){if(ask('¿Cancelar el contrato? Se conserva el histórico.')){const c=gc(id);c.estado='cancelado';c.fechaCancel=today();save();go()}}
@@ -153,7 +172,7 @@ function gastos(){const g=ui.gv,tb=[['recibos','Recibos'],['repostajes','Gasolin
  const l=S[g].filter(r=>gfl(g,r)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
  const txt={recibos:recTxt,repostajes:r=>`${esc(an(r.coche))} · ${NUM.format(r.litros)} L · ${NUM.format(r.ppl||0)} €/L${r.km?' · '+NUM.format(r.km)+' km':''}`,gastos:r=>`${esc(r.desc)} · ${esc(r.categoria)} · ${esc(an(r.asociado))}`};
  return`<h1>Gastos</h1><div class="tabs">${tb.map(([k,v])=>`<button class="${g===k?'on':''}" onclick="ui.gv='${k}';go()">${v}</button>`).join('')}</div>
-<button class="p" onclick="edit('${g}')">+ Añadir</button><div class="card np"><div class="row"><select onchange="ui.gf.a=this.value;go()"><option value="">Todos los asociados</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.gf.a===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select><select onchange="ui.gf.c=this.value;go()"><option value="">Todas las categorías</option>${S.categorias.map(c=>`<option${ui.gf.c===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="row"><label>Desde<input type="date" value="${ui.gf.d1}" onchange="ui.gf.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.gf.d2}" onchange="ui.gf.d2=this.value;go()"></label></div><div class="row"><input placeholder="Buscar…" value="${esc(ui.gf.q)}" onchange="ui.gf.q=this.value;go()"><button class="s" onclick="ui.gf={a:'',c:'',d1:'',d2:'',q:''};go()">Limpiar</button></div></div><div class="m">${l.length} registros · ${eur(l.reduce((t,r)=>t+r.importe,0))}</div>${g==='repostajes'?fuel():''}
+<button class="p" onclick="edit('${g}')">+ Añadir</button><div class="card np"><div class="row"><select onchange="ui.gf.a=this.value;go()"><option value="">Todos los asociados</option>${S.asociados.map(a=>`<option value="${a.id}"${ui.gf.a===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>${g==='recibos'?`<select onchange="ui.gf.s=this.value;go()"><option value="">Todos los servicios</option>${SERV.map(([k,l])=>`<option value="${k}"${ui.gf.s===k?' selected':''}>${l}</option>`).join('')}</select>`:''}<select onchange="ui.gf.c=this.value;go()"><option value="">Todas las categorías</option>${S.categorias.map(c=>`<option${ui.gf.c===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="row"><label>Desde<input type="date" value="${ui.gf.d1}" onchange="ui.gf.d1=this.value;go()"></label><label>Hasta<input type="date" value="${ui.gf.d2}" onchange="ui.gf.d2=this.value;go()"></label></div><div class="row"><input placeholder="Buscar…" value="${esc(ui.gf.q)}" onchange="ui.gf.q=this.value;go()"><button class="s" onclick="ui.gf={a:'',c:'',s:'',d1:'',d2:'',q:''};go()">Limpiar</button></div></div><div class="m">${l.length} registros · ${eur(l.reduce((t,r)=>t+r.importe,0))}</div>${g==='repostajes'?fuel():''}
 ${l.length?l.map(r=>`<div class="card"><div class="row sp"><b>${eur(r.importe)}</b><span class="m">${fd(r.fecha)}</span></div><div class="m">${txt[g](r)}</div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('${g}','${r.id}')">Editar</button><button class="s d" onclick="del('${g}','${r.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Aún no hay registros.</div>'}`}
 function fuelStats(coche){const l=S.repostajes.filter(r=>r.coche===coche).sort((a,b)=>a.fecha.localeCompare(b.fecha)||(a.km||0)-(b.km||0));
  let prev=null,lit=0,eu=0,km=0;
@@ -185,7 +204,7 @@ ${ui.comb?`<tr><td><b>Total combinado</b></td><td class="n"><b>${eur(Object.valu
 <h2>Por asociado</h2><div class="card">${tbl(sum(it,'aso'),an)}</div><h2>Por categoría</h2><div class="card">${tbl(sum(it,'cat'))}</div><h2>Por mes (sin contratos fijos)</h2><div class="card">${svg}</div>`}
 /* --- Más --- */
 function mas(){const s=ui.sub;if(s)return SUB[s]();
- return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula (electricidad)'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}</p>`}
+ return`<h1>Más</h1>${[['aso','Asociados'],['cat','Categorías'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}</p>`}
 const back=`<button onclick="go('mas')">‹ Más</button>`;
 const SUB={
 aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Editar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
@@ -197,13 +216,14 @@ ics:()=>`${back}<h1>Exportar al calendario</h1><div class="card"><p class="m">Ev
 ideas:()=>{const q=ui.idq.toLowerCase(),l=S.ideas.filter(i=>(ui.idf==='todas'||(ui.idf==='pend'?i.estado==='pendiente':i.estado==='implementada'))&&(!q||i.texto.toLowerCase().includes(q)));
  return`${back}<h1>Ideas de mejora</h1><div class="row"><button class="p" onclick="ideaEd()">+ Idea</button><button onclick="copyPend()">Copiar pendientes</button></div>
 <div class="tabs">${[['todas','Todas'],['pend','Pendientes'],['impl','Implementadas']].map(([k,v])=>`<button class="${ui.idf===k?'on':''}" onclick="ui.idf='${k}';go('mas','ideas')">${v}</button>`).join('')}</div>
-<input placeholder="Buscar…" value="${esc(ui.idq)}" oninput="ui.idq=this.value;go('mas','ideas');$('#app input').focus()">
+<input placeholder="Buscar…" value="${esc(ui.idq)}" oninput="ui.idq=this.value;go('mas','ideas');rf()">
 ${l.length?l.map(i=>`<div class="card"><div style="white-space:pre-wrap">${esc(i.texto)}</div><div class="m">${fd(i.creada)} · ${i.estado}${i.fechaImpl?' '+fd(i.fechaImpl):''}</div><div class="row"><button class="s" onclick="ideaEd('${i.id}')">Editar</button><button class="s" onclick="ideaTog('${i.id}')">${i.estado==='pendiente'?'Implementada':'Volver a pendiente'}</button><button class="s d" onclick="ideaDel('${i.id}')">Borrar</button></div></div>`).join(''):'<div class="card m">Sin ideas todavía.</div>'}`},
 calc:()=>{const a=S.ajustes;return`${back}<h1>Cómo se calcula</h1><div class="card"><p>Estimación del importe de un recibo eléctrico con tarifa 2.0TD (energía en 3 franjas: P1 punta, P2 llano, P3 valle; potencia en 2: P1 punta, P2 valle). Se usa la tarifa del contrato vigente en la fecha «hasta» del recibo.</p><ol>
 <li><b>días</b> = (hasta − desde) + 1</li><li><b>potencia</b> = (P1 · precio P1 + P2 · precio P2) · días</li><li><b>energía</b> = (kWh1 · e1 + kWh2 · e2 + kWh3 · e3) · (1 − descuento / 100)</li><li><b>contador</b> = alquiler mensual · 12 / 365 · días</li>
 <li><b>impuesto eléctrico</b> = ${NUM.format(a.impElec)} % · (potencia + energía)</li><li><b>IVA</b> = ${NUM.format(a.iva)} % · (potencia + energía + impuesto + contador + otros)</li><li><b>total</b> = potencia + energía + impuesto + contador + otros + IVA</li></ol>
 <p class="m">«Otros» es el importe mensual antes de impuestos que se suma a cada recibo. Los porcentajes se cambian en Más → Ajustes. El umbral de desviación (${NUM.format(a.umbral)} %) marca en naranja los recibos cuyo importe real difiere del teórico.</p>
-<p class="warn card">⚠️ Es una estimación orientativa: no incluye bono social, exceso de potencia ni servicios extra. Los recibos sin desglose de franjas o marcados como pendientes de consumo quedan fuera del cálculo teórico y de la comparativa.</p></div>`},
+<p class="warn card">⚠️ Es una estimación orientativa: no incluye bono social, exceso de potencia ni servicios extra. Los recibos sin desglose de franjas o marcados como pendientes de consumo quedan fuera del cálculo teórico y de la comparativa.</p></div>
+<h2>Agua y gas</h2><div class="card"><p>Cada factura cubre un periodo (desde–hasta). Por factura: <b>consumo/mes</b> = consumo ÷ días · 30,4375 y <b>€/mes</b> = importe ÷ días · 30,4375. Para el intervalo elegido, cada factura se <b>prorratea por días</b> (si solo una parte del periodo cae dentro del intervalo, cuenta esa parte) y las medias mensuales se calculan solo sobre los días cubiertos por facturas. Si hay varios contratos (por ejemplo dos casas), se suman sus medias mensuales.</p><p class="m">Las facturas sin periodo o sin consumo no entran en las medias (se avisa y se pueden editar desde la tabla).</p></div>`},
 acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v${APP_VERSION} · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (localStorage).</span></div>`};
 const asoF=()=>[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','trastero','garaje','vehiculo','persona','general']},{k:'perteneceA',l:'Pertenece a (casa; para trastero/garaje)',t:'select',o:[['','—'],...aOpts(null,'casa')]}];
 function addAso(){modal('Nuevo asociado',asoF(),{},o=>{S.asociados.push({id:uid(),...o,archivado:false});save();go('mas','aso')})}
@@ -220,7 +240,7 @@ async function wipe(){try{Object.keys(localStorage).filter(k=>k.startsWith('mis_
  try{const dbs=indexedDB.databases?await indexedDB.databases():[{name:'mis_servicios'}];await Promise.all(dbs.filter(d=>d.name&&d.name.startsWith('mis_servicios')).map(d=>new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=r})))}catch(e){}
  S=def();alert('Datos de la app borrados.');location.reload()}
 function gfl(g,r){const f=ui.gf,c=g==='recibos'?gc(r.contrato):null,aso=g==='recibos'?c?.asociado:g==='repostajes'?r.coche:r.asociado,cat=g==='recibos'?c?.categoria:g==='repostajes'?S.ajustes.catGas:r.categoria;
- return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
+ return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&(!f.s||g!=='recibos'||(c?.tipoSuministro||'ninguno')===f.s)&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
 function setP(k){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),F=(a,b)=>{ui.d1=ISO(a);ui.d2=ISO(b)};ui.per=k;
  if(k==='mes')F(new Date(y,m,1),new Date(y,m+1,0));else if(k==='mesant')F(new Date(y,m-1,1),new Date(y,m,0));else if(k==='tri'){const q=Math.floor(m/3)*3;F(new Date(y,q,1),new Date(y,q+3,0))}
  else if(k==='ano')F(new Date(y,0,1),new Date(y,11,31));else if(k==='anoant')F(new Date(y-1,0,1),new Date(y-1,11,31));else{ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
@@ -268,7 +288,8 @@ function recTxt(r){const c=gc(r.contrato),n=esc(c?.nombre||'—')+' · ';
  if(isElecC(c)){if(r.conDatos===false)return n+'⏳ pendiente de datos de consumo (excluido de los cálculos)';
   if(num(r.kwh1)&&num(r.kwh2)&&num(r.kwh3))return n+`P1 ${NUM.format(r.kwh1)} · P2 ${NUM.format(r.kwh2)} · P3 ${NUM.format(r.kwh3)} kWh`+(r.desde&&r.hasta?` · ${fd(r.desde)}–${fd(r.hasta)}`:'');
   return n+(r.consumo?NUM.format(r.consumo)+' '+r.unidad+' · ':'')+'sin desglose de franjas'}
- return n+(r.consumo?NUM.format(r.consumo)+' '+r.unidad:'sin consumo')}
+ const pr=r.desde&&r.hasta?` · ${fd(r.desde)}–${fd(r.hasta)}`:'',pu=r.consumo>0&&r.importe?` · ${NUM.format(r.importe/r.consumo)} €/${r.unidad||'ud'}`:'';
+ return n+(r.consumo?NUM.format(r.consumo)+' '+(r.unidad||''):'sin consumo')+pr+pu}
 /* --- Tarifas del contrato (editor dentro del formulario del contrato) --- */
 const TMP={tar:[]};
 const TAR_F=[{k:'desde',l:'Vigente desde',t:'date',r:1},{k:'pot1',l:'Potencia contratada P1 punta (kW)',t:'number',r:1},{k:'pot2',l:'Potencia contratada P2 valle (kW)',t:'number',r:1},
@@ -287,8 +308,8 @@ function tarEd(i){const t=i>=0?TMP.tar[i]:null,last=TMP.tar.slice().sort((a,b)=>
 function tarDel(i){if(ask('¿Borrar esta tarifa?')){TMP.tar.splice(i,1);refTar()}}
 /* --- Informes: segmentado, selector de periodo --- */
 const perSel=()=>`<div class="tabs" style="flex-wrap:wrap">${[['mes','Este mes'],['mesant','Mes anterior'],['tri','Trimestre'],['ano','Año'],['12m','12 meses'],['anoant','Año anterior']].map(([k,l])=>`<button class="${ui.per===k?'on':''}" onclick="setP('${k}')">${l}</button>`).join('')}</div>${['mes','mesant','tri','ano','anoant'].includes(ui.per)?`<div class="row"><button onclick="shiftP(-1)">◀</button><button onclick="shiftP(1)">▶</button></div>`:''}<div class="row"><label>Desde<input type="date" value="${ui.d1}" onchange="ui.d1=this.value;ui.per='';go()"></label><label>Hasta<input type="date" value="${ui.d2}" onchange="ui.d2=this.value;ui.per='';go()"></label></div>`;
-function setIV(k){ui.iv=k;if(k==='ele'&&!ui.eleInit){ui.eleInit=1;ui.per='12m';ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
-function informes(){return`<h1>Informes</h1><div class="tabs np">${[['res','Resumen'],['ele','Electricidad'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='ele'?infEle():ui.iv==='cmp'?infCmp():infRes()}`}
+function setIV(k){ui.iv=k;if((k==='ele'||k==='agua')&&!ui['init_'+k]){ui['init_'+k]=1;ui.per='12m';ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
+function informes(){return`<h1>Informes</h1><div class="tabs np" style="flex-wrap:wrap">${[['res','Resumen'],['ele','Electricidad'],['agua','Agua y gas'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='ele'?infEle():ui.iv==='agua'?infAgua():ui.iv==='cmp'?infCmp():infRes()}`}
 /* --- Gráficos SVG (colores por variables CSS) --- */
 const lg=(c,t)=>`<span class="lg"><i style="background:${c}"></i>${t}</span>`;
 const svgWrap=(n,h,inner,lab)=>`<div style="overflow-x:auto"><svg width="${Math.max(320,n*46+16)}" height="${h}" role="img" aria-label="${esc(lab)}">${inner}</svg></div>`;
@@ -351,6 +372,45 @@ ${cmpTbl(c.rows,c.real)}</div>`});
   if(R.tot){const best=c=>cmpRows(c.rows,c.real).best,bt=cmpRows(R.tot.rows,R.tot.real).best;
    h+=`<h2>Todas las casas (plan único)</h2><div class="card"><div class="m">Mejor plan por casa:</div>${R.casas.map(c=>{const b=best(c);return`<div>${esc(c.a.nombre)}: <b>${esc(b.lab)}</b> · ${eur(b.c)}/año <span class="m">(${sg(b.c-c.real)} vs. real)</span></div>`}).join('')}<div style="margin-top:6px">Mejor plan único para todas: <b>${esc(bt.lab)}</b> · ${eur(bt.c)}/año <span class="m">(${sg(bt.c-R.tot.real)} vs. real)</span></div></div><div class="card">${cmpTbl(R.tot.rows,R.tot.real)}</div>`}}
  return h+planesHtml()}
+/* --- Informes → Agua y gas (v2.2) --- */
+/* Cada factura: ×/mes = consumo/días·30,4375. Intervalo: prorrateo por días de solape; medias solo sobre días cubiertos; varios contratos → suma de medias. */
+const KM=30.4375,SVN={agua:'Agua',gas:'Gas'};
+function consRows(sv,aso,d1,d2){return S.recibos.map(r=>{const c=gc(r.contrato);if(!c||c.tipoSuministro!==sv||(aso&&c.asociado!==aso))return null;
+  const cons=num(r.consumo)?r.consumo:null,unit=r.unidad||'m³';
+  if(r.desde&&r.hasta&&r.hasta>=r.desde){const dias=diff(r.hasta,r.desde)+1,a=r.desde>d1?r.desde:d1,b=r.hasta<d2?r.hasta:d2,ov=diff(b,a)+1;if(ov<=0)return null;return{r,c,has:1,dias,ov,frac:ov/dias,cons,unit,key:r.hasta}}
+  if(!r.fecha||r.fecha<d1||r.fecha>d2)return null;return{r,c,has:0,dias:0,ov:0,frac:1,cons,unit,key:r.fecha}}).filter(Boolean).sort((a,b)=>a.key.localeCompare(b.key))}
+function svgBars1(b,col,lab,f){const mx=Math.max(1e-9,...b.map(x=>x.v)),base=134,ph=104;
+ return svgWrap(b.length,160,b.map((x,i)=>{const xx=i*46+8,h=x.v/mx*ph;return`<rect x="${xx}" y="${base-h}" width="30" height="${h}" fill="${col}" rx="2"/>`+tx(xx+15,base-h-4,f(x.v),9)+tx(xx+15,base+14,esc(x.l))}).join(''),lab)}
+function svgLine1(b,lab,f){const v=b.map(x=>x.v),lo=Math.min(...v),hi=Math.max(...v),span=(hi-lo)||hi||1,base=134,ph=90,pts=v.map((y,i)=>[i*46+23,base-8-((y-lo)/span)*ph]);
+ return svgWrap(b.length,160,`<polyline fill="none" stroke="var(--p)" stroke-width="2" points="${pts.map(q=>q.join(',')).join(' ')}"/>`+pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="3.5" fill="var(--p)"/>`+tx(q[0],q[1]-8,f(v[i]),9)+tx(q[0],base+14,esc(b[i].l))).join(''),lab)}
+function infAgua(){const sv=ui.sv,cs=S.contratos.filter(c=>c.tipoSuministro===sv),asos=[...new Set(cs.map(c=>c.asociado))].map(A).filter(Boolean);
+ if(ui.ac&&!asos.some(a=>a.id===ui.ac))ui.ac='';
+ const rows=consRows(sv,ui.ac,ui.d1,ui.d2),cnt={};rows.forEach(x=>{if(x.has&&x.cons!=null)cnt[x.unit]=(cnt[x.unit]||0)+1});
+ const U=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||'m³',used=rows.filter(x=>x.has&&x.cons!=null&&x.unit===U),
+  sinPer=rows.filter(x=>!x.has).length,sinCons=rows.filter(x=>x.has&&x.cons==null).length,otraU=rows.filter(x=>x.has&&x.cons!=null&&x.unit!==U).length,G={};
+ used.forEach(x=>{const g=G[x.c.id]||(G[x.c.id]={c:x.c,rows:[],cons:0,imp:0,dias:0});g.rows.push(x);g.cons+=x.cons*x.frac;g.imp+=x.r.importe*x.frac;g.dias+=x.ov});
+ const gs=Object.values(G).map(g=>({...g,mc:g.cons/g.dias*KM,mi:g.imp/g.dias*KM})),cons=gs.reduce((s,g)=>s+g.cons,0),imp=gs.reduce((s,g)=>s+g.imp,0),mc=gs.reduce((s,g)=>s+g.mc,0),mi=gs.reduce((s,g)=>s+g.mi,0),span=diff(ui.d2,ui.d1)+1,
+  kp=(l,v,x)=>`<div class="card" style="margin:0"><div class="m">${l}</div><b>${v}</b>${x?`<div class="m">${x}</div>`:''}</div>`,pl=(n,t)=>`${n} factura${n===1?'':'s'} ${t}`,
+  mal=sv==='agua'?S.contratos.filter(c=>c.tipoImporte==='variable'&&(!c.tipoSuministro||c.tipoSuministro==='ninguno'||c.tipoSuministro==='otro')&&/agua|aigua|water/i.test(c.nombre+' '+(c.proveedor||''))):[],
+  avisos=[...mal.map(c=>`⚠️ El contrato «${esc(c.nombre)}» parece de agua pero su Tipo de servicio no es «agua», así que no entra en este informe. Edítalo en Contratos.`),
+   sinPer?`⚠️ ${pl(sinPer,'sin periodo (desde/hasta)')}: no entra${sinPer===1?'':'n'} en las medias. Edítalas desde la tabla.`:'',sinCons?`⚠️ ${pl(sinCons,'sin consumo')}: no entra${sinCons===1?'':'n'} en las medias.`:'',
+   otraU?`⚠️ ${pl(otraU,'con unidad distinta de '+U)}: excluida${otraU===1?'':'s'} del informe.`:'',
+   ...gs.filter(g=>g.dias<span).map(g=>`ℹ️ ${esc(an(g.c.asociado))}${gs.length>1?' · '+esc(g.c.nombre):''}: las facturas cubren ${g.dias} de ${span} días del intervalo; las medias se calculan solo sobre los días cubiertos.`)];
+ const prevBy={},fmt1=v=>NUM.format(Math.round(v*10)/10),
+  tr=rows.map(x=>{const ed=`<td class="np"><button class="s" onclick="edit('recibos','${x.r.id}')">✎</button></td>`,casa=ui.ac?'':`<td>${esc(an(x.c.asociado))}</td>`;
+   if(!x.has)return`<tr class="wr">${casa}<td>${fd(x.r.fecha)}<br><span class="m">sin periodo</span></td><td class="n">${x.cons!=null?NUM.format(x.cons):'—'}</td><td class="n">—</td><td class="n">${eur(x.r.importe)}</td><td class="n">—</td><td class="n">—</td>${ed}</tr>`;
+   const ok=x.cons!=null&&x.unit===U,m=ok?x.cons/x.dias*KM:null,e=x.r.importe/x.dias*KM,pu=ok&&x.cons>0?x.r.importe/x.cons:null;let vr='';
+   if(m!=null){const q=prevBy[x.c.id];if(q>0)vr=`<br><span class="m">${sgp((m-q)/q*100)}</span>`;prevBy[x.c.id]=m}
+   return`<tr${ok?'':' class="wr"'}>${casa}<td>${fd(x.r.desde)}<br>${fd(x.r.hasta)}<br><span class="m">${x.dias} días${x.frac<0.999?' · parcial: '+Math.round(x.frac*100)+' % dentro':''}</span></td><td class="n">${x.cons!=null?NUM.format(x.cons)+(x.unit!==U?' '+esc(x.unit):''):'—'}</td><td class="n">${m!=null?NUM.format(m)+vr:'—'}</td><td class="n">${eur(x.r.importe)}</td><td class="n">${eur(e)}</td><td class="n">${pu!=null?N3.format(pu)+' €':'—'}</td>${ed}</tr>`}).join(''),
+  lab=x=>x.r.hasta.slice(5,7)+'/'+x.r.hasta.slice(2,4),
+  charts=gs.map(g=>`<h2>${esc(an(g.c.asociado))}${gs.length>1?' · '+esc(g.c.nombre):''}</h2><div class="card"><div class="m">${U}/mes por factura</div>${svgBars1(g.rows.map(x=>({l:lab(x),v:x.cons/x.dias*KM})),'var(--p)',U+'/mes por factura',fmt1)}<div class="m">€/mes por factura</div>${svgBars1(g.rows.map(x=>({l:lab(x),v:x.r.importe/x.dias*KM})),'var(--teo)','€/mes por factura',v=>Math.round(v))}<div class="m">€/${U} por factura</div>${svgLine1(g.rows.map(x=>({l:lab(x),v:x.cons>0?x.r.importe/x.cons:0})),'€ por '+U,v=>N3.format(v))}</div>`).join('');
+ const sel=`<div class="card np"><div class="row"><label style="margin:0">Servicio<select onchange="ui.sv=this.value;ui.ac='';go()">${Object.entries(SVN).map(([k,l])=>`<option value="${k}"${sv===k?' selected':''}>${l}</option>`).join('')}</select></label><label style="margin:0">Asociado<select onchange="ui.ac=this.value;go()"><option value="">Todos</option>${asos.map(a=>`<option value="${a.id}"${ui.ac===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select></label></div>${perSel()}<div class="row"><button onclick="go('mas','calc')">Cómo se calcula</button><button onclick="print()">Imprimir / PDF</button></div></div>`;
+ const head=`<h2>${SVN[sv]} · ${ui.ac?esc(an(ui.ac)):'Todos los asociados'} · ${fd(ui.d1)} – ${fd(ui.d2)}</h2>${avisos.map(a=>`<div class="card warn">${a}</div>`).join('')}`;
+ if(!cs.length&&!mal.length)return sel+head+`<div class="card m">No hay contratos con «Tipo de servicio = ${sv}». Crea un contrato de importe variable con ese tipo de servicio y añade sus facturas en Gastos → Recibos.</div>`;
+ if(!used.length)return sel+head+`<div class="card m">No hay facturas con periodo y consumo en este intervalo.</div>${rows.length?tbl1(tr):''}`;
+ function tbl1(t){return`<h2>Facturas</h2><div class="card" style="overflow-x:auto;font-size:13px"><table><tr>${ui.ac?'':'<th>Asociado</th>'}<th>Periodo</th><th class="n">${U}</th><th class="n">${U}/mes</th><th class="n">€</th><th class="n">€/mes</th><th class="n">€/${U}</th><th class="np"></th></tr>${t}</table></div>`}
+ const porC=gs.length>1?`<h2>Resumen por contrato</h2><div class="card" style="overflow-x:auto"><table><tr><th>Contrato</th><th class="n">${U}</th><th class="n">€</th><th class="n">Días</th><th class="n">${U}/mes</th><th class="n">€/mes</th></tr>${gs.map(g=>`<tr><td>${esc(g.c.nombre)}<br><span class="m">${esc(an(g.c.asociado))}</span></td><td class="n">${NUM.format(g.cons)}</td><td class="n">${eur(g.imp)}</td><td class="n">${g.dias}</td><td class="n">${NUM.format(g.mc)}</td><td class="n">${eur(g.mi)}</td></tr>`).join('')}</table></div>`:'';
+ return sel+head+`<div class="kp">${kp(U+' en el intervalo',NUM.format(cons),'prorrateado por días')}${kp(U+'/mes (media)',NUM.format(mc),gs.length>1?'suma de los contratos':'')}${kp('€ en el intervalo',eur(imp))}${kp('€/mes (media)',eur(mi),gs.length>1?'suma de los contratos':'')}${kp('€ por '+U+' (medio)',N3.format(cons?imp/cons:0)+' €')}${U==='m³'?kp('Litros/día (media)',NUM.format(mc/KM*1000)):''}</div>${porC}${tbl1(tr)}<div class="m">${U}/mes y €/mes de cada factura se normalizan a 30,4375 días. En naranja: facturas que no entran en las medias. Debajo de ${U}/mes: variación frente a la factura anterior del mismo contrato.</div><h2>Gráficos</h2>${charts}`}
 /* --- Planes de compañías --- */
 const PF=()=>[{k:'compania',l:'Compañía',r:1},{k:'plan',l:'Plan',r:1},{k:'tipo',l:'Tipo',t:'select',o:[['fijo','fijo'],['indexado','indexado (precio medio estimado)']],d:'fijo'},
 {k:'e1',l:'Energía P1 punta (€/kWh)',t:'number',r:1},{k:'e2',l:'Energía P2 llano (€/kWh)',t:'number',r:1},{k:'e3',l:'Energía P3 valle (€/kWh)',t:'number',r:1},
