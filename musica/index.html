@@ -40,6 +40,19 @@ dialog label{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
 #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;display:none;z-index:9}
 .sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .idea{white-space:pre-wrap}.done .idea{text-decoration:line-through;color:var(--mut)}
+
+body{padding-bottom:70px}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--ink);z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{flex:1;border:0;border-radius:0;background:transparent;color:var(--bg);padding:8px 2px;font-size:12px;line-height:1.2}
+.tabs button span{display:block;font-size:18px}
+.tabs button.on{background:var(--acc);color:var(--acct)}
+.fab{position:fixed;right:14px;bottom:84px;width:52px;height:52px;border-radius:50%;font-size:26px;padding:0;z-index:4;box-shadow:0 2px 8px #0005}
+@media(min-width:860px){body{padding-bottom:0}.tabs{position:static;flex-direction:column;border-radius:12px;overflow:hidden;margin-top:12px}.tabs button{display:flex;gap:10px;align-items:center;padding:10px 14px;font-size:15px;text-align:left}.tabs button span{display:inline;font-size:16px}.fab{bottom:20px}}
+.az{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}.az button{padding:2px 9px;flex:none}
+.row.c{padding:5px 8px;margin-bottom:4px;flex-wrap:nowrap}.row.c img{width:56px}.row.c .btns{flex-wrap:nowrap;max-width:none;width:auto}
+.inf small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.chip{border:1px solid var(--line);cursor:pointer;padding:2px 10px;margin:3px 4px 0 0}
+#toast{bottom:76px}#toast button{margin-left:8px;padding:2px 8px}
 </style>
 </head>
 <body>
@@ -55,16 +68,13 @@ dialog label{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
   <button data-a="rep" id="brep" title="Repetir" aria-label="Repetir">🔁</button>
  </div>
  <small id="qinfo"></small>
+ <div class="tabs"><button data-a="tab" data-v="lib"><span>🎵</span>Biblioteca</button><button data-a="tab" data-v="art"><span>🎤</span>Artistas</button><button data-a="tab" data-v="gen"><span>🏷️</span>Géneros</button><button data-a="tab" data-v="pls"><span>📋</span>Listas</button><button data-a="tab" data-v="set"><span>⚙️</span>Ajustes</button></div>
 </aside>
 <main>
- <nav>
-  <button data-a="tab" data-v="lib">Biblioteca</button>
-  <button data-a="tab" data-v="pls">Listas</button>
-  <button data-a="tab" data-v="set">Configuración</button>
- </nav>
- <div id="main"></div>
+ <div id="bk"></div><div id="main"></div>
 </main>
 </div>
+<button class="fab pri" data-a="add" aria-label="Añadir canciones">＋</button>
 <dialog id="dlg"></dialog>
 <input type="file" id="file" accept=".json,application/json" hidden>
 <div id="toast"></div>
@@ -77,79 +87,95 @@ const fmt=t=>{t=Math.round(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60)
 const TYPES=['canción','concierto','otro'];
 
 /* ---------- Datos: IndexedDB ---------- */
-let db;const S={songs:[],playlists:[],ideas:[]};
-const openDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open('musicaDB',1);
- r.onupgradeneeded=()=>Object.keys(S).forEach(n=>r.result.createObjectStore(n,{keyPath:'id'}));
+let db;const S={songs:[],playlists:[],ideas:[],genres:[]};
+const openDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open('musicaDB',2);
+ r.onupgradeneeded=()=>Object.keys(S).forEach(n=>{if(!r.result.objectStoreNames.contains(n))r.result.createObjectStore(n,{keyPath:'id'})});
  r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>ko(r.error)});
 const getAll=n=>new Promise(ok=>{const q=db.transaction(n).objectStore(n).getAll();q.onsuccess=()=>ok(q.result)});
-const put=(n,o)=>db.transaction(n,'readwrite').objectStore(n).put(o);
-const del=(n,id)=>db.transaction(n,'readwrite').objectStore(n).delete(id);
+const bk=()=>{try{return JSON.parse(localStorage.getItem('musica.bk'))||{}}catch{return{}}};
+const setBk=o=>{try{localStorage.setItem('musica.bk',JSON.stringify(o))}catch{}};
+const bump=()=>{const b=bk();b.n=(b.n||0)+1;setBk(b)};
+const markBk=()=>setBk({t:Date.now(),n:0});
+const put=(n,o,q)=>{db.transaction(n,'readwrite').objectStore(n).put(o);if(!q)bump()};
+const del=(n,id)=>{db.transaction(n,'readwrite').objectStore(n).delete(id);bump()};
 const clr=n=>db.transaction(n,'readwrite').objectStore(n).clear();
 
 /* ---------- Estado e interfaz ---------- */
 let prefs={sh:false,rep:'off'};try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
 const savePrefs=()=>{try{localStorage.setItem('musica.prefs',JSON.stringify(prefs))}catch{}};
-const ui={view:'lib',q:'',g:'',t:'',fav:false,pl:null,ctx:[]};
+const ui={view:'lib',q:'',g:'',t:'',fav:false,ar:null,l:'',al:'',sort:'title',fo:false,lim:60,pl:null,ctx:[]};
 const byId=id=>S.songs.find(s=>s.id===id);
-const genres=()=>[...new Set(S.songs.flatMap(s=>s.genres))].sort((a,b)=>a.localeCompare(b,'es'));
-const parseG=t=>[...new Set(t.split(',').map(x=>x.trim()).filter(Boolean))];
-function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
-function dlg(title,body,ok,label='Guardar'){const d=$('#dlg');
+const cmp=(a,b)=>(a||'').localeCompare(b||'','es');
+const genres=()=>[...new Set([...S.genres.map(g=>g.id),...S.songs.flatMap(s=>s.genres)])].sort(cmp);
+const ini=t=>{const c=(t||'').normalize('NFD').replace(/[^A-Za-z0-9]/g,'')[0];return c&&/[A-Za-z]/.test(c)?c.toUpperCase():'#'};
+const opts=(arr,cur)=>arr.map(([v,t])=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(t)}</option>`).join('');
+function toast(t,undo){const e=$('#toast');e.innerHTML=esc(t)+(undo?' <button data-a="undo">Deshacer</button>':'');toast.u=undo;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',undo?8000:2800)}
+function destroy(fn,msg){const snap=JSON.stringify(S);fn();toast(msg,()=>{const o=JSON.parse(snap);for(const n of Object.keys(S)){clr(n);S[n]=o[n];o[n].forEach(x=>put(n,x,1))}render();upd()})}
+function dlg(title,body,ok,label='Guardar',init){const d=$('#dlg');d.pk=null;
  d.innerHTML=`<h3>${title}</h3>${body}<div class="end"><button data-x="c">Cancelar</button><button class="pri" data-x="o">${label}</button></div>`;
- d.onclick=e=>{const x=e.target.dataset.x;if(x==='c')d.close();if(x==='o'&&ok(d)!==false)d.close()};d.showModal()}
+ d.onclick=e=>{const x=e.target.dataset.x;if(x==='c')d.close();else if(x==='o'){if(ok(d)!==false)d.close()}else if(d.pk)d.pk(e)};if(init)init(d);d.showModal()}
 const typeSel=v=>`<select id="f-t">${TYPES.map(t=>`<option${t===v?' selected':''}>${t}</option>`).join('')}</select>`;
-const gList=()=>`<datalist id="gl">${genres().map(g=>`<option value="${esc(g)}">`).join('')}</datalist>`;
+const aList=()=>`<datalist id="al">${[...new Set(S.songs.map(s=>s.artist).filter(Boolean))].sort(cmp).map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
+const pickHTML=()=>`<label>Géneros (toca para marcar)</label><div id="gp"></div><div class="bar" style="margin:6px 0 0"><input id="gn" placeholder="Nuevo género"><button data-x="ng" style="flex:none">Crear</button></div>`;
+function picker(d,sel){const draw=()=>d.querySelector('#gp').innerHTML=genres().map(g=>`<button class="chip${sel.has(g)?' on':''}" data-gc="${esc(g)}">${esc(g)}</button>`).join('')||'<small>Aún no hay géneros: crea el primero.</small>';draw();
+ d.pk=e=>{const gc=e.target.dataset.gc,x=e.target.dataset.x;
+  if(gc!==undefined){sel.has(gc)?sel.delete(gc):sel.add(gc);draw()}
+  else if(x==='ng'){const i=d.querySelector('#gn'),v=i.value.trim();if(!v)return;const ex=genres().find(g=>g.toLowerCase()===v.toLowerCase())||v;
+   if(!genres().includes(ex)){S.genres.push({id:ex});put('genres',{id:ex})}sel.add(ex);i.value='';draw()}}}
 
-function row(s,ctx){
- const cur=Q[qi]===s.id;
- return `<div class="row${cur?' cur':''}" data-id="${s.id}">
- <img src="https://i.ytimg.com/vi/${s.vid}/mqdefault.jpg" alt="" loading="lazy" data-a="play">
- <div class="inf"><b>${esc(s.title)}</b>
- <small><span>${esc(s.artist)}</span>${s.type!=='canción'?`<span>${esc(s.type)}</span>`:''}${s.year?`<span>${esc(s.year)}</span>`:''}${s.dur?`<span>${fmt(s.dur)}</span>`:''}${s.bad?`<span class="bad">${esc(s.bad)}</span>`:''}</small>
- <div>${s.genres.map(g=>`<span class="chip">${esc(g)}</span>`).join('')}</div></div>
- <div class="btns"><button data-a="play" aria-label="Reproducir">▶</button>
- <button data-a="fav" class="${s.fav?'on':''}" aria-label="Favorito">★</button>
- ${ctx==='pl'?`<button data-a="up" aria-label="Subir">↑</button><button data-a="down" aria-label="Bajar">↓</button><button data-a="rem" aria-label="Quitar de la lista">✕</button>`
- :`<button data-a="addpl" aria-label="Añadir a una lista">＋</button><button data-a="edit" aria-label="Editar">✎</button><button data-a="delete" aria-label="Eliminar">🗑</button>`}
- </div></div>`}
+const row=(s,ctx)=>{const cur=Q[qi]===s.id;
+ return `<div class="row c${cur?' cur':''}" data-id="${s.id}"><img src="https://i.ytimg.com/vi/${s.vid}/mqdefault.jpg" alt="" loading="lazy" data-a="play">
+ <div class="inf"><b>${esc(s.title)}</b><small><span>${esc(s.artist||'Sin artista')}</span>${s.year?`<span>${esc(s.year)}</span>`:''}${s.dur?`<span>${fmt(s.dur)}</span>`:''}${s.bad?`<span class="bad">${esc(s.bad)}</span>`:''}</small>${s.genres.length?`<small>${esc(s.genres.join(', '))}</small>`:''}</div>
+ <div class="btns"><button data-a="play" aria-label="Reproducir">▶</button><button data-a="fav" class="${s.fav?'on':''}" aria-label="Favorito">★</button>
+ ${ctx==='pl'?`<button data-a="up" aria-label="Subir">↑</button><button data-a="down" aria-label="Bajar">↓</button><button data-a="rem" aria-label="Quitar de la lista">✕</button>`:`<button data-a="menu" aria-label="Más opciones">⋮</button>`}</div></div>`};
+function az(k){const have=new Set(S.songs.map(s=>ini(s.artist)));const L=[...'#ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter(c=>have.has(c));
+ return L.length>1?`<div class="az"><button data-a="az" data-k="${k}" data-l=""${!ui[k]?' class="on"':''}>Todo</button>${L.map(c=>`<button data-a="az" data-k="${k}" data-l="${c}"${ui[k]===c?' class="on"':''}>${c}</button>`).join('')}</div>`:''}
 
 function render(){
- document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===ui.view||(ui.view==='ideas'&&b.dataset.v==='set')));
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===ui.view||(ui.view==='ideas'&&b.dataset.v==='set')));
  const m=$('#main');
  if(ui.view==='lib'){
-  m.innerHTML=`<div class="bar"><input id="q" type="search" placeholder="Buscar título, artista o notas" value="${esc(ui.q)}">
-  <select id="g"><option value="">Todos los géneros</option>${genres().map(g=>`<option${ui.g===g?' selected':''}>${esc(g)}</option>`).join('')}</select>
-  <select id="t"><option value="">Todos los tipos</option>${TYPES.map(t=>`<option${ui.t===t?' selected':''}>${t}</option>`).join('')}</select>
-  <button data-a="favf" class="${ui.fav?'on':''}" aria-label="Solo favoritos">★</button>
-  <button class="pri" data-a="add">Añadir canciones</button></div><div id="list"></div>`;
+  const fl=[ui.ar!==null&&['ar','Artista: '+(ui.ar||'Sin artista')],ui.g&&['g','Género: '+ui.g]].filter(Boolean);
+  m.innerHTML=`<div class="bar"><input id="q" type="search" placeholder="Buscar título, artista o notas" value="${esc(ui.q)}"><button data-a="filt" class="${ui.fo?'on':''}">Filtros</button></div>
+  ${ui.fo?`<div class="bar"><select id="g">${opts([['','Todos los géneros'],...genres().map(x=>[x,x])],ui.g)}</select><select id="t">${opts([['','Todos los tipos'],...TYPES.map(x=>[x,x])],ui.t)}</select><select id="so">${opts([['title','Orden: título'],['artist','Orden: artista'],['recent','Orden: recientes']],ui.sort)}</select><button data-a="favf" class="${ui.fav?'on':''}">★ Solo favoritas</button></div>`:''}
+  ${fl.length?`<div class="bar">${fl.map(([k,x])=>`<button class="chip on" data-a="clr" data-k="${k}">${esc(x)} ✕</button>`).join('')}</div>`:''}
+  ${az('l')}<div id="list"></div>`;
   fillList();
- }else if(ui.view==='pls'){
-  if(ui.pl&&S.playlists.find(p=>p.id===ui.pl))vPl();else{
-   ui.pl=null;
+ }else if(ui.view==='art')vArt();else if(ui.view==='gen')vGen();
+ else if(ui.view==='pls'){
+  if(ui.pl&&S.playlists.find(p=>p.id===ui.pl))vPl();else{ui.pl=null;
    m.innerHTML=`<div class="bar"><h2 style="flex:1;margin:0">Listas</h2><button class="pri" data-a="plnew">Nueva lista</button></div>`+
-   (S.playlists.map(p=>`<div class="row" data-pl="${p.id}"><div class="inf"><b>${esc(p.name)}</b><small>${p.songIds.length} canciones</small></div>
-   <div class="btns"><button data-a="plopen">Abrir</button><button data-a="plplay" aria-label="Reproducir">▶</button><button data-a="plren" aria-label="Renombrar">✎</button><button data-a="pldel" aria-label="Eliminar">🗑</button></div></div>`).join('')||'<p class="mut">Aún no tienes listas. Crea una y añade canciones desde la biblioteca.</p>');
-  }
+   ([...S.playlists].sort((a,b)=>cmp(a.name,b.name)).map(p=>`<div class="row" data-pl="${p.id}"><div class="inf"><b>${esc(p.name)}</b><small>${p.songIds.length} canciones</small></div>
+   <div class="btns"><button data-a="plopen">Abrir</button><button data-a="plplay" aria-label="Reproducir">▶</button><button data-a="plren" aria-label="Renombrar">✎</button><button data-a="pldel" aria-label="Eliminar">🗑</button></div></div>`).join('')||'<p class="mut">Aún no tienes listas. Crea una y añade canciones desde la biblioteca.</p>');}
  }else if(ui.view==='set')vSet();else vIdeas();
 }
 function fillList(){
  const q=ui.q.toLowerCase();
- const f=S.songs.filter(s=>(!ui.g||s.genres.includes(ui.g))&&(!ui.t||s.type===ui.t)&&(!ui.fav||s.fav)&&
-  (!q||[s.title,s.artist,s.notes,s.genres.join(' ')].join(' ').toLowerCase().includes(q))).sort((a,b)=>a.title.localeCompare(b.title,'es'));
- ui.ctx=f.map(s=>s.id);
- $('#list').innerHTML=`<small>${f.length} de ${S.songs.length} canciones</small>`+(f.length?` <button data-a="playall" style="margin:0 0 8px 8px">Reproducir todo</button>`:'')+
-  `<div>${f.map(s=>row(s)).join('')||'<p class="mut">No hay canciones. Pulsa «Añadir canciones» y pega enlaces de YouTube.</p>'}</div>`}
+ const f=S.songs.filter(s=>(!ui.g||s.genres.includes(ui.g))&&(!ui.t||s.type===ui.t)&&(!ui.fav||s.fav)&&(ui.ar===null||(s.artist||'')===ui.ar)&&(!ui.l||ini(s.artist)===ui.l)&&
+  (!q||[s.title,s.artist,s.notes,s.genres.join(' ')].join(' ').toLowerCase().includes(q)));
+ f.sort(ui.sort==='recent'?(a,b)=>b.added-a.added:ui.sort==='artist'?(a,b)=>cmp(a.artist,b.artist)||cmp(a.title,b.title):(a,b)=>cmp(a.title,b.title));
+ ui.ctx=f.map(s=>s.id);const sh=f.slice(0,ui.lim);
+ $('#list').innerHTML=`<div class="bar" style="align-items:center"><small style="flex:1">${f.length} de ${S.songs.length} canciones</small>${f.length?'<button data-a="playall">Reproducir todo</button>':''}</div>`+
+  sh.map(s=>row(s)).join('')+(f.length>sh.length?`<button data-a="more" style="width:100%;margin-top:6px">Mostrar más (${f.length-sh.length} restantes)</button>`:'')+
+  (!f.length?`<p class="mut">${S.songs.length?'No hay canciones con estos filtros.':'Biblioteca vacía. Pulsa ＋ y pega enlaces de YouTube.'}</p>`:'')}
 const refresh=()=>ui.view==='lib'?fillList():render();
+function vArt(){
+ const mp=new Map();S.songs.forEach(s=>{const a=s.artist||'';mp.set(a,(mp.get(a)||0)+1)});
+ const L=[...mp].filter(([a])=>!ui.al||ini(a)===ui.al).sort((x,y)=>cmp(x[0]||'~',y[0]||'~'));
+ $('#main').innerHTML=`<h2>Artistas</h2>${az('al')}`+(L.map(([a,n])=>`<div class="row" data-ar="${esc(a)}"><div class="inf" data-a="arsel" style="cursor:pointer"><b>${esc(a||'Sin artista')}</b><small>${n} canciones</small></div><div class="btns"><button data-a="arplay" aria-label="Reproducir">▶</button></div></div>`).join('')||'<p class="mut">Aún no hay artistas.</p>')}
+function vGen(){
+ $('#main').innerHTML=`<div class="bar"><h2 style="flex:1;margin:0">Géneros</h2><button class="pri" data-a="gnew">Nuevo género</button></div>`+
+ (genres().map(g=>`<div class="row" data-g="${esc(g)}"><div class="inf" data-a="gsel" style="cursor:pointer"><b>${esc(g)}</b><small>${S.songs.filter(s=>s.genres.includes(g)).length} canciones</small></div><div class="btns"><button data-a="gplay" aria-label="Reproducir">▶</button><button data-a="gren" aria-label="Renombrar">✎</button><button data-a="gdel" aria-label="Quitar">🗑</button></div></div>`).join('')||'<p class="mut">Sin géneros. Crea el primero con «Nuevo género».</p>')}
+function vSet(){const b=bk(),d=b.t?new Date(b.t).toLocaleDateString('es-ES'):'nunca';
+ $('#main').innerHTML=`<div class="sec"><h3>Copia de seguridad</h3><p class="mut">Los datos viven solo en este navegador. Última copia: ${d}. Cambios desde entonces: ${b.n||0}.</p><button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button></div>
+ <div class="sec"><h3>Ideas de mejora</h3><p class="mut">Apunta lo que quieras cambiar o añadir.</p><button data-a="ideasgo">Abrir ideas de mejora</button></div>`}
+function chkBk(){const b=bk();if(!S.songs.length)return;const days=b.t?Math.floor((Date.now()-b.t)/864e5):0;
+ const why=!b.t?'Todavía no has hecho ninguna copia de seguridad.':days>=14?`Hace ${days} días de tu última copia de seguridad.`:(b.n||0)>10?`Llevas ${b.n} cambios desde tu última copia de seguridad.`:'';
+ if(why)$('#bk').innerHTML=`<div class="sec" style="border-color:var(--acc)"><b>${why}</b><div class="end" style="justify-content:flex-start"><button class="pri" data-a="bkgo">Descargar copia ahora</button><button data-a="bkno">Más tarde</button></div></div>`}
 function vPl(){
  const p=S.playlists.find(x=>x.id===ui.pl);const ss=p.songIds.map(byId).filter(Boolean);ui.ctx=ss.map(s=>s.id);
  $('#main').innerHTML=`<div class="bar"><button data-a="plback">← Listas</button><h2 style="flex:1;margin:0">${esc(p.name)}</h2><button class="pri" data-a="playall">Reproducir</button></div>
  <small>${ss.length} canciones</small>${ss.map(s=>row(s,'pl')).join('')||'<p class="mut">Lista vacía. Añade canciones con ＋ desde la biblioteca.</p>'}`}
-function vSet(){
- const gs=genres();
- $('#main').innerHTML=`<div class="sec"><h3>Géneros</h3>${gs.map(g=>`<div class="row" data-g="${esc(g)}"><div class="inf"><b>${esc(g)}</b><small>${S.songs.filter(s=>s.genres.includes(g)).length} canciones</small></div><div class="btns"><button data-a="gren">Renombrar</button><button data-a="gdel">Quitar</button></div></div>`).join('')||'<p class="mut">Los géneros aparecen al asignarlos a canciones. Renombrar uno con el nombre de otro los fusiona.</p>'}</div>
- <div class="sec"><h3>Copia de seguridad</h3><p class="mut">Los datos viven solo en este navegador. Descarga una copia JSON con regularidad.</p>
- <button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button></div>
- <div class="sec"><h3>Ideas de mejora</h3><p class="mut">Apunta lo que quieras cambiar o añadir.</p><button data-a="ideasgo">Abrir ideas de mejora</button></div>`}
 function vIdeas(){
  const L=[...S.ideas].sort((a,b)=>(a.done-b.done)||b.date-a.date);
  $('#main').innerHTML=`<div class="bar"><button data-a="tab" data-v="set">← Configuración</button><h2 style="flex:1;margin:0">Ideas de mejora</h2></div>
@@ -168,8 +194,8 @@ function onPlay(){const s=cur();if(!s)return;errs=0;let ch=false;
  const d=Math.round(P.getDuration()||0);if(d>0&&!s.dur){s.dur=d;ch=true}
  const vd=P.getVideoData&&P.getVideoData();if(vd&&vd.title&&/^Vídeo /.test(s.title)){s.title=vd.title;ch=true}
  if(s.bad){s.bad='';ch=true}
- if(ch){put('songs',s);upd();refresh()}}
-function perr(c){const s=cur();if(!s)return;s.bad=c===100?'no disponible':'no se puede incrustar';put('songs',s);toast('«'+s.title+'»: '+s.bad+'. Paso a la siguiente.');
+ if(ch){put('songs',s,1);upd();refresh()}}
+function perr(c){const s=cur();if(!s)return;s.bad=c===100?'no disponible':'no se puede incrustar';put('songs',s,1);toast('«'+s.title+'»: '+s.bad+'. Paso a la siguiente.');
  if(++errs>=Q.length){errs=0;refresh();return}next(true)}
 function ended(){if(prefs.rep==='one'){P.seekTo(0);P.playVideo();return}next(true)}
 function next(auto){if(!Q.length)return;
@@ -185,25 +211,28 @@ function upd(){const s=cur();$('#now').textContent=s?s.title:'Nada en reproducci
 /* ---------- Altas, ediciones y copias ---------- */
 const vidOf=t=>{const m=t.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/|\/v\/)([\w-]{11})/)||t.match(/^([\w-]{11})$/);return m&&m[1]};
 async function meta(s){try{const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent('https://www.youtube.com/watch?v='+s.vid));if(!r.ok)return;
- const j=await r.json();s.title=j.title||s.title;if(!s.artist)s.artist=(j.author_name||'').replace(/ - Topic$/,'');put('songs',s);refresh();upd()}catch{}}
-function addDlg(){
+ const j=await r.json();s.title=j.title||s.title;if(!s.artist)s.artist=(j.author_name||'').replace(/ - Topic$/,'');put('songs',s,1);refresh();upd()}catch{}}
+function addDlg(){const sel=new Set(ui.g?[ui.g]:[]);
  dlg('Añadir canciones',`<label>Enlaces de YouTube (uno por línea; sirve pegar muchos de golpe)</label><textarea id="f-u" rows="6" placeholder="https://www.youtube.com/watch?v=…"></textarea>
- <label>Tipo para todas</label>${typeSel('canción')}<label>Géneros para todas (separados por comas)</label><input id="f-g" list="gl">${gList()}
- <small>El título y el canal se intentan rellenar solos; si no se puede, aparecerán como «Vídeo …» y se corrigen al editar o al reproducir.</small>`,d=>{
+ <label>Artista para todas (opcional)</label><input id="f-a" list="al">${aList()}<label>Tipo para todas</label>${typeSel('canción')}${pickHTML()}
+ <small>El título y el canal se rellenan solos si es posible; si no, se corrigen al editar.</small>`,d=>{
   const ids=d.querySelector('#f-u').value.split(/\s+/).map(vidOf).filter(Boolean);
   if(!ids.length){toast('No he encontrado enlaces válidos');return false}
-  const t=d.querySelector('#f-t').value,g=parseG(d.querySelector('#f-g').value);let n=0,dup=0;
+  const t=d.querySelector('#f-t').value,ar=d.querySelector('#f-a').value.trim();let n=0,dup=0;
   for(const v of new Set(ids)){if(S.songs.some(s=>s.vid===v)){dup++;continue}
-   const s={id:uid(),vid:v,title:'Vídeo '+v,artist:'',type:t,genres:g,year:'',notes:'',fav:false,dur:0,bad:'',added:Date.now()};
+   const s={id:uid(),vid:v,title:'Vídeo '+v,artist:ar,type:t,genres:[...sel],year:'',notes:'',fav:false,dur:0,bad:'',added:Date.now()};
    S.songs.push(s);put('songs',s);meta(s);n++}
-  toast(`${n} añadidas${dup?`, ${dup} ya estaban`:''}`);refresh()},'Añadir')}
-function editDlg(s){
- dlg('Editar canción',`<label>Título</label><input id="f-ti" value="${esc(s.title)}"><label>Artista</label><input id="f-a" value="${esc(s.artist)}">
- <label>Tipo</label>${typeSel(s.type)}<label>Géneros (separados por comas)</label><input id="f-g" list="gl" value="${esc(s.genres.join(', '))}">${gList()}
- <label>Año</label><input id="f-y" value="${esc(s.year)}"><label>Notas</label><textarea id="f-n" rows="3">${esc(s.notes)}</textarea>`,d=>{
+  toast(`${n} añadidas${dup?`, ${dup} ya estaban`:''}`);refresh()},'Añadir',d=>picker(d,sel))}
+function editDlg(s){const sel=new Set(s.genres);
+ dlg('Editar canción',`<label>Título</label><input id="f-ti" value="${esc(s.title)}"><label>Artista</label><input id="f-a" list="al" value="${esc(s.artist)}">${aList()}
+ <label>Tipo</label>${typeSel(s.type)}${pickHTML()}<label>Año</label><input id="f-y" value="${esc(s.year)}"><label>Notas</label><textarea id="f-n" rows="3">${esc(s.notes)}</textarea>`,d=>{
   const v=i=>d.querySelector(i).value;
-  Object.assign(s,{title:v('#f-ti').trim()||s.title,artist:v('#f-a').trim(),type:v('#f-t'),genres:parseG(v('#f-g')),year:v('#f-y').trim(),notes:v('#f-n')});
-  put('songs',s);refresh();upd()})}
+  Object.assign(s,{title:v('#f-ti').trim()||s.title,artist:v('#f-a').trim(),type:v('#f-t'),genres:[...sel],year:v('#f-y').trim(),notes:v('#f-n')});
+  put('songs',s);refresh();upd()},'Guardar',d=>picker(d,sel))}
+function menuDlg(s){const d=$('#dlg');d.pk=null;
+ d.innerHTML=`<h3>${esc(s.title)}</h3><div style="display:grid;gap:6px"><button data-m="e">✎ Editar</button><button data-m="l">＋ Añadir a una lista</button><button data-m="d">🗑 Eliminar</button></div><div class="end"><button data-x="c">Cerrar</button></div>`;
+ d.onclick=e=>{const m=e.target.dataset.m;if(!m&&e.target.dataset.x!=='c')return;d.close();if(m==='e')editDlg(s);if(m==='l')addPlDlg(s);if(m==='d')delSong(s)};d.showModal()}
+function delSong(s){destroy(()=>{S.songs=S.songs.filter(x=>x!==s);del('songs',s.id);S.playlists.forEach(l=>{if(l.songIds.includes(s.id)){l.songIds=l.songIds.filter(i=>i!==s.id);put('playlists',l)}})},'«'+s.title+'» eliminada');refresh()}
 function addPlDlg(s){
  dlg('Añadir a una lista',`${S.playlists.length?`<label>Lista existente</label><select id="f-p"><option value="">Elegir…</option>${S.playlists.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:''}
  <label>${S.playlists.length?'O crear una nueva':'Nombre de la nueva lista'}</label><input id="f-np">`,d=>{
@@ -215,67 +244,79 @@ function addPlDlg(s){
 function nameDlg(title,val,ok){dlg(title,`<label>Nombre</label><input id="f-nm" value="${esc(val)}">`,d=>{const v=d.querySelector('#f-nm').value.trim();if(!v)return false;ok(v)})}
 function ideaDlg(i){dlg('Editar idea',`<textarea id="f-i" rows="6">${esc(i.text)}</textarea>`,d=>{const v=d.querySelector('#f-i').value;if(!v.trim())return false;i.text=v;put('ideas',i);render()})}
 function exportJSON(){
- const b=new Blob([JSON.stringify({app:'mi-musica',v:1,date:new Date().toISOString(),songs:S.songs,playlists:S.playlists,ideas:S.ideas},null,1)],{type:'application/json'});
+ const b=new Blob([JSON.stringify({app:'mi-musica',v:1,date:new Date().toISOString(),songs:S.songs,playlists:S.playlists,ideas:S.ideas,genres:S.genres},null,1)],{type:'application/json'});
  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'mi-musica-'+new Date().toISOString().slice(0,10)+'.json'});
- document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+ document.body.append(a);a.click();a.remove();markBk();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 async function importJSON(f){
  let j;try{j=JSON.parse(await f.text());if(!Array.isArray(j.songs))throw 0}catch{toast('El archivo no es una copia válida');return}
  const rep=confirm('Aceptar: REEMPLAZAR todo lo actual por la copia.\nCancelar: FUSIONAR la copia con lo que ya tienes.');
  if(rep){for(const n of Object.keys(S)){await clr(n);S[n]=[]}}
- const map={};
+ const map={};for(const g of j.genres||[])if(!S.genres.some(x=>x.id===g.id)){S.genres.push({id:g.id});put('genres',{id:g.id},1)}
  for(const s of j.songs){const ex=S.songs.find(x=>x.vid===s.vid);if(ex){map[s.id]=ex.id;continue}
   const n={id:s.id||uid(),vid:s.vid,title:s.title||'Vídeo '+s.vid,artist:s.artist||'',type:s.type||'canción',genres:s.genres||[],year:s.year||'',notes:s.notes||'',fav:!!s.fav,dur:s.dur||0,bad:'',added:s.added||Date.now()};
   map[s.id]=n.id;S.songs.push(n);put('songs',n)}
  for(const p of j.playlists||[]){const n={id:p.id,name:p.name,songIds:(p.songIds||[]).map(i=>map[i]).filter(Boolean)};
   const k=S.playlists.findIndex(x=>x.id===n.id);k>=0?S.playlists[k]=n:S.playlists.push(n);put('playlists',n)}
  for(const i of j.ideas||[])if(!S.ideas.some(x=>x.id===i.id)){S.ideas.push(i);put('ideas',i)}
- toast('Copia restaurada');render()}
+ if(rep)markBk();toast('Copia restaurada');render()}
 
 /* ---------- Eventos ---------- */
+const reset=()=>{ui.lim=60};
+const idsBy=f=>S.songs.filter(f).sort((a,b)=>cmp(a.title,b.title)).map(s=>s.id);
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
  const id=b.closest('[data-id]')?.dataset.id,s=id&&byId(id),pid=b.closest('[data-pl]')?.dataset.pl,p=pid&&S.playlists.find(x=>x.id===pid),
-  cp=S.playlists.find(x=>x.id===ui.pl),gn=b.closest('[data-g]')?.dataset.g,iid=b.closest('[data-i]')?.dataset.i,idea=iid&&S.ideas.find(x=>x.id===iid);
+  cp=S.playlists.find(x=>x.id===ui.pl),gn=b.closest('[data-g]')?.dataset.g,iid=b.closest('[data-i]')?.dataset.i,idea=iid&&S.ideas.find(x=>x.id===iid),ar=b.closest('[data-ar]')?.dataset.ar;
  switch(a){
+ case'undo':{const f=toast.u;$('#toast').style.display='none';if(f)f()}break;
  case'tab':ui.view=b.dataset.v;if(ui.view!=='pls')ui.pl=null;render();break;
  case'play':startQ(ui.ctx,ui.ctx.indexOf(id));break;
  case'playall':if(ui.ctx.length)startQ(ui.ctx,0);break;
  case'fav':s.fav=!s.fav;put('songs',s);refresh();break;
- case'favf':ui.fav=!ui.fav;render();break;
+ case'favf':ui.fav=!ui.fav;reset();render();break;
  case'add':addDlg();break;
- case'edit':editDlg(s);break;
- case'addpl':addPlDlg(s);break;
- case'delete':if(confirm('¿Eliminar «'+s.title+'»?')){S.songs=S.songs.filter(x=>x!==s);del('songs',s.id);
-  S.playlists.forEach(l=>{if(l.songIds.includes(s.id)){l.songIds=l.songIds.filter(i=>i!==s.id);put('playlists',l)}});refresh()}break;
+ case'menu':menuDlg(s);break;
+ case'filt':ui.fo=!ui.fo;render();break;
+ case'more':ui.lim+=60;fillList();break;
+ case'az':ui[b.dataset.k]=b.dataset.l;reset();render();break;
+ case'clr':if(b.dataset.k==='ar')ui.ar=null;else ui.g='';reset();render();break;
+ case'arsel':ui.ar=ar;ui.l='';reset();ui.view='lib';render();break;
+ case'arplay':{const i=idsBy(x=>(x.artist||'')===ar);if(i.length)startQ(i,0)}break;
+ case'gsel':ui.g=gn;reset();ui.view='lib';render();break;
+ case'gplay':{const i=idsBy(x=>x.genres.includes(gn));if(i.length)startQ(i,0);else toast('No hay canciones en este género')}break;
+ case'gnew':nameDlg('Nuevo género','',v=>{if(!genres().some(g=>g.toLowerCase()===v.toLowerCase())){S.genres.push({id:v});put('genres',{id:v})}render()});break;
+ case'gren':nameDlg('Renombrar género',gn,v=>{S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=[...new Set(x.genres.map(g=>g===gn?v:g))];put('songs',x)}});
+  S.genres=S.genres.filter(g=>g.id!==gn);del('genres',gn);if(!S.genres.some(g=>g.id===v)){S.genres.push({id:v});put('genres',{id:v})}if(ui.g===gn)ui.g=v;render()});break;
+ case'gdel':destroy(()=>{S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=x.genres.filter(g=>g!==gn);put('songs',x)}});S.genres=S.genres.filter(g=>g.id!==gn);del('genres',gn);if(ui.g===gn)ui.g=''},'Género «'+gn+'» eliminado');render();break;
  case'plnew':nameDlg('Nueva lista','',v=>{const l={id:uid(),name:v,songIds:[]};S.playlists.push(l);put('playlists',l);render()});break;
  case'plopen':ui.pl=pid;render();break;
  case'plback':ui.pl=null;render();break;
  case'plplay':{const ids=p.songIds.filter(byId);if(ids.length)startQ(ids,0);else toast('La lista está vacía')}break;
  case'plren':nameDlg('Renombrar lista',p.name,v=>{p.name=v;put('playlists',p);render()});break;
- case'pldel':if(confirm('¿Eliminar la lista «'+p.name+'»? Las canciones se conservan.')){S.playlists=S.playlists.filter(x=>x!==p);del('playlists',p.id);render()}break;
+ case'pldel':destroy(()=>{S.playlists=S.playlists.filter(x=>x!==p);del('playlists',p.id)},'Lista «'+p.name+'» eliminada');render();break;
  case'up':case'down':{const i=cp.songIds.indexOf(id),j=a==='up'?i-1:i+1;if(j>=0&&j<cp.songIds.length){[cp.songIds[i],cp.songIds[j]]=[cp.songIds[j],cp.songIds[i]];put('playlists',cp);render()}}break;
- case'rem':cp.songIds=cp.songIds.filter(i=>i!==id);put('playlists',cp);render();break;
- case'gren':nameDlg('Renombrar género',gn,v=>{S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=[...new Set(x.genres.map(g=>g===gn?v:g))];put('songs',x)}});render()});break;
- case'gdel':if(confirm('¿Quitar el género «'+gn+'» de todas las canciones?')){S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=x.genres.filter(g=>g!==gn);put('songs',x)}});render()}break;
- case'exp':exportJSON();break;
+ case'rem':destroy(()=>{cp.songIds=cp.songIds.filter(i=>i!==id);put('playlists',cp)},'Quitada de la lista');render();break;
+ case'exp':exportJSON();toast('Copia descargada');if(ui.view==='set')render();break;
  case'imp':$('#file').click();break;
+ case'bkgo':exportJSON();$('#bk').innerHTML='';toast('Copia descargada');break;
+ case'bkno':$('#bk').innerHTML='';break;
  case'ideasgo':ui.view='ideas';render();break;
  case'ideaadd':{const t=$('#in').value;if(!t.trim())return;const i={id:uid(),text:t,done:false,date:Date.now()};S.ideas.push(i);put('ideas',i);render()}break;
  case'ideatog':idea.done=!idea.done;put('ideas',idea);render();break;
  case'ideaedit':ideaDlg(idea);break;
- case'ideadel':if(confirm('¿Borrar esta idea?')){S.ideas=S.ideas.filter(x=>x!==idea);del('ideas',idea.id);render()}break;
+ case'ideadel':destroy(()=>{S.ideas=S.ideas.filter(x=>x!==idea);del('ideas',idea.id)},'Idea borrada');render();break;
  case'pp':if(ready&&Q.length)(P.getPlayerState()===1?P.pauseVideo():P.playVideo());else if(!Q.length&&ui.ctx.length)startQ(ui.ctx,0);break;
  case'nxt':next(false);break;
  case'prv':prev();break;
  case'shf':prefs.sh=!prefs.sh;savePrefs();upd();break;
  case'rep':prefs.rep={off:'all',all:'one',one:'off'}[prefs.rep];savePrefs();upd();toast({off:'Repetir: no',all:'Repetir: todo',one:'Repetir: una canción'}[prefs.rep]);break;
  }});
-document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;fillList()}});
-document.addEventListener('change',e=>{if(e.target.id==='g'){ui.g=e.target.value;fillList()}if(e.target.id==='t'){ui.t=e.target.value;fillList()}});
+document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;reset();fillList()}});
+document.addEventListener('change',e=>{const i=e.target.id,v=e.target.value;if(i==='g')ui.g=v;else if(i==='t')ui.t=v;else if(i==='so')ui.sort=v;else return;reset();fillList()});
 $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=''});
 
 (async()=>{try{await openDB();for(const n of Object.keys(S))S[n]=await getAll(n)}catch{toast('No se puede usar el almacenamiento del navegador')}
- render();upd()})();
+ render();upd();chkBk()})();
 </script>
 </body>
 </html>
