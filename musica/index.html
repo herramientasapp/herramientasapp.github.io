@@ -6,7 +6,8 @@
 <title>Mi música</title>
 <style>
 :root{--bg:#eceff3;--card:#fff;--ink:#1b2233;--mut:#667086;--acc:#3d4fd1;--acct:#fff;--line:#d9dee7;--bad:#b3261e;color-scheme:light}
-@media(prefers-color-scheme:dark){:root{--bg:#12151d;--card:#1b2030;--ink:#e8ebf3;--mut:#9aa3b8;--acc:#8fa2ff;--acct:#12151d;--line:#2d3550;--bad:#ff8a80;color-scheme:dark}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12151d;--card:#1b2030;--ink:#e8ebf3;--mut:#9aa3b8;--acc:#8fa2ff;--acct:#12151d;--line:#2d3550;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#12151d;--card:#1b2030;--ink:#e8ebf3;--mut:#9aa3b8;--acc:#8fa2ff;--acct:#12151d;--line:#2d3550;--bad:#ff8a80;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -14,13 +15,20 @@ button{background:var(--card);border:1px solid var(--line);border-radius:8px;pad
 button:hover{border-color:var(--acc)}button.pri,button.on{background:var(--acc);color:var(--acct);border-color:var(--acc)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
-.wrap{max-width:1100px;margin:0 auto;padding:12px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
-@media(min-width:860px){.wrap{grid-template-columns:380px minmax(0,1fr);align-items:start}.side{position:sticky;top:12px}}
-.side{background:var(--card);border-radius:14px;padding:12px;border:1px solid var(--line)}
-.vid{aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+.wrap{max-width:1100px;margin:0 auto;padding:0 12px 12px}
+.side{position:sticky;top:0;z-index:6;background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;padding:8px 10px;margin-bottom:10px;box-shadow:0 2px 8px #0003}
+@media(min-width:860px){.wrap{display:grid;grid-template-columns:380px minmax(0,1fr);gap:14px;align-items:start;padding-top:12px}.side{top:12px;border-top:1px solid var(--line);border-radius:14px;padding:12px;margin:0}}
+.nowr{display:flex;align-items:center;gap:8px}.nt{flex:1;min-width:0}
+#now{font-weight:650;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nowa{color:var(--mut);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.3em}
+.src{display:inline-block;font-size:10px;line-height:1;padding:3px 5px;border-radius:5px;margin-right:6px;vertical-align:1px;color:#fff;background:#e62117;flex:none}
+.src.lo{background:var(--acc);color:var(--acct)}.nowr .src{font-size:13px;padding:6px 8px;margin:0}
+.prog{display:flex;align-items:center;gap:6px;margin-top:6px}.prog input{padding:0;border:0;flex:1;min-width:0;accent-color:var(--acc);background:transparent}.prog small{min-width:40px;text-align:center;font-size:11px}
+.ctl{display:flex;gap:5px;margin-top:4px}.ctl button{flex:1;font-size:16px;padding:5px 0}
+.vid{aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;margin-top:8px;position:relative}
+.vid.hide{height:0;aspect-ratio:auto;margin:0}
 .vid iframe{width:100%;height:100%}
-#now{font-weight:650;font-size:17px;margin:10px 0 2px;line-height:1.25}#nowa{color:var(--mut);min-height:1.4em}
-.ctl{display:flex;gap:6px;margin-top:10px}.ctl button{flex:1;font-size:17px}
+.vid .lm{position:absolute;inset:0;display:none;place-items:center;color:#fff;background:#111;text-align:center;padding:10px}.vid.local .lm{display:grid}
 nav{display:flex;gap:6px;margin-bottom:12px}nav button{flex:1}
 h2{font-size:20px;margin:0 0 10px}h3{margin:0 0 8px}
 .bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.bar input{flex:2 1 160px}.bar select{flex:1 1 120px;width:auto}
@@ -54,21 +62,26 @@ body{padding-bottom:70px}
 button.chip{border:1px solid var(--line);cursor:pointer;padding:2px 10px;margin:3px 4px 0 0}
 #toast{bottom:76px}#toast button{margin-left:8px;padding:2px 8px}
 .ph{width:96px;aspect-ratio:16/9;border-radius:6px;flex:none;background:var(--line);display:grid;place-items:center;font-size:20px;cursor:pointer}.row.c .ph{width:56px}@media(max-width:520px){.row:not(.c) .ph{width:80px}}
+.row.top{align-items:flex-start}.inf b.b3{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+details.sec>summary{cursor:pointer;font-weight:650;font-size:16px}details.sec[open]>summary{margin-bottom:8px}
+.sec label{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
+dialog label.pk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin:0;padding:5px 0}.pk input{width:auto}
 </style>
 </head>
 <body>
 <div class="wrap">
 <aside class="side">
- <div class="vid"><div id="yt"></div></div>
- <div id="now">Nada en reproducción</div><div id="nowa"></div>
+ <div class="nowr"><span id="nsrc"></span><div class="nt"><div id="now">Nada en reproducción</div><div id="nowa"></div></div></div>
+ <div class="prog"><small id="tcur">0:00</small><input type="range" id="seek" min="0" max="10000" value="0" aria-label="Posición" disabled><small id="tdur">–:–</small></div>
  <div class="ctl">
   <button data-a="prv" title="Anterior" aria-label="Anterior">⏮</button>
   <button data-a="pp" id="bpp" title="Reproducir o pausar" aria-label="Reproducir o pausar">⏯</button>
   <button data-a="nxt" title="Siguiente" aria-label="Siguiente">⏭</button>
   <button data-a="shf" id="bshf" title="Aleatorio" aria-label="Aleatorio">🔀</button>
   <button data-a="rep" id="brep" title="Repetir" aria-label="Repetir">🔁</button>
+  <button data-a="vid" id="bvid" title="Mostrar u ocultar el vídeo" aria-label="Mostrar u ocultar el vídeo">📺</button>
  </div>
- <small id="qinfo"></small>
+ <div class="vid hide" id="vidbox"><div id="yt"></div><div class="lm">🎧 Reproduciendo en modo local</div></div>
  <div class="tabs"><button data-a="tab" data-v="lib"><span>🎵</span>Biblioteca</button><button data-a="tab" data-v="art"><span>🎤</span>Artistas</button><button data-a="tab" data-v="gen"><span>🏷️</span>Géneros</button><button data-a="tab" data-v="pls"><span>📋</span>Listas</button><button data-a="tab" data-v="set"><span>⚙️</span>Ajustes</button></div>
 </aside>
 <main>
@@ -103,9 +116,10 @@ const del=(n,id)=>{db.transaction(n,'readwrite').objectStore(n).delete(id);bump(
 const clr=n=>db.transaction(n,'readwrite').objectStore(n).clear();
 
 /* ---------- Estado e interfaz ---------- */
-let prefs={sh:false,rep:'off'};try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
+let prefs={sh:false,rep:'off',src:'all',theme:'auto'};const VERSION='4.0 · Fase 1';try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
 const savePrefs=()=>{try{localStorage.setItem('musica.prefs',JSON.stringify(prefs))}catch{}};
-const ui={view:'lib',q:'',g:'',t:'',fav:false,ar:null,l:'',al:'',sort:'title',fo:false,lim:60,pl:null,ctx:[]};
+const applyTheme=()=>{prefs.theme==='light'||prefs.theme==='dark'?document.documentElement.dataset.theme=prefs.theme:document.documentElement.removeAttribute('data-theme')};applyTheme();
+const ui={open:{},draft:'',view:'lib',q:'',g:'',t:'',fav:false,ar:null,l:'',al:'',sort:'title',fo:false,lim:60,pl:null,ctx:[]};
 const byId=id=>S.songs.find(s=>s.id===id);
 const cmp=(a,b)=>(a||'').localeCompare(b||'','es');
 const genres=()=>[...new Set([...S.genres.map(g=>g.id),...S.songs.flatMap(s=>s.genres)])].sort(cmp);
@@ -127,7 +141,7 @@ function picker(d,sel){const draw=()=>d.querySelector('#gp').innerHTML=genres().
 
 const row=(s,ctx)=>{const cur=Q[qi]===s.id;
  return `<div class="row c${cur?' cur':''}" data-id="${s.id}">${isL(s)?'<div class="ph" data-a="play">🎧</div>':`<img src="https://i.ytimg.com/vi/${s.vid}/mqdefault.jpg" alt="" loading="lazy" data-a="play">`}
- <div class="inf"><b>${esc(s.title)}</b><small><span>${esc(s.artist||'Sin artista')}</span>${s.year?`<span>${esc(s.year)}</span>`:''}${s.dur?`<span>${fmt(s.dur)}</span>`:''}${isL(s)&&!FILES.has(s.fk)?'<span class="bad">sin conectar</span>':''}${s.bad?`<span class="bad">${esc(s.bad)}</span>`:''}</small>${s.genres.length?`<small>${esc(s.genres.join(', '))}</small>`:''}</div>
+ <div class="inf"><b>${ico(s)}${esc(s.title)}</b><small><span>${esc(s.artist||'Sin artista')}</span>${s.year?`<span>${esc(s.year)}</span>`:''}${s.dur?`<span>${fmt(s.dur)}</span>`:''}${isL(s)&&!FILES.has(s.fk)?'<span class="bad">sin conectar</span>':''}${s.bad?`<span class="bad">${esc(s.bad)}</span>`:''}</small>${s.genres.length?`<small>${esc(s.genres.join(', '))}</small>`:''}</div>
  <div class="btns"><button data-a="play" aria-label="Reproducir">▶</button><button data-a="fav" class="${s.fav?'on':''}" aria-label="Favorito">★</button>
  ${ctx==='pl'?`<button data-a="up" aria-label="Subir">↑</button><button data-a="down" aria-label="Bajar">↓</button><button data-a="rem" aria-label="Quitar de la lista">✕</button>`:`<button data-a="menu" aria-label="Más opciones">⋮</button>`}</div></div>`};
 function az(k){const have=new Set(S.songs.map(s=>ini(s.artist)));const L=[...'#ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter(c=>have.has(c));
@@ -147,8 +161,8 @@ function render(){
  else if(ui.view==='pls'){
   if(ui.pl&&S.playlists.find(p=>p.id===ui.pl))vPl();else{ui.pl=null;
    m.innerHTML=`<div class="bar"><h2 style="flex:1;margin:0">Listas</h2><button class="pri" data-a="plnew">Nueva lista</button></div>`+
-   ([...S.playlists].sort((a,b)=>cmp(a.name,b.name)).map(p=>`<div class="row" data-pl="${p.id}"><div class="inf"><b>${esc(p.name)}</b><small>${p.songIds.length} canciones</small></div>
-   <div class="btns"><button data-a="plopen">Abrir</button><button data-a="plplay" aria-label="Reproducir">▶</button><button data-a="plren" aria-label="Renombrar">✎</button><button data-a="pldel" aria-label="Eliminar">🗑</button></div></div>`).join('')||'<p class="mut">Aún no tienes listas. Crea una y añade canciones desde la biblioteca.</p>');}
+   ([...S.playlists].sort((a,b)=>cmp(a.name,b.name)).map(p=>`<div class="row c top" data-pl="${p.id}"><div class="inf" data-a="plopen" style="cursor:pointer"><b class="b3">${esc(p.name)}</b><small>${p.songIds.length} canciones</small></div>
+   <div class="btns"><button data-a="plplay" aria-label="Reproducir">▶</button><button data-a="plren" aria-label="Renombrar">✎</button><button data-a="pldel" aria-label="Eliminar">🗑</button></div></div>`).join('')||'<p class="mut">Aún no tienes listas. Crea una y añade canciones desde la biblioteca.</p>');}
  }else if(ui.view==='set')vSet();else vIdeas();
 }
 function fillList(){
@@ -160,35 +174,43 @@ function fillList(){
  $('#list').innerHTML=`<div class="bar" style="align-items:center"><small style="flex:1">${f.length} de ${S.songs.length} canciones</small><button data-a="lc">🎧 Local</button>${f.length?'<button data-a="playall">Reproducir todo</button>':''}</div>`+
   sh.map(s=>row(s)).join('')+(f.length>sh.length?`<button data-a="more" style="width:100%;margin-top:6px">Mostrar más (${f.length-sh.length} restantes)</button>`:'')+
   (!f.length?`<p class="mut">${S.songs.length?'No hay canciones con estos filtros.':'Biblioteca vacía. Pulsa ＋ y pega enlaces de YouTube, o 🎧 Local para tus MP3.'}</p>`:'')}
-const refresh=()=>ui.view==='lib'?fillList():render();
+const refresh=()=>ui.view==='lib'?fillList():(ui.view==='ideas'||ui.view==='set')?0:render();
 function vArt(){
  const mp=new Map();S.songs.forEach(s=>{const a=s.artist||'';mp.set(a,(mp.get(a)||0)+1)});
  const L=[...mp].filter(([a])=>!ui.al||ini(a)===ui.al).sort((x,y)=>cmp(x[0]||'~',y[0]||'~'));
- $('#main').innerHTML=`<h2>Artistas</h2>${az('al')}`+(L.map(([a,n])=>`<div class="row" data-ar="${esc(a)}"><div class="inf" data-a="arsel" style="cursor:pointer"><b>${esc(a||'Sin artista')}</b><small>${n} canciones</small></div><div class="btns"><button data-a="arplay" aria-label="Reproducir">▶</button></div></div>`).join('')||'<p class="mut">Aún no hay artistas.</p>')}
+ $('#main').innerHTML=`<h2>Artistas</h2>${az('al')}`+(L.map(([a,n])=>`<div class="row c" data-ar="${esc(a)}"><div class="inf" data-a="arsel" style="cursor:pointer"><b>${esc(a||'Sin artista')}</b><small>${n} canciones</small></div><div class="btns"><button data-a="arplay" aria-label="Reproducir">▶</button></div></div>`).join('')||'<p class="mut">Aún no hay artistas.</p>')}
 function vGen(){
  $('#main').innerHTML=`<div class="bar"><h2 style="flex:1;margin:0">Géneros</h2><button class="pri" data-a="gnew">Nuevo género</button></div>`+
- (genres().map(g=>`<div class="row" data-g="${esc(g)}"><div class="inf" data-a="gsel" style="cursor:pointer"><b>${esc(g)}</b><small>${S.songs.filter(s=>s.genres.includes(g)).length} canciones</small></div><div class="btns"><button data-a="gplay" aria-label="Reproducir">▶</button><button data-a="gren" aria-label="Renombrar">✎</button><button data-a="gdel" aria-label="Quitar">🗑</button></div></div>`).join('')||'<p class="mut">Sin géneros. Crea el primero con «Nuevo género».</p>')}
+ (genres().map(g=>`<div class="row c" data-g="${esc(g)}"><div class="inf" data-a="gsel" style="cursor:pointer"><b>${esc(g)}</b><small>${S.songs.filter(s=>s.genres.includes(g)).length} canciones</small></div><div class="btns"><button data-a="gplay" aria-label="Reproducir">▶</button><button data-a="gren" aria-label="Renombrar">✎</button><button data-a="gdel" aria-label="Quitar">🗑</button></div></div>`).join('')||'<p class="mut">Sin géneros. Crea el primero con «Nuevo género».</p>')}
 function vSet(){const b=bk(),d=b.t?new Date(b.t).toLocaleDateString('es-ES'):'nunca';
- $('#main').innerHTML=`<div class="sec"><h3>Copia de seguridad</h3><p class="mut">Los datos viven solo en este navegador. Última copia: ${d}. Cambios desde entonces: ${b.n||0}.</p><button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button></div>
- ${localSec()}<div class="sec"><h3>Ideas de mejora</h3><p class="mut">Apunta lo que quieras cambiar o añadir.</p><button data-a="ideasgo">Abrir ideas de mejora</button></div>`}
+ const sel=(id,c,o)=>`<select id="${id}">${opts(o,c)}</select>`;
+ $('#main').innerHTML=`<h2>Ajustes</h2>`+
+ det('rp','Reproducción',`<label>Qué reproducir</label>${sel('p-src',prefs.src,[['all','Local y YouTube'],['local','Solo local (MP3)'],['yt','Solo YouTube']])}<label>Aleatorio</label>${sel('p-sh',prefs.sh?'1':'0',[['0','No'],['1','Sí']])}<label>Repetir</label>${sel('p-rep',prefs.rep,[['off','No'],['all','Toda la cola'],['one','Una canción']])}`,true)+
+ det('ap','Apariencia',`<label>Tema</label>${sel('p-th',prefs.theme,[['auto','Automático (según el móvil)'],['light','Claro'],['dark','Oscuro']])}`)+
+ det('cp','Copia de seguridad',`<p class="mut">Los datos viven solo en este navegador. Última copia: ${d}. Cambios desde entonces: ${b.n||0}.</p><button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button>`)+
+ det('lo','Música local (MP3)',localSec())+
+ det('id','Ideas de mejora',`<p class="mut">Apunta lo que quieras cambiar o añadir.</p><button data-a="ideasgo">Abrir ideas de mejora</button>`)+
+ `<p class="mut" style="text-align:center">Mi música · versión ${VERSION}</p>`}
 function chkBk(){const b=bk();if(!S.songs.length)return;const days=b.t?Math.floor((Date.now()-b.t)/864e5):0;
  const why=!b.t?'Todavía no has hecho ninguna copia de seguridad.':days>=14?`Hace ${days} días de tu última copia de seguridad.`:(b.n||0)>10?`Llevas ${b.n} cambios desde tu última copia de seguridad.`:'';
  if(why)$('#bk').innerHTML=`<div class="sec" style="border-color:var(--acc)"><b>${why}</b><div class="end" style="justify-content:flex-start"><button class="pri" data-a="bkgo">Descargar copia ahora</button><button data-a="bkno">Más tarde</button></div></div>`}
 function vPl(){
  const p=S.playlists.find(x=>x.id===ui.pl);const ss=p.songIds.map(byId).filter(Boolean);ui.ctx=ss.map(s=>s.id);
  $('#main').innerHTML=`<div class="bar"><button data-a="plback">← Listas</button><h2 style="flex:1;margin:0">${esc(p.name)}</h2><button class="pri" data-a="playall">Reproducir</button></div>
- <small>${ss.length} canciones</small>${ss.map(s=>row(s,'pl')).join('')||'<p class="mut">Lista vacía. Añade canciones con ＋ desde la biblioteca.</p>'}`}
+ <div class="bar"><button data-a="pladd">＋ Añadir canciones</button><small style="align-self:center">${ss.length} canciones</small></div>${ss.map(s=>row(s,'pl')).join('')||'<p class="mut">Lista vacía. Pulsa «Añadir canciones» para elegirlas de tu biblioteca (YouTube y MP3).</p>'}`}
 function vIdeas(){
  const L=[...S.ideas].sort((a,b)=>(a.done-b.done)||b.date-a.date);
  $('#main').innerHTML=`<div class="bar"><button data-a="tab" data-v="set">← Configuración</button><h2 style="flex:1;margin:0">Ideas de mejora</h2></div>
- <div class="sec"><textarea id="in" rows="4" placeholder="Escribe una idea (admite varias líneas)"></textarea><div class="end"><button class="pri" data-a="ideaadd">Guardar idea</button></div></div>
+ <div class="sec"><textarea id="in" rows="4" placeholder="Escribe una idea (admite varias líneas)">${esc(ui.draft)}</textarea><div class="end"><button class="pri" data-a="ideaadd">Guardar idea</button></div></div>
  ${L.map(i=>`<div class="row${i.done?' done':''}" data-i="${i.id}"><input type="checkbox" data-a="ideatog" style="width:auto"${i.done?' checked':''} aria-label="Marcar como implementada"><div class="inf idea" style="white-space:pre-wrap">${esc(i.text)}</div><div class="btns"><button data-a="ideaedit">Editar</button><button data-a="ideadel">Borrar</button></div></div>`).join('')||'<p class="mut">Sin ideas todavía.</p>'}`}
 
 /* ---------- Reproductor ---------- */
 let P,ready=false,Q=[],qi=-1,errs=0,wd=0,urlL=null;
 const au=new Audio(),FILES=new Map();
 const isL=s=>!!s&&s.src==='local',AUD=/\.(mp3|m4a|aac|flac|ogg|opus|wav)$/i,fk=f=>f.name+'|'+f.size;
-const ok=s=>!!s&&(isL(s)?FILES.has(s.fk):navigator.onLine);
+const ok=s=>!!s&&!((prefs.src==='local'&&!isL(s))||(prefs.src==='yt'&&isL(s)))&&(isL(s)?FILES.has(s.fk):navigator.onLine);
+const ico=s=>isL(s)?'<span class="src lo" title="Local">♪</span>':'<span class="src" title="YouTube">▶</span>';
+const det=(k,t,b,o)=>`<details class="sec" data-k="${k}"${(ui.open[k]??o)?' open':''}><summary>${t}</summary>${b}</details>`;
 const ytScript=()=>{if((window.YT&&YT.Player)||$('#ytapi'))return;document.head.append(Object.assign(document.createElement('script'),{id:'ytapi',src:'https://www.youtube.com/iframe_api',onerror(){this.remove()}}))};
 ytScript();addEventListener('online',ytScript);
 window.onYouTubeIframeAPIReady=()=>{P=new YT.Player('yt',{width:'100%',height:'100%',playerVars:{playsinline:1,rel:0},
@@ -207,7 +229,7 @@ function toggle(){const s=cur();if(!s){if(ui.ctx.length)startQ(ui.ctx,0);return}
  if(isL(s))au.paused?au.play():au.pause();else if(ready)P.getPlayerState()===1?P.pauseVideo():P.playVideo()}
 function startQ(ids,i){Q=[...ids];qi=i;errs=0;
  if(!ok(cur())){const j=pick(1,false);if(j<0){Q=[];qi=-1;upd();toast('Ahora mismo no se puede reproducir nada de esta lista (sin conexión o MP3 sin conectar)');return}qi=j}load()}
-function load(){const s=cur();if(!s)return;stopWd();upd();refresh();media(s);
+function load(){const s=cur();if(!s)return;stopWd();$('#vidbox').classList.toggle('local',isL(s));upd();refresh();media(s);
  if(isL(s)){if(ready)try{P.stopVideo()}catch{}
   if(urlL)URL.revokeObjectURL(urlL);urlL=URL.createObjectURL(FILES.get(s.fk));au.src=urlL;
   au.play().catch(e=>{if(e.name==='NotAllowedError')toast('Toca ⏯ para reproducir');else if(e.name!=='AbortError')skip('no se puede reproducir')})}
@@ -216,7 +238,7 @@ au.onplaying=()=>{errs=0;stopWd();const s=cur();if(isL(s)&&!s.dur&&isFinite(au.d
 au.onended=()=>{if(isL(cur()))ended()};
 au.onerror=()=>{if(isL(cur()))skip('no se puede reproducir')};
 const localSec=()=>{const l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;
- return `<div class="sec"><h3>Música local (MP3)</h3><p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p><button class="pri" data-a="lc">Conectar música</button></div>`};
+ return `<p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p><button class="pri" data-a="lc">Conectar música</button>`};
 function onPlay(){const s=cur();if(!s)return;errs=0;let ch=false;
  const d=Math.round(P.getDuration()||0);if(d>0&&!s.dur){s.dur=d;ch=true}
  const vd=P.getVideoData&&P.getVideoData();if(vd&&vd.title&&/^Vídeo /.test(s.title)){s.title=vd.title;ch=true}
@@ -231,10 +253,34 @@ function next(auto){if(!Q.length)return;const i=pick(1,auto);
 function prev(){if(!Q.length)return;const s=cur(),l=isL(s),t=l?au.currentTime:ready?P.getCurrentTime():0;
  if(t>3){l?au.currentTime=0:P.seekTo(0);return}
  const i=pick(-1,false);if(i<0){if(l)au.currentTime=0;else if(ready)P.seekTo(0);return}qi=i;load()}
-function upd(){const s=cur();$('#now').textContent=s?s.title:'Nada en reproducción';$('#nowa').textContent=s?s.artist:'';
- $('#qinfo').textContent=Q.length?`Cola: ${qi+1} de ${Q.length}`:'';
+function upd(){const s=cur();$('#now').textContent=s?s.title:'Nada en reproducción';$('#nsrc').innerHTML=s?ico(s):'';
+ $('#nowa').textContent=s?(s.artist||'Sin artista')+(Q.length>1?' · Cola '+(qi+1)+' de '+Q.length:''):'';
+ const x=$('#p-sh');if(x)x.value=prefs.sh?'1':'0';const y=$('#p-rep');if(y)y.value=prefs.rep;
  $('#bshf').classList.toggle('on',prefs.sh);$('#brep').classList.toggle('on',prefs.rep!=='off');
  $('#brep').textContent=prefs.rep==='one'?'🔂':'🔁';document.title=s?s.title+' – Mi música':'Mi música'}
+
+let seeking=false;
+function durNow(){const s=cur();try{const d=isL(s)?au.duration:(ready?P.getDuration():0);return isFinite(d)?(d||0):0}catch{return 0}}
+setInterval(()=>{if(seeking)return;const s=cur(),sk=$('#seek');sk.disabled=!s;
+ if(!s){sk.value=0;$('#tcur').textContent='0:00';$('#tdur').textContent='–:–';return}
+ let t=0;try{t=(isL(s)?au.currentTime:ready?P.getCurrentTime():0)||0}catch{}const d=durNow();
+ sk.value=d?Math.round(t/d*10000):0;$('#tcur').textContent=fmt(t);$('#tdur').textContent=d?fmt(d):'–:–'},500);
+$('#seek').addEventListener('input',e=>{seeking=true;$('#tcur').textContent=fmt(e.target.value/10000*durNow())});
+$('#seek').addEventListener('change',e=>{const s=cur(),d=durNow();if(s&&d){const x=e.target.value/10000*d;if(isL(s))au.currentTime=x;else if(ready)P.seekTo(x,true)}seeking=false});
+
+function plAddDlg(p){const sel=new Set();let q='',src='',shown=[];
+ dlg('Añadir canciones a «'+esc(p.name)+'»',`<div class="bar" style="margin:0 0 6px"><input id="pq" type="search" placeholder="Buscar título o artista"><select id="ps" style="flex:none;width:auto"><option value="">Todas</option><option value="l">Locales</option><option value="y">YouTube</option></select></div>
+  <div class="bar" style="align-items:center;margin:0 0 6px"><button data-x="all">Marcar las mostradas</button><small id="pc" style="flex:1;text-align:right"></small></div><div id="pa" style="max-height:45vh;overflow:auto"></div>`,d=>{
+  if(!sel.size){toast('No has marcado ninguna canción');return false}
+  sel.forEach(id=>p.songIds.push(id));put('playlists',p);toast(sel.size+' añadidas a «'+p.name+'»');render()},'Añadir',d=>{
+  const cnt=()=>d.querySelector('#pc').textContent=sel.size+' marcadas';
+  const draw=()=>{shown=S.songs.filter(s=>!p.songIds.includes(s.id)&&(!src||(src==='l')===isL(s))&&(!q||[s.title,s.artist].join(' ').toLowerCase().includes(q))).sort((a,b)=>cmp(a.title,b.title));
+   d.querySelector('#pa').innerHTML=(shown.slice(0,100).map(s=>`<label class="pk"><input type="checkbox" data-pid="${s.id}"${sel.has(s.id)?' checked':''}><span>${ico(s)}${esc(s.title)} <small>${esc(s.artist)}</small></span></label>`).join('')+(shown.length>100?`<small>Mostrando 100 de ${shown.length}. Afina la búsqueda.</small>`:''))||'<small>No hay canciones que añadir.</small>';cnt()};
+  draw();
+  d.pk=e=>{if(e.target.dataset.x==='all'){shown.slice(0,100).forEach(s=>sel.add(s.id));draw()}};
+  d.querySelector('#pq').oninput=e=>{q=e.target.value.toLowerCase();draw()};
+  d.querySelector('#ps').onchange=e=>{src=e.target.value;draw()};
+  d.querySelector('#pa').onchange=e=>{const i=e.target.dataset.pid;if(!i)return;e.target.checked?sel.add(i):sel.delete(i);cnt()}})}
 
 /* ---------- Altas, ediciones y copias ---------- */
 const vidOf=t=>{const m=t.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/|\/v\/)([\w-]{11})/)||t.match(/^([\w-]{11})$/);return m&&m[1]};
@@ -301,10 +347,11 @@ async function loadLocal(fs){const L=fs.filter(f=>AUD.test(f.name));if(!L.length
  const have=new Set(S.songs.filter(isL).map(s=>s.fk)),nu=[];
  for(let i=0;i<L.length;i++){const f=L[i],k=fk(f);FILES.set(k,f);
   if(!have.has(k)){have.add(k);const t=await tags(f);
-   nu.push({id:uid()+i.toString(36),src:'local',fk:k,fname:f.name,title:t.TIT2||f.name.replace(/\.[^.]+$/,''),artist:t.TPE1||'',type:'canción',genres:[],year:(t.TDRC||t.TYER||'').slice(0,4),notes:'',fav:false,dur:0,bad:'',added:Date.now()})}
+   nu.push({id:uid()+i.toString(36),src:'local',fk:k,fname:f.name,title:t.TIT2||f.name.replace(/\.[^.]+$/,''),artist:t.TPE1||'',type:'canción',genres:['MP3','Nuevas'],year:(t.TDRC||t.TYER||'').slice(0,4),notes:'',fav:false,dur:0,bad:'',added:Date.now()})}
   if(i%25===24){toast(`Leyendo ${i+1} de ${L.length}…`);await new Promise(r=>setTimeout(r))}}
- if(nu.length){const st=db.transaction('songs','readwrite').objectStore('songs');nu.forEach(s=>st.put(s));S.songs.push(...nu);bump()}
- toast(`${L.length} conectadas, ${nu.length} nuevas`);refresh();upd()}
+ if(nu.length){const st=db.transaction('songs','readwrite').objectStore('songs');nu.forEach(s=>st.put(s));S.songs.push(...nu);bump();
+  ['MP3','Nuevas'].forEach(g=>{if(!S.genres.some(x=>x.id===g)){S.genres.push({id:g});put('genres',{id:g},1)}})}
+ toast(`${L.length} conectadas, ${nu.length} nuevas`);render();upd()}
 function localDlg(){const d=$('#dlg'),l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;d.pk=null;
  d.innerHTML=`<h3>Música local</h3><p class="mut">${l.length} canciones locales, ${c} conectadas. Las nuevas se añaden a la biblioteca y las que ya conozco se reconectan. Los MP3 no se copian ni se suben a ningún sitio.</p><div style="display:grid;gap:6px"><button class="pri" data-m="d">📁 Elegir carpeta</button><button data-m="f">🎵 Elegir archivos</button></div><div class="end"><button data-x="c">Cerrar</button></div>`;
  d.onclick=e=>{const m=e.target.dataset.m;if(e.target.dataset.x==='c')d.close();if(m==='d')$('#fd').click();if(m==='f')$('#ff').click()};d.showModal()}
@@ -350,8 +397,10 @@ document.addEventListener('click',e=>{
  case'imp':$('#file').click();break;case'lc':localDlg();break;
  case'bkgo':exportJSON();$('#bk').innerHTML='';toast('Copia descargada');break;
  case'bkno':$('#bk').innerHTML='';break;
+ case'vid':{const v=$('#vidbox');v.classList.toggle('hide');b.classList.toggle('on',!v.classList.contains('hide'))}break;
+ case'pladd':if(cp)plAddDlg(cp);break;
  case'ideasgo':ui.view='ideas';render();break;
- case'ideaadd':{const t=$('#in').value;if(!t.trim())return;const i={id:uid(),text:t,done:false,date:Date.now()};S.ideas.push(i);put('ideas',i);render()}break;
+ case'ideaadd':{const t=$('#in').value;if(!t.trim())return;const i={id:uid(),text:t,done:false,date:Date.now()};S.ideas.push(i);put('ideas',i);ui.draft='';render()}break;
  case'ideatog':idea.done=!idea.done;put('ideas',idea);render();break;
  case'ideaedit':ideaDlg(idea);break;
  case'ideadel':destroy(()=>{S.ideas=S.ideas.filter(x=>x!==idea);del('ideas',idea.id)},'Idea borrada');render();break;
@@ -361,8 +410,14 @@ document.addEventListener('click',e=>{
  case'shf':prefs.sh=!prefs.sh;savePrefs();upd();break;
  case'rep':prefs.rep={off:'all',all:'one',one:'off'}[prefs.rep];savePrefs();upd();toast({off:'Repetir: no',all:'Repetir: todo',one:'Repetir: una canción'}[prefs.rep]);break;
  }});
-document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;reset();fillList()}});
-document.addEventListener('change',e=>{const i=e.target.id,v=e.target.value;if(i==='g')ui.g=v;else if(i==='t')ui.t=v;else if(i==='so')ui.sort=v;else return;reset();fillList()});
+document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;reset();fillList()}else if(e.target.id==='in')ui.draft=e.target.value});
+document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)ui.open[k]=e.target.open},true);
+document.addEventListener('change',e=>{const i=e.target.id,v=e.target.value;
+ if(i==='p-sh'){prefs.sh=v==='1';savePrefs();upd();return}
+ if(i==='p-rep'){prefs.rep=v;savePrefs();upd();return}
+ if(i==='p-src'){prefs.src=v;savePrefs();return}
+ if(i==='p-th'){prefs.theme=v;savePrefs();applyTheme();return}
+ if(i==='g')ui.g=v;else if(i==='t')ui.t=v;else if(i==='so')ui.sort=v;else return;reset();fillList()});
 $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=''});
 
 (async()=>{try{await openDB();for(const n of Object.keys(S))S[n]=await getAll(n)}catch{toast('No se puede usar el almacenamiento del navegador')}
