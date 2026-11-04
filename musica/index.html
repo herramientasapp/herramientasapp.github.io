@@ -1,1 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi música</title>
+<style>
+:root{--bg:#eceff3;--card:#fff;--ink:#1b2233;--mut:#667086;--acc:#3d4fd1;--acct:#fff;--line:#d9dee7;--bad:#b3261e;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#12151d;--card:#1b2030;--ink:#e8ebf3;--mut:#9aa3b8;--acc:#8fa2ff;--acct:#12151d;--line:#2d3550;--bad:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--acc)}button.pri,button.on{background:var(--acc);color:var(--acct);border-color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.wrap{max-width:1100px;margin:0 auto;padding:12px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.wrap{grid-template-columns:380px minmax(0,1fr);align-items:start}.side{position:sticky;top:12px}}
+.side{background:var(--card);border-radius:14px;padding:12px;border:1px solid var(--line)}
+.vid{aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+.vid iframe{width:100%;height:100%}
+#now{font-weight:650;font-size:17px;margin:10px 0 2px;line-height:1.25}#nowa{color:var(--mut);min-height:1.4em}
+.ctl{display:flex;gap:6px;margin-top:10px}.ctl button{flex:1;font-size:17px}
+nav{display:flex;gap:6px;margin-bottom:12px}nav button{flex:1}
+h2{font-size:20px;margin:0 0 10px}h3{margin:0 0 8px}
+.bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.bar input{flex:2 1 160px}.bar select{flex:1 1 120px;width:auto}
+.mut{color:var(--mut)}small{color:var(--mut)}
+.row{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:6px}
+.row.cur{border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
+.row img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;cursor:pointer;flex:none;background:var(--line)}
+.inf{flex:1;min-width:0}.inf b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inf span{margin-right:8px}.bad{color:var(--bad)}
+.chip{display:inline-block;background:var(--bg);border-radius:20px;padding:0 8px;font-size:12px;margin:2px 4px 0 0}
+.btns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:150px}.btns button{padding:3px 8px}
+@media(max-width:520px){.row{flex-wrap:wrap}.row img{width:80px}.btns{max-width:none;width:100%;justify-content:flex-start}}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(520px,94vw);padding:16px}
+dialog::backdrop{background:#0008}
+dialog label{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
+.end{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+#toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;display:none;z-index:9}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.idea{white-space:pre-wrap}.done .idea{text-decoration:line-through;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside class="side">
+ <div class="vid"><div id="yt"></div></div>
+ <div id="now">Nada en reproducción</div><div id="nowa"></div>
+ <div class="ctl">
+  <button data-a="prv" title="Anterior" aria-label="Anterior">⏮</button>
+  <button data-a="pp" id="bpp" title="Reproducir o pausar" aria-label="Reproducir o pausar">⏯</button>
+  <button data-a="nxt" title="Siguiente" aria-label="Siguiente">⏭</button>
+  <button data-a="shf" id="bshf" title="Aleatorio" aria-label="Aleatorio">🔀</button>
+  <button data-a="rep" id="brep" title="Repetir" aria-label="Repetir">🔁</button>
+ </div>
+ <small id="qinfo"></small>
+</aside>
+<main>
+ <nav>
+  <button data-a="tab" data-v="lib">Biblioteca</button>
+  <button data-a="tab" data-v="pls">Listas</button>
+  <button data-a="tab" data-v="set">Configuración</button>
+ </nav>
+ <div id="main"></div>
+</main>
+</div>
+<dialog id="dlg"></dialog>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<div id="toast"></div>
 
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmt=t=>{t=Math.round(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0')};
+const TYPES=['canción','concierto','otro'];
+
+/* ---------- Datos: IndexedDB ---------- */
+let db;const S={songs:[],playlists:[],ideas:[]};
+const openDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open('musicaDB',1);
+ r.onupgradeneeded=()=>Object.keys(S).forEach(n=>r.result.createObjectStore(n,{keyPath:'id'}));
+ r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>ko(r.error)});
+const getAll=n=>new Promise(ok=>{const q=db.transaction(n).objectStore(n).getAll();q.onsuccess=()=>ok(q.result)});
+const put=(n,o)=>db.transaction(n,'readwrite').objectStore(n).put(o);
+const del=(n,id)=>db.transaction(n,'readwrite').objectStore(n).delete(id);
+const clr=n=>db.transaction(n,'readwrite').objectStore(n).clear();
+
+/* ---------- Estado e interfaz ---------- */
+let prefs={sh:false,rep:'off'};try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
+const savePrefs=()=>{try{localStorage.setItem('musica.prefs',JSON.stringify(prefs))}catch{}};
+const ui={view:'lib',q:'',g:'',t:'',fav:false,pl:null,ctx:[]};
+const byId=id=>S.songs.find(s=>s.id===id);
+const genres=()=>[...new Set(S.songs.flatMap(s=>s.genres))].sort((a,b)=>a.localeCompare(b,'es'));
+const parseG=t=>[...new Set(t.split(',').map(x=>x.trim()).filter(Boolean))];
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
+function dlg(title,body,ok,label='Guardar'){const d=$('#dlg');
+ d.innerHTML=`<h3>${title}</h3>${body}<div class="end"><button data-x="c">Cancelar</button><button class="pri" data-x="o">${label}</button></div>`;
+ d.onclick=e=>{const x=e.target.dataset.x;if(x==='c')d.close();if(x==='o'&&ok(d)!==false)d.close()};d.showModal()}
+const typeSel=v=>`<select id="f-t">${TYPES.map(t=>`<option${t===v?' selected':''}>${t}</option>`).join('')}</select>`;
+const gList=()=>`<datalist id="gl">${genres().map(g=>`<option value="${esc(g)}">`).join('')}</datalist>`;
+
+function row(s,ctx){
+ const cur=Q[qi]===s.id;
+ return `<div class="row${cur?' cur':''}" data-id="${s.id}">
+ <img src="https://i.ytimg.com/vi/${s.vid}/mqdefault.jpg" alt="" loading="lazy" data-a="play">
+ <div class="inf"><b>${esc(s.title)}</b>
+ <small><span>${esc(s.artist)}</span>${s.type!=='canción'?`<span>${esc(s.type)}</span>`:''}${s.year?`<span>${esc(s.year)}</span>`:''}${s.dur?`<span>${fmt(s.dur)}</span>`:''}${s.bad?`<span class="bad">${esc(s.bad)}</span>`:''}</small>
+ <div>${s.genres.map(g=>`<span class="chip">${esc(g)}</span>`).join('')}</div></div>
+ <div class="btns"><button data-a="play" aria-label="Reproducir">▶</button>
+ <button data-a="fav" class="${s.fav?'on':''}" aria-label="Favorito">★</button>
+ ${ctx==='pl'?`<button data-a="up" aria-label="Subir">↑</button><button data-a="down" aria-label="Bajar">↓</button><button data-a="rem" aria-label="Quitar de la lista">✕</button>`
+ :`<button data-a="addpl" aria-label="Añadir a una lista">＋</button><button data-a="edit" aria-label="Editar">✎</button><button data-a="delete" aria-label="Eliminar">🗑</button>`}
+ </div></div>`}
+
+function render(){
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===ui.view||(ui.view==='ideas'&&b.dataset.v==='set')));
+ const m=$('#main');
+ if(ui.view==='lib'){
+  m.innerHTML=`<div class="bar"><input id="q" type="search" placeholder="Buscar título, artista o notas" value="${esc(ui.q)}">
+  <select id="g"><option value="">Todos los géneros</option>${genres().map(g=>`<option${ui.g===g?' selected':''}>${esc(g)}</option>`).join('')}</select>
+  <select id="t"><option value="">Todos los tipos</option>${TYPES.map(t=>`<option${ui.t===t?' selected':''}>${t}</option>`).join('')}</select>
+  <button data-a="favf" class="${ui.fav?'on':''}" aria-label="Solo favoritos">★</button>
+  <button class="pri" data-a="add">Añadir canciones</button></div><div id="list"></div>`;
+  fillList();
+ }else if(ui.view==='pls'){
+  if(ui.pl&&S.playlists.find(p=>p.id===ui.pl))vPl();else{
+   ui.pl=null;
+   m.innerHTML=`<div class="bar"><h2 style="flex:1;margin:0">Listas</h2><button class="pri" data-a="plnew">Nueva lista</button></div>`+
+   (S.playlists.map(p=>`<div class="row" data-pl="${p.id}"><div class="inf"><b>${esc(p.name)}</b><small>${p.songIds.length} canciones</small></div>
+   <div class="btns"><button data-a="plopen">Abrir</button><button data-a="plplay" aria-label="Reproducir">▶</button><button data-a="plren" aria-label="Renombrar">✎</button><button data-a="pldel" aria-label="Eliminar">🗑</button></div></div>`).join('')||'<p class="mut">Aún no tienes listas. Crea una y añade canciones desde la biblioteca.</p>');
+  }
+ }else if(ui.view==='set')vSet();else vIdeas();
+}
+function fillList(){
+ const q=ui.q.toLowerCase();
+ const f=S.songs.filter(s=>(!ui.g||s.genres.includes(ui.g))&&(!ui.t||s.type===ui.t)&&(!ui.fav||s.fav)&&
+  (!q||[s.title,s.artist,s.notes,s.genres.join(' ')].join(' ').toLowerCase().includes(q))).sort((a,b)=>a.title.localeCompare(b.title,'es'));
+ ui.ctx=f.map(s=>s.id);
+ $('#list').innerHTML=`<small>${f.length} de ${S.songs.length} canciones</small>`+(f.length?` <button data-a="playall" style="margin:0 0 8px 8px">Reproducir todo</button>`:'')+
+  `<div>${f.map(s=>row(s)).join('')||'<p class="mut">No hay canciones. Pulsa «Añadir canciones» y pega enlaces de YouTube.</p>'}</div>`}
+const refresh=()=>ui.view==='lib'?fillList():render();
+function vPl(){
+ const p=S.playlists.find(x=>x.id===ui.pl);const ss=p.songIds.map(byId).filter(Boolean);ui.ctx=ss.map(s=>s.id);
+ $('#main').innerHTML=`<div class="bar"><button data-a="plback">← Listas</button><h2 style="flex:1;margin:0">${esc(p.name)}</h2><button class="pri" data-a="playall">Reproducir</button></div>
+ <small>${ss.length} canciones</small>${ss.map(s=>row(s,'pl')).join('')||'<p class="mut">Lista vacía. Añade canciones con ＋ desde la biblioteca.</p>'}`}
+function vSet(){
+ const gs=genres();
+ $('#main').innerHTML=`<div class="sec"><h3>Géneros</h3>${gs.map(g=>`<div class="row" data-g="${esc(g)}"><div class="inf"><b>${esc(g)}</b><small>${S.songs.filter(s=>s.genres.includes(g)).length} canciones</small></div><div class="btns"><button data-a="gren">Renombrar</button><button data-a="gdel">Quitar</button></div></div>`).join('')||'<p class="mut">Los géneros aparecen al asignarlos a canciones. Renombrar uno con el nombre de otro los fusiona.</p>'}</div>
+ <div class="sec"><h3>Copia de seguridad</h3><p class="mut">Los datos viven solo en este navegador. Descarga una copia JSON con regularidad.</p>
+ <button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button></div>
+ <div class="sec"><h3>Ideas de mejora</h3><p class="mut">Apunta lo que quieras cambiar o añadir.</p><button data-a="ideasgo">Abrir ideas de mejora</button></div>`}
+function vIdeas(){
+ const L=[...S.ideas].sort((a,b)=>(a.done-b.done)||b.date-a.date);
+ $('#main').innerHTML=`<div class="bar"><button data-a="tab" data-v="set">← Configuración</button><h2 style="flex:1;margin:0">Ideas de mejora</h2></div>
+ <div class="sec"><textarea id="in" rows="4" placeholder="Escribe una idea (admite varias líneas)"></textarea><div class="end"><button class="pri" data-a="ideaadd">Guardar idea</button></div></div>
+ ${L.map(i=>`<div class="row${i.done?' done':''}" data-i="${i.id}"><input type="checkbox" data-a="ideatog" style="width:auto"${i.done?' checked':''} aria-label="Marcar como implementada"><div class="inf idea" style="white-space:pre-wrap">${esc(i.text)}</div><div class="btns"><button data-a="ideaedit">Editar</button><button data-a="ideadel">Borrar</button></div></div>`).join('')||'<p class="mut">Sin ideas todavía.</p>'}`}
+
+/* ---------- Reproductor ---------- */
+let P,ready=false,Q=[],qi=-1,errs=0;
+document.head.append(Object.assign(document.createElement('script'),{src:'https://www.youtube.com/iframe_api'}));
+window.onYouTubeIframeAPIReady=()=>{P=new YT.Player('yt',{width:'100%',height:'100%',playerVars:{playsinline:1,rel:0},
+ events:{onReady:()=>{ready=true;if(Q.length&&qi>=0)load()},onStateChange:e=>{if(e.data===0)ended();if(e.data===1)onPlay()},onError:e=>perr(e.data)}})};
+const cur=()=>byId(Q[qi]);
+function startQ(ids,i){Q=[...ids];qi=i;errs=0;load()}
+function load(){const s=cur();if(!s)return;upd();refresh();if(ready)P.loadVideoById(s.vid);else toast('Cargando el reproductor…')}
+function onPlay(){const s=cur();if(!s)return;errs=0;let ch=false;
+ const d=Math.round(P.getDuration()||0);if(d>0&&!s.dur){s.dur=d;ch=true}
+ const vd=P.getVideoData&&P.getVideoData();if(vd&&vd.title&&/^Vídeo /.test(s.title)){s.title=vd.title;ch=true}
+ if(s.bad){s.bad='';ch=true}
+ if(ch){put('songs',s);upd();refresh()}}
+function perr(c){const s=cur();if(!s)return;s.bad=c===100?'no disponible':'no se puede incrustar';put('songs',s);toast('«'+s.title+'»: '+s.bad+'. Paso a la siguiente.');
+ if(++errs>=Q.length){errs=0;refresh();return}next(true)}
+function ended(){if(prefs.rep==='one'){P.seekTo(0);P.playVideo();return}next(true)}
+function next(auto){if(!Q.length)return;
+ if(prefs.sh&&Q.length>1){let n;do n=Math.floor(Math.random()*Q.length);while(n===qi);qi=n}
+ else if(qi+1<Q.length)qi++;else if(prefs.rep==='all'||!auto)qi=0;else{upd();return}
+ load()}
+function prev(){if(!Q.length)return;if(ready&&P.getCurrentTime()>3){P.seekTo(0);return}qi=Math.max(0,qi-1);load()}
+function upd(){const s=cur();$('#now').textContent=s?s.title:'Nada en reproducción';$('#nowa').textContent=s?s.artist:'';
+ $('#qinfo').textContent=Q.length?`Cola: ${qi+1} de ${Q.length}`:'';
+ $('#bshf').classList.toggle('on',prefs.sh);$('#brep').classList.toggle('on',prefs.rep!=='off');
+ $('#brep').textContent=prefs.rep==='one'?'🔂':'🔁';document.title=s?s.title+' – Mi música':'Mi música'}
+
+/* ---------- Altas, ediciones y copias ---------- */
+const vidOf=t=>{const m=t.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/|\/v\/)([\w-]{11})/)||t.match(/^([\w-]{11})$/);return m&&m[1]};
+async function meta(s){try{const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent('https://www.youtube.com/watch?v='+s.vid));if(!r.ok)return;
+ const j=await r.json();s.title=j.title||s.title;if(!s.artist)s.artist=(j.author_name||'').replace(/ - Topic$/,'');put('songs',s);refresh();upd()}catch{}}
+function addDlg(){
+ dlg('Añadir canciones',`<label>Enlaces de YouTube (uno por línea; sirve pegar muchos de golpe)</label><textarea id="f-u" rows="6" placeholder="https://www.youtube.com/watch?v=…"></textarea>
+ <label>Tipo para todas</label>${typeSel('canción')}<label>Géneros para todas (separados por comas)</label><input id="f-g" list="gl">${gList()}
+ <small>El título y el canal se intentan rellenar solos; si no se puede, aparecerán como «Vídeo …» y se corrigen al editar o al reproducir.</small>`,d=>{
+  const ids=d.querySelector('#f-u').value.split(/\s+/).map(vidOf).filter(Boolean);
+  if(!ids.length){toast('No he encontrado enlaces válidos');return false}
+  const t=d.querySelector('#f-t').value,g=parseG(d.querySelector('#f-g').value);let n=0,dup=0;
+  for(const v of new Set(ids)){if(S.songs.some(s=>s.vid===v)){dup++;continue}
+   const s={id:uid(),vid:v,title:'Vídeo '+v,artist:'',type:t,genres:g,year:'',notes:'',fav:false,dur:0,bad:'',added:Date.now()};
+   S.songs.push(s);put('songs',s);meta(s);n++}
+  toast(`${n} añadidas${dup?`, ${dup} ya estaban`:''}`);refresh()},'Añadir')}
+function editDlg(s){
+ dlg('Editar canción',`<label>Título</label><input id="f-ti" value="${esc(s.title)}"><label>Artista</label><input id="f-a" value="${esc(s.artist)}">
+ <label>Tipo</label>${typeSel(s.type)}<label>Géneros (separados por comas)</label><input id="f-g" list="gl" value="${esc(s.genres.join(', '))}">${gList()}
+ <label>Año</label><input id="f-y" value="${esc(s.year)}"><label>Notas</label><textarea id="f-n" rows="3">${esc(s.notes)}</textarea>`,d=>{
+  const v=i=>d.querySelector(i).value;
+  Object.assign(s,{title:v('#f-ti').trim()||s.title,artist:v('#f-a').trim(),type:v('#f-t'),genres:parseG(v('#f-g')),year:v('#f-y').trim(),notes:v('#f-n')});
+  put('songs',s);refresh();upd()})}
+function addPlDlg(s){
+ dlg('Añadir a una lista',`${S.playlists.length?`<label>Lista existente</label><select id="f-p"><option value="">Elegir…</option>${S.playlists.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:''}
+ <label>${S.playlists.length?'O crear una nueva':'Nombre de la nueva lista'}</label><input id="f-np">`,d=>{
+  const nn=d.querySelector('#f-np').value.trim(),sel=d.querySelector('#f-p');let p;
+  if(nn){p={id:uid(),name:nn,songIds:[]};S.playlists.push(p)}else if(sel&&sel.value)p=S.playlists.find(x=>x.id===sel.value);
+  if(!p){toast('Elige una lista o escribe un nombre');return false}
+  if(p.songIds.includes(s.id))toast('Ya estaba en «'+p.name+'»');else{p.songIds.push(s.id);toast('Añadida a «'+p.name+'»')}
+  put('playlists',p)},'Añadir')}
+function nameDlg(title,val,ok){dlg(title,`<label>Nombre</label><input id="f-nm" value="${esc(val)}">`,d=>{const v=d.querySelector('#f-nm').value.trim();if(!v)return false;ok(v)})}
+function ideaDlg(i){dlg('Editar idea',`<textarea id="f-i" rows="6">${esc(i.text)}</textarea>`,d=>{const v=d.querySelector('#f-i').value;if(!v.trim())return false;i.text=v;put('ideas',i);render()})}
+function exportJSON(){
+ const b=new Blob([JSON.stringify({app:'mi-musica',v:1,date:new Date().toISOString(),songs:S.songs,playlists:S.playlists,ideas:S.ideas},null,1)],{type:'application/json'});
+ const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'mi-musica-'+new Date().toISOString().slice(0,10)+'.json'});
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+async function importJSON(f){
+ let j;try{j=JSON.parse(await f.text());if(!Array.isArray(j.songs))throw 0}catch{toast('El archivo no es una copia válida');return}
+ const rep=confirm('Aceptar: REEMPLAZAR todo lo actual por la copia.\nCancelar: FUSIONAR la copia con lo que ya tienes.');
+ if(rep){for(const n of Object.keys(S)){await clr(n);S[n]=[]}}
+ const map={};
+ for(const s of j.songs){const ex=S.songs.find(x=>x.vid===s.vid);if(ex){map[s.id]=ex.id;continue}
+  const n={id:s.id||uid(),vid:s.vid,title:s.title||'Vídeo '+s.vid,artist:s.artist||'',type:s.type||'canción',genres:s.genres||[],year:s.year||'',notes:s.notes||'',fav:!!s.fav,dur:s.dur||0,bad:'',added:s.added||Date.now()};
+  map[s.id]=n.id;S.songs.push(n);put('songs',n)}
+ for(const p of j.playlists||[]){const n={id:p.id,name:p.name,songIds:(p.songIds||[]).map(i=>map[i]).filter(Boolean)};
+  const k=S.playlists.findIndex(x=>x.id===n.id);k>=0?S.playlists[k]=n:S.playlists.push(n);put('playlists',n)}
+ for(const i of j.ideas||[])if(!S.ideas.some(x=>x.id===i.id)){S.ideas.push(i);put('ideas',i)}
+ toast('Copia restaurada');render()}
+
+/* ---------- Eventos ---------- */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+ const id=b.closest('[data-id]')?.dataset.id,s=id&&byId(id),pid=b.closest('[data-pl]')?.dataset.pl,p=pid&&S.playlists.find(x=>x.id===pid),
+  cp=S.playlists.find(x=>x.id===ui.pl),gn=b.closest('[data-g]')?.dataset.g,iid=b.closest('[data-i]')?.dataset.i,idea=iid&&S.ideas.find(x=>x.id===iid);
+ switch(a){
+ case'tab':ui.view=b.dataset.v;if(ui.view!=='pls')ui.pl=null;render();break;
+ case'play':startQ(ui.ctx,ui.ctx.indexOf(id));break;
+ case'playall':if(ui.ctx.length)startQ(ui.ctx,0);break;
+ case'fav':s.fav=!s.fav;put('songs',s);refresh();break;
+ case'favf':ui.fav=!ui.fav;render();break;
+ case'add':addDlg();break;
+ case'edit':editDlg(s);break;
+ case'addpl':addPlDlg(s);break;
+ case'delete':if(confirm('¿Eliminar «'+s.title+'»?')){S.songs=S.songs.filter(x=>x!==s);del('songs',s.id);
+  S.playlists.forEach(l=>{if(l.songIds.includes(s.id)){l.songIds=l.songIds.filter(i=>i!==s.id);put('playlists',l)}});refresh()}break;
+ case'plnew':nameDlg('Nueva lista','',v=>{const l={id:uid(),name:v,songIds:[]};S.playlists.push(l);put('playlists',l);render()});break;
+ case'plopen':ui.pl=pid;render();break;
+ case'plback':ui.pl=null;render();break;
+ case'plplay':{const ids=p.songIds.filter(byId);if(ids.length)startQ(ids,0);else toast('La lista está vacía')}break;
+ case'plren':nameDlg('Renombrar lista',p.name,v=>{p.name=v;put('playlists',p);render()});break;
+ case'pldel':if(confirm('¿Eliminar la lista «'+p.name+'»? Las canciones se conservan.')){S.playlists=S.playlists.filter(x=>x!==p);del('playlists',p.id);render()}break;
+ case'up':case'down':{const i=cp.songIds.indexOf(id),j=a==='up'?i-1:i+1;if(j>=0&&j<cp.songIds.length){[cp.songIds[i],cp.songIds[j]]=[cp.songIds[j],cp.songIds[i]];put('playlists',cp);render()}}break;
+ case'rem':cp.songIds=cp.songIds.filter(i=>i!==id);put('playlists',cp);render();break;
+ case'gren':nameDlg('Renombrar género',gn,v=>{S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=[...new Set(x.genres.map(g=>g===gn?v:g))];put('songs',x)}});render()});break;
+ case'gdel':if(confirm('¿Quitar el género «'+gn+'» de todas las canciones?')){S.songs.forEach(x=>{if(x.genres.includes(gn)){x.genres=x.genres.filter(g=>g!==gn);put('songs',x)}});render()}break;
+ case'exp':exportJSON();break;
+ case'imp':$('#file').click();break;
+ case'ideasgo':ui.view='ideas';render();break;
+ case'ideaadd':{const t=$('#in').value;if(!t.trim())return;const i={id:uid(),text:t,done:false,date:Date.now()};S.ideas.push(i);put('ideas',i);render()}break;
+ case'ideatog':idea.done=!idea.done;put('ideas',idea);render();break;
+ case'ideaedit':ideaDlg(idea);break;
+ case'ideadel':if(confirm('¿Borrar esta idea?')){S.ideas=S.ideas.filter(x=>x!==idea);del('ideas',idea.id);render()}break;
+ case'pp':if(ready&&Q.length)(P.getPlayerState()===1?P.pauseVideo():P.playVideo());else if(!Q.length&&ui.ctx.length)startQ(ui.ctx,0);break;
+ case'nxt':next(false);break;
+ case'prv':prev();break;
+ case'shf':prefs.sh=!prefs.sh;savePrefs();upd();break;
+ case'rep':prefs.rep={off:'all',all:'one',one:'off'}[prefs.rep];savePrefs();upd();toast({off:'Repetir: no',all:'Repetir: todo',one:'Repetir: una canción'}[prefs.rep]);break;
+ }});
+document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;fillList()}});
+document.addEventListener('change',e=>{if(e.target.id==='g'){ui.g=e.target.value;fillList()}if(e.target.id==='t'){ui.t=e.target.value;fillList()}});
+$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=''});
+
+(async()=>{try{await openDB();for(const n of Object.keys(S))S[n]=await getAll(n)}catch{toast('No se puede usar el almacenamiento del navegador')}
+ render();upd()})();
+</script>
+</body>
+</html>
