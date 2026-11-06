@@ -89,16 +89,18 @@ details.fd{margin-left:10px}details.fd>summary{display:flex;justify-content:spac
 .bar.sub{border-top:1px dashed var(--line);padding-top:8px;align-items:center}.bar.sub small{flex:none}
 details.sec>summary{list-style:none;display:flex;justify-content:space-between;align-items:center}
 details.sec>summary::-webkit-details-marker{display:none}details.sec>summary::after{content:'▾';color:var(--mut)}details.sec[open]>summary::after{content:'▴'}
-#drv{display:none;position:fixed;inset:0;z-index:30;background:var(--bg);flex-direction:column;gap:14px;padding:max(14px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+body.drv{overflow:hidden;overscroll-behavior:none}
+#drv{display:none;position:fixed;top:0;left:0;right:0;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:none;z-index:30;background:var(--bg);flex-direction:column;justify-content:flex-start;gap:12px;padding:max(14px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
 #drv.on{display:flex}
 #drv .dtop{display:flex;justify-content:space-between;align-items:center;gap:8px}#drv .dx{padding:12px 18px;font-size:18px;font-weight:650}
-#drv .dmid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;min-height:0;overflow:hidden}
-#dico{font-size:64px;line-height:1}#dtit{font-size:clamp(22px,6.5vw,38px);font-weight:700;line-height:1.2;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-#dart{font-size:clamp(17px,4.5vw,26px);color:var(--mut)}#dq{font-size:13px;color:var(--mut)}
+#drv .dmid{flex:none;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:2px 0}
+#drv input[type=range]{touch-action:pan-x}
+#dico{font-size:40px;line-height:1}#dtit{font-size:clamp(18px,5vw,28px);font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#dart{font-size:clamp(15px,4vw,21px);color:var(--mut)}#dq{font-size:13px;color:var(--mut)}
 #dprog{width:100%;height:10px;accent-color:var(--acc)}.dtm{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:-8px}
-.dctl{display:flex;gap:12px}.dctl button{flex:1;font-size:38px;padding:22px 0;border-radius:18px}.dctl button#dpp{flex:1.6;background:var(--acc);color:var(--acct);border-color:var(--acc)}
-.dvol{display:flex;gap:12px;align-items:center}.dvol button{font-size:26px;padding:10px 16px}.dvol input{flex:1;padding:0;height:34px;accent-color:var(--acc);background:transparent;border:0}
-.dopt{display:flex;gap:8px;flex-wrap:wrap}.dopt button{flex:1 1 150px;padding:12px 8px;font-size:15px}
+.dctl{display:flex;gap:12px}.dctl button{flex:1;font-size:38px;padding:20px 0;border-radius:18px}.dctl button#dpp{flex:1.6;background:var(--acc);color:var(--acct);border-color:var(--acc)}
+.dvol{display:flex;gap:12px;align-items:center}.dvol button{font-size:38px;padding:16px 26px;min-width:96px;border-radius:18px}.dvol input{flex:1;padding:0;height:48px;accent-color:var(--acc);background:transparent;border:0}
+.dopt{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.dopt button{flex:1 1 150px;padding:12px 8px;font-size:15px}
 </style>
 </head>
 <body>
@@ -131,7 +133,7 @@ details.sec>summary::-webkit-details-marker{display:none}details.sec>summary::af
  <progress id="dprog" max="10000" value="0"></progress><div class="dtm"><span id="dcur">0:00</span><span id="ddur">–:–</span></div>
  <div class="dctl"><button data-a="prv" aria-label="Anterior">⏮</button><button data-a="pp" id="dpp" aria-label="Reproducir o pausar">▶</button><button data-a="nxt" aria-label="Siguiente">⏭</button></div>
  <div class="dvol"><button data-a="dmute" id="dmu" aria-label="Silenciar">🔊</button><input type="range" id="dvol" min="0" max="100" aria-label="Volumen"></div>
- <div class="dopt"><button data-a="dloc" id="dlo"></button><button data-a="dwl" id="dwl"></button><button data-a="dauto" id="dau"></button></div>
+ <div class="dopt"><button data-a="dloc" id="dlo"></button><button data-a="dauto" id="dau"></button></div>
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="file" accept=".json,application/json" hidden>
@@ -166,7 +168,7 @@ const putMany=(n,a)=>{if(!a.length)return;const st=db.transaction(n,'readwrite')
 const delMany=(n,ids)=>{if(!ids.length)return;const st=db.transaction(n,'readwrite').objectStore(n);ids.forEach(i=>st.delete(i));bump()};
 
 /* ---------- Estado e interfaz ---------- */
-let prefs={sh:false,rep:'off',src:'all',theme:'auto',cp:false};const VERSION='7.0 · Fase 3b';try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
+let prefs={sh:false,rep:'off',src:'all',theme:'auto',cp:false};const VERSION='7.1 · Fase 3b-2';try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
 const savePrefs=()=>{try{localStorage.setItem('musica.prefs',JSON.stringify(prefs))}catch{}};
 const applyTheme=()=>{prefs.theme==='light'||prefs.theme==='dark'?document.documentElement.dataset.theme=prefs.theme:document.documentElement.removeAttribute('data-theme')};applyTheme();
 const ui={open:{},draft:'',view:'lib',q:'',g:'',t:'',fav:false,ar:null,l:'',al:'',sort:'title',fp:'',fo:false,lim:60,pl:null,ctx:[],sel:null,o:'',nw:false,sg:false,sa:false,bd:false,qf:0,ql:80,pv:'lib'};
@@ -236,7 +238,7 @@ function fillList(){
  const extra=ws.length&&act?S.songs.filter(s=>flt(s,ws,false)).length-f.length:0;
  $('#list').innerHTML=`<div class="pt">🎵 Canciones</div><div class="bar" style="align-items:center"><small style="flex:1">${f.length} de ${S.songs.length} canciones</small>${act?'<button data-a="clrall">Quitar filtros</button>':''}</div>
   <div class="bar">${f.length?'<button class="pri" data-a="playall">▶ Reproducir todo</button>':''}${ui.sel?'<button data-a="selx" class="on">✕ Salir de selección</button>':'<button data-a="selon">☑ Seleccionar</button>'}<button data-a="cpt">${prefs.cp?'▤ Normal':'☰ Compacta'}</button></div>
-  <div class="bar sub"><small>Local y compartir:</small><button data-a="lc">🎧 Cargar local</button><button data-a="fol">📂 Carpetas</button><button data-a="share">📤 Compartir YouTube</button></div>
+  <div class="bar sub"><small>Local y compartir:</small><button data-a="lc">🎧 Carga local MP3</button><button data-a="fol">📂 Carpetas</button><button data-a="share">📤 Compartir YouTube</button></div>
   ${ui.bd&&f.length?`<div class="bar"><button data-a="bdclear">Quitar la marca de error (${f.length})</button><button data-a="bddel" style="color:var(--bad)">🗑 Eliminar estas ${f.length}</button></div>`:''}
   ${extra>0?`<div class="bar"><button data-a="clrall">Hay ${extra} coincidencias más sin filtros: quitar filtros</button></div>`:''}`+
   sh.map(s=>row(s)).join('')+(f.length>sh.length?`<div class="bar" style="margin-top:6px"><button data-a="more" style="flex:1">Mostrar más (${f.length-sh.length} restantes)</button><button data-a="all" style="flex:1">Mostrar todas</button></div>`:'')+
@@ -356,7 +358,7 @@ function gapless(el){if(el!==au||el.src===SIL||prefs.rep==='one')return;const s=
   $('#vidbox').classList.add('local');upd();refresh();media(n);try{navigator.mediaSession.playbackState='playing'}catch{}
   setTimeout(()=>{if(el!==au)el.pause()},1500)}}
 const localSec=()=>{const l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;
- return `<p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p><button class="pri" data-a="lc">🎧 Cargar local</button>`};
+ return `<p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p><button class="pri" data-a="lc">🎧 Carga local MP3</button>`};
 function onPlay(){const s=cur();if(!s)return;applyVol();try{navigator.mediaSession.playbackState='playing'}catch{}errs=0;tmo=0;netBad=false;fast=false;let ch=false;
  const d=Math.round(P.getDuration()||0);if(d>0&&!s.dur){s.dur=d;ch=true}
  const vd=P.getVideoData&&P.getVideoData();if(vd&&vd.title&&/^Vídeo /.test(s.title)){s.title=vd.title;ch=true}
@@ -541,19 +543,16 @@ document.addEventListener('contextmenu',e=>{if(e.target.closest('.row[data-id]')
 
 /* ---------- Modo conducción y volumen ---------- */
 let drvPrev=null,drvAuto=false,wl=null;
-{let o={};try{o=JSON.parse(localStorage.getItem('musica.prefs'))||{}}catch{}Object.assign(prefs,{vol:1,mute:false,dauto:true,dwl:false},o)}
+{let o={};try{o=JSON.parse(localStorage.getItem('musica.prefs'))||{}}catch{}Object.assign(prefs,{vol:1,mute:false,dauto:true},o)}
 function applyVol(){const v=prefs.mute?0:prefs.vol;AUS.forEach(x=>x.volume=v);try{if(ready&&P.setVolume){P.setVolume(Math.round(v*100));prefs.mute?P.mute():P.unMute()}}catch{}}
 const drvOn=()=>$('#drv').classList.contains('on');
 function drvUpd(){const s=cur();$('#dico').textContent=s?(isL(s)?'🎧':'▶'):'🎧';$('#dtit').textContent=s?s.title:'Nada en reproducción';$('#dart').textContent=s?(s.artist||'Sin artista'):'';
  $('#dq').textContent=s&&Q.length>1?'Cola '+(qi+1)+' de '+Q.length:'';
  $('#dmu').textContent=prefs.mute||!prefs.vol?'🔇':'🔊';$('#dvol').value=Math.round(prefs.vol*100);
  $('#dlo').textContent='📶 Solo local: '+(prefs.src==='local'?'SÍ':'no');$('#dlo').classList.toggle('on',prefs.src==='local');
- $('#dwl').textContent='🔆 Pantalla encendida: '+(prefs.dwl?'sí':'no');$('#dwl').classList.toggle('on',prefs.dwl);
  $('#dau').textContent='🔁 Solo local si pierdo cobertura: '+(prefs.dauto?'sí':'no');$('#dau').classList.toggle('on',prefs.dauto);
  $('#dstat').textContent=navigator.onLine?'':'Sin conexión'}
-async function wlSet(){try{if(prefs.dwl&&drvOn()&&navigator.wakeLock&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}else if((!prefs.dwl||!drvOn())&&wl){await wl.release();wl=null}}catch{}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)wlSet()});
-function drvExit(){$('#drv').classList.remove('on');if(drvPrev!==null){prefs.src=drvPrev;drvPrev=null;drvAuto=false}wlSet();render()}
+function drvExit(){$('#drv').classList.remove('on');document.body.classList.remove('drv');if(drvPrev!==null){prefs.src=drvPrev;drvPrev=null;drvAuto=false}render()}
 addEventListener('offline',()=>{drvUpd();if(drvOn()&&prefs.dauto&&prefs.src!=='local'){if(drvPrev===null)drvPrev=prefs.src;prefs.src='local';drvAuto=true;drvUpd();toast('Sin cobertura: solo música local')}});
 addEventListener('online',()=>{drvUpd();if(drvAuto&&drvOn()){prefs.src=drvPrev;drvPrev=null;drvAuto=false;drvUpd();toast('Vuelve la cobertura: YouTube activado de nuevo')}});
 $('#dvol').addEventListener('input',e=>{prefs.vol=e.target.value/100;prefs.mute=false;applyVol();savePrefs();drvUpd()});
@@ -640,11 +639,10 @@ document.addEventListener('click',e=>{
  case'fdel':{const p0=b.dataset.p,ids=idsBy(x=>inF(x,p0));dlg('Eliminar carpeta','<p>Se quitarán de la biblioteca y de las listas <b>'+ids.length+'</b> canciones de «'+esc(p0)+'». Los archivos del móvil no se tocan. Podrás deshacerlo justo después.</p>',()=>{removeSongs(ids);render()},'Eliminar')}break;
  case'share':shareIds();break;
  case'wipe':wipe1();break;
- case'drive':selOff();$('#drv').classList.add('on');drvUpd();wlSet();break;
+ case'drive':selOff();$('#drv').classList.add('on');document.body.classList.add('drv');drvUpd();break;
  case'dexit':drvExit();break;
  case'dmute':prefs.mute=!prefs.mute;applyVol();savePrefs();drvUpd();break;
  case'dloc':if(prefs.src==='local'){prefs.src=drvPrev||'all';drvPrev=null}else{drvPrev=prefs.src;prefs.src='local'}drvAuto=false;drvUpd();if(prefs.src==='local'&&cur()&&!isL(cur()))toast('Esta canción de YouTube termina y sigo con las locales');break;
- case'dwl':prefs.dwl=!prefs.dwl;savePrefs();drvUpd();wlSet();break;
  case'dauto':prefs.dauto=!prefs.dauto;savePrefs();drvUpd();break;
  case'lgcopy':navigator.clipboard&&navigator.clipboard.writeText(LOG.join('\n')).then(()=>toast('Registro copiado'));break;
  case'pp':toggle();break;
