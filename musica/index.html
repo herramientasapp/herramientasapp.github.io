@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mi música</title>
+<meta name="theme-color" content="#3d4fd1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi música">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{--bg:#eceff3;--card:#fff;--ink:#1b2233;--mut:#667086;--acc:#3d4fd1;--acct:#fff;--line:#d9dee7;--bad:#b3261e;color-scheme:light}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12151d;--card:#1b2030;--ink:#e8ebf3;--mut:#9aa3b8;--acc:#8fa2ff;--acct:#12151d;--line:#2d3550;--bad:#ff8a80;color-scheme:dark}}
@@ -139,7 +146,7 @@ body.drv{overflow:hidden;overscroll-behavior:none}
  <div class="dopt"><button data-a="dloc" id="dlo"></button><button data-a="dauto" id="dau"></button><button data-a="dwl" id="dwl"></button></div>
 </div>
 <dialog id="dlg"></dialog>
-<input type="file" id="file" accept=".json,application/json" hidden>
+<input type="file" id="file" hidden>
 <input type="file" id="fd" webkitdirectory multiple hidden><input type="file" id="ff" accept="audio/*,video/*,.mp3,.m4a,.flac,.ogg,.opus,.wav,.mp4,.m4v,.webm,.mkv,.mov" multiple hidden>
 <div id="sb"></div>
 <div id="prg"><span></span><progress></progress><button data-a="lcancel">Cancelar la carga</button></div>
@@ -171,7 +178,7 @@ const putMany=(n,a)=>{if(!a.length)return;const st=db.transaction(n,'readwrite')
 const delMany=(n,ids)=>{if(!ids.length)return;const st=db.transaction(n,'readwrite').objectStore(n);ids.forEach(i=>st.delete(i));bump()};
 
 /* ---------- Estado e interfaz ---------- */
-let prefs={sh:false,rep:'off',src:'all',theme:'auto',cp:false};const VERSION='7.3 · Fase 3c';try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
+let prefs={sh:false,rep:'off',src:'all',theme:'auto',cp:false,bkN:15,bkD:30,llask:true};const VERSION='8.0 · Fase 4 (PWA)';try{Object.assign(prefs,JSON.parse(localStorage.getItem('musica.prefs')))}catch{}
 const savePrefs=()=>{try{localStorage.setItem('musica.prefs',JSON.stringify(prefs))}catch{}};
 const applyTheme=()=>{prefs.theme==='light'||prefs.theme==='dark'?document.documentElement.dataset.theme=prefs.theme:document.documentElement.removeAttribute('data-theme')};applyTheme();
 const ui={open:{},draft:'',view:'lib',q:'',g:'',t:'',fav:false,ar:null,l:'',al:'',sort:'title',fp:'',fo:false,lim:60,pl:null,ctx:[],sel:null,o:'',nw:false,sg:false,sa:false,bd:false,qf:0,ql:80,pv:'lib'};
@@ -181,7 +188,7 @@ const genres=()=>[...new Set([...S.genres.map(g=>g.id),...S.songs.flatMap(s=>s.g
 const ini=t=>{const c=(t||'').normalize('NFD').replace(/[^A-Za-z0-9]/g,'')[0];return c&&/[A-Za-z]/.test(c)?c.toUpperCase():'#'};
 const opts=(arr,cur)=>arr.map(([v,t])=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(t)}</option>`).join('');
 function toast(t,undo){const e=$('#toast');e.innerHTML=esc(t)+(undo?' <button data-a="undo">Deshacer</button>':'');toast.u=undo;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',undo?8000:2800)}
-function destroy(fn,msg){const snap=JSON.stringify(S);fn();toast(msg,()=>{const o=JSON.parse(snap),tx=db.transaction(Object.keys(S),'readwrite');for(const n of Object.keys(S)){const st=tx.objectStore(n);st.clear();S[n]=o[n];o[n].forEach(x=>st.put(x))}bump();render();upd()})}
+function destroy(fn,msg){const snap=JSON.stringify(S);fn();toast(typeof msg==='function'?msg():msg,()=>{const o=JSON.parse(snap),tx=db.transaction(Object.keys(S),'readwrite');for(const n of Object.keys(S)){const st=tx.objectStore(n);st.clear();S[n]=o[n];o[n].forEach(x=>st.put(x))}bump();render();upd()})}
 function dlg(title,body,ok,label='Guardar',init){const d=$('#dlg');d.pk=null;d.classList.remove('wide');
  d.innerHTML=`<h3>${title}</h3>${body}<div class="end"><button data-x="c">Cancelar</button><button class="pri" data-x="o">${label}</button></div>`;
  d.onclick=e=>{const x=e.target.dataset.x;if(x==='c')d.close();else if(x==='o'){if(ok(d)!==false)d.close()}else if(d.pk)d.pk(e)};if(init)init(d);d.showModal()}
@@ -241,7 +248,7 @@ function fillList(){
  const extra=ws.length&&act?S.songs.filter(s=>flt(s,ws,false)).length-f.length:0;
  $('#list').innerHTML=`<div class="pt">🎵 Canciones</div><div class="bar" style="align-items:center"><small style="flex:1">${f.length} de ${S.songs.length} canciones</small>${act?'<button data-a="clrall">Quitar filtros</button>':''}</div>
   <div class="bar">${f.length?'<button class="pri" data-a="playall">▶ Reproducir todo</button>':''}${ui.sel?'<button data-a="selx" class="on">✕ Salir de selección</button>':'<button data-a="selon">☑ Seleccionar</button>'}<button data-a="cpt">${prefs.cp?'▤ Normal':'☰ Compacta'}</button></div>
-  <div class="bar sub"><small>Local y compartir:</small><button data-a="lc">🎧 Carga local MP3</button><button data-a="fol">📂 Carpetas</button><button data-a="share">📤 Compartir YouTube</button></div>
+  <div class="bar sub"><small>Local y compartir:</small><button data-a="lc">🎧 Carga MP3 y Vídeos locales</button><button data-a="fol">📂 Carpetas</button><button data-a="share">📤 Compartir YouTube</button></div>
   ${ui.bd&&f.length?`<div class="bar"><button data-a="bdclear">Quitar la marca de error (${f.length})</button><button data-a="bddel" style="color:var(--bad)">🗑 Eliminar estas ${f.length}</button></div>`:''}
   ${extra>0?`<div class="bar"><button data-a="clrall">Hay ${extra} coincidencias más sin filtros: quitar filtros</button></div>`:''}`+
   sh.map(s=>row(s)).join('')+(f.length>sh.length?`<div class="bar" style="margin-top:6px"><button data-a="more" style="flex:1">Mostrar más (${f.length-sh.length} restantes)</button><button data-a="all" style="flex:1">Mostrar todas</button></div>`:'')+
@@ -260,13 +267,13 @@ function vSet(){const b=bk(),d=b.t?new Date(b.t).toLocaleDateString('es-ES'):'nu
  $('#main').innerHTML=`<h2>Ajustes</h2>`+
  det('rp','▶ Reproducción',`<label>Qué reproducir</label>${sel('p-src',prefs.src,[['all','Local y YouTube'],['local','Solo local (MP3 y vídeo)'],['yt','Solo YouTube']])}<label>Aleatorio</label>${sel('p-sh',prefs.sh?'1':'0',[['0','No'],['1','Sí']])}<label>Repetir</label>${sel('p-rep',prefs.rep,[['off','No'],['all','Toda la cola'],['one','Una canción']])}`)+
  det('ap','🎨 Apariencia',`<label>Tema</label>${sel('p-th',prefs.theme,[['auto','Automático (según el móvil)'],['light','Claro'],['dark','Oscuro']])}<label>Lista de canciones</label>${sel('p-cp',prefs.cp?'1':'0',[['0','Normal (con miniaturas)'],['1','Compacta (una línea)']])}`)+
- det('cp','💾 Copia de seguridad',`<p class="mut">Los datos viven solo en este navegador. Última copia: ${d}. Cambios desde entonces: ${b.n||0}.</p><button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">Restaurar copia</button> <button data-a="imptxt">Pegar JSON (compartido o de una IA)</button>`)+
+ det('cp','💾 Copia de seguridad',`<p class="mut">Los datos viven solo en este navegador. Última copia: ${d}. Cambios desde entonces: ${b.n||0}.</p><button class="pri" data-a="exp">Descargar copia</button> <button data-a="imp">📥 Importar archivo (copia o de una IA)</button> <button data-a="imptxt">Pegar texto JSON</button><label>Avisar al abrir si hay más de … cambios (0 = nunca)</label><input type="number" id="p-bkn" min="0" max="999" inputmode="numeric" value="${+prefs.bkN||0}"><label>o si han pasado … días desde la última copia (0 = nunca)</label><input type="number" id="p-bkd" min="0" max="999" inputmode="numeric" value="${+prefs.bkD||0}">`)+
  det('lo','🎧 Música local (MP3 y vídeo)',localSec())+
- det('rpt','📊 Informe de canciones',repBody())+det('ia','🤖 Prompts de IA',iaBody())+det('yl','🎯 Pedir enlaces de YouTube a una IA',ytBody())+det('id','💡 Ideas de mejora',ideasBody())+det('lg','🩺 Registro de eventos (diagnóstico)',`<p class="mut">Si la reproducción se para con la pantalla apagada, copia este registro y pásamelo. Incluye si el navegador «congela» la página (freeze), los eventos del audio/vídeo y los reintentos de YouTube con la pantalla apagada.</p><button data-a="lgcopy">Copiar registro</button><pre style="white-space:pre-wrap;font-size:11px;max-height:40vh;overflow:auto">${esc(LOG.join('\n'))}</pre>`)+det('wi','🗑 Borrar datos de esta app',`<p class="mut">Elimina solo los datos de Mi música (no toca otras apps).</p><button data-a="wipe" style="color:var(--bad)">🗑 Borrar todos los datos…</button>`)+
- `<p class="mut" style="text-align:center">Mi música · versión ${VERSION}</p>`}
-function chkBk(){const b=bk();if(!S.songs.length)return;const days=b.t?Math.floor((Date.now()-b.t)/864e5):0;
- const why=!b.t?'Todavía no has hecho ninguna copia de seguridad.':days>=14?`Hace ${days} días de tu última copia de seguridad.`:(b.n||0)>10?`Llevas ${b.n} cambios desde tu última copia de seguridad.`:'';
- if(why)$('#bk').innerHTML=`<div class="sec" style="border-color:var(--acc)"><b>${why}</b><div class="end" style="justify-content:flex-start"><button class="pri" data-a="bkgo">Descargar copia ahora</button><button data-a="bkno">Más tarde</button></div></div>`}
+ det('rpt','📊 Informe de canciones',repBody())+det('ia','🤖 Prompts de IA',iaBody())+det('yl','🎯 Pedir enlaces de YouTube a una IA',ytBody())+det('id','💡 Ideas de mejora',ideasBody())+det('pw','📲 Instalar como app',pwaBody())+det('wi','🗑 Borrar datos de esta app',`<p class="mut">Elimina solo los datos de Mi música (no toca otras apps).</p><button data-a="wipe" style="color:var(--bad)">🗑 Borrar todos los datos…</button>`)+
+ `<p class="mut" style="text-align:center" data-a="vtap">Mi música · versión ${VERSION}</p>`}
+function chkBk(){const b=bk();if(!S.songs.length)return;const N=+prefs.bkN||0,D=+prefs.bkD||0,days=b.t?Math.floor((Date.now()-b.t)/864e5):0,n=b.n||0;
+ const why=!b.t?(N||D?'Todavía no has hecho ninguna copia de seguridad.':''):(D&&days>=D)?`Hace ${days} días de tu última copia de seguridad.`:(N&&n>N)?`Llevas ${n} cambios desde tu última copia de seguridad.`:'';
+ if(why)$('#bk').innerHTML=`<div class="sec" style="border-color:var(--acc)"><b>💾 ${why}</b><div class="end" style="justify-content:flex-start"><button class="pri" data-a="bkgo">Descargar copia ahora</button><button data-a="bkno">Más tarde</button></div></div>`}
 function vPl(){
  const p=S.playlists.find(x=>x.id===ui.pl);const ss=p.songIds.map(byId).filter(Boolean);ui.ctx=ss.map(s=>s.id);
  $('#main').innerHTML=`<div class="bar"><button data-a="plback">← Listas</button><h2 style="flex:1;margin:0">${esc(p.name)}</h2><button class="pri" data-a="playall">Reproducir</button></div>
@@ -342,12 +349,14 @@ function repBody(){const r=rf(),n=repSongs().length;
  <label>Formato</label><select id="r-fm">${opts([['tsv','Texto: una línea por canción'],['json','JSON para IA (conserva id, fk, vid, path, kind)']],r.fmt)}</select>
  <div class="end" style="justify-content:flex-start;align-items:center"><button class="pri" data-a="repgo">Generar informe</button><small id="r-n">${n} canciones coinciden</small></div>
  <textarea id="r-out" rows="8" readonly placeholder="El informe aparecerá aquí">${esc(repOut)}</textarea>
- <div class="end" style="justify-content:flex-start"><button data-a="repcopy">📋 Copiar informe</button></div>`}
+ <div class="end" style="justify-content:flex-start"><button class="pri" data-a="repdl">💾 Descargar como archivo</button><button data-a="repcopy">📋 Copiar</button></div><small class="mut">Con muchas canciones usa el archivo: adjúntalo a la IA en vez de pegarlo. Luego importa su respuesta con «📥 Importar archivo».</small>`}
 
-const BASEP='Te paso un JSON exportado de mi app «Mi música». Devuélveme únicamente un JSON válido (sin explicaciones ni bloques de código) con la misma estructura. Respeta exactamente id, fk, vid, path, kind y src, y la estructura; solo puedes cambiar title, artist, genres, year, notes y las listas (name y songIds de playlists, usando solo ids que existan). No elimines ni inventes canciones.';
+const BASEP='Te paso un JSON exportado de mi app «Mi música» (pegado o como archivo adjunto). Devuélveme únicamente un JSON válido (sin explicaciones ni bloques de código) con la misma estructura y COMPLETO: todas las canciones, aunque sean muchas; si puedes, entrégalo como archivo .json descargable. Respeta exactamente id, fk, vid, path, kind y src, y la estructura; solo puedes cambiar title, artist, genres, year, notes y las listas (name y songIds de playlists, usando solo ids que existan). No elimines ni inventes canciones.';
 const EJ=[['Completar géneros y año','Revisa cada canción y, si faltan, añade en genres los géneros musicales adecuados (máximo 3) y en year el año de lanzamiento. No cambies nada más.'],
  ['Corregir títulos y artistas','Corrige erratas y mayúsculas, y limpia en title la basura típica de YouTube («Official Video», «HD», «Lyrics»…). Pon en artist el intérprete correcto cuando esté vacío o mal escrito.'],
- ['Crear listas por estilo','Crea entre 5 y 10 listas nuevas en playlists por estilo o estado de ánimo (cada una con un id nuevo único, name y songIds con ids que existan). No toques las listas que ya existen.']];
+ ['Crear listas por estilo','Crea entre 5 y 10 listas nuevas en playlists por estilo o estado de ánimo (cada una con un id nuevo único, name y songIds con ids que existan). No toques las listas que ya existen.'],
+  ['Reorganizar en pocas categorías','Sustituye los géneros de cada canción por 1 o 2 de un máximo de 8 categorías amplias que elijas tú (por ejemplo Rock, Pop, Clásica, Jazz, Latina, Banda sonora, Otros). Usa siempre exactamente los mismos nombres de categoría. No cambies nada más.'],
+  ['Traducir y limpiar títulos raros','Si title o artist están en chino, japonés, coreano, cirílico u otro alfabeto, tradúcelos o transcríbelos al español con letras latinas (nombres propios: romanización habitual). Quita basura del título: números de pista, nombres de archivo, «Official Video», «HD», webs, corchetes. No cambies nada más.']];
 const prOf=b=>S.prompts.find(y=>y.id===b.closest('[data-pr]')?.dataset.pr);
 function iaBody(){const L=[...S.prompts].sort((a,b)=>b.date-a.date);
  return `<p class="mut">Instrucciones para una IA. Al copiar, siempre se pone delante este texto fijo, para que la IA no rompa tus datos:</p>
@@ -356,8 +365,8 @@ function iaBody(){const L=[...S.prompts].sort((a,b)=>b.date-a.date);
  <label>Título</label><input id="pr-t" value="${esc(drafts.pt)}" placeholder="Ej.: Completar géneros y año">
  <label>Instrucción</label><textarea id="pr-x" rows="4" placeholder="Qué quieres que haga la IA (admite varias líneas)">${esc(drafts.px)}</textarea>
  <div class="end"><button class="pri" data-a="pradd">Guardar prompt</button></div>`+
- (L.map(x=>`<div class="row" data-pr="${x.id}"><div class="inf"><b>${esc(x.title)}</b><small style="display:block;white-space:pre-wrap">${esc(x.text)}</small></div><div class="btns"><button data-a="prcopy">Copiar</button><button data-a="predit">Editar</button><button data-a="prdel">Borrar</button></div></div>`).join('')||'<p class="mut">Aún no tienes prompts.</p><button data-a="prex">➕ Añadir 3 prompts de ejemplo</button>')+
- `<p class="mut">Flujo: genera un informe en JSON (sección «Informe»), pégalo en tu IA con uno de estos prompts, y pega la respuesta en «Pegar JSON» (Copia de seguridad) para actualizar tus canciones.</p>`}
+ (L.map(x=>`<div class="row" data-pr="${x.id}"><div class="inf"><b>${esc(x.title)}</b><small style="display:block;white-space:pre-wrap">${esc(x.text)}</small></div><div class="btns"><button data-a="prcopy">Copiar</button><button data-a="predit">Editar</button><button data-a="prdel">Borrar</button></div></div>`).join('')||'<p class="mut">Aún no tienes prompts.</p>')+`<div class="end" style="justify-content:flex-start"><button data-a="prex">➕ Añadir prompts de ejemplo (los que falten)</button></div>`+
+ `<p class="mut">Flujo: genera un informe en JSON (sección «Informe»), pégalo en tu IA con uno de estos prompts, y importa la respuesta con «Importar archivo» (o pégala) para actualizar tus canciones.</p><div class="end" style="justify-content:flex-start"><button class="pri" data-a="imp">📥 Importar archivo de la IA</button><button data-a="imptxt">Pegar texto</button></div>`}
 function ytBody(){const d=drafts;
  return `<p class="mut">Crea un prompt para que una IA te proponga enlaces de YouTube en el formato de «Pegar JSON». Ojo: las IA sin búsqueda web inventan identificadores de vídeo; usa una con búsqueda. Los vídeos que no existan se marcarán con ⚠ al fallar y podrás quitarlos con «no reproducibles».</p>
  <label>Mis gustos</label><textarea id="y-g" rows="3" placeholder="Ej.: rock de los 70 y 80, conciertos completos, guitarristas…">${esc(d.yg)}</textarea>
@@ -365,7 +374,7 @@ function ytBody(){const d=drafts;
  <label>Tipo</label><select id="y-t">${opts([['mix','Canciones y conciertos'],['canción','Solo canciones'],['concierto','Solo conciertos']],d.yt)}</select>
  <label>Nombre de la lista</label><input id="y-l" value="${esc(d.yl)}" placeholder="Rock 70-80">
  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="y-a" style="width:auto"${d.ya?' checked':''}> Adjuntar mis artistas más frecuentes</label>
- <div class="end" style="justify-content:flex-start"><button class="pri" data-a="ytcopy">📋 Copiar prompt</button><button data-a="imptxt">Pegar JSON de la IA</button></div>`}
+ <div class="end" style="justify-content:flex-start"><button class="pri" data-a="ytcopy">📋 Copiar prompt</button><button data-a="imp">📥 Importar archivo</button><button data-a="imptxt">Pegar texto</button></div>`}
 function ytPrompt(){const d=drafts,tp=d.yt==='mix'?'canciones y conciertos completos':d.yt==='canción'?'canciones':'conciertos completos',nm=d.yl.trim()||'Propuesta IA';
  let ar='';if(d.ya){const m=new Map();S.songs.forEach(s=>{if(s.artist)m.set(s.artist,(m.get(s.artist)||0)+1)});ar=[...m].sort((a,b)=>b[1]-a[1]).slice(0,40).map(x=>x[0]).join(', ')}
  return `Quiero que me propongas ${d.yn} vídeos de YouTube (${tp}) según mis gustos: ${d.yg.trim()||'(sin especificar)'}.\n`+
@@ -378,20 +387,20 @@ function parseJ(t){t=(t||'').trim();if(!t)return null;const tp=x=>{try{return JS
  if(Array.isArray(j))j={app:'mi-musica-share',v:1,name:'Lista importada',songs:j};return j}
 const ytId=x=>{x=String(x||'').trim();const m=x.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:/^[\w-]{11}$/.test(x)?x:''};
 function normShare(j){let bad=0;const seen=new Set();j.songs=j.songs.filter(s=>{if(!s||typeof s!=='object'){bad++;return false}const v=ytId(s.vid||s.url||s.id);if(!v||seen.has(v)){if(!v)bad++;return false}seen.add(v);s.vid=v;delete s.id;delete s.src;delete s.fk;return true});return bad}
-const findEx=s=>S.songs.find(x=>s.id&&x.id===s.id)||S.songs.find(x=>s.src==='local'?(s.fk&&x.fk===s.fk):(x.src!=='local'&&s.vid&&x.vid===s.vid));
+const findEx=s=>S.songs.find(x=>s.id&&x.id===s.id)||(s.fk&&S.songs.find(x=>x.fk===s.fk))||(s.vid&&S.songs.find(x=>x.src!=='local'&&x.vid===s.vid))||(s.fname&&S.songs.find(x=>isL(x)&&x.fname===s.fname&&(x.path||'')===(s.path||'')))||null;
 function editDiff(j){const out=[];for(const s of j.songs){const x=findEx(s);if(!x)continue;const c={};
  const F=(k,v)=>{if(v!==undefined&&v!==null&&String(v)!==String(x[k]??''))c[k]=String(v)};
  F('title',typeof s.title==='string'&&s.title.trim()?s.title.trim():undefined);F('artist',typeof s.artist==='string'?s.artist.trim():undefined);F('year',s.year);F('notes',typeof s.notes==='string'?s.notes:undefined);
  if(Array.isArray(s.genres)){const g=[...new Set(s.genres.map(t=>String(t).trim()).filter(Boolean))];if(g.join('|')!==x.genres.join('|'))c.genres=g}
  if(Object.keys(c).length)out.push([x,c])}
  return out}
-function applyEdits(j,diff){const pls=j.playlists||[];if(!diff.length&&!pls.length){toast('No hay cambios que aplicar');return}
+function applyEdits(j,diff,clean){let r={};
  destroy(()=>{for(const [x,c] of diff){Object.assign(x,c);put('songs',x);for(const g of c.genres||[])if(!S.genres.some(y=>y.id===g)){S.genres.push({id:g});put('genres',{id:g},1)}}
-  const map={};j.songs.forEach(s=>{const x=findEx(s);if(x)map[s.id||s.vid]=x.id});
-  for(const p of pls){const ids=(p.songIds||[]).map(i=>map[i]||(byId(i)?i:null)).filter(Boolean),ex=p.id&&S.playlists.find(x=>x.id===p.id);
-   if(ex){if(p.name)ex.name=p.name;ex.songIds=[...ex.songIds,...ids.filter(i=>!ex.songIds.includes(i))];put('playlists',ex)}
-   else if(ids.length){const n={id:uid()+Math.random().toString(36).slice(2,4),name:p.name||'Lista de la IA',songIds:ids};S.playlists.push(n);put('playlists',n)}}},
-  'Cambios aplicados en '+diff.length+' canciones');render();upd()}
+  r=apply(j,false,null,'s');
+  for(const p of j.playlists||[]){const ex=p.id&&S.playlists.find(x=>x.id===p.id);if(ex&&p.name&&p.name!==ex.name){if(QN==='📋 '+ex.name)QN='📋 '+p.name;ex.name=p.name;put('playlists',ex);r.ren=(r.ren||0)+1}}
+  if(clean){const gone=S.genres.filter(g=>!S.songs.some(s=>s.genres.includes(g.id))).map(g=>g.id);if(gone.length){S.genres=S.genres.filter(g=>!gone.includes(g.id));delMany('genres',gone);r.gone=gone.length}}},
+  ()=>`Actualizadas ${diff.length} canciones`+(r.added?` · ${r.added} nuevas`:'')+(r.lists?` · ${r.lists} listas nuevas`:'')+(r.ren?` · ${r.ren} listas renombradas`:'')+(r.gone?` · ${r.gone} géneros vacíos quitados`:''));
+ render();upd()}
 
 /* ---------- Reproductor ---------- */
 let P,ready=false,ytWant=false,hw=0,QN='',Q=[],qi=-1,errs=0,wd=0,urlL=null,missed=new Set(),tries=new Map(),netBad=false,tmo=0,fast=false;
@@ -458,7 +467,7 @@ function gapless(el){if(el!==au||el.src===SIL||prefs.rep==='one')return;const s=
   $('#vidbox').classList.add('local');upd();refresh();media(n);try{navigator.mediaSession.playbackState='playing'}catch{}
   setTimeout(()=>{if(el!==au)el.pause()},1500)}}
 const localSec=()=>{const l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;
- return `<p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p><button class="pri" data-a="lc">🎧 Carga local MP3</button>`};
+ return `<p class="mut">${l.length} canciones locales, ${c} conectadas ahora. Los archivos no se copian: se conectan desde tu carpeta cada vez que abres la app.</p>${llTxt()?'<p class="mut">'+llTxt()+'</p>':''}<button class="pri" data-a="lc">🎧 Carga MP3 y Vídeos locales</button><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="p-llask" style="width:auto"${prefs.llask!==false?' checked':''}> Avisarme al abrir la app para cargar los archivos</label>`};
 function onPlay(){const s=cur();if(!s)return;applyVol();try{navigator.mediaSession.playbackState='playing'}catch{}errs=0;tmo=0;netBad=false;fast=false;let ch=false;
  const d=Math.round(P.getDuration()||0);if(d>0&&!s.dur){s.dur=d;ch=true}
  const vd=P.getVideoData&&P.getVideoData();if(vd&&vd.title&&/^Vídeo /.test(s.title)){s.title=vd.title;ch=true}
@@ -566,26 +575,33 @@ function exportJSON(){
 async function importJSON(f){importObj(parseJ(await f.text()))}
 function pasteDlg(){dlg('Pegar JSON compartido','<p class="mut">Pega el texto que te han compartido, una copia completa o la respuesta de una IA (vale aunque lleve texto alrededor).</p><textarea id="f-pj" rows="7" placeholder="{&quot;app&quot;:&quot;mi-musica-share&quot;,…}"></textarea>',d=>{const j=parseJ(d.querySelector('#f-pj').value);if(!j||!Array.isArray(j.songs)){toast('El texto no es válido');return false}setTimeout(()=>importObj(j),80)},'Continuar')}
 function importObj(j){if(!j||!Array.isArray(j.songs)){toast('El archivo no es una copia válida');return}
- const sh=j.app==='mi-musica-share'||(j.app!=='mi-musica'&&j.songs.length>0&&j.songs.every(s=>s&&!s.id&&!s.fk&&(s.vid||s.url))),nbad=sh?normShare(j):0,diff=sh?[]:editDiff(j);
+ const sh=j.app==='mi-musica-share'||(j.app!=='mi-musica'&&j.songs.length>0&&j.songs.every(s=>s&&!s.id&&!s.fk&&(s.vid||s.url))),nbad=sh?normShare(j):0;
  if(sh&&!j.songs.length){toast('No he encontrado enlaces de YouTube válidos en el texto');return}
- const nv=j.songs.filter(s=>!S.songs.some(x=>s.src==='local'?x.fk===s.fk:(x.src!=='local'&&x.vid===s.vid))).length,
-  d=$('#dlg');d.pk=null;d.classList.remove('wide');
- if(sh){dlg('Importar lista compartida',`<p><b>«${esc(j.name||'Lista compartida')}»</b>: ${j.songs.length} canciones (${nv} nuevas, ${j.songs.length-nv} ya las tienes).</p><p class="mut">Se añadirán a tu biblioteca y se creará una lista nueva. No se borra nada.${nbad?' Descartados '+nbad+' sin identificador de YouTube válido.':''}</p><label>Nombre de la lista</label><input id="f-ln" value="${esc(j.name||'Lista compartida')}">`,dd=>{apply(j,true,dd.querySelector('#f-ln').value.trim()||j.name)},'Importar');return}
- d.innerHTML=`<h3>Restaurar copia</h3><p>La copia tiene <b>${j.songs.length}</b> canciones (${nv} nuevas para ti), <b>${(j.playlists||[]).length}</b> listas y ${(j.ideas||[]).length} ideas${j.date?' · del '+new Date(j.date).toLocaleDateString('es-ES'):''}.<br>Ahora tienes <b>${S.songs.length}</b> canciones y <b>${S.playlists.length}</b> listas.</p>
- <div style="display:grid;gap:6px"><button class="pri" data-m="f">➕ Fusionar con lo que tengo (no borra nada)</button><button data-m="u">✏ Actualizar mis canciones con los cambios (${diff.length} con título, artista, géneros, año o notas distintos)</button><button data-m="r" style="color:var(--bad)">♻ Reemplazar todo por la copia…</button></div><small style="display:block;margin-top:8px">«Actualizar» solo cambia esos campos en las canciones que ya tienes (por id) y añade listas nuevas; no borra canciones ni quita temas de tus listas, y se puede deshacer. Al reemplazar se descarga antes una copia de lo actual y también podrás deshacerlo.</small><div class="end"><button data-x="c">Cancelar</button></div>`;
- d.onclick=e=>{const m=e.target.dataset.m;if(e.target.dataset.x==='c'){d.close();return}if(!m)return;if(m==='u'){d.close();applyEdits(j,diff);return}d.close();
-  if(m==='f')apply(j,false);else setTimeout(()=>dlg('Reemplazar todo','<p>Se sustituirán <b>todas</b> tus canciones, listas, géneros e ideas por los de la copia. Antes se descargará una copia de lo actual.</p>',()=>{if(S.songs.length||S.playlists.length)exportJSON();setTimeout(()=>{destroy(()=>{pauseAll();try{if(ready)P.stopVideo()}catch{}Q=[];qi=-1;for(const n of Object.keys(S)){clr(n);S[n]=[]}apply(j,false,null,true)},'Todo reemplazado por la copia');upd()},400)},'Reemplazar'),80)};
+ j.songs=j.songs.filter(s=>s&&typeof s==='object');
+ const diff=sh?[]:editDiff(j),mt=j.songs.filter(s=>findEx(s)).length,nv=j.songs.length-mt,d=$('#dlg');d.pk=null;d.classList.remove('wide');
+ if(sh){dlg('Importar lista compartida',`<p><b>«${esc(j.name||'Lista compartida')}»</b>: ${j.songs.length} canciones (${nv} nuevas, ${mt} ya las tienes).</p><p class="mut">Se añadirán a tu biblioteca y se creará una lista nueva. No se borra nada.${nbad?' Descartados '+nbad+' sin identificador de YouTube válido.':''}</p><label>Nombre de la lista</label><input id="f-ln" value="${esc(j.name||'Lista compartida')}">`,dd=>{apply(j,true,dd.querySelector('#f-ln').value.trim()||j.name)},'Importar');return}
+ const nl=(j.playlists||[]).length;
+ d.innerHTML=`<h3>Importar archivo JSON</h3><p>Contiene <b>${j.songs.length}</b> canciones: <b>${mt}</b> coinciden con las tuyas (<b>${diff.length}</b> con título, artista, géneros, año o notas distintos) y <b>${nv}</b> son nuevas. También ${nl} listas${j.date?' · del '+new Date(j.date).toLocaleDateString('es-ES'):''}.<br>Ahora tienes <b>${S.songs.length}</b> canciones y <b>${S.playlists.length}</b> listas.</p>
+ ${mt===0&&j.songs.length?'<p class="bad"><b>Ninguna canción coincide</b> con las tuyas (por id, archivo o vídeo). Si esperabas cambios, la IA ha tocado los identificadores.</p>':mt&&!diff.length?'<p class="mut">Las canciones que ya tienes no cambian: el archivo trae los mismos datos.</p>':''}
+ <div style="display:grid;gap:6px"><button class="pri" data-m="u">✏ Aplicar los cambios y añadir lo nuevo</button><button data-m="f">➕ Solo añadir lo nuevo (no modifica las que ya tienes)</button><button data-m="r" style="color:var(--bad)">♻ Reemplazar todo por el archivo…</button></div>
+ <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="cg" style="width:auto" checked> Quitar después los géneros que se queden sin canciones</label>
+ <small style="display:block;margin-top:8px">«Aplicar» cambia título, artista, géneros, año y notas de las que ya existen, renombra listas y añade las nuevas; no borra canciones ni quita temas de tus listas, y se puede deshacer. «Solo añadir» deja intactas las que ya tienes. Al reemplazar se descarga antes una copia de lo actual.</small><div class="end"><button data-x="c">Cancelar</button></div>`;
+ d.onclick=e=>{const m=e.target.dataset.m;if(e.target.dataset.x==='c'){d.close();return}if(!m)return;const cl=d.querySelector('#cg').checked;d.close();
+  if(m==='u'){applyEdits(j,diff,cl);return}
+  if(m==='f')apply(j,false);else setTimeout(()=>dlg('Reemplazar todo','<p>Se sustituirán <b>todas</b> tus canciones, listas, géneros e ideas por los del archivo. Antes se descargará una copia de lo actual.</p>',()=>{if(S.songs.length||S.playlists.length)exportJSON();setTimeout(()=>{destroy(()=>{pauseAll();try{if(ready)P.stopVideo()}catch{}Q=[];qi=-1;for(const n of Object.keys(S)){clr(n);S[n]=[]}apply(j,false,null,'q')},'Todo reemplazado por el archivo');upd()},400)},'Reemplazar'),80)};
  d.showModal()}
-function apply(j,sh,lname,quiet){const map={};for(const g of j.genres||[])if(!S.genres.some(x=>x.id===g.id)){S.genres.push({id:g.id});put('genres',{id:g.id},1)}
- for(const s of j.songs){const ex=S.songs.find(x=>s.src==='local'?x.fk===s.fk:(x.src!=='local'&&x.vid===s.vid));if(ex){map[s.id||s.vid]=ex.id;continue}
-  const n={id:s.id||uid(),vid:s.vid,src:s.src,fk:s.fk,fname:s.fname,path:s.path,kind:s.kind||'',st:s.st||0,title:s.title||'Vídeo '+s.vid,artist:s.artist||'',type:s.type||'canción',genres:s.genres||[],year:s.year||'',notes:s.notes||'',fav:!!s.fav,dur:s.dur||0,bad:'',added:s.added||Date.now()};
-  map[s.id||s.vid]=n.id;S.songs.push(n);put('songs',n);for(const g of n.genres)if(!S.genres.some(x=>x.id===g)){S.genres.push({id:g});put('genres',{id:g},1)}}
- for(const p of j.playlists||[]){const n={id:p.id,name:p.name,songIds:(p.songIds||[]).map(i=>map[i]).filter(Boolean)};
-  const k=S.playlists.findIndex(x=>x.id===n.id);k>=0?S.playlists[k]=n:S.playlists.push(n);put('playlists',n)}
+function apply(j,sh,lname,mode){const map={};let added=0,kept=0,lists=0;for(const g of j.genres||[])if(g&&g.id&&!S.genres.some(x=>x.id===g.id)){S.genres.push({id:g.id});put('genres',{id:g.id},1)}
+ for(const s of j.songs){const ex=findEx(s);if(ex){map[s.id||s.vid]=ex.id;kept++;continue}
+  const n={id:s.id||uid()+Math.random().toString(36).slice(2,4),vid:s.vid,src:s.src,fk:s.fk,fname:s.fname,path:s.path,kind:s.kind||'',st:s.st||0,title:s.title||'Vídeo '+s.vid,artist:s.artist||'',type:s.type||'canción',genres:Array.isArray(s.genres)?s.genres:[],year:s.year||'',notes:s.notes||'',fav:!!s.fav,dur:s.dur||0,bad:'',added:s.added||Date.now()};
+  map[s.id||s.vid]=n.id;added++;S.songs.push(n);put('songs',n);for(const g of n.genres)if(!S.genres.some(x=>x.id===g)){S.genres.push({id:g});put('genres',{id:g},1)}}
+ for(const p of j.playlists||[]){const ids=(p.songIds||[]).map(i=>map[i]||(byId(i)?i:null)).filter(Boolean),ex=p.id&&S.playlists.find(x=>x.id===p.id);
+  if(ex){ex.songIds=[...ex.songIds,...ids.filter(i=>!ex.songIds.includes(i))];put('playlists',ex)}
+  else if(ids.length||mode==='q'){const n={id:p.id||uid()+Math.random().toString(36).slice(2,4),name:p.name||'Lista importada',songIds:ids};S.playlists.push(n);put('playlists',n);lists++}}
  if(sh){const l={id:uid(),name:lname||'Lista compartida',songIds:j.songs.map(s=>map[s.id||s.vid]).filter(Boolean)};S.playlists.push(l);put('playlists',l)}
- for(const i of j.ideas||[])if(!S.ideas.some(x=>x.id===i.id)){S.ideas.push(i);put('ideas',i)}
+ for(const i of j.ideas||[])if(i&&i.id&&!S.ideas.some(x=>x.id===i.id)){S.ideas.push(i);put('ideas',i)}
  for(const q of j.prompts||[])if(q&&q.id&&!S.prompts.some(x=>x.id===q.id)){S.prompts.push(q);put('prompts',q)}
- if(quiet)markBk();else toast(sh?'Lista «'+lname+'» importada ('+j.songs.length+' canciones)':'Copia fusionada');render()}
+ if(mode==='q')markBk();else if(mode!=='s')toast(sh?'Lista «'+lname+'» importada ('+j.songs.length+' canciones)':'Añadidas '+added+' canciones nuevas'+(lists?' y '+lists+' listas':'')+(kept?' · las '+kept+' que ya tenías no se han modificado (usa «Aplicar los cambios» para actualizarlas)':''));
+ render();return{added,kept,lists}}
 
 /* ---------- Música local ---------- */
 async function tags(f){try{const b=new Uint8Array(await f.slice(0,65536).arrayBuffer());
@@ -610,10 +626,13 @@ async function loadLocal(fs){const L=fs.filter(f=>AUD.test(f.name)||VIDX.test(f.
    if(pend.length>=200)flush()}else{const o=byFk.get(k);if(o&&!o.path&&pth(f)){o.path=pth(f);fix.push(o)}}
   if(Date.now()-last>120){last=Date.now();prog(`Leyendo ${i+1} de ${L.length} · ${nuevas+pend.length} nuevas`,i+1,L.length);await new Promise(r=>setTimeout(r))}}
  flush();if(fix.length)putMany('songs',fix);prog(null);
- toast(lcancel?`Carga cancelada: ${i} conectadas, ${nuevas} nuevas`:`${L.length} conectadas, ${nuevas} nuevas`);render();upd()}
-function localDlg(){const d=$('#dlg'),l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;d.pk=null;
- d.innerHTML=`<h3>Música local</h3><p class="mut">${l.length} canciones locales, ${c} conectadas. Las nuevas se añaden a la biblioteca y las que ya conozco se reconectan. Los archivos (MP3 y vídeos) no se copian ni se suben a ningún sitio.</p><div style="display:grid;gap:6px"><button class="pri" data-m="d">📁 Elegir carpeta</button><button data-m="f">🎵 Elegir archivos (MP3 o vídeo)</button></div><div class="end"><button data-x="c">Cerrar</button></div>`;
+ if(!lcancel){const r0=(L.find(f=>f.webkitRelativePath)||{}).webkitRelativePath;prefs.ll={root:r0?r0.split('/')[0]:'',n:L.length,t:Date.now()};savePrefs()}
+  toast(lcancel?`Carga cancelada: ${i} conectadas, ${nuevas} nuevas`:`${L.length} conectadas, ${nuevas} nuevas`);render();upd()}
+const llTxt=()=>{const x=prefs.ll;if(!x)return'';return(x.root?`Elige la carpeta: <b>«${esc(x.root)}»</b>`:'Elige los mismos archivos sueltos')+` (la última vez cargaste <b>${x.n}</b> archivos${x.t?', el '+new Date(x.t).toLocaleDateString('es-ES'):''}).`};
+function localDlg(start){const d=$('#dlg'),l=S.songs.filter(isL),c=l.filter(s=>FILES.has(s.fk)).length;d.pk=null;
+ d.innerHTML=`<h3>${start?'🎧 Conectar tus archivos locales':'Música local'}</h3><p>${start?`Tienes <b>${l.length}</b> canciones locales sin conectar. `:`${l.length} canciones locales, ${c} conectadas. `}${llTxt()}</p><p class="mut">Las nuevas se añaden a la biblioteca y las que ya conozco se reconectan. Los archivos (MP3 y vídeos) no se copian ni se suben a ningún sitio. El selector del móvil suele abrirse en la última ubicación usada.</p><div style="display:grid;gap:6px"><button class="pri" data-m="d">📁 Elegir carpeta</button><button data-m="f">🎵 Elegir archivos (MP3 o vídeo)</button></div><div class="end"><button data-x="c">${start?'Ahora no':'Cerrar'}</button></div>`;
  d.onclick=e=>{const m=e.target.dataset.m;if(e.target.dataset.x==='c')d.close();if(m==='d')$('#fd').click();if(m==='f')$('#ff').click()};d.showModal()}
+function askLocal(){if(prefs.llask===false||!S.songs.some(isL)||FILES.size)return;localDlg(true)}
 ['#fd','#ff'].forEach(i=>$(i).addEventListener('change',e=>{const f=[...e.target.files];e.target.value='';const d=$('#dlg');if(d.open)d.close();loadLocal(f)}));
 
 /* ---------- Selección múltiple ---------- */
@@ -760,21 +779,32 @@ document.addEventListener('click',e=>{
  case'prcopy':{const x=prOf(b);if(x)copyTxt(BASEP+'\n\n'+x.text+'\n\nJSON:\n','Prompt copiado (con el texto fijo delante)')}break;
  case'predit':{const x=prOf(b);if(x)dlg('Editar prompt',`<label>Título</label><input id="f-pt" value="${esc(x.title)}"><label>Instrucción</label><textarea id="f-px" rows="6">${esc(x.text)}</textarea>`,d=>{const t=d.querySelector('#f-pt').value.trim(),v=d.querySelector('#f-px').value.trim();if(!t||!v)return false;x.title=t;x.text=v;put('prompts',x);render()})}break;
  case'prdel':{const x=prOf(b);if(x){destroy(()=>{S.prompts=S.prompts.filter(y=>y!==x);del('prompts',x.id)},'Prompt eliminado');render()}}break;
- case'prex':EJ.forEach((e,k)=>{const n={id:uid()+k,title:e[0],text:e[1],date:Date.now()+k};S.prompts.push(n);put('prompts',n)});render();break;
+ case'prex':{const have=new Set(S.prompts.map(y=>y.title));let c=0;EJ.forEach((e,k)=>{if(have.has(e[0]))return;const n={id:uid()+k,title:e[0],text:e[1],date:Date.now()+k};S.prompts.push(n);put('prompts',n);c++});toast(c?c+' prompts añadidos':'Ya tienes todos los de ejemplo');render()}break;
+  case'repdl':{if(!rf().f.length){toast('Elige al menos un dato');break}repOut=repBuild();if(!repOut){toast('No hay canciones con estos filtros');break}const js=rf().fmt==='json',a2=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([repOut],{type:js?'application/json':'text/plain'})),download:'informe-musica-'+new Date().toISOString().slice(0,10)+(js?'.json':'.txt')});document.body.append(a2);a2.click();a2.remove();setTimeout(()=>URL.revokeObjectURL(a2.href),3000);const o=$('#r-out');if(o)o.value=repOut;toast(repSongs().length+' canciones · archivo descargado')}break;
  case'ytcopy':copyTxt(ytPrompt(),'Prompt copiado: pégalo en tu IA y luego usa «Pegar JSON de la IA»');break;
- case'lgcopy':navigator.clipboard&&navigator.clipboard.writeText(LOG.join('\n')).then(()=>toast('Registro copiado'));break;
+ case'vtap':{vtap.n=(vtap.n||0)+1;clearTimeout(vtap.t);vtap.t=setTimeout(()=>vtap.n=0,2500);if(vtap.n>=5){vtap.n=0;dlg('Registro de eventos (diagnóstico)',`<pre style="white-space:pre-wrap;font-size:11px;max-height:50vh;overflow:auto">${esc(LOG.join('\n'))}</pre>`,()=>{copyTxt(LOG.join('\n'),'Registro copiado')},'Copiar')}}break;
+  case'pwainst':if(dip){dip.prompt();dip.userChoice.finally(()=>{dip=null;if(ui.view==='set')render()})}break;
+  case'lgcopy':navigator.clipboard&&navigator.clipboard.writeText(LOG.join('\n')).then(()=>toast('Registro copiado'));break;
  case'pp':toggle();break;
  case'nxt':next(false);break;
  case'prv':prev();break;
  case'shf':prefs.sh=!prefs.sh;savePrefs();upd();break;
  case'rep':prefs.rep={off:'all',all:'one',one:'off'}[prefs.rep];savePrefs();upd();toast({off:'Repetir: no',all:'Repetir: todo',one:'Repetir: una canción'}[prefs.rep]);break;
  }});
+const vtap=()=>{};
+let dip=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(ui.view==='set')render()});window.addEventListener('appinstalled',()=>{dip=null;toast('App instalada');if(ui.view==='set')render()});
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function pwaBody(){return standalone()?'<p class="mut">✅ Estás usando Mi música como app instalada.</p>':'<p class="mut">Instálala para abrirla como una app, con su icono y sin la barra del navegador. Los datos son los mismos que en el navegador (mismo sitio web). Los MP3 y vídeos siguen sin copiarse: se conectan desde tu carpeta.</p>'+(dip?'<button class="pri" data-a="pwainst">📲 Instalar app</button>':'<p class="mut">Si no ves el botón: menú ⋮ del navegador → «Instalar aplicación» o «Añadir a la pantalla de inicio».</p>')+'<p class="mut">Sin conexión la app arranca igual y funcionan los MP3 y vídeos locales conectados; YouTube necesita internet.</p>'}
+if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}
 document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;reset();fillList()}else if(e.target.id==='in')ui.draft=e.target.value;else{const m={'pr-t':'pt','pr-x':'px','y-g':'yg','y-l':'yl'}[e.target.id];if(m){drafts[m]=e.target.value;saveDr()}else if(e.target.id==='r-p'){rf().p=e.target.value;savePrefs();refreshRepN()}}});
 document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)ui.open[k]=e.target.open},true);
 document.addEventListener('change',e=>{const i=e.target.id,v=e.target.value;
  if(i==='r-o'||i==='r-g'||i==='r-l'||i==='r-fm'){const r=rf();if(i==='r-o')r.o=v;else if(i==='r-g')r.g=v;else if(i==='r-l')r.l=v;else r.fmt=v;savePrefs();refreshRepN();return}
  if(i==='y-n'){drafts.yn=v;saveDr();return}if(i==='y-t'){drafts.yt=v;saveDr();return}if(i==='y-a'){drafts.ya=e.target.checked;saveDr();return}
- if(i==='p-sh'){prefs.sh=v==='1';savePrefs();upd();return}
+ if(i==='p-bkn'||i==='p-bkd'){prefs[i==='p-bkn'?'bkN':'bkD']=Math.max(0,Math.min(999,parseInt(v)||0));savePrefs();return}
+  if(i==='p-llask'){prefs.llask=e.target.checked;savePrefs();return}
+  if(i==='p-sh'){prefs.sh=v==='1';savePrefs();upd();return}
  if(i==='p-rep'){prefs.rep=v;savePrefs();upd();return}
  if(i==='p-src'){prefs.src=v;savePrefs();return}
  if(i==='p-th'){prefs.theme=v;savePrefs();applyTheme();return}
@@ -783,7 +813,7 @@ document.addEventListener('change',e=>{const i=e.target.id,v=e.target.value;
 $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=''});
 
 (async()=>{try{await openDB();for(const n of Object.keys(S))S[n]=await getAll(n)}catch{toast('No se puede usar el almacenamiento del navegador')}
- render();upd();chkBk()})();
+ render();upd();chkBk();askLocal()})();
 </script>
 </body>
 </html>
