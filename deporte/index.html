@@ -4,31 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>Ocio y Deporte</title>
+<title>Ocio y Deporte v3.1</title>
 <style>
-  :root {
-    --bg-main:#0b1220; --bg-card:#151f33; --bg-card-alt:#0e1728;
-    --bg-header:rgba(11,18,32,.94); --border-color:#26344f; --border-subtle:#1e2c46;
-    --text-main:#e8eefb; --text-muted:#93a3bd; --text-dim:#6b7c99;
-    --primary:#2563eb; --primary-hover:#3b82f6; --accent:#7dd3fc;
-    --danger-bg:#3b1016; --danger-border:#7f1d1d; --danger-text:#fca5a5;
-    --warn-bg:#422006; --warn-border:#78350f; --warn-text:#fcd34d;
-    --chip-bg:#0e1728; --chip-border:#26344f; --chip-text:#c3d0e6;
+  :root{
+    --bg-main:#0b1220;--bg-card:#151f33;--bg-card-alt:#0e1728;
+    --bg-header:rgba(11,18,32,.94);--border-color:#26344f;--border-subtle:#1e2c46;
+    --text-main:#e8eefb;--text-muted:#93a3bd;--text-dim:#6b7c99;
+    --primary:#2563eb;--primary-hover:#3b82f6;--accent:#7dd3fc;
+    --danger-bg:#3b1016;--danger-border:#7f1d1d;--danger-text:#fca5a5;
+    --warn-bg:#422006;--warn-border:#78350f;--warn-text:#fcd34d;
+    --ok-bg:#052e16;--ok-border:#166534;--ok-text:#86efac;
+    --chip-bg:#0e1728;--chip-border:#26344f;--chip-text:#c3d0e6;
   }
   [data-theme="light"]{
-    --bg-main:#f1f5f9; --bg-card:#fff; --bg-card-alt:#f8fafc;
-    --bg-header:rgba(255,255,255,.94); --border-color:#cbd5e1; --border-subtle:#e2e8f0;
-    --text-main:#0f172a; --text-muted:#475569; --text-dim:#94a3b8;
-    --primary:#2563eb; --primary-hover:#1d4ed8; --accent:#0284c7;
-    --danger-bg:#fef2f2; --danger-border:#fecaca; --danger-text:#dc2626;
-    --warn-bg:#fffbeb; --warn-border:#fde68a; --warn-text:#b45309;
-    --chip-bg:#f1f5f9; --chip-border:#cbd5e1; --chip-text:#334155;
+    --bg-main:#f1f5f9;--bg-card:#fff;--bg-card-alt:#f8fafc;
+    --bg-header:rgba(255,255,255,.94);--border-color:#cbd5e1;--border-subtle:#e2e8f0;
+    --text-main:#0f172a;--text-muted:#475569;--text-dim:#94a3b8;
+    --primary:#2563eb;--primary-hover:#1d4ed8;--accent:#0284c7;
+    --danger-bg:#fef2f2;--danger-border:#fecaca;--danger-text:#dc2626;
+    --warn-bg:#fffbeb;--warn-border:#fde68a;--warn-text:#b45309;
+    --ok-bg:#f0fdf4;--ok-border:#bbf7d0;--ok-text:#15803d;
+    --chip-bg:#f1f5f9;--chip-border:#cbd5e1;--chip-text:#334155;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg-main);color:var(--text-main);
     font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:30px;
     transition:background-color .2s,color .2s}
-  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
     padding:12px 14px;background:var(--bg-header);backdrop-filter:blur(8px);
     border-bottom:1px solid var(--border-color)}
   .topbar h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px;flex:1}
@@ -40,7 +42,7 @@
   .badge-dot{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;
     font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:999px;
     display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-main)}
-  .wrap{padding:14px;max-width:850px;margin:0 auto}
+  .wrap{padding:14px;max-width:900px;margin:0 auto}
   .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;margin-bottom:12px}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-color);
     background:var(--bg-card-alt);color:var(--text-main);padding:10px 14px;border-radius:12px;
@@ -50,8 +52,9 @@
   .btn-block{width:100%}
   .btn-big{padding:16px;font-size:16px}
   .btn-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
-  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
   .btn-warn{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text)}
+  .btn-ok{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)}
+  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
   .tile{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;
     cursor:pointer;display:flex;flex-direction:column;gap:4px;position:relative}
@@ -88,6 +91,12 @@
     font-weight:700;margin:16px 0 8px}
   .empty{color:var(--text-dim);text-align:center;padding:18px 10px;font-size:13.5px}
 
+  /* BANNER COPIA */
+  .banner-copia{background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);
+    border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+  .banner-copia .bc-text{font-size:13.5px;font-weight:600}
+  .banner-copia .bc-actions{display:flex;gap:8px}
+
   /* HOY */
   .hoy-block{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);
     border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px}
@@ -103,48 +112,53 @@
     background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);
     display:flex;align-items:center;gap:6px;cursor:pointer}
 
-  /* PLANTILLA SEMANAL ESTÁTICA */
-  .plantilla-tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-  .week-grid-container{width:100%;overflow-x:auto;background:var(--bg-card);
-    border:1px solid var(--border-color);border-radius:14px;position:relative}
-  .week-grid{display:grid;grid-template-columns:70px repeat(7,minmax(85px,1fr));min-width:680px}
-  .grid-header{position:sticky;top:0;z-index:10;background:var(--bg-card-alt);
-    border-bottom:1px solid var(--border-color);text-align:center;padding:8px 4px;
-    font-weight:700;font-size:12px}
-  .grid-header.corner{position:sticky;left:0;z-index:11;background:var(--bg-card-alt);
+  /* PLANTILLA SEMANAL (cuadrícula por horas) */
+  .plantilla-container{background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:14px;overflow-x:auto;position:relative}
+  .plantilla-head{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));
+    min-width:720px;position:sticky;top:0;z-index:10;background:var(--bg-card-alt);
+    border-bottom:1px solid var(--border-color)}
+  .plantilla-head>div{padding:6px 4px;text-align:center;font-weight:700;font-size:12px;
+    border-right:1px solid var(--border-subtle)}
+  .plantilla-head>div:last-child{border-right:none}
+  .plantilla-head .corner{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;letter-spacing:.4px}
+  .plantilla-head .day-head{position:relative;display:flex;flex-direction:column;gap:2px}
+  .plantilla-head .day-head.hoy{background:rgba(37,99,235,.15)}
+  .plantilla-head .dname{font-size:10px;text-transform:uppercase;color:var(--text-muted)}
+  .plantilla-head .day-head.hoy .dname{color:var(--primary-hover)}
+  .plantilla-head .dnum{font-size:13px}
+  .plantilla-head .day-head.hoy .dnum{color:var(--primary-hover)}
+  .plantilla-head .add-btn{margin-top:2px;border:1px dashed var(--border-color);background:transparent;
+    color:var(--text-muted);border-radius:6px;font-size:13px;cursor:pointer;padding:2px;
+    font-family:inherit;line-height:1}
+  .plantilla-head .add-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .plantilla-body{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));
+    min-width:720px;position:relative}
+  .hours-col{position:sticky;left:0;z-index:6;background:var(--bg-card-alt);
     border-right:1px solid var(--border-color)}
-  .grid-header .dname{color:var(--text-muted);font-size:10px;text-transform:uppercase}
-  .grid-header .dnum{font-size:14px;color:var(--text-main)}
-  .grid-header.hoy{background:rgba(37,99,235,.15);color:var(--primary-hover)}
-  .grid-header.hoy .dnum{color:var(--primary-hover)}
-  .tramo-col{position:sticky;left:0;z-index:9;background:var(--bg-card-alt);
-    border-right:1px solid var(--border-color);color:var(--text-muted);font-size:11px;
-    font-weight:600;text-align:center;display:flex;flex-direction:column;justify-content:center;padding:6px 4px}
-  .tramo-col .tname{color:var(--text-main);font-weight:700;font-size:12px}
-  .tramo-col .thours{font-size:10px;margin-top:2px}
-  .day-col-plantilla{position:relative;border-right:1px solid var(--border-subtle);
-    padding:6px;display:flex;flex-direction:column;gap:5px;min-height:110px}
-  .day-col-plantilla:last-child{border-right:none}
-  .celda-add{flex:1;border:1px dashed var(--border-color);border-radius:8px;
-    display:flex;align-items:center;justify-content:center;color:var(--text-dim);
-    font-size:16px;cursor:pointer;min-height:22px}
-  .celda-add:hover{border-color:var(--primary);color:var(--primary)}
-  .celda-act{border-radius:8px;padding:6px 7px;font-size:11.5px;line-height:1.25;
-    overflow:hidden;cursor:pointer;color:#fff;position:relative;box-shadow:0 2px 4px rgba(0,0,0,.2)}
-  .celda-act .ca-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    display:flex;align-items:center;gap:4px}
-  .celda-act .ca-title .chk-mini{width:14px;height:14px;border-radius:3px;
-    border:1.5px solid rgba(255,255,255,.7);flex:0 0 auto;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;font-size:9px}
-  .celda-act .ca-title .chk-mini.on{background:rgba(255,255,255,.9);border-color:#fff;color:#111}
-  .celda-act .ca-sub{font-size:10px;opacity:.9;margin-top:1px}
-  .celda-act.hecha{opacity:.55}
+  .hour-cell{height:44px;display:flex;align-items:flex-start;justify-content:flex-end;
+    padding-right:6px;font-size:10.5px;color:var(--text-muted);font-weight:600;
+    border-bottom:1px solid var(--border-subtle)}
+  .day-body{position:relative;border-right:1px solid var(--border-subtle)}
+  .day-body:last-child{border-right:none}
+  .hour-line{position:absolute;left:0;right:0;height:44px;
+    border-bottom:1px solid var(--border-subtle);pointer-events:none}
+  .evento-plantilla{position:absolute;border-radius:6px;padding:4px 6px;color:#fff;
+    font-size:11px;line-height:1.15;cursor:pointer;overflow:hidden;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);z-index:2}
+  .evento-plantilla .ev-hora{font-size:10px;opacity:.92;display:flex;align-items:center;gap:4px}
+  .evento-plantilla .ev-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .evento-plantilla .ev-nota{font-size:10px;opacity:.85;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .ev-chk{width:12px;height:12px;border:1.5px solid rgba(255,255,255,.85);
+    border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-size:8px;flex:0 0 auto;cursor:pointer;background:transparent}
+  .ev-chk.on{background:rgba(255,255,255,.95);border-color:#fff;color:#111}
+  .evento-plantilla.hecha{opacity:.5}
 
-  /* Colores por tipo */
-  .bg-senderismo{background:#059669} .bg-paseo{background:#0284c7}
-  .bg-gimnasio{background:#7c3aed} .bg-otro{background:#d97706}
-  .bg-natacion{background:#2563eb} .bg-running{background:#dc2626}
-  .bg-guitarra{background:#be185d} .bg-ingles{background:#0891b2}
+  /* Colores de chips de cat */
+  .cat-color{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-right:4px}
 
   /* DEBERES */
   .deber-card{background:var(--bg-card);border:1px solid var(--border-color);
@@ -163,7 +177,7 @@
   .prio-baja{color:#64748b;font-weight:700}
   .hecho .deber-title{text-decoration:line-through;color:var(--text-dim)}
 
-  /* Detalles plegables */
+  /* Details */
   details.sec-fold{background:var(--bg-card);border:1px solid var(--border-color);
     border-radius:12px;margin-bottom:10px;overflow:hidden}
   details.sec-fold summary{padding:12px 14px;font-weight:650;font-size:14px;cursor:pointer;
@@ -175,6 +189,7 @@
   details.sec-fold summary:hover{background:var(--bg-card-alt)}
   .fold-body{padding:12px 14px;border-top:1px solid var(--border-color);background:var(--bg-card)}
 
+  /* Modal */
   .overlay{position:fixed;inset:0;background:rgba(4,8,16,.75);z-index:100;
     display:flex;align-items:flex-end;justify-content:center;padding:0}
   @media(min-width:600px){.overlay{align-items:center;padding:20px}}
@@ -200,6 +215,20 @@
   .chk-compact.on .box{background:var(--primary);border-color:var(--primary)}
   .chk-compact.on .txt{text-decoration:line-through;color:var(--text-dim)}
   .chk-compact .txt{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* Paleta de colores en modal */
+  .paleta{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:6px}
+  .paleta .sw{width:100%;aspect-ratio:1;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;position:relative}
+  .paleta .sw.sel{border-color:var(--text-main);box-shadow:0 0 0 2px var(--bg-card) inset}
+
+  .res-card{padding:10px 12px;margin-bottom:8px}
+  .res-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:6px}
+  .res-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;
+    background:var(--bg-card-alt);padding:8px;border-radius:8px;border:1px solid var(--border-subtle)}
+  .m-box{display:flex;flex-direction:column}
+  .m-lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;font-weight:600}
+  .m-val{font-size:13.5px;font-weight:700}
 </style>
 </head>
 <body>
@@ -215,50 +244,79 @@ const pad = n => String(n).padStart(2,'0');
 const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtNum = (n,d=1) => Number(Number(n).toFixed(d)).toLocaleString('es-ES');
-
-function dateKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-function parseKey(k){ const p = String(k).split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
-function addDays(d,n){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()+n); return x; }
-function hoyKey(){ return dateKey(new Date()); }
-function fmtFecha(k){ if(!k) return '—'; return parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}); }
-function fmtFechaCorta(k){ if(!k) return '—'; return parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
-function diasHasta(k){ if(!k) return null; const d = parseKey(k); const h = new Date(); h.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-h)/86400000); }
+const dateKey = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseKey = k => { const p=String(k).split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); };
+const addDays = (d,n) => { const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+n); return x; };
+const hoyKey = () => dateKey(new Date());
+const fmtFecha = k => !k ? '—' : parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+const fmtFechaCorta = k => !k ? '—' : parseKey(k).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+function diasHasta(k){
+  if(!k) return null;
+  const d=parseKey(k); const h=new Date(); h.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.round((d-h)/86400000);
+}
 function labelDiasHasta(k){
-  const n = diasHasta(k);
-  if(n === null) return 'Sin fecha';
-  if(n < 0) return `Vencido hace ${-n} día${-n===1?'':'s'}`;
-  if(n === 0) return 'Vence hoy';
-  if(n === 1) return 'Vence mañana';
-  if(n <= 7) return `Vence en ${n} días`;
+  const n=diasHasta(k);
+  if(n===null) return 'Sin fecha';
+  if(n<0) return `Vencido hace ${-n}d`;
+  if(n===0) return 'Vence hoy';
+  if(n===1) return 'Vence mañana';
+  if(n<=7) return `Vence en ${n} días`;
   return `Vence el ${fmtFechaCorta(k)}`;
 }
-function inicioSemana(d, ini){
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = x.getDay();
-  const diff = (ini === 'domingo') ? dow : (dow + 6) % 7;
-  return addDays(x, -diff);
+function diaSemanaIdx(d){ const dow=d.getDay(); return dow===0?7:dow; } // lunes=1..dom=7
+function slugify(s){
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'cat';
+}
+function calcMin(ini, fin){
+  if(!ini || !fin) return 0;
+  const [h1,m1]=ini.split(':').map(Number); const [h2,m2]=fin.split(':').map(Number);
+  return Math.max(0, (h2*60+m2)-(h1*60+m1));
+}
+function hhmmToMin(hhmm){
+  const [h,m]=String(hhmm||'0:0').split(':').map(Number);
+  return h*60+(m||0);
 }
 function toast(msg){
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 1900);
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2000);
+}
+
+/* Paleta de colores */
+const PALETA = [
+  '#059669','#0284c7','#7c3aed','#d97706','#2563eb','#dc2626','#be185d','#0891b2',
+  '#65a30d','#7c2d12','#a16207','#0d9488','#9333ea','#e11d48','#0ea5e9','#14b8a6',
+];
+const COLOR_MAP_ANTIGUO = {
+  'bg-senderismo':'#059669','bg-paseo':'#0284c7','bg-gimnasio':'#7c3aed',
+  'bg-otro':'#d97706','bg-natacion':'#2563eb','bg-running':'#dc2626',
+  'bg-guitarra':'#be185d','bg-ingles':'#0891b2','bg-limpieza':'#65a30d'
+};
+function tipoColor(t){
+  if(!t) return '#d97706';
+  if(t.color && t.color.startsWith('#')) return t.color;
+  return COLOR_MAP_ANTIGUO[t.color] || '#d97706';
 }
 
 /* =====================================================================
    INDEXEDDB
    ===================================================================== */
-const DB_NAME='ocio_deporte', DB_VER=3;
+const DB_NAME='ocio_deporte', DB_VER=4;
 let db=null;
-function openDB(){
+const TODOS_STORES = ['tipos','subcategorias','actividades','plantilla','hechos','deberes','tramos','checklist','checkEstado','peso','prefs','ideas','planes'];
+
+function abrirDBRaw(name, version){
   return new Promise((res,rej)=>{
-    const r = indexedDB.open(DB_NAME, DB_VER);
+    const r = indexedDB.open(name, version);
     r.onupgradeneeded = ev => {
       const d = ev.target.result;
-      const mk=(n,opt={})=>{ if(!d.objectStoreNames.contains(n)) d.createObjectStore(n,opt); };
+      const mk = (n,opt={}) => { if(!d.objectStoreNames.contains(n)) d.createObjectStore(n,opt); };
       mk('tipos',{keyPath:'id'});
       mk('subcategorias',{keyPath:'id',autoIncrement:true});
       mk('actividades',{keyPath:'id',autoIncrement:true});
-      mk('plantilla',{keyPath:'id',autoIncrement:true});  // actividades recurrentes semanales
-      mk('hechos',{keyPath:'id'});                        // id = plantilla_id+fecha
+      mk('plantilla',{keyPath:'id',autoIncrement:true});
+      mk('hechos',{keyPath:'id'});
       mk('deberes',{keyPath:'id',autoIncrement:true});
       mk('tramos',{keyPath:'id'});
       mk('checklist',{keyPath:'id',autoIncrement:true});
@@ -266,30 +324,121 @@ function openDB(){
       mk('peso',{keyPath:'id',autoIncrement:true});
       mk('prefs',{keyPath:'k'});
       mk('ideas',{keyPath:'id',autoIncrement:true});
+      mk('planes',{keyPath:'id',autoIncrement:true});
     };
-    r.onsuccess = ()=>{ db=r.result; res(db); };
-    r.onerror = ()=>rej(r.error);
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
   });
 }
+async function existeDB(name){
+  try{
+    if(indexedDB.databases){
+      const dbs = await indexedDB.databases();
+      return dbs.some(d=>d.name===name);
+    }
+    return new Promise(res=>{
+      const r = indexedDB.open(name,1); let created=false;
+      r.onupgradeneeded=()=>{created=true};
+      r.onsuccess=()=>{r.result.close(); res(!created)};
+      r.onerror=()=>res(false);
+    });
+  }catch(e){ return false; }
+}
+function getAllFromStore(database, storeName){
+  return new Promise((res,rej)=>{
+    if(!database.objectStoreNames.contains(storeName)) return res([]);
+    const tx = database.transaction(storeName);
+    const r = tx.objectStore(storeName).getAll();
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function copiarStores(origen, destino, stores){
+  for(const s of stores){
+    if(!origen.objectStoreNames.contains(s)) continue;
+    if(!destino.objectStoreNames.contains(s)) continue;
+    const items = await getAllFromStore(origen, s);
+    if(!items.length) continue;
+    await new Promise((res,rej)=>{
+      const tx = destino.transaction(s,'readwrite');
+      const store = tx.objectStore(s);
+      for(const it of items) store.put(it);
+      tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+    });
+  }
+}
+
+/* -------- Wrappers con contador de cambios -------- */
+let _silenciarCambios = false;
+let _pendientesCambios = 0;
+let _timerCambios = null;
+const PREFS_CONTROL = new Set([
+  'seeded','theme','ultimaCopia','cambiosDesdeCopia','snoozeCopia',
+  'jornadaIni','jornadaFin','umbralCambiosCopia','umbralDiasCopia',
+  'semanaInicio','avisoDias'
+]);
+async function incrementarCambios(){
+  if(_silenciarCambios) return;
+  _pendientesCambios++;
+  if(_timerCambios) clearTimeout(_timerCambios);
+  _timerCambios = setTimeout(async ()=>{
+    const actual = Number(S.prefs.cambiosDesdeCopia || 0);
+    S.prefs.cambiosDesdeCopia = actual + _pendientesCambios;
+    _pendientesCambios = 0;
+    _silenciarCambios = true;
+    try{
+      await new Promise((res,rej)=>{
+        const r = db.transaction('prefs','readwrite').objectStore('prefs')
+          .put({k:'cambiosDesdeCopia', v:S.prefs.cambiosDesdeCopia});
+        r.onsuccess=res; r.onerror=()=>rej(r.error);
+      });
+    }catch(e){}
+    _silenciarCambios = false;
+  }, 400);
+}
+
 function req(r){ return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-const dbAll = s => req(db.transaction(s).objectStore(s).getAll());
-const dbGet = (s,k) => req(db.transaction(s).objectStore(s).get(k));
-const dbPut = (s,v) => req(db.transaction(s,'readwrite').objectStore(s).put(v));
-const dbDel = (s,k) => req(db.transaction(s,'readwrite').objectStore(s).delete(k));
-const dbClear = s => req(db.transaction(s,'readwrite').objectStore(s).clear());
+const dbAll   = s     => req(db.transaction(s).objectStore(s).getAll());
+const dbGet   = (s,k) => req(db.transaction(s).objectStore(s).get(k));
+async function dbPut(s,v){
+  const result = await req(db.transaction(s,'readwrite').objectStore(s).put(v));
+  if(s==='prefs' && v && PREFS_CONTROL.has(v.k)) return result;
+  incrementarCambios();
+  return result;
+}
+const dbDel   = (s,k) => { const p=req(db.transaction(s,'readwrite').objectStore(s).delete(k)); incrementarCambios(); return p; };
+const dbClear = s     => req(db.transaction(s,'readwrite').objectStore(s).clear());
+
+async function openDB(){
+  db = await abrirDBRaw(DB_NAME, DB_VER);
+  const tipos = await dbAll('tipos');
+  if(tipos.length === 0 && DB_NAME !== 'deporte_v2'){
+    if(await existeDB('deporte_v2')){
+      try{
+        const vieja = await new Promise((res,rej)=>{
+          const r = indexedDB.open('deporte_v2');
+          r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+        });
+        await copiarStores(vieja, db, ['tipos','subcategorias','actividades','checklist','checkEstado','peso','prefs','ideas']);
+        vieja.close();
+        toast('Datos migrados de la versión anterior');
+      }catch(e){ console.warn('Migración fallida', e); }
+    }
+  }
+}
 
 /* =====================================================================
-   DATOS DE FÁBRICA
+   DATOS DE FÁBRICA / SEED
    ===================================================================== */
 const TIPOS_BASE = [
-  {id:'senderismo', nombre:'Senderismo', icono:'🥾', visible:1, orden:1, color:'bg-senderismo'},
-  {id:'paseo',      nombre:'Paseo',      icono:'🚶', visible:1, orden:2, color:'bg-paseo'},
-  {id:'gimnasio',   nombre:'Gimnasio',   icono:'🏋️', visible:1, orden:3, color:'bg-gimnasio'},
-  {id:'guitarra',   nombre:'Guitarra',   icono:'🎸', visible:1, orden:4, color:'bg-guitarra'},
-  {id:'ingles',     nombre:'Inglés',     icono:'🗣️', visible:1, orden:5, color:'bg-ingles'},
-  {id:'otro',       nombre:'Otro',       icono:'✨', visible:1, orden:6, color:'bg-otro'},
-  {id:'natacion',   nombre:'Natación',   icono:'🏊', visible:0, orden:7, color:'bg-natacion'},
-  {id:'running',    nombre:'Running',    icono:'🏃', visible:0, orden:8, color:'bg-running'},
+  {id:'senderismo', nombre:'Senderismo', icono:'🥾', visible:1, orden:1, color:'#059669'},
+  {id:'paseo',      nombre:'Paseo',      icono:'🚶', visible:1, orden:2, color:'#0284c7'},
+  {id:'gimnasio',   nombre:'Gimnasio',   icono:'🏋️', visible:1, orden:3, color:'#7c3aed'},
+  {id:'guitarra',   nombre:'Guitarra',   icono:'🎸', visible:1, orden:4, color:'#be185d'},
+  {id:'ingles',     nombre:'Inglés',     icono:'🗣️', visible:1, orden:5, color:'#0891b2'},
+  {id:'limpieza',   nombre:'Limpieza',   icono:'🧹', visible:1, orden:6, color:'#65a30d'},
+  {id:'otro',       nombre:'Otro',       icono:'✨', visible:1, orden:7, color:'#d97706'},
+  {id:'natacion',   nombre:'Natación',   icono:'🏊', visible:0, orden:8, color:'#2563eb'},
+  {id:'running',    nombre:'Running',    icono:'🏃', visible:0, orden:9, color:'#dc2626'},
 ];
 const SUBCATS_BASE = [
   {tipo_id:'gimnasio', nombre:'Fitness / Pesas'},
@@ -301,15 +450,17 @@ const SUBCATS_BASE = [
   {tipo_id:'guitarra', nombre:'Práctica personal'},
   {tipo_id:'ingles', nombre:'Clase conversación'},
   {tipo_id:'ingles', nombre:'Estudio personal'},
+  {tipo_id:'limpieza', nombre:'Casa'},
+  {tipo_id:'limpieza', nombre:'Exterior'},
 ];
 const CHECK_FABRICA = {
-  senderismo:{ imprescindible:['Agua','Botas','Chubasquero','Comida','Móvil cargado','Botiquín'],
-               opcional:['Bastones','Gorra','Crema solar'] },
+  senderismo:{ imprescindible:['Agua','Botas','Chubasquero','Comida','Móvil cargado','Botiquín'], opcional:['Bastones','Gorra','Crema solar'] },
   paseo:{ imprescindible:['Calzado cómodo'], opcional:['Agua'] },
   gimnasio:{ imprescindible:['Ropa deporte','Toalla','Candado','Botella agua'], opcional:['Auriculares','Guantes'] },
   guitarra:{ imprescindible:['Guitarra','Púas','Afinador','Cuaderno'], opcional:['Metrónomo','Atril'] },
   ingles:{ imprescindible:['Cuaderno','Bolígrafo'], opcional:['Libro','App de apoyo'] },
-  otro:{ imprescindible:[], opcional:[] },
+  limpieza:{ imprescindible:['Guantes','Bayeta','Producto'], opcional:['Aspiradora','Fregona'] },
+  otro:{ imprescindible:[], opcional:[] }
 };
 const CAMPOS_POR_TIPO = {
   senderismo:['distancia_km','desnivel_m','ruta','con_quien'],
@@ -317,9 +468,10 @@ const CAMPOS_POR_TIPO = {
   gimnasio:[],
   guitarra:['pieza','lugar'],
   ingles:['tema','lugar'],
+  limpieza:['descripcion'],
   natacion:['distancia_m'],
   running:['distancia_km'],
-  otro:['descripcion'],
+  otro:['descripcion']
 };
 const CAMPO_DEF = {
   distancia_km:{label:'Distancia (km)', type:'number', step:'0.01'},
@@ -330,91 +482,124 @@ const CAMPO_DEF = {
   tema:{label:'Tema / contenido', type:'text'},
   lugar:{label:'Lugar / asociación', type:'text'},
   distancia_m:{label:'Distancia (m)', type:'number', step:'1'},
-  descripcion:{label:'Descripción', type:'text'},
+  descripcion:{label:'Descripción', type:'textarea'}
 };
-const TRAMOS_BASE = [
-  {id:'manana',   nombre:'Mañana',   ini:'07:00', fin:'12:00', orden:1},
-  {id:'mediodia', nombre:'Mediodía', ini:'12:00', fin:'16:00', orden:2},
-  {id:'tarde',    nombre:'Tarde',    ini:'16:00', fin:'20:00', orden:3},
-  {id:'noche',    nombre:'Noche',    ini:'20:00', fin:'23:00', orden:4},
-];
-const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']; // índice 1..7 (lunes=1)
+const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DIAS_NOMBRE = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 
-/* =====================================================================
-   ESTADO GLOBAL
-   ===================================================================== */
-const S = {
-  screen:'hoy',
-  theme:'dark',
-  tipos:[], subcategorias:[], prefs:[], tramos:[],
-  form:null, calOffset:0, chkTipo:'senderismo',
-  hist:{tipo:'', desde:'', hasta:''},
-  resumenRango:'semana', resumenDesde:'', resumenHasta:'',
-  pesoForm:{fecha:hoyKey(), kg:''}, pesoCache:[],
-  plantillaForm:null, deberForm:null,
-  deberFiltro:'pendientes',
-  homeDeberesCache:[], homePlantillaCache:[]
-};
-
-/* =====================================================================
-   SEMILLA / CARGA
-   ===================================================================== */
 async function seed(){
-  const ya = await dbGet('prefs','seeded');
-  if(ya) return;
-  for(const t of TIPOS_BASE) await dbPut('tipos', {...t});
-  for(const sc of SUBCATS_BASE) await dbPut('subcategorias', {...sc});
-  for(const t of TRAMOS_BASE) await dbPut('tramos', {...t});
-  let orden = 0;
+  const tiposEx = await dbAll('tipos');
+  const ids = new Set(tiposEx.map(t=>t.id));
+  for(const t of TIPOS_BASE){ if(!ids.has(t.id)) await dbPut('tipos', {...t}); }
+
+  const subsEx = await dbAll('subcategorias');
+  for(const sc of SUBCATS_BASE){
+    const existe = subsEx.some(s => s.tipo_id===sc.tipo_id && s.nombre===sc.nombre);
+    if(!existe) await dbPut('subcategorias', {...sc});
+  }
+
+  const chkEx = await dbAll('checklist');
+  let orden = chkEx.length ? Math.max(...chkEx.map(x=>x.orden||0)) + 1 : 0;
   for(const tipo of Object.keys(CHECK_FABRICA)){
+    const tiene = chkEx.some(i=>i.tipo_id===tipo);
+    if(tiene) continue;
     for(const sec of ['imprescindible','opcional']){
       for(const txt of CHECK_FABRICA[tipo][sec]){
         await dbPut('checklist', {tipo_id:tipo, seccion:sec, texto:txt, orden:orden++});
       }
     }
   }
-  await dbPut('prefs', {k:'semanaInicio', v:'lunes'});
-  await dbPut('prefs', {k:'theme', v:'dark'});
-  await dbPut('prefs', {k:'avisoDias', v:3});
-  await dbPut('prefs', {k:'seeded', v:1});
-  await dbPut('ideas', {
-    texto: "v3.0.0: Añadida pantalla Hoy, Deberes, plantilla semanal estática y categorías Guitarra/Inglés.",
-    fecha: hoyKey(), implementado: true
-  });
+
+  const p = {}; (await dbAll('prefs')).forEach(x=>p[x.k]=x.v);
+  if(!p.semanaInicio) await dbPut('prefs',{k:'semanaInicio',v:'lunes'});
+  if(!p.theme) await dbPut('prefs',{k:'theme',v:'dark'});
+  if(!p.avisoDias) await dbPut('prefs',{k:'avisoDias',v:3});
+  if(!p.jornadaIni) await dbPut('prefs',{k:'jornadaIni',v:'07:00'});
+  if(!p.jornadaFin) await dbPut('prefs',{k:'jornadaFin',v:'23:00'});
+  if(!p.umbralCambiosCopia) await dbPut('prefs',{k:'umbralCambiosCopia',v:15});
+  if(!p.umbralDiasCopia) await dbPut('prefs',{k:'umbralDiasCopia',v:30});
+  if(!p.cambiosDesdeCopia) await dbPut('prefs',{k:'cambiosDesdeCopia',v:0});
+  await dbPut('prefs',{k:'seeded',v:1});
+
+  const ideas = await dbAll('ideas');
+  if(ideas.length===0){
+    await dbPut('ideas', {
+      texto: "v3.1.0: Plantilla rediseñada por horas, categorías editables, migración desde v2, recordatorio de copia y Peso accesible desde Hoy.",
+      fecha: hoyKey(), implementado: true
+    });
+  }
 }
+
+/* =====================================================================
+   ESTADO
+   ===================================================================== */
+const S = {
+  screen:'hoy', theme:'dark',
+  tipos:[], subcategorias:[], prefs:[],
+  form:null, chkTipo:'senderismo',
+  hist:{tipo:'', desde:'', hasta:''},
+  resumenRango:'semana', resumenDesde:'', resumenHasta:'',
+  pesoForm:{fecha:hoyKey(), kg:''}, pesoCache:[],
+  plantillaForm:null, deberForm:null, catForm:null,
+  deberFiltro:'pendientes',
+  ajustesOpen:{categorias:true, subcats:false, preferencias:false, jornada:false, ideasc:false, datos:false, copia:false},
+  mostrarBannerCopia:false
+};
+
 async function loadState(){
   S.tipos = (await dbAll('tipos')).sort((a,b)=>a.orden-b.orden);
   S.subcategorias = await dbAll('subcategorias');
-  S.tramos = (await dbAll('tramos')).sort((a,b)=>a.orden-b.orden);
   const p={}; (await dbAll('prefs')).forEach(x=>p[x.k]=x.v);
   S.prefs=p; S.theme=p.theme||'dark';
   document.documentElement.setAttribute('data-theme', S.theme);
 }
-async function setPref(k,v){ await dbPut('prefs',{k,v}); S.prefs[k]=v; }
+async function setPref(k,v){
+  _silenciarCambios = true;
+  await dbPut('prefs',{k,v});
+  S.prefs[k]=v;
+  _silenciarCambios = false;
+}
 function toggleTheme(){
   const next = S.theme==='dark'?'light':'dark';
   S.theme=next; setPref('theme',next);
   document.documentElement.setAttribute('data-theme', next); render();
 }
-const tipoDe = id => S.tipos.find(t=>t.id===id) || {nombre:'—',icono:'•',color:'bg-otro'};
-const prefInicio = () => S.prefs.semanaInicio || 'lunes';
+const tipoDe = id => S.tipos.find(t=>t.id===id) || {nombre:'—',icono:'•',color:'#d97706'};
 
 /* =====================================================================
-   TOPBAR con badge de deberes
+   MIGRACIÓN DE PLANTILLA v3 → v3.1
+   ===================================================================== */
+async function migrarPlantillaAntigua(){
+  const planes = await dbAll('plantilla');
+  const T_MAP = {manana:['07:00','12:00'], mediodia:['12:00','16:00'], tarde:['16:00','20:00'], noche:['20:00','23:00']};
+  for(const p of planes){
+    if(p.hora_inicio !== undefined) continue;
+    const t = T_MAP[p.tramo] || ['09:00','10:00'];
+    const nuevo = {
+      id: p.id, tipo_id: p.tipo_id, dia: p.dia,
+      hora_inicio: t[0], hora_fin: t[1],
+      subcategoria: p.subcategoria || '', nota: p.nota || ''
+    };
+    _silenciarCambios = true;
+    await dbPut('plantilla', nuevo);
+    _silenciarCambios = false;
+  }
+}
+
+/* =====================================================================
+   TOPBAR
    ===================================================================== */
 async function topbar(titulo, opts={}){
-  let badge = '';
+  let badge='';
   if(!opts.sinBadge){
-    const pend = (await dbAll('deberes')).filter(d => d.estado !== 'hecho');
-    if(pend.length){
-      const vencenPronto = pend.filter(d => {
-        const n = diasHasta(d.fecha_limite); return n !== null && n <= (Number(S.prefs.avisoDias)||3);
-      }).length;
-      if(vencenPronto > 0){
-        badge = `<button class="icon-btn" data-action="go" data-screen="deberes" title="Deberes pendientes">
-          📌<span class="badge-dot">${vencenPronto}</span></button>`;
-      }
+    const pend = (await dbAll('deberes')).filter(d=>d.estado!=='hecho');
+    const avisoDias = Number(S.prefs.avisoDias) || 3;
+    const proximos = pend.filter(d=>{
+      const n=diasHasta(d.fecha_limite); return n!==null && n<=avisoDias;
+    }).length;
+    if(proximos>0){
+      badge = `<button class="icon-btn" data-action="go" data-screen="deberes" title="Deberes">
+        📌<span class="badge-dot">${proximos}</span></button>`;
     }
   }
   return `<header class="topbar">
@@ -428,10 +613,46 @@ async function topbar(titulo, opts={}){
 }
 
 /* =====================================================================
+   RECOMENDACIÓN DE COPIA
+   ===================================================================== */
+async function debeRecomendarCopia(){
+  const cambios = Number(S.prefs.cambiosDesdeCopia||0);
+  const ultima = S.prefs.ultimaCopia;
+  const snooze = S.prefs.snoozeCopia;
+  if(snooze && new Date(snooze) > new Date()) return false;
+  const uC = Number(S.prefs.umbralCambiosCopia||15);
+  const uD = Number(S.prefs.umbralDiasCopia||30);
+  if(cambios >= uC) return true;
+  if(ultima){
+    const dias = (Date.now() - new Date(ultima).getTime()) / 86400000;
+    if(dias >= uD) return true;
+  } else {
+    if(cambios >= uC) return true;
+  }
+  return false;
+}
+function motivoCopia(){
+  const cambios = Number(S.prefs.cambiosDesdeCopia||0);
+  const uC = Number(S.prefs.umbralCambiosCopia||15);
+  const uD = Number(S.prefs.umbralDiasCopia||30);
+  const ultima = S.prefs.ultimaCopia;
+  const motivos = [];
+  if(cambios >= uC) motivos.push(`${cambios} cambios desde la última copia`);
+  if(ultima){
+    const dias = Math.floor((Date.now() - new Date(ultima).getTime()) / 86400000);
+    if(dias >= uD) motivos.push(`${dias} días sin copia`);
+  } else if(cambios>0) {
+    motivos.push('aún no has hecho ninguna copia');
+  }
+  return motivos.join(' · ') || 'ha pasado tiempo desde la última copia';
+}
+
+/* =====================================================================
    RENDER
    ===================================================================== */
 async function render(){
   await loadState();
+  await migrarPlantillaAntigua();
   let html='';
   switch(S.screen){
     case 'hoy':        html = await viewHoy();        break;
@@ -450,58 +671,60 @@ async function render(){
 function go(screen){ S.screen=screen; render(); window.scrollTo(0,0); }
 
 /* =====================================================================
-   1. HOY
+   VISTA HOY
    ===================================================================== */
-function diaSemanaIdx(d){
-  const dow = d.getDay(); // 0=dom..6=sab
-  return dow === 0 ? 7 : dow; // lunes=1..domingo=7
-}
 async function viewHoy(){
-  const hoy = new Date();
-  const kHoy = hoyKey();
+  const hoy = new Date(); const kHoy = hoyKey();
   const diaIdx = diaSemanaIdx(hoy);
 
   const plantilla = await dbAll('plantilla');
-  const hechos = await dbAll('hechos');
-  const setHechos = new Set(hechos.map(h=>h.id));
+  const hechos = await dbAll('hechos'); const setHechos = new Set(hechos.map(h=>h.id));
   const deberes = await dbAll('deberes');
   const avisoDias = Number(S.prefs.avisoDias) || 3;
 
-  // Actividades de hoy desde plantilla
-  const actsHoy = plantilla.filter(p => Number(p.dia) === diaIdx)
-    .sort((a,b) => (a.tramo||'').localeCompare(b.tramo||''));
+  const actsHoy = plantilla.filter(p=>Number(p.dia)===diaIdx)
+    .sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
 
-  const deberesPendientes = deberes.filter(d => d.estado !== 'hecho');
-  const deberesUrgentes = deberesPendientes.filter(d => {
-    const n = diasHasta(d.fecha_limite); return n !== null && n <= avisoDias;
-  }).sort((a,b) => (a.fecha_limite||'').localeCompare(b.fecha_limite||''));
+  const deberesPend = deberes.filter(d=>d.estado!=='hecho');
+  const deberesUrg = deberesPend.filter(d=>{
+    const n=diasHasta(d.fecha_limite); return n!==null && n<=avisoDias;
+  }).sort((a,b)=>(a.fecha_limite||'').localeCompare(b.fecha_limite||''));
 
   const deberesPorTipo = {};
-  deberesPendientes.forEach(d => {
-    if(!deberesPorTipo[d.tipo_id]) deberesPorTipo[d.tipo_id]=[];
-    deberesPorTipo[d.tipo_id].push(d);
-  });
+  deberesPend.forEach(d=>{ (deberesPorTipo[d.tipo_id]=deberesPorTipo[d.tipo_id]||[]).push(d); });
+
+  const bannerCopia = S.mostrarBannerCopia ? `
+    <div class="banner-copia">
+      <div class="bc-text">💾 Recomendación: ${esc(motivoCopia())}. ¿Hacer copia de seguridad?</div>
+      <div class="bc-actions">
+        <button class="btn btn-sm btn-primary" data-action="copia-ahora">Exportar ahora</button>
+        <button class="btn btn-sm" data-action="copia-snooze">Recordar más tarde</button>
+      </div>
+    </div>` : '';
 
   const actsHTML = actsHoy.length ? actsHoy.map(a => {
     const t = tipoDe(a.tipo_id);
     const hechoId = `${a.id}_${kHoy}`;
     const hecho = setHechos.has(hechoId);
+    const color = tipoColor(t);
     const deberesTipo = (deberesPorTipo[a.tipo_id]||[]).slice(0,2);
     return `<div class="hoy-block ${hecho?'hecho':''}">
       <div class="ti">${t.icono}</div>
       <div class="grow">
-        <div class="hoy-title">${esc(t.nombre)}${a.subcategoria ? ' · '+esc(a.subcategoria) : ''}</div>
-        <div class="hoy-sub">${tramoLabel(a.tramo)}${a.nota ? ' · '+esc(a.nota) : ''}</div>
-        ${deberesTipo.map(d => `<div class="deber-mini" data-action="deber-editar" data-id="${d.id}">
+        <div class="hoy-title">${esc(t.nombre)}${a.subcategoria?' · '+esc(a.subcategoria):''}</div>
+        <div class="hoy-sub">
+          <span style="color:${color};font-weight:700">${a.hora_inicio||'--'}–${a.hora_fin||'--'}</span>
+          ${a.nota?' · '+esc(a.nota):''}
+        </div>
+        ${deberesTipo.map(d=>`<div class="deber-mini" data-action="deber-editar" data-id="${d.id}">
           📌 ${esc(d.titulo)} · ${labelDiasHasta(d.fecha_limite)}</div>`).join('')}
       </div>
-      <div class="hoy-check ${hecho?'on':''}" data-action="hoy-marcar" data-plantilla="${a.id}" data-fecha="${kHoy}">
-        ${hecho?'✓':''}
-      </div>
+      <div class="hoy-check ${hecho?'on':''}" data-action="hoy-marcar"
+        data-plantilla="${a.id}" data-fecha="${kHoy}">${hecho?'✓':''}</div>
     </div>`;
-  }).join('') : '<div class="empty">Hoy no tienes actividades planificadas. ¡Disfruta del día libre!</div>';
+  }).join('') : '<div class="empty">Hoy no tienes actividades planificadas.</div>';
 
-  const deberesHTML = deberesUrgentes.length ? deberesUrgentes.map(d => {
+  const deberesHTML = deberesUrg.length ? deberesUrg.map(d => {
     const t = tipoDe(d.tipo_id);
     const n = diasHasta(d.fecha_limite);
     const cls = n!==null && n<0 ? 'urgente' : 'proximo';
@@ -510,7 +733,7 @@ async function viewHoy(){
         <span class="ico">${t.icono}</span>
         <div class="deber-title">${esc(d.titulo)}</div>
       </div>
-      <div class="deber-meta">${t.nombre}${d.subcategoria ? ' · '+esc(d.subcategoria) : ''} · ${labelDiasHasta(d.fecha_limite)}</div>
+      <div class="deber-meta">${esc(t.nombre)}${d.subcategoria?' · '+esc(d.subcategoria):''} · ${labelDiasHasta(d.fecha_limite)}</div>
       <div class="deber-actions">
         <button class="btn btn-sm btn-primary" data-action="deber-hecho" data-id="${d.id}">✓ Hecho</button>
         <button class="btn btn-sm" data-action="deber-editar" data-id="${d.id}">✎</button>
@@ -520,6 +743,7 @@ async function viewHoy(){
 
   return await topbar('Hoy') + `
   <div class="wrap">
+    ${bannerCopia}
     <div style="margin-bottom:14px">
       <div style="font-size:20px;font-weight:750">${DIAS_NOMBRE[diaIdx-1]}, ${hoy.getDate()} de ${hoy.toLocaleDateString('es-ES',{month:'long'})}</div>
       <div class="muted" style="font-size:13px">Tu agenda de hoy</div>
@@ -534,20 +758,22 @@ async function viewHoy(){
     <div class="sec-title" style="margin-top:20px">Accesos rápidos</div>
     <div class="tiles">
       <div class="tile" data-action="go" data-screen="plantilla">
-        <div class="ti">🗓️</div><div class="tt">Mi semana</div>
-        <div class="ts">Plantilla semanal</div>
+        <div class="ti">🗓️</div><div class="tt">Mi semana</div><div class="ts">Plantilla semanal</div>
       </div>
       <div class="tile" data-action="go" data-screen="deberes">
-        <div class="ti">📌</div><div class="tt">Deberes</div>
-        <div class="ts">${deberesPendientes.length} pendientes</div>
+        <div class="ti">📌</div><div class="tt">Deberes</div><div class="ts">${deberesPend.length} pendientes</div>
       </div>
       <div class="tile" data-action="go" data-screen="checklist">
-        <div class="ti">🎒</div><div class="tt">Checklist</div>
-        <div class="ts">Preparación</div>
+        <div class="ti">🎒</div><div class="tt">Checklist</div><div class="ts">Preparación</div>
       </div>
       <div class="tile" data-action="go" data-screen="resumen">
-        <div class="ti">📊</div><div class="tt">Resumen</div>
-        <div class="ts">Estadísticas</div>
+        <div class="ti">📊</div><div class="tt">Resumen</div><div class="ts">Estadísticas</div>
+      </div>
+      <div class="tile" data-action="go" data-screen="peso">
+        <div class="ti">⚖️</div><div class="tt">Peso</div><div class="ts">Registro semanal</div>
+      </div>
+      <div class="tile" data-action="go" data-screen="ajustes">
+        <div class="ti">⚙️</div><div class="tt">Ajustes</div><div class="ts">Configuración</div>
       </div>
     </div>
 
@@ -556,91 +782,138 @@ async function viewHoy(){
     </div>
     <div class="row" style="margin-top:8px">
       <button class="btn" data-action="go" data-screen="historico">Histórico</button>
-      <button class="btn" data-action="go" data-screen="ajustes">Ajustes</button>
     </div>
   </div>`;
 }
-function tramoLabel(id){
-  const t = S.tramos.find(x=>x.id===id);
-  return t ? `${t.nombre} (${t.ini}–${t.fin})` : (id||'');
-}
 
 /* =====================================================================
-   2. PLANTILLA SEMANAL ESTÁTICA
+   VISTA PLANTILLA (rediseño por horas)
    ===================================================================== */
+const HORA_PX = 44;
+function layoutDia(eventos){
+  const sorted = [...eventos].sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+  const clusters = [];
+  let cluster = null;
+  for(const ev of sorted){
+    if(!cluster || hhmmToMin(ev.hora_inicio) >= hhmmToMin(cluster.fin)){
+      if(cluster) clusters.push(cluster);
+      cluster = {eventos:[ev], fin: ev.hora_fin};
+    } else {
+      cluster.eventos.push(ev);
+      if(hhmmToMin(ev.hora_fin) > hhmmToMin(cluster.fin)) cluster.fin = ev.hora_fin;
+    }
+  }
+  if(cluster) clusters.push(cluster);
+  const result = [];
+  for(const c of clusters){
+    const lanes = [];
+    const asign = [];
+    for(const ev of c.eventos){
+      let lane = lanes.findIndex(fin => hhmmToMin(fin) <= hhmmToMin(ev.hora_inicio));
+      if(lane === -1){ lane = lanes.length; lanes.push(ev.hora_fin); }
+      else { lanes[lane] = ev.hora_fin; }
+      asign.push({evento:ev, lane});
+    }
+    for(const a of asign) result.push({...a, lanes: lanes.length});
+  }
+  return result;
+}
+
 async function viewPlantilla(){
-  const hoy = new Date();
+  const jIni = S.prefs.jornadaIni || '07:00';
+  const jFin = S.prefs.jornadaFin || '23:00';
+  const iniMin = hhmmToMin(jIni);
+  const finMin = hhmmToMin(jFin);
+  const numHoras = Math.max(1, Math.ceil((finMin - iniMin)/60));
+  const totalH = numHoras * HORA_PX;
+
+  const diaIdxHoy = diaSemanaIdx(new Date());
   const kHoy = hoyKey();
-  const diaIdxHoy = diaSemanaIdx(hoy);
+  const hechos = await dbAll('hechos'); const setHechos = new Set(hechos.map(h=>h.id));
   const plantilla = await dbAll('plantilla');
-  const hechos = await dbAll('hechos');
-  const setHechos = new Set(hechos.map(h=>h.id));
 
   // Cabecera
-  const header = `<div class="grid-header corner">Tramo</div>` +
+  const header = `<div class="corner">Hora</div>` +
     DIAS.map((d,i) => {
-      const esHoy = (i+1)===diaIdxHoy;
-      return `<div class="grid-header ${esHoy?'hoy':''}">
+      const dia = i+1;
+      const esHoy = dia===diaIdxHoy;
+      return `<div class="day-head ${esHoy?'hoy':''}">
         <div class="dname">${d}</div>
-        <div class="dnum">${i+1}</div>
+        <div class="dnum">${dia}</div>
+        <button class="add-btn" data-action="plantilla-nueva" data-dia="${dia}" title="Añadir">＋</button>
       </div>`;
     }).join('');
 
-  // Filas por tramo
-  let filas='';
-  for(const tramo of S.tramos){
-    filas += `<div class="tramo-col">
-      <div class="tname">${esc(tramo.nombre)}</div>
-      <div class="thours">${tramo.ini}–${tramo.fin}</div>
-    </div>`;
-    for(let dia=1; dia<=7; dia++){
-      const acts = plantilla.filter(p => p.tramo===tramo.id && Number(p.dia)===dia);
-      const actsHTML = acts.map(a => {
-        const t = tipoDe(a.tipo_id);
-        const hechoId = `${a.id}_${kHoy}`;
-        const hecho = (dia===diaIdxHoy) && setHechos.has(hechoId);
-        return `<div class="celda-act ${t.color||'bg-otro'} ${hecho?'hecha':''}"
-                 data-action="plantilla-editar" data-id="${a.id}">
-          <div class="ca-title">
-            ${dia===diaIdxHoy ? `<span class="chk-mini ${hecho?'on':''}"
-              data-action="plantilla-marcar" data-plantilla="${a.id}" data-fecha="${kHoy}">${hecho?'✓':''}</span>` : ''}
-            ${t.icono} ${esc(a.subcategoria||t.nombre)}
-          </div>
-          ${a.nota ? `<div class="ca-sub">${esc(a.nota)}</div>` : ''}
-        </div>`;
-      }).join('');
-      filas += `<div class="day-col-plantilla" data-dia="${dia}" data-tramo="${tramo.id}">
-        ${actsHTML}
-        <div class="celda-add" data-action="plantilla-nueva" data-dia="${dia}" data-tramo="${tramo.id}">＋</div>
+  // Columna de horas
+  let hoursHTML = '';
+  for(let i=0;i<numHoras;i++){
+    const minutos = iniMin + i*60;
+    const h = Math.floor(minutos/60), m = minutos%60;
+    hoursHTML += `<div class="hour-cell">${pad(h)}:${pad(m)}</div>`;
+  }
+
+  // Cuerpo por días
+  let bodyHTML = `<div class="hours-col">${hoursHTML}</div>`;
+  for(let dia=1; dia<=7; dia++){
+    const acts = plantilla.filter(p => Number(p.dia)===dia);
+    const pos = layoutDia(acts);
+    // líneas horizontales
+    let lines = '';
+    for(let i=0;i<numHoras;i++) lines += `<div class="hour-line"></div>`;
+    // eventos posicionados
+    let evs = '';
+    for(const {evento:p, lane, lanes} of pos){
+      const t = tipoDe(p.tipo_id);
+      const color = tipoColor(t);
+      const startMin = hhmmToMin(p.hora_inicio) - iniMin;
+      const durMin = Math.max(15, calcMin(p.hora_inicio, p.hora_fin));
+      const topPx = (startMin/60) * HORA_PX;
+      const heightPx = Math.max(28, (durMin/60) * HORA_PX);
+      const anchoPct = 100/lanes;
+      const leftPct = lane * anchoPct;
+      const hechoId = `${p.id}_${kHoy}`;
+      const hecho = dia===diaIdxHoy && setHechos.has(hechoId);
+      evs += `<div class="evento-plantilla ${hecho?'hecha':''}"
+        style="top:${topPx}px;height:${heightPx}px;left:calc(${leftPct}% + 2px);width:calc(${anchoPct}% - 4px);background:${color}"
+        data-action="plantilla-editar" data-id="${p.id}">
+        <div class="ev-hora">
+          ${dia===diaIdxHoy ? `<span class="ev-chk ${hecho?'on':''}" data-action="plantilla-marcar" data-plantilla="${p.id}" data-fecha="${kHoy}">${hecho?'✓':''}</span>` : ''}
+          ${p.hora_inicio}–${p.hora_fin}
+        </div>
+        <div class="ev-title">${t.icono} ${esc(p.subcategoria || t.nombre)}</div>
+        ${p.nota ? `<div class="ev-nota">${esc(p.nota)}</div>` : ''}
       </div>`;
     }
+    bodyHTML += `<div class="day-body" style="height:${totalH}px">${lines}${evs}</div>`;
   }
 
   return await topbar('Mi semana') + `
   <div class="wrap">
-    <div class="plantilla-tools">
-      <button class="chip" data-action="plantilla-hoy-marcar-todo">✓ Marcar todo hoy</button>
-      <button class="chip" data-action="go" data-screen="deberes">📌 Deberes</button>
-    </div>
     <div class="muted center" style="font-size:12px;margin-bottom:8px">
-      Plantilla semanal fija. Pulsa ＋ para añadir una actividad recurrente.
+      ${S.prefs.jornadaIni||'07:00'} – ${S.prefs.jornadaFin||'23:00'} ·
+      Añade con ＋ · Toca una actividad para editar
     </div>
-    <div class="week-grid-container">
-      <div class="week-grid">${header}${filas}</div>
+    <div class="plantilla-container">
+      <div class="plantilla-head">${header}</div>
+      <div class="plantilla-body">${bodyHTML}</div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" data-action="go" data-screen="deberes">📌 Deberes</button>
+      <button class="btn" data-action="go" data-screen="hoy">🏠 Hoy</button>
     </div>
   </div>`;
 }
 
 function abrirPlantillaModal(item){
   S.plantillaForm = item ? {...item} : {
-    id:null, dia:1, tramo:(S.tramos[0]&&S.tramos[0].id)||'manana',
+    id:null, dia:1,
     tipo_id:(S.tipos.find(t=>t.visible)||{id:'gimnasio'}).id,
+    hora_inicio:'09:00', hora_fin:'10:00',
     subcategoria:'', nota:''
   };
   const f = S.plantillaForm;
   const tiposVis = S.tipos.filter(t=>t.visible);
   const subcats = S.subcategorias.filter(s=>s.tipo_id===f.tipo_id);
-
   showModal(`
     <h2>${f.id?'Editar':'Nueva'} actividad recurrente</h2>
     <div class="field">
@@ -649,18 +922,20 @@ function abrirPlantillaModal(item){
         ${tiposVis.map(t=>`<option value="${t.id}" ${t.id===f.tipo_id?'selected':''}>${t.icono} ${esc(t.nombre)}</option>`).join('')}
       </select>
     </div>
+    <div class="field">
+      <label class="lbl">Día</label>
+      <select class="input" data-plantilla="dia">
+        ${DIAS_NOMBRE.map((n,i)=>`<option value="${i+1}" ${Number(f.dia)===i+1?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
     <div class="row">
       <div class="field">
-        <label class="lbl">Día</label>
-        <select class="input" data-plantilla="dia">
-          ${DIAS_NOMBRE.map((n,i)=>`<option value="${i+1}" ${Number(f.dia)===i+1?'selected':''}>${n}</option>`).join('')}
-        </select>
+        <label class="lbl">Hora inicio</label>
+        <input class="input" type="time" data-plantilla="hora_inicio" value="${esc(f.hora_inicio||'09:00')}">
       </div>
       <div class="field">
-        <label class="lbl">Tramo</label>
-        <select class="input" data-plantilla="tramo">
-          ${S.tramos.map(t=>`<option value="${t.id}" ${t.id===f.tramo?'selected':''}>${esc(t.nombre)} (${t.ini}–${t.fin})</option>`).join('')}
-        </select>
+        <label class="lbl">Hora fin</label>
+        <input class="input" type="time" data-plantilla="hora_fin" value="${esc(f.hora_fin||'10:00')}">
       </div>
     </div>
     <div class="field">
@@ -672,7 +947,7 @@ function abrirPlantillaModal(item){
     </div>
     <div class="field">
       <label class="lbl">Nota</label>
-      <input class="input" data-plantilla="nota" value="${esc(f.nota||'')}" placeholder="Lugar, profesor, etc.">
+      <textarea class="input" data-plantilla="nota" placeholder="Lugar, profesor, etc.">${esc(f.nota||'')}</textarea>
     </div>
     <div class="modal-actions">
       <button class="btn" data-action="modal-close">Cancelar</button>
@@ -683,8 +958,11 @@ function abrirPlantillaModal(item){
 }
 async function guardarPlantilla(){
   const f = S.plantillaForm; if(!f) return;
+  if(!f.hora_inicio || !f.hora_fin){ toast('Pon hora inicio y fin'); return; }
+  if(hhmmToMin(f.hora_fin) <= hhmmToMin(f.hora_inicio)){ toast('Hora fin debe ser mayor'); return; }
   const obj = {
-    tipo_id:f.tipo_id, dia:Number(f.dia), tramo:f.tramo,
+    tipo_id:f.tipo_id, dia:Number(f.dia),
+    hora_inicio:f.hora_inicio, hora_fin:f.hora_fin,
     subcategoria:(f.subcategoria||'').trim(), nota:(f.nota||'').trim()
   };
   if(f.id) obj.id = f.id;
@@ -694,47 +972,46 @@ async function guardarPlantilla(){
   render();
 }
 
-/* Marcar celda como hecha hoy → registra actividad en histórico */
 async function marcarPlantillaHecha(plantillaId, fecha){
   const id = `${plantillaId}_${fecha}`;
   const existente = await dbGet('hechos', id);
   if(existente){
     await dbDel('hechos', id);
-    // Borrar actividad asociada
     if(existente.actividad_id) await dbDel('actividades', existente.actividad_id);
     toast('Desmarcado');
   } else {
     const p = await dbGet('plantilla', Number(plantillaId));
     if(!p){ toast('No existe'); return; }
-    const tramo = S.tramos.find(t=>t.id===p.tramo);
+    const dur = calcMin(p.hora_inicio, p.hora_fin);
     const actId = await new Promise((res,rej)=>{
       const r = db.transaction('actividades','readwrite').objectStore('actividades').add({
-        tipo_id:p.tipo_id, fecha, subcategoria:p.subcategoria||'',
-        duracion_min:null, notas:`[Plantilla] ${tramo?tramo.nombre:''} ${p.nota||''}`.trim(),
+        tipo_id:p.tipo_id, fecha,
+        subcategoria:p.subcategoria||'',
+        duracion_min: dur || null,
+        hora_inicio: p.hora_inicio, hora_fin: p.hora_fin,
+        notas: (p.nota||'').trim(),
         origen:'plantilla'
       });
       r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
     });
     await dbPut('hechos', {id, plantilla_id:Number(plantillaId), fecha, actividad_id:actId});
-    toast('¡Hecho! Registrado en histórico');
+    toast('¡Hecho!');
   }
   render();
 }
 
 /* =====================================================================
-   3. DEBERES
+   DEBERES
    ===================================================================== */
 async function viewDeberes(){
   const todos = await dbAll('deberes');
   const filtro = S.deberFiltro;
   const avisoDias = Number(S.prefs.avisoDias) || 3;
-
   let lista = todos.slice();
   if(filtro==='pendientes') lista = lista.filter(d=>d.estado==='pendiente'||d.estado==='en_curso');
   else if(filtro==='hechos') lista = lista.filter(d=>d.estado==='hecho');
   else if(filtro==='vencidos') lista = lista.filter(d=>d.estado!=='hecho' && d.fecha_limite && diasHasta(d.fecha_limite)<0);
 
-  // Ordenación: urgentes primero
   lista.sort((a,b)=>{
     if(a.estado==='hecho' && b.estado!=='hecho') return 1;
     if(b.estado==='hecho' && a.estado!=='hecho') return -1;
@@ -743,15 +1020,14 @@ async function viewDeberes(){
     return da - db2;
   });
 
-  // Agrupar
   const grupos = {vencen_hoy:[], vencidos:[], esta_semana:[], mas_adelante:[], sin_fecha:[], hechos:[]};
   for(const d of lista){
     if(d.estado==='hecho'){ grupos.hechos.push(d); continue; }
     if(!d.fecha_limite){ grupos.sin_fecha.push(d); continue; }
     const n = diasHasta(d.fecha_limite);
-    if(n < 0) grupos.vencidos.push(d);
-    else if(n === 0) grupos.vencen_hoy.push(d);
-    else if(n <= avisoDias) grupos.esta_semana.push(d);
+    if(n<0) grupos.vencidos.push(d);
+    else if(n===0) grupos.vencen_hoy.push(d);
+    else if(n<=avisoDias) grupos.esta_semana.push(d);
     else grupos.mas_adelante.push(d);
   }
 
@@ -770,17 +1046,17 @@ async function viewDeberes(){
         <div class="deber-title">${esc(d.titulo)}</div>
       </div>
       <div class="deber-meta">
-        ${esc(t.nombre)}${d.subcategoria ? ' · '+esc(d.subcategoria) : ''}
+        ${esc(t.nombre)}${d.subcategoria?' · '+esc(d.subcategoria):''}
         · <span class="${prioCls}">${(d.prioridad||'media').toUpperCase()}</span>
         · ${labelDiasHasta(d.fecha_limite)}
-        ${hechos && d.hecho_en ? ' · Hecho el '+fmtFechaCorta(d.hecho_en) : ''}
+        ${hechos && d.hecho_en?' · Hecho el '+fmtFechaCorta(d.hecho_en):''}
       </div>
-      ${d.descripcion ? `<div class="deber-desc">${esc(d.descripcion)}</div>` : ''}
-      ${hechos && d.nota_resultado ? `<div class="deber-desc">📝 ${esc(d.nota_resultado)}</div>` : ''}
+      ${d.descripcion?`<div class="deber-desc">${esc(d.descripcion)}</div>`:''}
+      ${hechos && d.nota_resultado?`<div class="deber-desc">📝 ${esc(d.nota_resultado)}</div>`:''}
       <div class="deber-actions">
-        ${!hechos ? `<button class="btn btn-sm btn-primary" data-action="deber-hecho" data-id="${d.id}">✓ Hecho</button>` : ''}
-        ${!hechos && d.fecha_limite && n!==null && n<0 ? `<button class="btn btn-sm btn-warn" data-action="deber-reprogramar" data-id="${d.id}">+7 días</button>` : ''}
-        ${!hechos ? `<button class="btn btn-sm" data-action="deber-en-curso" data-id="${d.id}">${d.estado==='en_curso'?'◐ En curso':'◯ En curso'}</button>` : ''}
+        ${!hechos?`<button class="btn btn-sm btn-primary" data-action="deber-hecho" data-id="${d.id}">✓ Hecho</button>`:''}
+        ${!hechos && d.fecha_limite && n!==null && n<0?`<button class="btn btn-sm btn-warn" data-action="deber-reprogramar" data-id="${d.id}">+7 días</button>`:''}
+        ${!hechos?`<button class="btn btn-sm" data-action="deber-en-curso" data-id="${d.id}">${d.estado==='en_curso'?'◐ En curso':'◯ En curso'}</button>`:''}
         <button class="btn btn-sm" data-action="deber-editar" data-id="${d.id}">✎</button>
         <button class="btn btn-sm btn-danger" data-action="deber-borrar" data-id="${d.id}">🗑</button>
       </div>
@@ -789,31 +1065,26 @@ async function viewDeberes(){
 
   const seccion = (titulo, arr) => arr.length ? `
     <div class="sec-title">${titulo} (${arr.length})</div>
-    ${arr.map(renderDeber).join('')}
-  ` : '';
+    ${arr.map(renderDeber).join('')}` : '';
 
   return await topbar('Deberes') + `
   <div class="wrap">
     <button class="btn btn-primary btn-block btn-big" data-action="deber-nuevo" style="margin-bottom:12px">＋ Nuevo deber</button>
-
     <div class="chips" style="margin-bottom:14px">
       <button class="chip ${filtro==='pendientes'?'sel':''}" data-action="deber-filtro" data-id="pendientes">Pendientes</button>
       <button class="chip ${filtro==='vencidos'?'sel':''}" data-action="deber-filtro" data-id="vencidos">Vencidos</button>
       <button class="chip ${filtro==='hechos'?'sel':''}" data-action="deber-filtro" data-id="hechos">Hechos</button>
       <button class="chip ${filtro==='todos'?'sel':''}" data-action="deber-filtro" data-id="todos">Todos</button>
     </div>
-
     ${seccion('Vencen hoy', grupos.vencen_hoy)}
     ${seccion('Vencidos', grupos.vencidos)}
     ${seccion('Próximos días', grupos.esta_semana)}
     ${seccion('Más adelante', grupos.mas_adelante)}
     ${seccion('Sin fecha límite', grupos.sin_fecha)}
     ${seccion('Hechos', grupos.hechos)}
-
-    ${lista.length===0 ? '<div class="empty">Sin deberes que mostrar.</div>' : ''}
+    ${lista.length===0?'<div class="empty">Sin deberes que mostrar.</div>':''}
   </div>`;
 }
-
 function abrirDeberModal(d){
   S.deberForm = d ? {...d} : {
     id:null, tipo_id:(S.tipos.find(t=>t.visible)||{id:'guitarra'}).id,
@@ -824,7 +1095,6 @@ function abrirDeberModal(d){
   const f = S.deberForm;
   const tiposVis = S.tipos.filter(t=>t.visible);
   const subcats = S.subcategorias.filter(s=>s.tipo_id===f.tipo_id);
-
   showModal(`
     <h2>${f.id?'Editar deber':'Nuevo deber'}</h2>
     <div class="field">
@@ -862,10 +1132,10 @@ function abrirDeberModal(d){
         </select>
       </div>
     </div>
-    ${f.estado==='hecho' ? `<div class="field">
+    ${f.estado==='hecho'?`<div class="field">
       <label class="lbl">Nota de resultado</label>
       <textarea class="input" data-deber="nota_resultado" placeholder="¿Cómo fue?">${esc(f.nota_resultado||'')}</textarea>
-    </div>` : ''}
+    </div>`:''}
     <div class="modal-actions">
       <button class="btn" data-action="modal-close">Cancelar</button>
       <button class="btn btn-primary" data-action="deber-guardar">Guardar</button>
@@ -888,12 +1158,12 @@ async function guardarDeber(){
   if(obj.estado==='hecho' && !f.hecho_en) obj.hecho_en = hoyKey();
   await dbPut('deberes', obj);
   cerrarModal(); S.deberForm=null;
-  toast(f.id?'Deber actualizado':'Deber añadido');
+  toast(f.id?'Actualizado':'Añadido');
   render();
 }
 
 /* =====================================================================
-   4. REGISTRO DE ACTIVIDAD SUELTA (sin plantilla)
+   REGISTRO ACTIVIDAD SUELTA
    ===================================================================== */
 function nuevoForm(){
   const primero = S.tipos.find(t=>t.visible) || S.tipos[0];
@@ -904,6 +1174,11 @@ function nuevoForm(){
 }
 function campoHTML(c, valor){
   const d = CAMPO_DEF[c];
+  if(!d) return '';
+  if(d.type==='textarea'){
+    return `<div class="field"><label class="lbl">${d.label}</label>
+      <textarea class="input" data-field="${c}">${esc(valor??'')}</textarea></div>`;
+  }
   return `<div class="field"><label class="lbl">${d.label}</label>
     <input class="input" type="${d.type}" ${d.step?`step="${d.step}"`:''}
       ${d.type==='number'?'inputmode="decimal"':''}
@@ -914,7 +1189,6 @@ async function viewActividad(){
   const f = S.form;
   const tiposVis = S.tipos.filter(t=>t.visible);
   const subcats = S.subcategorias.filter(s=>s.tipo_id===f.tipo_id);
-
   return await topbar(f.id?'Editar actividad':'Registrar actividad') + `
   <div class="wrap">
     <div class="card">
@@ -945,7 +1219,7 @@ async function viewActividad(){
         <input class="input" type="number" inputmode="numeric" data-field="duracion_min" value="${esc(f.duracion_min)}">
       </div>
     </div>
-    ${(CAMPOS_POR_TIPO[f.tipo_id]||[]).length ? `<div class="card">
+    ${(CAMPOS_POR_TIPO[f.tipo_id]||[]).length?`<div class="card">
       <div class="sec-title" style="margin-top:0">Datos de ${esc(tipoDe(f.tipo_id).nombre)}</div>
       ${(CAMPOS_POR_TIPO[f.tipo_id]||[]).map(c=>campoHTML(c,f[c])).join('')}
     </div>`:''}
@@ -978,7 +1252,7 @@ async function guardarActividad(){
 }
 
 /* =====================================================================
-   5. CHECKLIST (igual que v2)
+   CHECKLIST
    ===================================================================== */
 async function viewChecklist(){
   const tiposVis = S.tipos.filter(t=>t.visible);
@@ -1014,7 +1288,7 @@ async function viewChecklist(){
 }
 
 /* =====================================================================
-   6. RESUMEN
+   RESUMEN
    ===================================================================== */
 const RANGOS=[['semana','Semana'],['2semanas','2 sem'],['mes','Mes'],['trimestre','Trim'],['año','Año'],['personalizado','Personalizar']];
 const DIAS_RANGO={semana:7,'2semanas':14,mes:30,trimestre:91,'año':365};
@@ -1044,7 +1318,6 @@ async function viewResumen(){
   const kD=dateKey(desde), kH=dateKey(hasta);
   const enRango = acts.filter(a=>a.fecha>=kD && a.fecha<=kH);
   const tot = totalesPorTipo(enRango, tiposVis);
-
   const tarjetas = tiposVis.map(t=>{
     const a = tot[t.id];
     let html = `<div class="card res-card"><div class="res-head">${t.icono} ${esc(t.nombre)}</div>
@@ -1058,7 +1331,6 @@ async function viewResumen(){
     html += `</div></div>`;
     return html;
   }).join('');
-
   return await topbar('Resumen') + `
   <div class="wrap">
     <div class="chips" style="margin-bottom:12px">
@@ -1076,7 +1348,7 @@ async function viewResumen(){
 }
 
 /* =====================================================================
-   7. PESO (igual que v2)
+   PESO
    ===================================================================== */
 async function viewPeso(){
   const entradas = (await dbAll('peso')).sort((a,b)=>a.fecha.localeCompare(b.fecha));
@@ -1095,7 +1367,7 @@ async function viewPeso(){
     </div>
     <div class="card">
       <div class="sec-title" style="margin-top:0">Evolución</div>
-      ${entradas.length>=2?'<canvas id="pesoCanvas" style="width:100%;height:160px;display:block"></canvas>':'<div class="empty">2 datos mínimo para gráfico.</div>'}
+      ${entradas.length>=2?'<canvas id="pesoCanvas" style="width:100%;height:160px;display:block"></canvas>':'<div class="empty">2 datos mínimo.</div>'}
     </div>
     <div class="sec-title">Historial</div>
     ${entradas.length?entradas.slice().reverse().map(e=>`
@@ -1128,7 +1400,7 @@ function drawPesoChart(){
 }
 
 /* =====================================================================
-   8. HISTÓRICO
+   HISTÓRICO
    ===================================================================== */
 async function viewHistorico(){
   const todas = await dbAll('actividades');
@@ -1159,9 +1431,9 @@ async function viewHistorico(){
     ${lista.length?lista.map(a=>{
       const t=tipoDe(a.tipo_id); const partes=[];
       if(a.subcategoria) partes.push(a.subcategoria);
-      if(a.duracion_min) partes.push(a.duracion_min+' min');
+      if(a.hora_inicio && a.hora_fin) partes.push(`${a.hora_inicio}–${a.hora_fin}`);
+      else if(a.duracion_min) partes.push(a.duracion_min+' min');
       if(a.distancia_km) partes.push(fmtNum(a.distancia_km,2)+' km');
-      if(a.desnivel_m) partes.push(fmtNum(a.desnivel_m,0)+' m desn.');
       if(a.pieza) partes.push('🎵 '+a.pieza);
       if(a.tema) partes.push('📚 '+a.tema);
       return `<div class="item" data-action="ver-act" data-id="${a.id}">
@@ -1176,30 +1448,130 @@ async function viewHistorico(){
 }
 
 /* =====================================================================
-   9. AJUSTES
+   AJUSTES
    ===================================================================== */
+function abrirCatModal(cat){
+  S.catForm = cat ? {...cat} : {
+    id:'', nombre:'', icono:'🏷️', color:PALETA[0], orden:(S.tipos.length+1), visible:1, esNueva:true
+  };
+  const f = S.catForm;
+  showModal(`
+    <h2>${f.id?'Editar':'Nueva'} categoría</h2>
+    <div class="field">
+      <label class="lbl">Nombre</label>
+      <input class="input" data-cat="nombre" value="${esc(f.nombre||'')}">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label class="lbl">Icono (emoji)</label>
+        <input class="input" data-cat="icono" value="${esc(f.icono||'🏷️')}" maxlength="4">
+      </div>
+      <div class="field">
+        <label class="lbl">Orden</label>
+        <input class="input" type="number" data-cat="orden" value="${esc(f.orden||1)}">
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl">Color</label>
+      <div class="paleta">
+        ${PALETA.map(c=>`<div class="sw ${f.color===c?'sel':''}" data-action="cat-color" data-color="${c}" style="background:${c}"></div>`).join('')}
+      </div>
+    </div>
+    <label class="chk-compact" style="cursor:pointer">
+      <span class="txt">Visible en selects</span>
+      <input type="checkbox" data-cat="visible" ${f.visible?'checked':''} style="width:18px;height:18px;accent-color:var(--primary)">
+    </label>
+    <div class="modal-actions">
+      <button class="btn" data-action="modal-close">Cancelar</button>
+      ${f.id&&!['otro'].includes(f.id)?'<button class="btn btn-danger" data-action="cat-borrar">Borrar</button>':''}
+      <button class="btn btn-primary" data-action="cat-guardar">Guardar</button>
+    </div>
+  `);
+}
+async function guardarCategoria(){
+  const f = S.catForm; if(!f) return;
+  if(!f.nombre || !f.nombre.trim()){ toast('Falta el nombre'); return; }
+  let id = f.id;
+  if(!id){
+    // generar id único
+    const base = slugify(f.nombre);
+    let n = base, i = 1;
+    const existentes = new Set(S.tipos.map(t=>t.id));
+    while(existentes.has(n)){ n = base + '-' + (++i); }
+    id = n;
+  }
+  const obj = {
+    id, nombre:f.nombre.trim(), icono:(f.icono||'🏷️').trim(),
+    color:f.color || PALETA[0], visible:f.visible?1:0,
+    orden: Number(f.orden)||1
+  };
+  await dbPut('tipos', obj);
+  cerrarModal(); S.catForm=null;
+  toast(f.id?'Actualizada':'Creada');
+  render();
+}
+async function borrarCategoria(){
+  const f = S.catForm; if(!f || !f.id) return;
+  const [acts, debs, plans] = await Promise.all([dbAll('actividades'), dbAll('deberes'), dbAll('plantilla')]);
+  const usos = {
+    a: acts.filter(x=>x.tipo_id===f.id).length,
+    d: debs.filter(x=>x.tipo_id===f.id).length,
+    p: plans.filter(x=>x.tipo_id===f.id).length
+  };
+  const total = usos.a + usos.d + usos.p;
+  const msg = total>0
+    ? `La categoría "${f.nombre}" tiene ${usos.a} actividades, ${usos.d} deberes y ${usos.p} en la plantilla. ¿Moverlos todos a "Otro" y borrarla?`
+    : `¿Borrar la categoría "${f.nombre}"?`;
+  if(!confirm(msg)) return;
+  if(total>0){
+    const nuevo = 'otro';
+    for(const a of acts.filter(x=>x.tipo_id===f.id)){ a.tipo_id=nuevo; await dbPut('actividades', a); }
+    for(const d of debs.filter(x=>x.tipo_id===f.id)){ d.tipo_id=nuevo; await dbPut('deberes', d); }
+    for(const p of plans.filter(x=>x.tipo_id===f.id)){ p.tipo_id=nuevo; await dbPut('plantilla', p); }
+  }
+  await dbDel('tipos', f.id);
+  // Borrar subcategorías de esa categoría
+  const subs = (await dbAll('subcategorias')).filter(s=>s.tipo_id===f.id);
+  for(const s of subs) await dbDel('subcategorias', s.id);
+  cerrarModal(); S.catForm=null;
+  toast('Categoría borrada');
+  render();
+}
+
 async function viewAjustes(){
-  const ini = prefInicio();
+  const ini = S.prefs.semanaInicio || 'lunes';
   const ideas = (await dbAll('ideas')).reverse();
+  const A = S.ajustesOpen;
+  const dOpen = k => A[k] ? 'open' : '';
   return await topbar('Ajustes') + `
   <div class="wrap">
-    <details class="sec-fold">
+
+    <details class="sec-fold" data-fold="categorias" ${dOpen('categorias')}>
       <summary>Categorías</summary>
       <div class="fold-body">
         ${S.tipos.map(t=>`
-          <label class="chk-compact" style="cursor:pointer;margin-bottom:8px">
+          <div class="chk-compact" style="margin-bottom:8px">
+            <span class="cat-color" style="background:${tipoColor(t)}"></span>
             <span class="txt">${t.icono} ${esc(t.nombre)}</span>
-            <input type="checkbox" data-tipo-visible="${t.id}" ${t.visible?'checked':''} style="width:18px;height:18px;accent-color:var(--primary)">
-          </label>`).join('')}
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted)">
+              Ver <input type="checkbox" data-tipo-visible="${t.id}" ${t.visible?'checked':''}
+                style="width:16px;height:16px;accent-color:var(--primary)">
+            </label>
+            <button class="mini" data-action="cat-editar" data-id="${t.id}">✎</button>
+          </div>`).join('')}
+        <button class="btn btn-sm" style="margin-top:6px;width:100%" data-action="cat-add">＋ Nueva categoría</button>
       </div>
     </details>
-    <details class="sec-fold">
+
+    <details class="sec-fold" data-fold="subcats" ${dOpen('subcats')}>
       <summary>Subcategorías</summary>
       <div class="fold-body">
-        ${S.tipos.filter(t=>t.visible).map(t=>{
+        ${S.tipos.map(t=>{
           const subs = S.subcategorias.filter(s=>s.tipo_id===t.id);
           return `<div style="margin-bottom:12px">
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px">${t.icono} ${esc(t.nombre)}</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px">
+              <span class="cat-color" style="background:${tipoColor(t)}"></span>${t.icono} ${esc(t.nombre)}
+            </div>
             ${subs.map(s=>`<div class="chk-compact"><span class="txt">${esc(s.nombre)}</span>
               <button class="mini" data-action="subcat-borrar" data-id="${s.id}">✕</button></div>`).join('')}
             <button class="btn btn-sm" style="margin-top:4px" data-action="subcat-add" data-tipo="${t.id}">＋ Añadir</button>
@@ -1207,20 +1579,24 @@ async function viewAjustes(){
         }).join('')}
       </div>
     </details>
-    <details class="sec-fold">
-      <summary>Tramos horarios de la plantilla semanal</summary>
+
+    <details class="sec-fold" data-fold="jornada" ${dOpen('jornada')}>
+      <summary>Jornada visible de la plantilla</summary>
       <div class="fold-body">
-        <div class="muted" style="font-size:12px;margin-bottom:10px">Define los tramos en que divides el día. La plantilla semanal usará estas filas.</div>
-        ${S.tramos.map(tr=>`
-          <div class="chk-compact">
-            <span class="txt"><b>${esc(tr.nombre)}</b> · ${tr.ini}–${tr.fin}</span>
-            <button class="mini" data-action="tramo-editar" data-id="${tr.id}">✎</button>
-          </div>`).join('')}
-        <button class="btn btn-sm" style="margin-top:6px;width:100%" data-action="tramo-add">＋ Añadir tramo</button>
+        <div class="muted" style="font-size:12px;margin-bottom:10px">
+          Define desde qué hora hasta qué hora se dibuja la cuadrícula semanal.
+        </div>
+        <div class="row">
+          <div class="field" style="margin:0"><label class="lbl">Hora inicio</label>
+            <input class="input" type="time" data-pref="jornadaIni" value="${esc(S.prefs.jornadaIni||'07:00')}"></div>
+          <div class="field" style="margin:0"><label class="lbl">Hora fin</label>
+            <input class="input" type="time" data-pref="jornadaFin" value="${esc(S.prefs.jornadaFin||'23:00')}"></div>
+        </div>
       </div>
     </details>
-    <details class="sec-fold">
-      <summary>Preferencias</summary>
+
+    <details class="sec-fold" data-fold="preferencias" ${dOpen('preferencias')}>
+      <summary>Preferencias generales</summary>
       <div class="fold-body">
         <div class="field">
           <label class="lbl">Primer día de la semana</label>
@@ -1230,13 +1606,33 @@ async function viewAjustes(){
           </select>
         </div>
         <div class="field">
-          <label class="lbl">Días de antelación de aviso de deberes</label>
+          <label class="lbl">Días de antelación para avisar de deberes</label>
           <input class="input" type="number" min="0" max="30" data-pref="avisoDias" value="${esc(S.prefs.avisoDias||3)}">
-          <div class="muted" style="font-size:11.5px;margin-top:4px">Los deberes que venzan en ≤ estos días aparecerán como "próximos" y en el badge de la topbar.</div>
         </div>
       </div>
     </details>
-    <details class="sec-fold">
+
+    <details class="sec-fold" data-fold="copia" ${dOpen('copia')}>
+      <summary>Copias de seguridad · recordatorio</summary>
+      <div class="fold-body">
+        <div class="muted" style="font-size:12px;margin-bottom:10px">
+          La app te recordará hacer copia al abrir si se superan estos umbrales.
+        </div>
+        <div class="row">
+          <div class="field" style="margin:0"><label class="lbl">Cada N cambios</label>
+            <input class="input" type="number" min="1" data-pref="umbralCambiosCopia" value="${esc(S.prefs.umbralCambiosCopia||15)}"></div>
+          <div class="field" style="margin:0"><label class="lbl">Cada N días</label>
+            <input class="input" type="number" min="1" data-pref="umbralDiasCopia" value="${esc(S.prefs.umbralDiasCopia||30)}"></div>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:8px">
+          Cambios desde última copia: <b>${S.prefs.cambiosDesdeCopia||0}</b><br>
+          Última copia: <b>${S.prefs.ultimaCopia ? fmtFecha(S.prefs.ultimaCopia.slice(0,10)) : '—'}</b>
+        </div>
+        <button class="btn btn-sm" style="margin-top:8px;width:100%" data-action="copia-reset">Resetear contador de cambios</button>
+      </div>
+    </details>
+
+    <details class="sec-fold" data-fold="ideasc" ${dOpen('ideasc')}>
       <summary>Ideas de mejora</summary>
       <div class="fold-body">
         <div class="field">
@@ -1259,7 +1655,8 @@ async function viewAjustes(){
         </div>
       </div>
     </details>
-    <details class="sec-fold">
+
+    <details class="sec-fold" data-fold="datos" ${dOpen('datos')}>
       <summary>Datos</summary>
       <div class="fold-body">
         <button class="btn btn-block" data-action="exportar">⬇ Exportar JSON</button>
@@ -1268,56 +1665,88 @@ async function viewAjustes(){
         <button class="btn btn-danger btn-block" style="margin-top:12px" data-action="borrar-todo">Borrar todo</button>
       </div>
     </details>
+
     <div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">
-      Ocio y Deporte · <b>v3.0.0</b>
+      Ocio y Deporte · <b>v3.1.0</b>
     </div>
   </div>`;
 }
-async function exportarJSON(){
+
+/* =====================================================================
+   EXPORTAR / IMPORTAR
+   ===================================================================== */
+async function exportarJSON(opts={}){
   const datos={};
-  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','tramos','checklist','checkEstado','peso','prefs','ideas'])
+  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'])
     datos[s] = await dbAll(s);
   datos.exportado = new Date().toISOString();
-  datos.version = "3.0.0";
+  datos.version = "3.1.0";
   const blob = new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download='ocio-deporte-'+hoyKey()+'.json'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
-  toast('Exportado');
+
+  // Actualizar tracking de copia
+  _silenciarCambios = true;
+  await dbPut('prefs',{k:'ultimaCopia', v:new Date().toISOString()});
+  await dbPut('prefs',{k:'cambiosDesdeCopia', v:0});
+  await dbPut('prefs',{k:'snoozeCopia', v:''});
+  _silenciarCambios = false;
+  S.prefs.ultimaCopia = new Date().toISOString();
+  S.prefs.cambiosDesdeCopia = 0;
+  S.prefs.snoozeCopia = '';
+  S.mostrarBannerCopia = false;
+  toast('Copia exportada');
+  if(opts.rerender) render();
 }
 async function importarJSON(file){
   try{
     const txt = await file.text(); const d = JSON.parse(txt);
-    for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','tramos','checklist','checkEstado','peso','prefs','ideas']){
+    _silenciarCambios = true;
+    for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas']){
       if(!Array.isArray(d[s])) continue;
       await dbClear(s); for(const it of d[s]) await dbPut(s, it);
     }
     await dbPut('prefs',{k:'seeded',v:1});
+    _silenciarCambios = false;
     toast('Importado'); render();
   }catch(err){ alert('Error: '+err.message); }
 }
 async function borrarTodo(){
   if(!confirm('¿Eliminar TODOS los datos?')) return;
-  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','tramos','checklist','checkEstado','peso','prefs','ideas'])
+  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'])
     await dbClear(s);
-  await seed(); toast('Borrado'); go('hoy');
+  _silenciarCambios = true;
+  await seed();
+  await dbPut('prefs',{k:'cambiosDesdeCopia',v:0});
+  await dbPut('prefs',{k:'ultimaCopia',v:''});
+  await dbPut('prefs',{k:'snoozeCopia',v:''});
+  _silenciarCambios = false;
+  toast('Borrado'); go('hoy');
 }
 
 /* =====================================================================
    MODAL
    ===================================================================== */
 function showModal(html){ $('#modal-root').innerHTML = `<div class="overlay"><div class="modal">${html}</div></div>`; }
-function cerrarModal(){ $('#modal-root').innerHTML=''; S.plantillaForm=null; S.deberForm=null; }
+function cerrarModal(){ $('#modal-root').innerHTML=''; S.plantillaForm=null; S.deberForm=null; S.catForm=null; }
 
 /* =====================================================================
    EVENTOS
    ===================================================================== */
+document.addEventListener('toggle', e=>{
+  if(e.target.tagName==='DETAILS' && e.target.dataset.fold){
+    S.ajustesOpen[e.target.dataset.fold] = e.target.open;
+  }
+}, true);
+
 document.addEventListener('input', e=>{
   const t = e.target;
   if(t.dataset.field && S.form){ S.form[t.dataset.field]=t.value; return; }
   if(t.dataset.peso && S.pesoForm){ S.pesoForm[t.dataset.peso]=t.value; return; }
   if(t.dataset.plantilla && S.plantillaForm){ S.plantillaForm[t.dataset.plantilla]=t.value; return; }
   if(t.dataset.deber && S.deberForm){ S.deberForm[t.dataset.deber]=t.value; return; }
+  if(t.dataset.cat && S.catForm){ S.catForm[t.dataset.cat]=t.value; return; }
   if(t.dataset.resumen){ S['resumen'+t.dataset.resumen.charAt(0).toUpperCase()+t.dataset.resumen.slice(1)] = t.value; }
 });
 document.addEventListener('change', e=>{
@@ -1328,6 +1757,7 @@ document.addEventListener('change', e=>{
     if(tipo){ tipo.visible = t.checked?1:0; dbPut('tipos',tipo).then(render); }
     return;
   }
+  if(t.dataset.cat==='visible' && S.catForm){ S.catForm.visible = t.checked?1:0; return; }
   if(t.dataset.filtro && t.dataset.rerender){ S.hist[t.dataset.filtro]=t.value; render(); return; }
   if(t.dataset.plantilla && t.dataset.rerender==='modal-plantilla'){ abrirPlantillaModal(S.plantillaForm); return; }
   if(t.dataset.deber && t.dataset.rerender==='modal-deber'){ abrirDeberModal(S.deberForm); return; }
@@ -1346,13 +1776,35 @@ document.addEventListener('click', async e=>{
     /* HOY */
     case 'hoy-marcar': await marcarPlantillaHecha(el.dataset.plantilla, el.dataset.fecha); break;
 
+    /* COPIA */
+    case 'copia-ahora': await exportarJSON({rerender:true}); break;
+    case 'copia-snooze': {
+      const snooze = new Date(Date.now() + 7*86400000).toISOString();
+      _silenciarCambios = true;
+      await dbPut('prefs',{k:'snoozeCopia',v:snooze});
+      _silenciarCambios = false;
+      S.prefs.snoozeCopia = snooze;
+      S.mostrarBannerCopia = false;
+      render(); break;
+    }
+    case 'copia-reset': {
+      _silenciarCambios = true;
+      await dbPut('prefs',{k:'cambiosDesdeCopia',v:0});
+      _silenciarCambios = false;
+      S.prefs.cambiosDesdeCopia = 0;
+      toast('Contador reseteado'); render(); break;
+    }
+
     /* PLANTILLA */
-    case 'plantilla-nueva': S.plantillaForm={
-        id:null, dia:Number(el.dataset.dia), tramo:el.dataset.tramo,
+    case 'plantilla-nueva': {
+      S.plantillaForm = {
+        id:null, dia:Number(el.dataset.dia),
         tipo_id:(S.tipos.find(t=>t.visible)||{id:'gimnasio'}).id,
+        hora_inicio:'09:00', hora_fin:'10:00',
         subcategoria:'', nota:''
       };
       abrirPlantillaModal(S.plantillaForm); break;
+    }
     case 'plantilla-editar': {
       const p = await dbGet('plantilla', Number(el.dataset.id));
       if(p) abrirPlantillaModal(p);
@@ -1369,14 +1821,6 @@ document.addEventListener('click', async e=>{
       e.stopPropagation();
       await marcarPlantillaHecha(el.dataset.plantilla, el.dataset.fecha);
       break;
-    case 'plantilla-hoy-marcar-todo': {
-      const hoy = new Date(); const kHoy = hoyKey();
-      const diaIdx = diaSemanaIdx(hoy);
-      const plan = (await dbAll('plantilla')).filter(p=>Number(p.dia)===diaIdx);
-      for(const p of plan) await marcarPlantillaHecha(p.id, kHoy);
-      toast(plan.length+' marcadas');
-      break;
-    }
 
     /* DEBERES */
     case 'deber-nuevo': abrirDeberModal(null); break;
@@ -1394,8 +1838,7 @@ document.addEventListener('click', async e=>{
         d.estado='hecho'; d.hecho_en=hoyKey();
         if(nota!==null) d.nota_resultado=nota;
         await dbPut('deberes', d);
-        toast('¡Hecho!');
-        render();
+        toast('¡Hecho!'); render();
       }
       break;
     }
@@ -1415,6 +1858,20 @@ document.addEventListener('click', async e=>{
     case 'deber-borrar':
       if(confirm('¿Borrar deber?')){ await dbDel('deberes', Number(el.dataset.id)); render(); }
       break;
+
+    /* CATEGORÍAS */
+    case 'cat-add': abrirCatModal(null); break;
+    case 'cat-editar': {
+      const cat = S.tipos.find(t=>t.id===el.dataset.id);
+      if(cat) abrirCatModal(cat);
+      break;
+    }
+    case 'cat-guardar': await guardarCategoria(); break;
+    case 'cat-borrar': await borrarCategoria(); break;
+    case 'cat-color': {
+      if(S.catForm){ S.catForm.color = el.dataset.color; abrirCatModal(S.catForm); }
+      break;
+    }
 
     /* ACTIVIDAD SUELTA */
     case 'nueva-act': S.form=nuevoForm(); go('actividad'); break;
@@ -1511,31 +1968,6 @@ document.addEventListener('click', async e=>{
       render(); break;
     }
 
-    /* TRAMOS */
-    case 'tramo-add': {
-      const nombre = prompt('Nombre del tramo (ej: "Siesta"):');
-      if(!nombre) break;
-      const ini = prompt('Hora inicio (HH:MM):', '14:00');
-      const fin = prompt('Hora fin (HH:MM):', '16:00');
-      if(!ini || !fin) break;
-      const tramos = await dbAll('tramos');
-      const orden = tramos.length ? Math.max(...tramos.map(t=>t.orden||0))+1 : 1;
-      await dbPut('tramos', {id:'tramo_'+Date.now(), nombre:nombre.trim(), ini, fin, orden});
-      toast('Añadido'); render(); break;
-    }
-    case 'tramo-editar': {
-      const tr = await dbGet('tramos', el.dataset.id);
-      if(!tr) break;
-      const nombre = prompt('Nombre:', tr.nombre);
-      if(nombre===null) break;
-      const ini = prompt('Hora inicio:', tr.ini);
-      if(ini===null) break;
-      const fin = prompt('Hora fin:', tr.fin);
-      if(fin===null) break;
-      tr.nombre=nombre.trim(); tr.ini=ini; tr.fin=fin;
-      await dbPut('tramos', tr); render(); break;
-    }
-
     /* IDEAS */
     case 'idea-guardar': {
       const txt = $('#inputIdea').value;
@@ -1553,17 +1985,31 @@ document.addEventListener('click', async e=>{
     case 'idea-borrar': await dbDel('ideas', Number(el.dataset.id)); render(); break;
 
     /* DATOS */
-    case 'exportar': await exportarJSON(); break;
+    case 'exportar': await exportarJSON({rerender:true}); break;
     case 'importar': document.getElementById('fileImport').click(); break;
     case 'borrar-todo': await borrarTodo(); break;
   }
 });
 
-/* ARRANQUE */
+/* =====================================================================
+   ARRANQUE
+   ===================================================================== */
 (async function init(){
-  await openDB();
-  await seed();
-  await render();
+  try{
+    await openDB();
+    await seed();
+    await loadState();
+    S.mostrarBannerCopia = await debeRecomendarCopia();
+    await render();
+  }catch(e){
+    console.error(e);
+    document.getElementById('app').innerHTML = `
+      <div style="padding:40px;text-align:center;color:#fca5a5">
+        <h2>Error al iniciar</h2>
+        <p>${esc(e.message)}</p>
+        <button onclick="location.reload()" style="margin-top:12px;padding:10px 20px;border-radius:10px">Recargar</button>
+      </div>`;
+  }
 })();
 </script>
 </body>
