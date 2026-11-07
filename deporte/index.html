@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>Ocio y Deporte v3.1</title>
+<title>Ocio y Deporte v3.2</title>
 <style>
   :root{
     --bg-main:#0b1220;--bg-card:#151f33;--bg-card-alt:#0e1728;
@@ -28,7 +28,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg-main);color:var(--text-main);
-    font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:30px;
+    font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:96px;
     transition:background-color .2s,color .2s}
   .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
     padding:12px 14px;background:var(--bg-header);backdrop-filter:blur(8px);
@@ -62,7 +62,7 @@
   .tile .ti{font-size:21px;line-height:1.1}
   .tile .tt{font-weight:650}
   .tile .ts{font-size:11.5px;color:var(--text-muted)}
-  .lbl{display:block;font-size:11.5px;color:var(--text-muted);margin:0 0 5px;
+  .lbl{display:block;font-size:12.5px;color:var(--text-muted);margin:0 0 5px;
     font-weight:650;letter-spacing:.3px;text-transform:uppercase}
   .input{width:100%;background:var(--bg-card-alt);border:1px solid var(--border-color);
     color:var(--text-main);border-radius:11px;padding:10px 12px;font-size:14.5px;
@@ -101,13 +101,13 @@
   .hoy-block{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);
     border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px}
   .hoy-block .ti{font-size:22px;flex:0 0 auto}
-  .hoy-check{width:32px;height:32px;border-radius:8px;border:2px solid var(--text-muted);
+  .hoy-check{width:44px;height:44px;border-radius:8px;border:2px solid var(--text-muted);
     display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;
     cursor:pointer;flex:0 0 auto;background:transparent}
   .hoy-check.on{background:var(--primary);border-color:var(--primary)}
   .hoy-block.hecho .hoy-title{text-decoration:line-through;color:var(--text-dim)}
   .hoy-title{font-weight:650}
-  .hoy-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .hoy-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
   .deber-mini{font-size:12.5px;margin-top:5px;padding:6px 8px;border-radius:8px;
     background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);
     display:flex;align-items:center;gap:6px;cursor:pointer}
@@ -151,7 +151,7 @@
   .evento-plantilla .ev-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .evento-plantilla .ev-nota{font-size:10px;opacity:.85;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .ev-chk{width:12px;height:12px;border:1.5px solid rgba(255,255,255,.85);
+  .ev-chk{width:18px;height:18px;border:1.5px solid rgba(255,255,255,.85);
     border-radius:3px;display:flex;align-items:center;justify-content:center;
     font-size:8px;flex:0 0 auto;cursor:pointer;background:transparent}
   .ev-chk.on{background:rgba(255,255,255,.95);border-color:#fff;color:#111}
@@ -200,7 +200,7 @@
   .modal h2{margin:0 0 14px;font-size:17px}
   .modal-actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
   .modal-actions .btn{flex:1}
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);
     background:var(--primary);color:#fff;padding:10px 18px;border-radius:999px;
     font-size:13.5px;font-weight:600;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.35)}
   .mini{background:none;border:none;color:var(--text-muted);font-size:14px;
@@ -229,11 +229,27 @@
   .m-box{display:flex;flex-direction:column}
   .m-lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;font-weight:600}
   .m-val{font-size:13.5px;font-weight:700}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:var(--bg-header);backdrop-filter:blur(8px);border-top:1px solid var(--border-color);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  .tabbar button{flex:1;background:none;border:none;color:var(--text-muted);font:inherit;font-size:11.5px;font-weight:650;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-height:54px}
+  .tabbar .tb-i{font-size:21px;line-height:1}
+  .tabbar button.on{color:var(--primary-hover)}
+  .tabbar .tb-add .tb-i{background:var(--primary);color:#fff;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-16px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  .dia-row{display:flex;gap:10px;padding:10px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px}
+  .dia-row.hoy{border-color:var(--primary-hover);box-shadow:0 0 0 1px var(--primary-hover) inset}
+  .dr-head{flex:0 0 52px;text-align:center}
+  .dr-n{font-size:12px;text-transform:uppercase;color:var(--text-muted);font-weight:700}
+  .dia-row.hoy .dr-n{color:var(--primary-hover)}
+  .dr-d{font-size:20px;font-weight:750;line-height:1.1}
+  .dr-head .add-btn{margin-top:6px;border:1px dashed var(--border-color);background:transparent;color:var(--text-muted);border-radius:8px;font-size:15px;cursor:pointer;width:100%;padding:4px 0}
+  .dr-evs{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .dr-ev{display:flex;align-items:center;gap:8px;background:var(--bg-card-alt);border-radius:8px;padding:7px 9px;cursor:pointer}
+  .dr-ev.hecha{opacity:.55}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="modal-root"></div>
+<div id="tab-root"></div>
 
 <script>
 /* =====================================================================
@@ -279,6 +295,7 @@ function hhmmToMin(hhmm){
   return h*60+(m||0);
 }
 function toast(msg){
+  document.querySelectorAll('.toast').forEach(x=>x.remove());
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(),2000);
 }
@@ -304,6 +321,7 @@ function tipoColor(t){
    ===================================================================== */
 const DB_NAME='ocio_deporte', DB_VER=4;
 let db=null;
+const STORES_DATOS=['tipos','subcategorias','actividades','plantilla','planes','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'];
 const TODOS_STORES = ['tipos','subcategorias','actividades','plantilla','hechos','deberes','tramos','checklist','checkEstado','peso','prefs','ideas','planes'];
 
 function abrirDBRaw(name, version){
@@ -402,10 +420,11 @@ const dbGet   = (s,k) => req(db.transaction(s).objectStore(s).get(k));
 async function dbPut(s,v){
   const result = await req(db.transaction(s,'readwrite').objectStore(s).put(v));
   if(s==='prefs' && v && PREFS_CONTROL.has(v.k)) return result;
+  if(s==='hechos'||s==='checkEstado') return result;
   incrementarCambios();
   return result;
 }
-const dbDel   = (s,k) => { const p=req(db.transaction(s,'readwrite').objectStore(s).delete(k)); incrementarCambios(); return p; };
+const dbDel   = (s,k) => { const p=req(db.transaction(s,'readwrite').objectStore(s).delete(k)); if(s!=='hechos'&&s!=='checkEstado') incrementarCambios(); return p; };
 const dbClear = s     => req(db.transaction(s,'readwrite').objectStore(s).clear());
 
 async function openDB(){
@@ -488,19 +507,21 @@ const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DIAS_NOMBRE = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 
 async function seed(){
+  const p0={}; (await dbAll('prefs')).forEach(x=>p0[x.k]=x.v);
+  const yaSeed=!!p0.seeded;
   const tiposEx = await dbAll('tipos');
   const ids = new Set(tiposEx.map(t=>t.id));
-  for(const t of TIPOS_BASE){ if(!ids.has(t.id)) await dbPut('tipos', {...t}); }
+  for(const t of (yaSeed?[]:TIPOS_BASE)){ if(!ids.has(t.id)) await dbPut('tipos', {...t}); }
 
   const subsEx = await dbAll('subcategorias');
-  for(const sc of SUBCATS_BASE){
+  for(const sc of (yaSeed?[]:SUBCATS_BASE)){
     const existe = subsEx.some(s => s.tipo_id===sc.tipo_id && s.nombre===sc.nombre);
     if(!existe) await dbPut('subcategorias', {...sc});
   }
 
   const chkEx = await dbAll('checklist');
   let orden = chkEx.length ? Math.max(...chkEx.map(x=>x.orden||0)) + 1 : 0;
-  for(const tipo of Object.keys(CHECK_FABRICA)){
+  for(const tipo of (yaSeed?[]:Object.keys(CHECK_FABRICA))){
     const tiene = chkEx.some(i=>i.tipo_id===tipo);
     if(tiene) continue;
     for(const sec of ['imprescindible','opcional']){
@@ -522,7 +543,7 @@ async function seed(){
   await dbPut('prefs',{k:'seeded',v:1});
 
   const ideas = await dbAll('ideas');
-  if(ideas.length===0){
+  if(ideas.length===0 && !yaSeed){
     await dbPut('ideas', {
       texto: "v3.1.0: Plantilla rediseñada por horas, categorías editables, migración desde v2, recordatorio de copia y Peso accesible desde Hoy.",
       fecha: hoyKey(), implementado: true
@@ -537,7 +558,7 @@ const S = {
   screen:'hoy', theme:'dark',
   tipos:[], subcategorias:[], prefs:[],
   form:null, chkTipo:'senderismo',
-  hist:{tipo:'', desde:'', hasta:''},
+  hist:{tipo:'', desde:'', hasta:'', texto:''},
   resumenRango:'semana', resumenDesde:'', resumenHasta:'',
   pesoForm:{fecha:hoyKey(), kg:''}, pesoCache:[],
   plantillaForm:null, deberForm:null, catForm:null,
@@ -603,7 +624,7 @@ async function topbar(titulo, opts={}){
     }
   }
   return `<header class="topbar">
-    ${S.screen==='hoy' ? '' : '<button class="icon-btn" data-action="go" data-screen="hoy" aria-label="Inicio">‹</button>'}
+    ${['hoy','plantilla','deberes','mas'].includes(S.screen) ? '' : '<button class="icon-btn" data-action="back" aria-label="Atrás">‹</button>'}
     <h1>${esc(titulo)}</h1>
     <div class="topbar-actions">
       ${badge}
@@ -664,125 +685,139 @@ async function render(){
     case 'peso':       html = await viewPeso();       break;
     case 'historico':  html = await viewHistorico();  break;
     case 'ajustes':    html = await viewAjustes();    break;
+    case 'mas':        html = await viewMas();        break;
+    case 'ideas':      html = await viewIdeas();      break;
   }
+  const pc0=document.querySelector('.plantilla-container');
+  const sx=S.resetScroll?0:(pc0?pc0.scrollLeft:0), sy=S.resetScroll?0:window.scrollY; S.resetScroll=false;
   $('#app').innerHTML = html;
+  $('#tab-root').innerHTML = tabbarHTML();
+  const pc1=document.querySelector('.plantilla-container'); if(pc1) pc1.scrollLeft=sx;
+  window.scrollTo(0,sy);
+  aplicarFuente();
   if(S.screen==='peso') drawPesoChart();
 }
-function go(screen){ S.screen=screen; render(); window.scrollTo(0,0); }
+function go(screen,noPush){
+  S.screen=screen; S.resetScroll=true;
+  if(!noPush){ try{ history.pushState({screen},''); }catch(e){} }
+  render();
+}
+window.addEventListener('popstate', e=>{ cerrarModal(); go((e.state&&e.state.screen)||'hoy', true); });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && !$('#modal-root').innerHTML && ['hoy','plantilla','deberes'].includes(S.screen)) render(); });
+function aplicarFuente(){ const z={normal:1,grande:1.15,muygrande:1.3}[S.prefs.fuente]||1; const a=$('#app'), m=$('#modal-root'); if(a) a.style.zoom=z; if(m) m.style.zoom=z; }
+function tabbarHTML(){
+  if(S.screen==='actividad') return '';
+  const main=['hoy','plantilla','deberes'].includes(S.screen)?S.screen:'mas';
+  const b=(id,ic,tx)=>`<button class="${main===id?'on':''}" data-action="go" data-screen="${id}"><span class="tb-i">${ic}</span>${tx}</button>`;
+  return `<nav class="tabbar">${b('hoy','🏠','Hoy')}${b('plantilla','🗓️','Semana')}<button class="tb-add" data-action="menu-add"><span class="tb-i">＋</span>Añadir</button>${b('deberes','📌','Deberes')}${b('mas','☰','Más')}</nav>`;
+}
+async function viewMas(){
+  const t=(sc,ic,tt,ts)=>`<div class="tile" data-action="go" data-screen="${sc}"><div class="ti">${ic}</div><div class="tt">${tt}</div><div class="ts">${ts}</div></div>`;
+  return await topbar('Más')+`<div class="wrap"><div class="tiles">${t('checklist','🎒','Checklist','Preparación')}${t('resumen','📊','Resumen','Estadísticas')}${t('historico','🗂️','Histórico','Lo realizado')}${t('peso','⚖️','Peso','Extra')}${t('ideas','💡','Ideas de mejora','Tus notas')}${t('ajustes','⚙️','Ajustes','Configuración')}</div></div>`;
+}
+async function viewIdeas(){
+  const ideas=(await dbAll('ideas')).reverse();
+  return await topbar('Ideas de mejora')+`<div class="wrap">
+    <div class="card"><label class="lbl">Nueva idea</label>
+      <textarea class="input" id="inputIdea" placeholder="Escribe aquí (admite varias líneas)"></textarea>
+      <button class="btn btn-primary btn-block" style="margin-top:10px" data-action="idea-guardar">Guardar</button></div>
+    ${ideas.length?ideas.map(i=>`<div class="card" style="${i.implementado?'opacity:.65':''}">
+      <div style="white-space:pre-wrap;font-size:14px">${esc(i.texto)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px;flex-wrap:wrap">
+        <span class="muted" style="font-size:12px">${fmtFecha(i.fecha)}${i.implementado?' · ✓ implementada':''}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" data-action="idea-toggle" data-id="${i.id}">${i.implementado?'↺ Reabrir':'✓ Implementada'}</button>
+          <button class="btn btn-sm" data-action="idea-editar" data-id="${i.id}">✎</button>
+          <button class="btn btn-sm btn-danger" data-action="idea-borrar" data-id="${i.id}">🗑</button>
+        </div></div></div>`).join(''):'<div class="empty">Aún no hay ideas.</div>'}</div>`;
+}
+function toastAccion(msg,label,fn,ms=6000){
+  document.querySelectorAll('.toast').forEach(x=>x.remove());
+  const x=document.createElement('div'); x.className='toast'; x.style.display='flex'; x.style.gap='12px'; x.style.alignItems='center';
+  x.innerHTML=`<span>${esc(msg)}</span><button class="btn btn-sm" style="padding:4px 10px">${esc(label)}</button>`;
+  x.querySelector('button').onclick=()=>{ x.remove(); fn(); };
+  document.body.appendChild(x); setTimeout(()=>x.remove(),ms);
+}
+async function borrarConUndo(store,key,msg){
+  const obj=await dbGet(store,key); if(!obj) return;
+  await dbDel(store,key); render();
+  toastAccion(msg,'Deshacer',async()=>{ await dbPut(store,obj); render(); });
+}
+async function editarActividadPorId(id){
+  const act=await dbGet('actividades',Number(id)); if(!act) return;
+  const f=nuevoForm(); Object.keys(f).forEach(k=>{ if(act[k]!==undefined&&act[k]!==null) f[k]=act[k]; });
+  f.id=act.id; f.fecha=act.fecha; S.form=f; go('actividad');
+}
 
 /* =====================================================================
    VISTA HOY
    ===================================================================== */
+function lunesDe(d){ return addDays(d, -(diaSemanaIdx(d)-1)); }
+async function eventosDia(k,plantilla,planes){
+  plantilla=plantilla||await dbAll('plantilla'); planes=planes||await dbAll('planes');
+  const dia=diaSemanaIdx(parseKey(k)), ev=[];
+  for(const p of plantilla) if(Number(p.dia)===dia) ev.push({...p,ref:String(p.id),store:'plantilla',fecha:k,puntual:false});
+  for(const p of planes) if(p.fecha===k) ev.push({...p,ref:'p'+p.id,store:'planes',puntual:true});
+  return ev.sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+}
 async function viewHoy(){
-  const hoy = new Date(); const kHoy = hoyKey();
-  const diaIdx = diaSemanaIdx(hoy);
+  const hoy=new Date(), kHoy=hoyKey(), kAyer=dateKey(addDays(hoy,-1));
+  const [plantilla,planes,hechos,deberes,checklist]=await Promise.all([dbAll('plantilla'),dbAll('planes'),dbAll('hechos'),dbAll('deberes'),dbAll('checklist')]);
+  const H=new Map(hechos.map(h=>[h.id,h]));
+  const avisoDias=Number(S.prefs.avisoDias)||3;
+  const evHoy=await eventosDia(kHoy,plantilla,planes);
+  const evAyer=(await eventosDia(kAyer,plantilla,planes)).filter(e=>!H.has(e.ref+'_'+kAyer));
+  const chkTipos=new Set(checklist.filter(i=>i.seccion==='imprescindible').map(i=>i.tipo_id));
+  const deberesPend=deberes.filter(d=>d.estado!=='hecho');
+  const deberesUrg=deberesPend.filter(d=>{const n=diasHasta(d.fecha_limite);return n!==null&&n<=avisoDias;})
+    .sort((a,b)=>(a.fecha_limite||'').localeCompare(b.fecha_limite||''));
+  const deberesPorTipo={}; deberesPend.forEach(d=>{(deberesPorTipo[d.tipo_id]=deberesPorTipo[d.tipo_id]||[]).push(d);});
+  const nowMin=hoy.getHours()*60+hoy.getMinutes();
+  const next=evHoy.find(e=>!H.has(e.ref+'_'+kHoy)&&hhmmToMin(e.hora_fin)>nowMin);
+  const hechasN=evHoy.filter(e=>{const h=H.get(e.ref+'_'+kHoy);return h&&!h.omitido;}).length;
 
-  const plantilla = await dbAll('plantilla');
-  const hechos = await dbAll('hechos'); const setHechos = new Set(hechos.map(h=>h.id));
-  const deberes = await dbAll('deberes');
-  const avisoDias = Number(S.prefs.avisoDias) || 3;
-
-  const actsHoy = plantilla.filter(p=>Number(p.dia)===diaIdx)
-    .sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-
-  const deberesPend = deberes.filter(d=>d.estado!=='hecho');
-  const deberesUrg = deberesPend.filter(d=>{
-    const n=diasHasta(d.fecha_limite); return n!==null && n<=avisoDias;
-  }).sort((a,b)=>(a.fecha_limite||'').localeCompare(b.fecha_limite||''));
-
-  const deberesPorTipo = {};
-  deberesPend.forEach(d=>{ (deberesPorTipo[d.tipo_id]=deberesPorTipo[d.tipo_id]||[]).push(d); });
-
-  const bannerCopia = S.mostrarBannerCopia ? `
-    <div class="banner-copia">
-      <div class="bc-text">💾 Recomendación: ${esc(motivoCopia())}. ¿Hacer copia de seguridad?</div>
-      <div class="bc-actions">
-        <button class="btn btn-sm btn-primary" data-action="copia-ahora">Exportar ahora</button>
-        <button class="btn btn-sm" data-action="copia-snooze">Recordar más tarde</button>
-      </div>
-    </div>` : '';
-
-  const actsHTML = actsHoy.length ? actsHoy.map(a => {
-    const t = tipoDe(a.tipo_id);
-    const hechoId = `${a.id}_${kHoy}`;
-    const hecho = setHechos.has(hechoId);
-    const color = tipoColor(t);
-    const deberesTipo = (deberesPorTipo[a.tipo_id]||[]).slice(0,2);
-    return `<div class="hoy-block ${hecho?'hecho':''}">
+  const bloque=(e,k,ayer)=>{
+    const t=tipoDe(e.tipo_id), h=H.get(e.ref+'_'+k), hecho=!!h&&!h.omitido, omit=!!h&&!!h.omitido, color=tipoColor(t);
+    const dts=ayer?[]:(deberesPorTipo[e.tipo_id]||[]).slice(0,2);
+    const sig=!ayer&&next&&next.ref===e.ref;
+    return `<div class="hoy-block ${hecho||omit?'hecho':''}" ${sig?'style="border-color:var(--primary-hover)"':''}>
       <div class="ti">${t.icono}</div>
       <div class="grow">
-        <div class="hoy-title">${esc(t.nombre)}${a.subcategoria?' · '+esc(a.subcategoria):''}</div>
-        <div class="hoy-sub">
-          <span style="color:${color};font-weight:700">${a.hora_inicio||'--'}–${a.hora_fin||'--'}</span>
-          ${a.nota?' · '+esc(a.nota):''}
+        <div class="hoy-title">${esc(t.nombre)}${e.subcategoria?' · '+esc(e.subcategoria):''}${e.puntual?' 📅':''}${sig?' <span style="color:var(--primary-hover);font-size:12px">· SIGUIENTE</span>':''}</div>
+        <div class="hoy-sub"><span style="color:${color};font-weight:700">${e.hora_inicio||'--'}–${e.hora_fin||'--'}</span>${omit?' · No hoy':''}</div>
+        ${e.nota?`<div class="hoy-sub" style="white-space:pre-wrap">${esc(e.nota)}</div>`:''}
+        ${dts.map(d=>`<div class="deber-mini" data-action="deber-editar" data-id="${d.id}">📌 ${esc(d.titulo)} · ${labelDiasHasta(d.fecha_limite)}</div>`).join('')}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          ${hecho&&h.actividad_id?`<button class="btn btn-sm" data-action="act-datos" data-id="${h.actividad_id}">✎ Datos</button>`:''}
+          ${!h?`<button class="btn btn-sm" data-action="hoy-saltar" data-plantilla="${e.ref}" data-fecha="${k}">No hoy</button>`:''}
+          ${!h&&!ayer&&chkTipos.has(e.tipo_id)?`<button class="btn btn-sm" data-action="chk-ir" data-id="${e.tipo_id}">🎒 Preparar</button>`:''}
         </div>
-        ${deberesTipo.map(d=>`<div class="deber-mini" data-action="deber-editar" data-id="${d.id}">
-          📌 ${esc(d.titulo)} · ${labelDiasHasta(d.fecha_limite)}</div>`).join('')}
       </div>
-      <div class="hoy-check ${hecho?'on':''}" data-action="hoy-marcar"
-        data-plantilla="${a.id}" data-fecha="${kHoy}">${hecho?'✓':''}</div>
+      <div class="hoy-check ${hecho?'on':''}" data-action="hoy-marcar" data-plantilla="${e.ref}" data-fecha="${k}">${hecho?'✓':''}</div>
     </div>`;
-  }).join('') : '<div class="empty">Hoy no tienes actividades planificadas.</div>';
-
-  const deberesHTML = deberesUrg.length ? deberesUrg.map(d => {
-    const t = tipoDe(d.tipo_id);
-    const n = diasHasta(d.fecha_limite);
-    const cls = n!==null && n<0 ? 'urgente' : 'proximo';
-    return `<div class="deber-card ${cls}">
-      <div class="deber-head">
-        <span class="ico">${t.icono}</span>
-        <div class="deber-title">${esc(d.titulo)}</div>
-      </div>
+  };
+  const bannerCopia=S.mostrarBannerCopia?`<div class="banner-copia">
+      <div class="bc-text">💾 Recomendación: ${esc(motivoCopia())}. ¿Hacer copia de seguridad?</div>
+      <div class="bc-actions"><button class="btn btn-sm btn-primary" data-action="copia-ahora">Exportar ahora</button>
+      <button class="btn btn-sm" data-action="copia-snooze">Recordar más tarde</button></div></div>`:'';
+  const deberesHTML=deberesUrg.length?deberesUrg.map(d=>{
+    const t=tipoDe(d.tipo_id), n=diasHasta(d.fecha_limite), cls=n!==null&&n<0?'urgente':'proximo';
+    return `<div class="deber-card ${cls}"><div class="deber-head"><span class="ico">${t.icono}</span><div class="deber-title">${esc(d.titulo)}</div></div>
       <div class="deber-meta">${esc(t.nombre)}${d.subcategoria?' · '+esc(d.subcategoria):''} · ${labelDiasHasta(d.fecha_limite)}</div>
-      <div class="deber-actions">
-        <button class="btn btn-sm btn-primary" data-action="deber-hecho" data-id="${d.id}">✓ Hecho</button>
-        <button class="btn btn-sm" data-action="deber-editar" data-id="${d.id}">✎</button>
-      </div>
-    </div>`;
-  }).join('') : '<div class="empty">Sin deberes urgentes. ¡Bien!</div>';
-
-  return await topbar('Hoy') + `
-  <div class="wrap">
+      <div class="deber-actions"><button class="btn btn-sm btn-primary" data-action="deber-hecho" data-id="${d.id}">✓ Hecho</button>
+      <button class="btn btn-sm" data-action="deber-editar" data-id="${d.id}">✎</button></div></div>`;
+  }).join(''):'<div class="empty">Sin deberes urgentes. ¡Bien!</div>';
+  return await topbar('Hoy')+`<div class="wrap">
     ${bannerCopia}
     <div style="margin-bottom:14px">
-      <div style="font-size:20px;font-weight:750">${DIAS_NOMBRE[diaIdx-1]}, ${hoy.getDate()} de ${hoy.toLocaleDateString('es-ES',{month:'long'})}</div>
-      <div class="muted" style="font-size:13px">Tu agenda de hoy</div>
+      <div style="font-size:21px;font-weight:750">${DIAS_NOMBRE[diaSemanaIdx(hoy)-1]}, ${hoy.getDate()} de ${hoy.toLocaleDateString('es-ES',{month:'long'})}</div>
+      <div class="muted" style="font-size:13.5px">${evHoy.length?`${hechasN} de ${evHoy.length} hechas hoy`:'Tu agenda de hoy'}</div>
     </div>
-
+    ${evAyer.length?`<div class="sec-title" style="margin-top:0">Pendiente de ayer</div>${evAyer.map(e=>bloque(e,kAyer,true)).join('')}`:''}
     <div class="sec-title">Actividades de hoy</div>
-    ${actsHTML}
-
+    ${evHoy.length?evHoy.map(e=>bloque(e,kHoy,false)).join(''):'<div class="empty">Hoy no tienes nada planificado.</div>'}
     <div class="sec-title" style="margin-top:20px">Deberes que vencen pronto</div>
     ${deberesHTML}
-
-    <div class="sec-title" style="margin-top:20px">Accesos rápidos</div>
-    <div class="tiles">
-      <div class="tile" data-action="go" data-screen="plantilla">
-        <div class="ti">🗓️</div><div class="tt">Mi semana</div><div class="ts">Plantilla semanal</div>
-      </div>
-      <div class="tile" data-action="go" data-screen="deberes">
-        <div class="ti">📌</div><div class="tt">Deberes</div><div class="ts">${deberesPend.length} pendientes</div>
-      </div>
-      <div class="tile" data-action="go" data-screen="checklist">
-        <div class="ti">🎒</div><div class="tt">Checklist</div><div class="ts">Preparación</div>
-      </div>
-      <div class="tile" data-action="go" data-screen="resumen">
-        <div class="ti">📊</div><div class="tt">Resumen</div><div class="ts">Estadísticas</div>
-      </div>
-      <div class="tile" data-action="go" data-screen="peso">
-        <div class="ti">⚖️</div><div class="tt">Peso</div><div class="ts">Registro semanal</div>
-      </div>
-      <div class="tile" data-action="go" data-screen="ajustes">
-        <div class="ti">⚙️</div><div class="tt">Ajustes</div><div class="ts">Configuración</div>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:14px">
-      <button class="btn" data-action="nueva-act">＋ Registrar actividad suelta</button>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button class="btn" data-action="go" data-screen="historico">Histórico</button>
-    </div>
   </div>`;
 }
 
@@ -819,184 +854,122 @@ function layoutDia(eventos){
   return result;
 }
 
-async function viewPlantilla(){
-  const jIni = S.prefs.jornadaIni || '07:00';
-  const jFin = S.prefs.jornadaFin || '23:00';
-  const iniMin = hhmmToMin(jIni);
-  const finMin = hhmmToMin(jFin);
-  const numHoras = Math.max(1, Math.ceil((finMin - iniMin)/60));
-  const totalH = numHoras * HORA_PX;
-
-  const diaIdxHoy = diaSemanaIdx(new Date());
-  const kHoy = hoyKey();
-  const hechos = await dbAll('hechos'); const setHechos = new Set(hechos.map(h=>h.id));
-  const plantilla = await dbAll('plantilla');
-
-  // Cabecera
-  const header = `<div class="corner">Hora</div>` +
-    DIAS.map((d,i) => {
-      const dia = i+1;
-      const esHoy = dia===diaIdxHoy;
-      return `<div class="day-head ${esHoy?'hoy':''}">
-        <div class="dname">${d}</div>
-        <div class="dnum">${dia}</div>
-        <button class="add-btn" data-action="plantilla-nueva" data-dia="${dia}" title="Añadir">＋</button>
-      </div>`;
-    }).join('');
-
-  // Columna de horas
-  let hoursHTML = '';
-  for(let i=0;i<numHoras;i++){
-    const minutos = iniMin + i*60;
-    const h = Math.floor(minutos/60), m = minutos%60;
-    hoursHTML += `<div class="hour-cell">${pad(h)}:${pad(m)}</div>`;
-  }
-
-  // Cuerpo por días
-  let bodyHTML = `<div class="hours-col">${hoursHTML}</div>`;
-  for(let dia=1; dia<=7; dia++){
-    const acts = plantilla.filter(p => Number(p.dia)===dia);
-    const pos = layoutDia(acts);
-    // líneas horizontales
-    let lines = '';
-    for(let i=0;i<numHoras;i++) lines += `<div class="hour-line"></div>`;
-    // eventos posicionados
-    let evs = '';
-    for(const {evento:p, lane, lanes} of pos){
-      const t = tipoDe(p.tipo_id);
-      const color = tipoColor(t);
-      const startMin = hhmmToMin(p.hora_inicio) - iniMin;
-      const durMin = Math.max(15, calcMin(p.hora_inicio, p.hora_fin));
-      const topPx = (startMin/60) * HORA_PX;
-      const heightPx = Math.max(28, (durMin/60) * HORA_PX);
-      const anchoPct = 100/lanes;
-      const leftPct = lane * anchoPct;
-      const hechoId = `${p.id}_${kHoy}`;
-      const hecho = dia===diaIdxHoy && setHechos.has(hechoId);
-      evs += `<div class="evento-plantilla ${hecho?'hecha':''}"
-        style="top:${topPx}px;height:${heightPx}px;left:calc(${leftPct}% + 2px);width:calc(${anchoPct}% - 4px);background:${color}"
-        data-action="plantilla-editar" data-id="${p.id}">
-        <div class="ev-hora">
-          ${dia===diaIdxHoy ? `<span class="ev-chk ${hecho?'on':''}" data-action="plantilla-marcar" data-plantilla="${p.id}" data-fecha="${kHoy}">${hecho?'✓':''}</span>` : ''}
-          ${p.hora_inicio}–${p.hora_fin}
-        </div>
-        <div class="ev-title">${t.icono} ${esc(p.subcategoria || t.nombre)}</div>
-        ${p.nota ? `<div class="ev-nota">${esc(p.nota)}</div>` : ''}
-      </div>`;
-    }
-    bodyHTML += `<div class="day-body" style="height:${totalH}px">${lines}${evs}</div>`;
-  }
-
-  return await topbar('Mi semana') + `
-  <div class="wrap">
-    <div class="muted center" style="font-size:12px;margin-bottom:8px">
-      ${S.prefs.jornadaIni||'07:00'} – ${S.prefs.jornadaFin||'23:00'} ·
-      Añade con ＋ · Toca una actividad para editar
-    </div>
-    <div class="plantilla-container">
-      <div class="plantilla-head">${header}</div>
-      <div class="plantilla-body">${bodyHTML}</div>
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button class="btn" data-action="go" data-screen="deberes">📌 Deberes</button>
-      <button class="btn" data-action="go" data-screen="hoy">🏠 Hoy</button>
-    </div>
-  </div>`;
+function tablaSemana(dias,H,kHoy){
+  return '<div class="semtabla">'+dias.map(({i,d,k,ev})=>{
+    const esHoy=k===kHoy;
+    return `<div class="dia-row ${esHoy?'hoy':''}">
+      <div class="dr-head"><div class="dr-n">${DIAS[i]}</div><div class="dr-d">${d.getDate()}</div>
+        <button class="add-btn" data-action="plantilla-nueva" data-dia="${i+1}" title="Añadir">＋</button></div>
+      <div class="dr-evs">${ev.length?ev.map(e=>{
+        const t=tipoDe(e.tipo_id), c=tipoColor(t), h=H.get(e.ref+'_'+k), hecho=!!h&&!h.omitido;
+        return `<div class="dr-ev ${hecho?'hecha':''}" style="border-left:5px solid ${c}" data-action="plantilla-editar" data-id="${e.id}" data-store="${e.store}">
+          <div class="grow"><div class="t1" style="white-space:normal">${t.icono} ${esc(t.nombre)}${e.subcategoria?' · '+esc(e.subcategoria):''}${e.puntual?' 📅':''}</div>
+          <div class="t2"><b style="color:${c}">${e.hora_inicio}–${e.hora_fin}</b>${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>
+          ${esHoy?`<span class="hoy-check ${hecho?'on':''}" style="width:36px;height:36px" data-action="plantilla-marcar" data-plantilla="${e.ref}" data-fecha="${k}">${hecho?'✓':''}</span>`:(hecho?'<span>✓</span>':'')}
+        </div>`;}).join(''):'<div class="muted" style="font-size:13.5px;padding:6px 0">Libre</div>'}</div></div>`;
+  }).join('')+'</div>';
 }
-
+function cuadriculaSemana(dias,H,kHoy){
+  let iniMin=hhmmToMin(S.prefs.jornadaIni||'07:00'), finMin=hhmmToMin(S.prefs.jornadaFin||'23:00');
+  if(finMin<=iniMin) finMin=iniMin+60;
+  for(const e of dias.flatMap(x=>x.ev)){ iniMin=Math.min(iniMin,Math.floor(hhmmToMin(e.hora_inicio)/60)*60); finMin=Math.max(finMin,Math.ceil(hhmmToMin(e.hora_fin)/60)*60); }
+  const numHoras=Math.ceil((finMin-iniMin)/60), totalH=numHoras*HORA_PX;
+  const header='<div class="corner">Hora</div>'+dias.map(({i,d,k})=>`<div class="day-head ${k===kHoy?'hoy':''}"><div class="dname">${DIAS[i]}</div><div class="dnum">${d.getDate()}</div><button class="add-btn" data-action="plantilla-nueva" data-dia="${i+1}">＋</button></div>`).join('');
+  let hoursHTML=''; for(let i=0;i<numHoras;i++){ const m=iniMin+i*60; hoursHTML+=`<div class="hour-cell">${pad(Math.floor(m/60))}:${pad(m%60)}</div>`; }
+  let body=`<div class="hours-col">${hoursHTML}</div>`;
+  for(const {k,ev} of dias){
+    let lines=''; for(let j=0;j<numHoras;j++) lines+=`<div class="hour-line" style="top:${j*HORA_PX}px"></div>`;
+    let evs='';
+    for(const {evento:p,lane,lanes} of layoutDia(ev)){
+      const t=tipoDe(p.tipo_id), color=tipoColor(t), h=H.get(p.ref+'_'+k), hecho=!!h&&!h.omitido, w=100/lanes;
+      const topPx=((hhmmToMin(p.hora_inicio)-iniMin)/60)*HORA_PX, hPx=Math.max(30,(Math.max(15,calcMin(p.hora_inicio,p.hora_fin))/60)*HORA_PX);
+      evs+=`<div class="evento-plantilla ${hecho?'hecha':''}" style="top:${topPx}px;height:${hPx}px;left:calc(${lane*w}% + 2px);width:calc(${w}% - 4px);background:${color}" data-action="plantilla-editar" data-id="${p.id}" data-store="${p.store}">
+        <div class="ev-hora">${k===kHoy?`<span class="ev-chk ${hecho?'on':''}" data-action="plantilla-marcar" data-plantilla="${p.ref}" data-fecha="${k}">${hecho?'✓':''}</span>`:''}${p.hora_inicio}–${p.hora_fin}</div>
+        <div class="ev-title">${t.icono} ${esc(p.subcategoria||t.nombre)}${p.puntual?' 📅':''}</div>
+        ${p.nota?`<div class="ev-nota">${esc(p.nota.split('\n')[0])}</div>`:''}</div>`;
+    }
+    body+=`<div class="day-body" style="height:${totalH}px">${lines}${evs}</div>`;
+  }
+  return `<div class="plantilla-container"><div class="plantilla-head">${header}</div><div class="plantilla-body">${body}</div></div>`;
+}
+async function viewPlantilla(){
+  const vista=S.prefs.semanaVista||'tabla';
+  const [plantilla,planes,hechos]=await Promise.all([dbAll('plantilla'),dbAll('planes'),dbAll('hechos')]);
+  const H=new Map(hechos.map(h=>[h.id,h])), lunes=lunesDe(new Date()), kHoy=hoyKey(), dias=[];
+  for(let i=0;i<7;i++){ const d=addDays(lunes,i), k=dateKey(d); dias.push({i,d,k,ev:await eventosDia(k,plantilla,planes)}); }
+  const toggle=`<div class="chips" style="margin-bottom:12px"><button class="chip ${vista==='tabla'?'sel':''}" data-action="sem-vista" data-id="tabla">☰ Tabla</button><button class="chip ${vista==='cuadricula'?'sel':''}" data-action="sem-vista" data-id="cuadricula">▦ Por horas</button></div>`;
+  return await topbar('Mi semana')+`<div class="wrap">${toggle}${vista==='tabla'?tablaSemana(dias,H,kHoy):cuadriculaSemana(dias,H,kHoy)}
+    <div class="muted center" style="font-size:12.5px;margin-top:10px">Rutina fija semanal · 📅 = actividad puntual de esta semana · Toca una actividad para editarla</div></div>`;
+}
+function nuevoEvento(dia){ return {id:null,store:'plantilla',dia:dia||1,fecha:hoyKey(),tipo_id:(S.tipos.find(t=>t.visible)||{id:'gimnasio'}).id,hora_inicio:'09:00',hora_fin:'10:00',subcategoria:'',nota:''}; }
 function abrirPlantillaModal(item){
-  S.plantillaForm = item ? {...item} : {
-    id:null, dia:1,
-    tipo_id:(S.tipos.find(t=>t.visible)||{id:'gimnasio'}).id,
-    hora_inicio:'09:00', hora_fin:'10:00',
-    subcategoria:'', nota:''
-  };
-  const f = S.plantillaForm;
-  const tiposVis = S.tipos.filter(t=>t.visible);
-  const subcats = S.subcategorias.filter(s=>s.tipo_id===f.tipo_id);
+  S.plantillaForm=item?{store:'plantilla',...item}:nuevoEvento();
+  const f=S.plantillaForm, esP=f.store==='planes';
+  const tiposVis=S.tipos.filter(t=>t.visible||t.id===f.tipo_id);
+  const subcats=S.subcategorias.filter(s=>s.tipo_id===f.tipo_id);
   showModal(`
-    <h2>${f.id?'Editar':'Nueva'} actividad recurrente</h2>
-    <div class="field">
-      <label class="lbl">Tipo</label>
+    <h2>${f.id?'Editar':'Nueva'} actividad ${esP?'puntual':'de la semana'}</h2>
+    ${!f.id?`<div class="chips" style="margin-bottom:12px"><button class="chip ${!esP?'sel':''}" data-action="ev-modo" data-store="plantilla">🔁 Cada semana</button><button class="chip ${esP?'sel':''}" data-action="ev-modo" data-store="planes">📅 Solo una vez</button></div>`:''}
+    <div class="field"><label class="lbl">Tipo</label>
       <select class="input" data-plantilla="tipo_id" data-rerender="modal-plantilla">
         ${tiposVis.map(t=>`<option value="${t.id}" ${t.id===f.tipo_id?'selected':''}>${t.icono} ${esc(t.nombre)}</option>`).join('')}
-      </select>
-    </div>
+      </select></div>
     <div class="field">
-      <label class="lbl">Día</label>
-      <select class="input" data-plantilla="dia">
-        ${DIAS_NOMBRE.map((n,i)=>`<option value="${i+1}" ${Number(f.dia)===i+1?'selected':''}>${n}</option>`).join('')}
-      </select>
+      ${esP?`<label class="lbl">Fecha</label><input class="input" type="date" data-plantilla="fecha" value="${esc(f.fecha||'')}">`
+      :`<label class="lbl">Día</label><select class="input" data-plantilla="dia">${DIAS_NOMBRE.map((n,i)=>`<option value="${i+1}" ${Number(f.dia)===i+1?'selected':''}>${n}</option>`).join('')}</select>`}
     </div>
     <div class="row">
-      <div class="field">
-        <label class="lbl">Hora inicio</label>
-        <input class="input" type="time" data-plantilla="hora_inicio" value="${esc(f.hora_inicio||'09:00')}">
-      </div>
-      <div class="field">
-        <label class="lbl">Hora fin</label>
-        <input class="input" type="time" data-plantilla="hora_fin" value="${esc(f.hora_fin||'10:00')}">
-      </div>
+      <div class="field"><label class="lbl">Hora inicio</label><input class="input" type="time" data-plantilla="hora_inicio" value="${esc(f.hora_inicio||'09:00')}"></div>
+      <div class="field"><label class="lbl">Hora fin</label><input class="input" type="time" data-plantilla="hora_fin" value="${esc(f.hora_fin||'10:00')}"></div>
     </div>
-    <div class="field">
-      <label class="lbl">Subcategoría</label>
-      ${subcats.length ? `<select class="input" data-plantilla="subcategoria">
-        <option value="">-- Ninguna --</option>
-        ${subcats.map(s=>`<option value="${esc(s.nombre)}" ${f.subcategoria===s.nombre?'selected':''}>${esc(s.nombre)}</option>`).join('')}
-      </select>` : `<input class="input" data-plantilla="subcategoria" value="${esc(f.subcategoria||'')}">`}
-    </div>
-    <div class="field">
-      <label class="lbl">Nota</label>
-      <textarea class="input" data-plantilla="nota" placeholder="Lugar, profesor, etc.">${esc(f.nota||'')}</textarea>
-    </div>
+    <div class="field"><label class="lbl">Subcategoría</label>
+      ${subcats.length?`<select class="input" data-plantilla="subcategoria"><option value="">-- Ninguna --</option>
+        ${subcats.map(s=>`<option value="${esc(s.nombre)}" ${f.subcategoria===s.nombre?'selected':''}>${esc(s.nombre)}</option>`).join('')}</select>`
+      :`<input class="input" data-plantilla="subcategoria" value="${esc(f.subcategoria||'')}">`}</div>
+    <div class="field"><label class="lbl">Nota</label>
+      <textarea class="input" data-plantilla="nota" placeholder="Lugar, profesor, etc.">${esc(f.nota||'')}</textarea></div>
     <div class="modal-actions">
       <button class="btn" data-action="modal-close">Cancelar</button>
       ${f.id?'<button class="btn btn-danger" data-action="plantilla-borrar">Borrar</button>':''}
       <button class="btn btn-primary" data-action="plantilla-guardar">Guardar</button>
-    </div>
-  `);
+    </div>`);
 }
 async function guardarPlantilla(){
-  const f = S.plantillaForm; if(!f) return;
-  if(!f.hora_inicio || !f.hora_fin){ toast('Pon hora inicio y fin'); return; }
-  if(hhmmToMin(f.hora_fin) <= hhmmToMin(f.hora_inicio)){ toast('Hora fin debe ser mayor'); return; }
-  const obj = {
-    tipo_id:f.tipo_id, dia:Number(f.dia),
-    hora_inicio:f.hora_inicio, hora_fin:f.hora_fin,
-    subcategoria:(f.subcategoria||'').trim(), nota:(f.nota||'').trim()
-  };
-  if(f.id) obj.id = f.id;
-  await dbPut('plantilla', obj);
-  cerrarModal(); S.plantillaForm=null;
-  toast(f.id?'Actualizado':'Añadido');
-  render();
+  const f=S.plantillaForm; if(!f) return;
+  if(!f.hora_inicio||!f.hora_fin){ toast('Pon hora inicio y fin'); return; }
+  if(hhmmToMin(f.hora_fin)<=hhmmToMin(f.hora_inicio)){ toast('La hora fin debe ser mayor'); return; }
+  const esP=f.store==='planes';
+  if(esP&&!f.fecha){ toast('Falta la fecha'); return; }
+  const obj={tipo_id:f.tipo_id,hora_inicio:f.hora_inicio,hora_fin:f.hora_fin,subcategoria:(f.subcategoria||'').trim(),nota:(f.nota||'').trim()};
+  if(esP) obj.fecha=f.fecha; else obj.dia=Number(f.dia);
+  if(f.id) obj.id=f.id;
+  const nuevo=!f.id;
+  await dbPut(f.store||'plantilla',obj);
+  cerrarModal(); S.plantillaForm=null; toast(nuevo?'Añadido':'Actualizado'); render();
 }
-
-async function marcarPlantillaHecha(plantillaId, fecha){
-  const id = `${plantillaId}_${fecha}`;
-  const existente = await dbGet('hechos', id);
-  if(existente){
-    await dbDel('hechos', id);
-    if(existente.actividad_id) await dbDel('actividades', existente.actividad_id);
-    toast('Desmarcado');
-  } else {
-    const p = await dbGet('plantilla', Number(plantillaId));
-    if(!p){ toast('No existe'); return; }
-    const dur = calcMin(p.hora_inicio, p.hora_fin);
-    const actId = await new Promise((res,rej)=>{
-      const r = db.transaction('actividades','readwrite').objectStore('actividades').add({
-        tipo_id:p.tipo_id, fecha,
-        subcategoria:p.subcategoria||'',
-        duracion_min: dur || null,
-        hora_inicio: p.hora_inicio, hora_fin: p.hora_fin,
-        notas: (p.nota||'').trim(),
-        origen:'plantilla'
-      });
-      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-    });
-    await dbPut('hechos', {id, plantilla_id:Number(plantillaId), fecha, actividad_id:actId});
-    toast('¡Hecho!');
-  }
+const _busy=new Set();
+async function marcarPlantillaHecha(ref,fecha){
+  const id=`${ref}_${fecha}`;
+  if(_busy.has(id)) return; _busy.add(id);
+  try{
+    const ex=await dbGet('hechos',id);
+    if(ex){
+      await dbDel('hechos',id);
+      if(ex.actividad_id) await dbDel('actividades',ex.actividad_id);
+      toast(ex.omitido?'Recuperada':'Desmarcado');
+    } else {
+      const esP=String(ref).startsWith('p');
+      const p=esP?await dbGet('planes',Number(String(ref).slice(1))):await dbGet('plantilla',Number(ref));
+      if(!p){ toast('No existe'); return; }
+      const dur=calcMin(p.hora_inicio,p.hora_fin);
+      const actId=await req(db.transaction('actividades','readwrite').objectStore('actividades').add({
+        tipo_id:p.tipo_id,fecha,subcategoria:p.subcategoria||'',duracion_min:dur||null,
+        hora_inicio:p.hora_inicio,hora_fin:p.hora_fin,notas:(p.nota||'').trim(),origen:esP?'puntual':'plantilla'}));
+      await dbPut('hechos',{id,plantilla_id:ref,fecha,actividad_id:actId});
+      incrementarCambios();
+      toastAccion('¡Hecho!','＋ Datos',()=>editarActividadPorId(actId),5000);
+    }
+  } finally { _busy.delete(id); }
   render();
 }
 
@@ -1118,6 +1091,9 @@ function abrirDeberModal(d){
         ${subcats.map(s=>`<option value="${esc(s.nombre)}" ${f.subcategoria===s.nombre?'selected':''}>${esc(s.nombre)}</option>`).join('')}
       </select>` : `<input class="input" data-deber="subcategoria" value="${esc(f.subcategoria||'')}">`}
     </div>
+    <div class="chips" style="margin-bottom:10px">
+      <button class="chip" data-action="deber-fecha" data-dias="0">Hoy</button><button class="chip" data-action="deber-fecha" data-dias="1">Mañana</button><button class="chip" data-action="deber-fecha" data-dias="7">+1 semana</button><button class="chip" data-action="deber-fecha" data-dias="">Sin fecha</button>
+    </div>
     <div class="row">
       <div class="field">
         <label class="lbl">Fecha límite</label>
@@ -1234,8 +1210,9 @@ async function viewActividad(){
 async function guardarActividad(){
   const f = S.form;
   if(!f.fecha){ toast('Falta la fecha'); return; }
+  const prev = f.id ? await dbGet('actividades', f.id) : null;
   const obj = {
-    tipo_id:f.tipo_id, fecha:f.fecha,
+    ...(prev||{}), tipo_id:f.tipo_id, fecha:f.fecha,
     subcategoria:(f.subcategoria||'').trim(),
     duracion_min: f.duracion_min===''?null:num(f.duracion_min),
     notas:(f.notas||'').trim()
@@ -1290,7 +1267,7 @@ async function viewChecklist(){
 /* =====================================================================
    RESUMEN
    ===================================================================== */
-const RANGOS=[['semana','Semana'],['2semanas','2 sem'],['mes','Mes'],['trimestre','Trim'],['año','Año'],['personalizado','Personalizar']];
+const RANGOS=[['semana','Esta semana'],['2semanas','2 sem'],['mes','Este mes'],['trimestre','Trim'],['año','Año'],['personalizado','Personalizar']];
 const DIAS_RANGO={semana:7,'2semanas':14,mes:30,trimestre:91,'año':365};
 function rangoActual(){
   const hoy=new Date();
@@ -1299,6 +1276,8 @@ function rangoActual(){
     const h = S.resumenHasta?parseKey(S.resumenHasta):hoy;
     return {desde:d, hasta:h};
   }
+  if(S.resumenRango==='semana') return {desde:lunesDe(hoy), hasta:hoy};
+  if(S.resumenRango==='mes') return {desde:new Date(hoy.getFullYear(),hoy.getMonth(),1), hasta:hoy};
   const n=DIAS_RANGO[S.resumenRango]||7;
   return {desde:addDays(hoy,-(n-1)), hasta:hoy};
 }
@@ -1317,16 +1296,17 @@ async function viewResumen(){
   const {desde,hasta} = rangoActual();
   const kD=dateKey(desde), kH=dateKey(hasta);
   const enRango = acts.filter(a=>a.fecha>=kD && a.fecha<=kH);
-  const tot = totalesPorTipo(enRango, tiposVis);
-  const tarjetas = tiposVis.map(t=>{
+  const tiposRes = S.tipos.filter(t=>t.visible||enRango.some(a=>a.tipo_id===t.id));
+  const tot = totalesPorTipo(enRango, tiposRes);
+  const tarjetas = tiposRes.map(t=>{
     const a = tot[t.id];
     let html = `<div class="card res-card"><div class="res-head">${t.icono} ${esc(t.nombre)}</div>
       <div class="res-metrics">
         <div class="m-box"><span class="m-lbl">Sesiones</span><span class="m-val">${a.n}</span></div>`;
     if(a.min>0) html += `<div class="m-box"><span class="m-lbl">Tiempo</span><span class="m-val">${a.min} min</span></div>`;
-    if(['senderismo','running','natacion','paseo'].includes(t.id) && a.km>0)
+    if(a.km>0)
       html += `<div class="m-box"><span class="m-lbl">Distancia</span><span class="m-val">${fmtNum(a.km,1)} km</span></div>`;
-    if(t.id==='senderismo' && a.desn>0)
+    if(a.desn>0)
       html += `<div class="m-box"><span class="m-lbl">Desnivel</span><span class="m-val">${fmtNum(a.desn,0)} m</span></div>`;
     html += `</div></div>`;
     return html;
@@ -1409,10 +1389,13 @@ async function viewHistorico(){
   if(f.tipo) lista = lista.filter(a=>a.tipo_id===f.tipo);
   if(f.desde) lista = lista.filter(a=>a.fecha>=f.desde);
   if(f.hasta) lista = lista.filter(a=>a.fecha<=f.hasta);
+  if(f.texto){ const q=f.texto.toLowerCase(); lista = lista.filter(a=>[a.notas,a.pieza,a.tema,a.ruta,a.subcategoria,a.con_quien,a.descripcion,a.lugar].join(' ').toLowerCase().includes(q)); }
   lista.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.id-a.id));
   return await topbar('Histórico') + `
   <div class="wrap">
     <div class="card">
+      <div class="field"><label class="lbl">Buscar texto</label>
+        <input class="input" data-filtro="texto" data-rerender="1" value="${esc(f.texto||'')}" placeholder="nota, pieza, tema, ruta…"></div>
       <div class="field">
         <label class="lbl">Tipo</label>
         <select class="input" data-filtro="tipo" data-rerender="1">
@@ -1430,12 +1413,14 @@ async function viewHistorico(){
     <div class="muted" style="font-size:12.5px;margin-bottom:10px">${lista.length} registros</div>
     ${lista.length?lista.map(a=>{
       const t=tipoDe(a.tipo_id); const partes=[];
-      if(a.subcategoria) partes.push(a.subcategoria);
+      if(a.subcategoria) partes.push(esc(a.subcategoria));
       if(a.hora_inicio && a.hora_fin) partes.push(`${a.hora_inicio}–${a.hora_fin}`);
       else if(a.duracion_min) partes.push(a.duracion_min+' min');
       if(a.distancia_km) partes.push(fmtNum(a.distancia_km,2)+' km');
-      if(a.pieza) partes.push('🎵 '+a.pieza);
-      if(a.tema) partes.push('📚 '+a.tema);
+      if(a.pieza) partes.push('🎵 '+esc(a.pieza));
+      if(a.tema) partes.push('📚 '+esc(a.tema));
+      if(a.desnivel_m) partes.push(fmtNum(a.desnivel_m,0)+' m↑');
+      if(a.ruta) partes.push('🥾 '+esc(a.ruta));
       return `<div class="item" data-action="ver-act" data-id="${a.id}">
         <div class="ico">${t.icono}</div>
         <div class="grow">
@@ -1598,16 +1583,18 @@ async function viewAjustes(){
     <details class="sec-fold" data-fold="preferencias" ${dOpen('preferencias')}>
       <summary>Preferencias generales</summary>
       <div class="fold-body">
-        <div class="field">
-          <label class="lbl">Primer día de la semana</label>
-          <select class="input" data-pref="semanaInicio">
-            <option value="lunes" ${ini==='lunes'?'selected':''}>Lunes</option>
-            <option value="domingo" ${ini==='domingo'?'selected':''}>Domingo</option>
-          </select>
-        </div>
+        
         <div class="field">
           <label class="lbl">Días de antelación para avisar de deberes</label>
           <input class="input" type="number" min="0" max="30" data-pref="avisoDias" value="${esc(S.prefs.avisoDias||3)}">
+        </div>
+        <div class="field">
+          <label class="lbl">Tamaño de letra</label>
+          <select class="input" data-pref="fuente">
+            <option value="normal" ${(S.prefs.fuente||'normal')==='normal'?'selected':''}>Normal</option>
+            <option value="grande" ${S.prefs.fuente==='grande'?'selected':''}>Grande</option>
+            <option value="muygrande" ${S.prefs.fuente==='muygrande'?'selected':''}>Muy grande</option>
+          </select>
         </div>
       </div>
     </details>
@@ -1632,29 +1619,7 @@ async function viewAjustes(){
       </div>
     </details>
 
-    <details class="sec-fold" data-fold="ideasc" ${dOpen('ideasc')}>
-      <summary>Ideas de mejora</summary>
-      <div class="fold-body">
-        <div class="field">
-          <label class="lbl">Nueva idea</label>
-          <textarea class="input" id="inputIdea" placeholder="Escribe aquí"></textarea>
-        </div>
-        <button class="btn btn-primary btn-block btn-sm" data-action="idea-guardar">Guardar</button>
-        <div style="margin-top:14px">
-          ${ideas.map(i=>`
-            <div class="card" style="padding:10px;margin-bottom:8px;background:var(--bg-card-alt)">
-              <div style="white-space:pre-wrap;font-size:13.5px">${esc(i.texto)}</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-                <span style="font-size:11px;color:var(--text-muted)">${fmtFecha(i.fecha)}</span>
-                <div style="display:flex;gap:6px">
-                  <button class="btn btn-sm" data-action="idea-toggle" data-id="${i.id}">${i.implementado?'✓ Listo':'Marcar listo'}</button>
-                  <button class="mini" data-action="idea-borrar" data-id="${i.id}">✕</button>
-                </div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </details>
+    <button class="btn btn-block" style="margin-bottom:10px" data-action="go" data-screen="ideas">💡 Ideas de mejora</button>
 
     <details class="sec-fold" data-fold="datos" ${dOpen('datos')}>
       <summary>Datos</summary>
@@ -1667,7 +1632,7 @@ async function viewAjustes(){
     </details>
 
     <div style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">
-      Ocio y Deporte · <b>v3.1.0</b>
+      Ocio y Deporte · <b>v3.2.0</b>
     </div>
   </div>`;
 }
@@ -1677,10 +1642,10 @@ async function viewAjustes(){
    ===================================================================== */
 async function exportarJSON(opts={}){
   const datos={};
-  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'])
+  for(const s of STORES_DATOS)
     datos[s] = await dbAll(s);
   datos.exportado = new Date().toISOString();
-  datos.version = "3.1.0";
+  datos.version = "3.2.0";
   const blob = new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download='ocio-deporte-'+hoyKey()+'.json'; a.click();
@@ -1700,21 +1665,24 @@ async function exportarJSON(opts={}){
   if(opts.rerender) render();
 }
 async function importarJSON(file){
+  const inp=document.getElementById('fileImport');
   try{
-    const txt = await file.text(); const d = JSON.parse(txt);
-    _silenciarCambios = true;
-    for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas']){
-      if(!Array.isArray(d[s])) continue;
-      await dbClear(s); for(const it of d[s]) await dbPut(s, it);
-    }
-    await dbPut('prefs',{k:'seeded',v:1});
-    _silenciarCambios = false;
+    const d=JSON.parse(await file.text());
+    if(!d||typeof d!=='object'||(!Array.isArray(d.tipos)&&!Array.isArray(d.actividades))) throw new Error('El archivo no parece una copia de Ocio y Deporte');
+    if(!confirm('Importar reemplazará TODOS los datos actuales. ¿Continuar?')) return;
+    _silenciarCambios=true;
+    try{
+      for(const s of STORES_DATOS){ if(!Array.isArray(d[s])) continue; await dbClear(s); for(const it of d[s]) await dbPut(s,it); }
+      await dbPut('prefs',{k:'seeded',v:1});
+    } finally { _silenciarCambios=false; }
     toast('Importado'); render();
   }catch(err){ alert('Error: '+err.message); }
+  finally{ if(inp) inp.value=''; }
 }
 async function borrarTodo(){
-  if(!confirm('¿Eliminar TODOS los datos?')) return;
-  for(const s of ['tipos','subcategorias','actividades','plantilla','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'])
+  if(!confirm('¿Eliminar TODOS los datos? Antes se descargará una copia de seguridad.')) return;
+  await exportarJSON();
+  for(const s of STORES_DATOS)
     await dbClear(s);
   _silenciarCambios = true;
   await seed();
@@ -1751,6 +1719,7 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('change', e=>{
   const t = e.target;
+  if(t.dataset.resumen){ render(); return; }
   if(t.dataset.pref){ setPref(t.dataset.pref, t.value).then(render); return; }
   if(t.dataset.tipoVisible){
     const tipo = S.tipos.find(x=>x.id===t.dataset.tipoVisible);
@@ -1764,7 +1733,7 @@ document.addEventListener('change', e=>{
   if(t.id==='fileImport' && t.files && t.files[0]){ importarJSON(t.files[0]); }
 });
 document.addEventListener('click', async e=>{
-  if(e.target.classList && e.target.classList.contains('overlay')){ cerrarModal(); return; }
+  if(e.target.classList && e.target.classList.contains('overlay')) return;
   const el = e.target.closest('[data-action]');
   if(!el) return;
   const a = el.dataset.action;
@@ -1806,17 +1775,31 @@ document.addEventListener('click', async e=>{
       abrirPlantillaModal(S.plantillaForm); break;
     }
     case 'plantilla-editar': {
-      const p = await dbGet('plantilla', Number(el.dataset.id));
-      if(p) abrirPlantillaModal(p);
+      const st = el.dataset.store || 'plantilla';
+      const p = await dbGet(st, Number(el.dataset.id));
+      if(p) abrirPlantillaModal({...p, store:st});
       break;
     }
     case 'plantilla-guardar': await guardarPlantilla(); break;
-    case 'plantilla-borrar':
-      if(confirm('¿Borrar actividad recurrente?')){
-        await dbDel('plantilla', S.plantillaForm.id);
-        cerrarModal(); toast('Borrado'); render();
-      }
-      break;
+    case 'plantilla-borrar': { const f=S.plantillaForm; cerrarModal(); await borrarConUndo(f.store||'plantilla', f.id, 'Actividad borrada'); break; }
+    case 'ev-modo': {
+      const f=S.plantillaForm; f.store=el.dataset.store;
+      if(f.store==='planes' && f.dia && !S.plantillaForm._fechaTocada) f.fecha=dateKey(addDays(lunesDe(new Date()), Number(f.dia)-1));
+      abrirPlantillaModal(f); break;
+    }
+    case 'sem-vista': await setPref('semanaVista', el.dataset.id); render(); break;
+    case 'hoy-saltar': await dbPut('hechos',{id:`${el.dataset.plantilla}_${el.dataset.fecha}`,plantilla_id:el.dataset.plantilla,fecha:el.dataset.fecha,omitido:true}); render(); break;
+    case 'act-datos': await editarActividadPorId(el.dataset.id); break;
+    case 'chk-ir': S.chkTipo=el.dataset.id; go('checklist'); break;
+    case 'back': history.back(); break;
+    case 'menu-add': showModal(`<h2>¿Qué quieres añadir?</h2>
+      <button class="btn btn-block btn-big" data-action="menu-registrar">✅ Registrar algo que ya he hecho</button>
+      <button class="btn btn-block btn-big" style="margin-top:10px" data-action="menu-puntual">📅 Planificar algo con fecha</button>
+      <button class="btn btn-block btn-big" style="margin-top:10px" data-action="menu-deber">📌 Nuevo deber</button>
+      <div class="modal-actions"><button class="btn" data-action="modal-close">Cancelar</button></div>`); break;
+    case 'menu-registrar': cerrarModal(); S.form=nuevoForm(); go('actividad'); break;
+    case 'menu-puntual': abrirPlantillaModal({...nuevoEvento(), store:'planes'}); break;
+    case 'menu-deber': abrirDeberModal(null); break;
     case 'plantilla-marcar':
       e.stopPropagation();
       await marcarPlantillaHecha(el.dataset.plantilla, el.dataset.fecha);
@@ -1834,11 +1817,10 @@ document.addEventListener('click', async e=>{
     case 'deber-hecho': {
       const d = await dbGet('deberes', Number(el.dataset.id));
       if(d){
-        const nota = prompt('Nota de resultado (opcional):', d.nota_resultado||'');
+        const prev={...d};
         d.estado='hecho'; d.hecho_en=hoyKey();
-        if(nota!==null) d.nota_resultado=nota;
-        await dbPut('deberes', d);
-        toast('¡Hecho!'); render();
+        await dbPut('deberes', d); render();
+        toastAccion('¡Deber hecho!','Deshacer',async()=>{ await dbPut('deberes',prev); render(); });
       }
       break;
     }
@@ -1855,9 +1837,8 @@ document.addEventListener('click', async e=>{
       }
       break;
     }
-    case 'deber-borrar':
-      if(confirm('¿Borrar deber?')){ await dbDel('deberes', Number(el.dataset.id)); render(); }
-      break;
+    case 'deber-borrar': await borrarConUndo('deberes', Number(el.dataset.id), 'Deber borrado'); break;
+    case 'deber-fecha': { const n=el.dataset.dias; S.deberForm.fecha_limite = n===''?null:dateKey(addDays(new Date(),Number(n))); abrirDeberModal(S.deberForm); break; }
 
     /* CATEGORÍAS */
     case 'cat-add': abrirCatModal(null); break;
@@ -1888,6 +1869,7 @@ document.addEventListener('click', async e=>{
     case 'guardar-act': await guardarActividad(); break;
     case 'borrar-act':
       if(confirm('¿Borrar actividad?')){
+        for(const h of (await dbAll('hechos')).filter(h=>h.actividad_id===S.form.id)) await dbDel('hechos',h.id);
         await dbDel('actividades', S.form.id);
         S.form=null; toast('Borrada'); go('hoy');
       }
@@ -1912,13 +1894,7 @@ document.addEventListener('click', async e=>{
       if(n && n.trim()){ it.texto=n.trim(); await dbPut('checklist', it); render(); }
       break;
     }
-    case 'chk-borrar':
-      if(confirm('¿Borrar ítem?')){
-        await dbDel('checklist', Number(el.dataset.id));
-        await dbDel('checkEstado', Number(el.dataset.id));
-        render();
-      }
-      break;
+    case 'chk-borrar': await borrarConUndo('checklist', Number(el.dataset.id), 'Ítem borrado'); break;
     case 'chk-add': {
       const texto = prompt('Nuevo ítem:');
       if(texto && texto.trim()){
@@ -1942,17 +1918,16 @@ document.addEventListener('click', async e=>{
     case 'peso-guardar': {
       const kg = num(S.pesoForm.kg);
       if(!kg){ toast('Falta el peso'); return; }
-      await dbPut('peso', {fecha:S.pesoForm.fecha||hoyKey(), kg});
+      const o={fecha:S.pesoForm.fecha||hoyKey(), kg}; if(S.pesoForm.id) o.id=S.pesoForm.id;
+      await dbPut('peso', o);
       S.pesoForm={fecha:hoyKey(), kg:''}; toast('Guardado'); render(); break;
     }
     case 'peso-editar': {
       const p = await dbGet('peso', Number(el.dataset.id));
-      if(p){ S.pesoForm={fecha:p.fecha, kg:p.kg}; render(); window.scrollTo(0,0); }
+      if(p){ S.pesoForm={id:p.id, fecha:p.fecha, kg:p.kg}; render(); window.scrollTo(0,0); }
       break;
     }
-    case 'peso-borrar':
-      if(confirm('¿Borrar?')){ await dbDel('peso', Number(el.dataset.id)); render(); }
-      break;
+    case 'peso-borrar': await borrarConUndo('peso', Number(el.dataset.id), 'Registro borrado'); break;
 
     /* SUBCATEGORÍAS */
     case 'subcat-add': {
@@ -1964,8 +1939,7 @@ document.addEventListener('click', async e=>{
       break;
     }
     case 'subcat-borrar': {
-      await dbDel('subcategorias', Number(el.dataset.id));
-      render(); break;
+      await borrarConUndo('subcategorias', Number(el.dataset.id), 'Subcategoría borrada'); break;
     }
 
     /* IDEAS */
@@ -1982,7 +1956,16 @@ document.addEventListener('click', async e=>{
       if(i){ i.implementado = !i.implementado; await dbPut('ideas', i); render(); }
       break;
     }
-    case 'idea-borrar': await dbDel('ideas', Number(el.dataset.id)); render(); break;
+    case 'idea-borrar': await borrarConUndo('ideas', Number(el.dataset.id), 'Idea borrada'); break;
+    case 'idea-editar': {
+      const i=await dbGet('ideas',Number(el.dataset.id));
+      if(i){ S.ideaEd={...i}; showModal(`<h2>Editar idea</h2><div class="field"><textarea class="input" id="ideaEdTxt" style="min-height:150px">${esc(i.texto)}</textarea></div><div class="modal-actions"><button class="btn" data-action="modal-close">Cancelar</button><button class="btn btn-primary" data-action="idea-editar-guardar">Guardar</button></div>`); }
+      break;
+    }
+    case 'idea-editar-guardar': {
+      const txt=$('#ideaEdTxt').value.trim(); if(!txt){ toast('Escribe algo'); break; }
+      S.ideaEd.texto=txt; await dbPut('ideas',S.ideaEd); S.ideaEd=null; cerrarModal(); toast('Actualizada'); render(); break;
+    }
 
     /* DATOS */
     case 'exportar': await exportarJSON({rerender:true}); break;
@@ -1997,7 +1980,9 @@ document.addEventListener('click', async e=>{
 (async function init(){
   try{
     await openDB();
-    await seed();
+    _silenciarCambios=true; try{ await seed(); } finally { _silenciarCambios=false; }
+    try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+    try{ history.replaceState({screen:'hoy'},''); }catch(e){}
     await loadState();
     S.mostrarBannerCopia = await debeRecomendarCopia();
     await render();
