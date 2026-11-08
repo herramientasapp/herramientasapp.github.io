@@ -1,58 +1,269 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ocio y Deporte v4</title>
+<title>Ocio y Deporte</title>
 <style>
-:root{--bg:#0b1220;--c:#151f33;--c2:#0e1728;--b:#26344f;--t:#e8eefb;--m:#93a3bd;--p:#2563eb;--ph:#3b82f6;--bad:#fca5a5;--w:#fcd34d}
-[data-theme=light]{--bg:#f1f5f9;--c:#fff;--c2:#f8fafc;--b:#cbd5e1;--t:#0f172a;--m:#475569;--bad:#dc2626;--w:#b45309}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif;padding-bottom:100px}
-.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--bg);border-bottom:1px solid var(--b)}
-.top h1{font-size:19px;margin:0;flex:1}
-.w{padding:14px;max-width:900px;margin:auto}
-.card{background:var(--c);border:1px solid var(--b);border-radius:14px;padding:12px;margin-bottom:10px}
-.btn{border:1px solid var(--b);background:var(--c2);color:var(--t);padding:11px 14px;border-radius:12px;font:inherit;font-weight:600;cursor:pointer}
-.btn.p{background:var(--p);border-color:var(--p);color:#fff}.btn.d{color:var(--bad)}.btn.s{padding:7px 10px;font-size:14px}.btn.f{width:100%}
-.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}.g{flex:1;min-width:0}
-label{display:block;font-size:13px;color:var(--m);font-weight:700;margin:10px 0 4px}
-input,select,textarea{width:100%;background:var(--c2);border:1px solid var(--b);color:var(--t);border-radius:10px;padding:10px;font:inherit}
-input[type=checkbox]{width:22px;height:22px}textarea{min-height:80px}
-.m{color:var(--m);font-size:14px}.h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--m);font-weight:700;margin:16px 0 8px}
-.nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}.nav .mid{flex:1;text-align:center;font-weight:700;font-size:18px;line-height:1.2}
-.nav .btn{min-width:48px;font-size:20px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.chip{border:1px solid var(--b);background:var(--c2);color:var(--t);border-radius:99px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}.chip.on{background:var(--p);border-color:var(--p);color:#fff}
-.ev{display:flex;gap:10px;align-items:center;background:var(--c);border:1px solid var(--b);border-left:6px solid;border-radius:12px;padding:12px;margin-bottom:10px}
-.ev.done{opacity:.55}.ev.solo{border-style:dashed;border-left-style:solid;background:transparent}
-.tt{font-weight:700;font-size:17px}.hh{font-weight:700;font-size:15px;margin-top:2px}
-.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.ck{width:52px;height:52px;border:3px solid var(--m);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;flex:none;cursor:pointer}.ck.on{background:var(--p);border-color:var(--p)}
-.drow{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:8px}.drow.hoy{border-color:var(--ph)}
-.dh{font-weight:700;margin-bottom:6px;cursor:pointer}.dh.hoy{color:var(--ph)}
-.mini{display:flex;gap:8px;align-items:center;padding:8px;margin-bottom:6px;background:var(--c2);border-left:5px solid;border-radius:8px;cursor:pointer}
-.sc{overflow-x:auto;border:1px solid var(--b);border-radius:12px;background:var(--c)}
-.gr{display:grid;grid-template-columns:48px repeat(7,minmax(120px,1fr));min-width:890px}
-.gr .hd{position:sticky;top:0;z-index:5;background:var(--c2);text-align:center;font-weight:700;padding:8px 2px;border-bottom:1px solid var(--b);border-right:1px solid var(--b);cursor:pointer}
-.hd.hoy{color:var(--ph)}
-.hc{position:sticky;left:0;z-index:4;background:var(--c2);border-right:1px solid var(--b);font-size:12px;color:var(--m);font-weight:600}
-.hc div{padding:2px 4px;text-align:right;border-bottom:1px solid var(--b)}
-.col{position:relative;border-right:1px solid var(--b)}
-.hl{position:absolute;left:0;right:0;border-bottom:1px solid var(--b)}
-.ge{position:absolute;border-radius:8px;padding:5px 7px;color:#fff;font-size:13px;line-height:1.2;overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.ge b{display:block}.ge.done{opacity:.5}
-.tab{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:var(--bg);border-top:1px solid var(--b);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
-.tab button{flex:1;background:none;border:none;color:var(--m);font:inherit;font-size:13px;font-weight:700;padding:6px 2px;display:flex;flex-direction:column;align-items:center;min-height:56px;cursor:pointer}
-.tab button span{font-size:23px}.tab .on{color:var(--ph)}
-.tab .plus span{background:var(--p);color:#fff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin-top:-18px}
-.ov{position:fixed;inset:0;background:rgba(4,8,16,.75);z-index:100;display:flex;align-items:flex-end;justify-content:center}
-.md{background:var(--c);border-radius:18px 18px 0 0;padding:18px;width:100%;max-width:520px;max-height:92vh;overflow:auto}
-@media(min-width:600px){.ov{align-items:center}.md{border-radius:18px}}
-.md h2{margin:0 0 6px;font-size:19px}.ma{display:flex;gap:8px;margin-top:16px}.ma .btn{flex:1}
-.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--p);color:#fff;padding:10px 16px;border-radius:99px;font-weight:600;z-index:200;display:flex;gap:10px;align-items:center;max-width:92vw}
-.ban{background:#422006;border:1px solid #78350f;color:var(--w);border-radius:12px;padding:12px;margin-bottom:12px}
-.tile{display:block;width:100%;text-align:left;margin-bottom:8px}
-.empty{text-align:center;color:var(--m);padding:16px}
+  :root{
+    --bg-main:#0b1220;--bg-card:#151f33;--bg-card-alt:#0e1728;
+    --bg-header:rgba(11,18,32,.94);--border-color:#26344f;--border-subtle:#1e2c46;
+    --text-main:#e8eefb;--text-muted:#93a3bd;--text-dim:#6b7c99;
+    --primary:#2563eb;--primary-hover:#3b82f6;--accent:#7dd3fc;
+    --danger-bg:#3b1016;--danger-border:#7f1d1d;--danger-text:#fca5a5;
+    --warn-bg:#422006;--warn-border:#78350f;--warn-text:#fcd34d;
+    --ok-bg:#052e16;--ok-border:#166534;--ok-text:#86efac;
+    --chip-bg:#0e1728;--chip-border:#26344f;--chip-text:#c3d0e6;
+  }
+  [data-theme="light"]{
+    --bg-main:#f1f5f9;--bg-card:#fff;--bg-card-alt:#f8fafc;
+    --bg-header:rgba(255,255,255,.94);--border-color:#cbd5e1;--border-subtle:#e2e8f0;
+    --text-main:#0f172a;--text-muted:#475569;--text-dim:#94a3b8;
+    --primary:#2563eb;--primary-hover:#1d4ed8;--accent:#0284c7;
+    --danger-bg:#fef2f2;--danger-border:#fecaca;--danger-text:#dc2626;
+    --warn-bg:#fffbeb;--warn-border:#fde68a;--warn-text:#b45309;
+    --ok-bg:#f0fdf4;--ok-border:#bbf7d0;--ok-text:#15803d;
+    --chip-bg:#f1f5f9;--chip-border:#cbd5e1;--chip-text:#334155;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg-main);color:var(--text-main);
+    font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:96px;
+    transition:background-color .2s,color .2s}
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
+    padding:12px 14px;background:var(--bg-header);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border-color)}
+  .topbar h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px;flex:1}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+  .icon-btn{background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-main);
+    width:36px;height:36px;border-radius:10px;font-size:18px;display:inline-flex;
+    align-items:center;justify-content:center;line-height:1;cursor:pointer;flex:0 0 auto;position:relative}
+  .icon-btn:active{transform:scale(.95)}
+  .badge-dot{position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;
+    font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:999px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-main)}
+  .wrap{padding:14px;max-width:900px;margin:0 auto}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;margin-bottom:12px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-color);
+    background:var(--bg-card-alt);color:var(--text-main);padding:10px 14px;border-radius:12px;
+    font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn:active{transform:scale(.985)}
+  .btn-primary{background:linear-gradient(180deg,var(--primary-hover),var(--primary));border-color:var(--primary);color:#fff}
+  .btn-block{width:100%}
+  .btn-big{padding:16px;font-size:16px}
+  .btn-danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger-text)}
+  .btn-warn{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text)}
+  .btn-ok{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)}
+  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .tile{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:14px;
+    cursor:pointer;display:flex;flex-direction:column;gap:4px;position:relative}
+  .tile:active{transform:scale(.985)}
+  .tile .ti{font-size:21px;line-height:1.1}
+  .tile .tt{font-weight:650}
+  .tile .ts{font-size:11.5px;color:var(--text-muted)}
+  .lbl{display:block;font-size:12.5px;color:var(--text-muted);margin:0 0 5px;
+    font-weight:650;letter-spacing:.3px;text-transform:uppercase}
+  .input{width:100%;background:var(--bg-card-alt);border:1px solid var(--border-color);
+    color:var(--text-main);border-radius:11px;padding:10px 12px;font-size:14.5px;
+    font-family:inherit;outline:none}
+  .input:focus{border-color:var(--primary-hover)}
+  select.input{appearance:none}
+  textarea.input{min-height:70px;resize:vertical}
+  .field{margin-bottom:12px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1;min-width:0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--chip-bg);border:1px solid var(--chip-border);color:var(--chip-text);
+    border-radius:999px;padding:7px 12px;font-size:13.5px;cursor:pointer;
+    font-family:inherit;font-weight:600}
+  .chip.sel{background:var(--primary);border-color:var(--primary-hover);color:#fff}
+  .item{display:flex;gap:11px;align-items:center;padding:10px 12px;background:var(--bg-card);
+    border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px;cursor:pointer}
+  .item:active{filter:brightness(.95)}
+  .item .ico{font-size:20px;width:26px;text-align:center;flex:0 0 auto}
+  .grow{flex:1;min-width:0}
+  .t1{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .t2{font-size:12px;color:var(--text-muted);margin-top:1px}
+  .muted{color:var(--text-muted)}
+  .center{text-align:center}
+  .sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);
+    font-weight:700;margin:16px 0 8px}
+  .empty{color:var(--text-dim);text-align:center;padding:18px 10px;font-size:13.5px}
+
+  /* BANNER COPIA */
+  .banner-copia{background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);
+    border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+  .banner-copia .bc-text{font-size:13.5px;font-weight:600}
+  .banner-copia .bc-actions{display:flex;gap:8px}
+
+  /* HOY */
+  .hoy-block{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);
+    border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px}
+  .hoy-block .ti{font-size:22px;flex:0 0 auto}
+  .hoy-check{width:44px;height:44px;border-radius:8px;border:2px solid var(--text-muted);
+    display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;
+    cursor:pointer;flex:0 0 auto;background:transparent}
+  .hoy-check.on{background:var(--primary);border-color:var(--primary)}
+  .hoy-block.hecho .hoy-title{text-decoration:line-through;color:var(--text-dim)}
+  .hoy-title{font-weight:650}
+  .hoy-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
+  .deber-mini{font-size:12.5px;margin-top:5px;padding:6px 8px;border-radius:8px;
+    background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);
+    display:flex;align-items:center;gap:6px;cursor:pointer}
+
+  /* PLANTILLA SEMANAL (cuadrícula por horas) */
+  .plantilla-container{background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:14px;overflow-x:auto;position:relative}
+  .plantilla-head{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));
+    min-width:720px;position:sticky;top:0;z-index:10;background:var(--bg-card-alt);
+    border-bottom:1px solid var(--border-color)}
+  .plantilla-head>div{padding:6px 4px;text-align:center;font-weight:700;font-size:12px;
+    border-right:1px solid var(--border-subtle)}
+  .plantilla-head>div:last-child{border-right:none}
+  .plantilla-head .corner{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;letter-spacing:.4px}
+  .plantilla-head .day-head{position:relative;display:flex;flex-direction:column;gap:2px}
+  .plantilla-head .day-head.hoy{background:rgba(37,99,235,.15)}
+  .plantilla-head .dname{font-size:10px;text-transform:uppercase;color:var(--text-muted)}
+  .plantilla-head .day-head.hoy .dname{color:var(--primary-hover)}
+  .plantilla-head .dnum{font-size:13px}
+  .plantilla-head .day-head.hoy .dnum{color:var(--primary-hover)}
+  .plantilla-head .add-btn{margin-top:2px;border:1px dashed var(--border-color);background:transparent;
+    color:var(--text-muted);border-radius:6px;font-size:13px;cursor:pointer;padding:2px;
+    font-family:inherit;line-height:1}
+  .plantilla-head .add-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .plantilla-body{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));
+    min-width:720px;position:relative}
+  .hours-col{position:sticky;left:0;z-index:6;background:var(--bg-card-alt);
+    border-right:1px solid var(--border-color)}
+  .hour-cell{height:44px;display:flex;align-items:flex-start;justify-content:flex-end;
+    padding-right:6px;font-size:10.5px;color:var(--text-muted);font-weight:600;
+    border-bottom:1px solid var(--border-subtle)}
+  .day-body{position:relative;border-right:1px solid var(--border-subtle)}
+  .day-body:last-child{border-right:none}
+  .hour-line{position:absolute;left:0;right:0;height:44px;
+    border-bottom:1px solid var(--border-subtle);pointer-events:none}
+  .evento-plantilla{position:absolute;border-radius:6px;padding:4px 6px;color:#fff;
+    font-size:11px;line-height:1.15;cursor:pointer;overflow:hidden;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);z-index:2}
+  .evento-plantilla .ev-hora{font-size:10px;opacity:.92;display:flex;align-items:center;gap:4px}
+  .evento-plantilla .ev-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .evento-plantilla .ev-nota{font-size:10px;opacity:.85;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .ev-chk{width:18px;height:18px;border:1.5px solid rgba(255,255,255,.85);
+    border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-size:8px;flex:0 0 auto;cursor:pointer;background:transparent}
+  .ev-chk.on{background:rgba(255,255,255,.95);border-color:#fff;color:#111}
+  .evento-plantilla.hecha{opacity:.5}
+
+  /* Colores de chips de cat */
+  .cat-color{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-right:4px}
+
+  /* DEBERES */
+  .deber-card{background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:12px;padding:12px;margin-bottom:8px;position:relative}
+  .deber-card.urgente{border-left:4px solid #dc2626}
+  .deber-card.proximo{border-left:4px solid #d97706}
+  .deber-card.vencido{border-left:4px solid #7f1d1d;background:var(--danger-bg)}
+  .deber-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:4px}
+  .deber-head .ico{font-size:18px;flex:0 0 auto}
+  .deber-title{font-weight:700;font-size:14.5px;flex:1;min-width:0}
+  .deber-meta{font-size:11.5px;color:var(--text-muted);margin-bottom:6px}
+  .deber-desc{font-size:13px;color:var(--text-muted);margin-bottom:8px;white-space:pre-wrap}
+  .deber-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .prio-alta{color:#dc2626;font-weight:700}
+  .prio-media{color:#d97706;font-weight:700}
+  .prio-baja{color:#64748b;font-weight:700}
+  .hecho .deber-title{text-decoration:line-through;color:var(--text-dim)}
+
+  /* Details */
+  details.sec-fold{background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:12px;margin-bottom:10px;overflow:hidden}
+  details.sec-fold summary{padding:12px 14px;font-weight:650;font-size:14px;cursor:pointer;
+    user-select:none;display:flex;align-items:center;justify-content:space-between;
+    outline:none;background:var(--bg-card)}
+  details.sec-fold summary::-webkit-details-marker{display:none}
+  details.sec-fold summary::after{content:'›';font-size:18px;transition:transform .2s;color:var(--text-muted)}
+  details.sec-fold[open] summary::after{transform:rotate(90deg)}
+  details.sec-fold summary:hover{background:var(--bg-card-alt)}
+  .fold-body{padding:12px 14px;border-top:1px solid var(--border-color);background:var(--bg-card)}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(4,8,16,.75);z-index:100;
+    display:flex;align-items:flex-end;justify-content:center;padding:0}
+  @media(min-width:600px){.overlay{align-items:center;padding:20px}}
+  .modal{background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:18px 18px 0 0;padding:18px;width:100%;max-width:520px;
+    max-height:92vh;overflow:auto;color:var(--text-main)}
+  @media(min-width:600px){.modal{border-radius:18px}}
+  .modal h2{margin:0 0 14px;font-size:17px}
+  .modal-actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+  .modal-actions .btn{flex:1}
+  .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);
+    background:var(--primary);color:#fff;padding:10px 18px;border-radius:999px;
+    font-size:13.5px;font-weight:600;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .mini{background:none;border:none;color:var(--text-muted);font-size:14px;
+    padding:2px 4px;cursor:pointer;line-height:1}
+  .mini:hover{color:var(--text-main)}
+  .chk-compact{display:flex;align-items:center;gap:8px;background:var(--bg-card-alt);
+    border:1px solid var(--border-subtle);border-radius:8px;padding:6px 9px;
+    margin-bottom:5px;font-size:13.5px}
+  .chk-compact .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--text-muted);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;
+    flex:0 0 auto;cursor:pointer}
+  .chk-compact.on .box{background:var(--primary);border-color:var(--primary)}
+  .chk-compact.on .txt{text-decoration:line-through;color:var(--text-dim)}
+  .chk-compact .txt{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* Paleta de colores en modal */
+  .paleta{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:6px}
+  .paleta .sw{width:100%;aspect-ratio:1;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;position:relative}
+  .paleta .sw.sel{border-color:var(--text-main);box-shadow:0 0 0 2px var(--bg-card) inset}
+
+  .res-card{padding:10px 12px;margin-bottom:8px}
+  .res-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:6px}
+  .res-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;
+    background:var(--bg-card-alt);padding:8px;border-radius:8px;border:1px solid var(--border-subtle)}
+  .m-box{display:flex;flex-direction:column}
+  .m-lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;font-weight:600}
+  .m-val{font-size:13.5px;font-weight:700}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:var(--bg-header);backdrop-filter:blur(8px);border-top:1px solid var(--border-color);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  .tabbar button{flex:1;background:none;border:none;color:var(--text-muted);font:inherit;font-size:11.5px;font-weight:650;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-height:54px}
+  .tabbar .tb-i{font-size:21px;line-height:1}
+  .tabbar button.on{color:var(--primary-hover)}
+  .tabbar .tb-add .tb-i{background:var(--primary);color:#fff;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-16px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  .dia-row{display:flex;gap:10px;padding:10px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;margin-bottom:8px}
+  .dia-row.hoy{border-color:var(--primary-hover);box-shadow:0 0 0 1px var(--primary-hover) inset}
+  .dr-head{flex:0 0 52px;text-align:center}
+  .dr-n{font-size:12px;text-transform:uppercase;color:var(--text-muted);font-weight:700}
+  .dia-row.hoy .dr-n{color:var(--primary-hover)}
+  .dr-d{font-size:20px;font-weight:750;line-height:1.1}
+  .dr-head .add-btn{margin-top:6px;border:1px dashed var(--border-color);background:transparent;color:var(--text-muted);border-radius:8px;font-size:15px;cursor:pointer;width:100%;padding:4px 0}
+  .dr-evs{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .dr-ev{display:flex;align-items:center;gap:8px;background:var(--bg-card-alt);border-radius:8px;padding:7px 9px;cursor:pointer}
+  .dr-ev.hecha{opacity:.55}
+  .topbar{padding:8px 12px;gap:6px}
+  .topbar h1{font-size:16px}
+  .icon-btn{width:32px;height:32px;font-size:16px;border-radius:9px}
+  .nav-title{flex:1;min-width:0;text-align:center;font-weight:650;font-size:14.5px;position:relative;cursor:pointer;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav-title input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+  .wrap{padding:10px 12px}
+  .fi{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg-card);border:1px solid var(--border-color);border-left:3px solid var(--primary);border-radius:9px;margin-bottom:5px}
+  .fi.hecha{opacity:.55}.fi.hecha .t1{text-decoration:line-through}
+  .fi.solo{border-style:dashed;border-left-style:solid;background:transparent}
+  .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex:0 0 auto;cursor:pointer}
+  .box.on{background:var(--primary);border-color:var(--primary)}
+  .fi .t1{font-size:13.5px;white-space:normal}.fi .t2{font-size:11.5px}
+  .fa{display:flex;flex:0 0 auto}.fa .mini{font-size:15px;padding:5px}
+  .dh2{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);font-weight:700;margin:10px 0 5px;cursor:pointer}.dh2.hoy{color:var(--primary-hover)}
+  .tb{width:100%;border-collapse:collapse;font-size:12px}.tb th{text-align:left;color:var(--text-muted);font-size:10.5px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid var(--border-color)}
+  .tb td{padding:5px 6px;border-bottom:1px solid var(--border-subtle);vertical-align:top}.tb a{color:var(--accent)}.tb tr[data-a]{cursor:pointer}
+  .tile .ts{min-height:14px}
+  .tabbar button{min-height:50px;font-size:11px}
+  .plantilla-head .day-head{padding:3px 2px}
+  .plantilla-head>div{padding:3px 2px;font-size:11px}
+  .evento-plantilla{overflow:hidden;line-height:1.1}
 </style></head><body>
-<div id="app"></div><div id="modal"></div><div id="tab"></div>
+<div id="app"></div><div id="modal-root"></div><div id="tab"></div>
 <script>
 const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -61,296 +272,336 @@ const pk=k=>{const p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])}
 const add=(d,n)=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x};
 const hoyK=()=>dk(new Date()),dow=d=>d.getDay()||7,lun=d=>add(d,1-dow(d));
 const mn=h=>{const[a,b]=String(h||'0:0').split(':').map(Number);return a*60+(b||0)};
-const DN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],DS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],DS=['L','M','X','J','V','S','D'];
 const fl=(k,o)=>pk(k).toLocaleDateString('es-ES',o);
+const fc=k=>fl(k,{day:'numeric',month:'short'}),fcs=k=>fl(k,{weekday:'short',day:'numeric',month:'short'});
 const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n};
-const fmt=n=>Number(Number(n).toFixed(1)).toLocaleString('es-ES');
+const fmt=(n,d=1)=>Number(Number(n).toFixed(d)).toLocaleString('es-ES');
+const PALETA=['#059669','#0284c7','#7c3aed','#be185d','#0891b2','#65a30d','#d97706','#dc2626','#2563eb','#9333ea','#db2777','#0d9488','#ca8a04','#ea580c','#475569','#16a34a'];
+const APR=[['cancion','🎵 Canción'],['acorde','🎼 Acorde'],['escala','🎹 Escala'],['teoria','📖 Teoría'],['otro','📝 Otro']];
 
-/* ---------- Base de datos (misma que v3: tus datos se conservan) ---------- */
-let db;const AI={keyPath:'id',autoIncrement:true},K={keyPath:'id'};
-const ST={tipos:K,subcategorias:AI,actividades:AI,plantilla:AI,hechos:K,deberes:AI,tramos:K,checklist:AI,checkEstado:K,peso:AI,prefs:{keyPath:'k'},ideas:AI,planes:AI};
-const DATOS=['tipos','subcategorias','actividades','plantilla','planes','hechos','deberes','checklist','checkEstado','peso','prefs','ideas'];
+/* ---- Base de datos simplificada (nueva: ocio_deporte_v41) ---- */
+let db;const AI={keyPath:'id',autoIncrement:true};
+const ST={tipos:{keyPath:'id'},rutina:AI,plan:AI,hechos:{keyPath:'id'},actividades:AI,deberes:AI,aprendido:AI,checklist:AI,checkEstado:{keyPath:'id'},peso:AI,ideas:AI,prefs:{keyPath:'k'}};
+const DATOS=Object.keys(ST);
 const rq=r=>new Promise((o,e)=>{r.onsuccess=()=>o(r.result);r.onerror=()=>e(r.error)});
 const st=(s,m)=>db.transaction(s,m||'readonly').objectStore(s);
 const all=s=>rq(st(s).getAll()),get=(s,k)=>rq(st(s).get(k)),clr=s=>rq(st(s,'readwrite').clear()),raw=(s,v)=>rq(st(s,'readwrite').put(v));
-async function chg(){const n=(+S.prefs.cambiosDesdeCopia||0)+1;S.prefs.cambiosDesdeCopia=n;await raw('prefs',{k:'cambiosDesdeCopia',v:n})}
-async function put(s,v){const r=await raw(s,v);if(!['hechos','checkEstado','prefs'].includes(s))chg();return r}
-async function del(s,k){await rq(st(s,'readwrite').delete(k));if(s!=='hechos'&&s!=='checkEstado')chg()}
+const SIN=['hechos','checkEstado','prefs'];
+async function chg(){const n=(+S.prefs.cambios||0)+1;S.prefs.cambios=n;await raw('prefs',{k:'cambios',v:n})}
+async function put(s,v){const r=await raw(s,v);if(!SIN.includes(s))chg();return r}
+async function del(s,k){await rq(st(s,'readwrite').delete(k));if(!SIN.includes(s))chg()}
 const setP=async(k,v)=>{S.prefs[k]=v;await raw('prefs',{k,v})};
 const P=(k,d)=>S.prefs[k]??d;
-function openDB(){return new Promise((o,e)=>{const r=indexedDB.open('ocio_deporte',4);
+const openDB=()=>new Promise((o,e)=>{const r=indexedDB.open('ocio_deporte_v41',1);
  r.onupgradeneeded=ev=>{const d=ev.target.result;for(const n in ST)if(!d.objectStoreNames.contains(n))d.createObjectStore(n,ST[n])};
- r.onsuccess=()=>{db=r.result;o()};r.onerror=()=>e(r.error)})}
-
-const TB=[['senderismo','Senderismo','🥾','#059669'],['paseo','Paseo','🚶','#0284c7'],['gimnasio','Gimnasio','🏋️','#7c3aed'],['guitarra','Guitarra','🎸','#be185d'],['ingles','Inglés','🗣️','#0891b2'],['limpieza','Limpieza','🧹','#65a30d'],['otro','Otro','✨','#d97706']];
-const CHK={senderismo:['Agua','Botas','Chubasquero','Comida','Móvil cargado'],gimnasio:['Ropa deporte','Toalla','Candado','Botella agua'],guitarra:['Guitarra','Púas','Afinador','Cuaderno'],ingles:['Cuaderno','Bolígrafo'],paseo:['Calzado cómodo']};
+ r.onsuccess=()=>{db=r.result;o()};r.onerror=()=>e(r.error)});
+const TB=[['senderismo','Senderismo','🥾','#059669',0,1],['paseo','Paseo','🚶','#0284c7',0,1],['gimnasio','Gimnasio','🏋️','#7c3aed'],['guitarra','Guitarra','🎸','#be185d'],['ingles','Inglés','🗣️','#0891b2'],['limpieza','Limpieza','🧹','#65a30d',1],['otro','Otro','✨','#d97706']];
+const CHK={senderismo:['Agua','Botas','Chubasquero','Comida','Móvil cargado'],paseo:['Calzado cómodo','Agua'],gimnasio:['Ropa deporte','Toalla','Candado','Botella agua'],guitarra:['Guitarra','Púas','Afinador','Cuaderno'],ingles:['Cuaderno','Bolígrafo']};
 async function seed(){const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);
  if(!p.seeded&&!(await all('tipos')).length){
-  for(const[i,n,ic,c]of TB)await raw('tipos',{id:i,nombre:n,icono:ic,color:c,visible:1,orden:TB.findIndex(t=>t[0]===i)+1,soloTiempo:i==='limpieza'});
-  let o=0;for(const t in CHK)for(const x of CHK[t])await raw('checklist',{tipo_id:t,seccion:'imprescindible',texto:x,orden:o++});
-  await raw('prefs',{k:'seeded',v:1});}
- for(const t of await all('tipos'))if(t.soloTiempo===undefined){t.soloTiempo=t.id==='limpieza';await raw('tipos',t)}}
+  for(let i=0;i<TB.length;i++){const[id,nombre,icono,color,soloTiempo,ruta]=TB[i];await raw('tipos',{id,nombre,icono,color,visible:1,orden:i+1,soloTiempo:!!soloTiempo,ruta:!!ruta})}
+  for(const t in CHK)for(const x of CHK[t])await raw('checklist',{tipo_id:t,seccion:'imprescindible',texto:x});
+  await raw('prefs',{k:'seeded',v:1})}}
 
-/* ---------- Estado ---------- */
-const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',hp:'mes',reset:true};
-async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);
- Object.assign(S.prefs,p);document.documentElement.dataset.theme=P('theme','dark')}
+/* ---- Estado ---- */
+const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',rr:'mes',desde:'',hasta:'',df:'pend',af:'todo',aq:'',aj:{},reset:true};
+async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);S.prefs=p;S.theme=P('theme','dark');document.documentElement.dataset.theme=S.theme}
 const tipo=id=>S.tipos.find(t=>t.id===id)||{id,nombre:'—',icono:'•',color:'#d97706'};
-const col=t=>t.color&&t.color[0]==='#'?t.color:'#d97706';
-function toast(m,lbl,fn){document.querySelectorAll('.toast').forEach(x=>x.remove());const x=document.createElement('div');x.className='toast';x.innerHTML=`<span>${esc(m)}</span>`;
- if(fn){const b=document.createElement('button');b.className='btn s';b.textContent=lbl;b.onclick=()=>{x.remove();fn()};x.append(b)}
+const act=()=>S.tipos.filter(t=>t.visible&&!t.soloTiempo),firstAct=()=>(act()[0]||S.tipos[0]||{}).id;
+function toast(m,lbl,fn){document.querySelectorAll('.toast').forEach(x=>x.remove());const x=document.createElement('div');x.className='toast';x.textContent=m;
+ if(fn){const b=document.createElement('button');b.className='btn btn-sm';b.style.marginLeft='10px';b.textContent=lbl;b.onclick=()=>{x.remove();fn()};x.append(b)}
  document.body.append(x);setTimeout(()=>x.remove(),fn?6000:2200)}
 async function delUndo(s,k,msg){const o=await get(s,k);if(!o)return;await del(s,k);render();toast(msg,'Deshacer',async()=>{await put(s,o);render()})}
-function modal(h){$('#modal').innerHTML=`<div class="ov"><div class="md">${h}</div></div>`}
-const close=()=>{$('#modal').innerHTML=''};
-const q=n=>{const e=document.querySelector('#modal [name='+n+']');return e?(e.type==='checkbox'?e.checked:e.value):''};
+const modal=h=>{$('#modal-root').innerHTML=`<div class="overlay"><div class="modal">${h}</div></div>`};
+const close=()=>{$('#modal-root').innerHTML=''};
+const q=n=>{const e=document.querySelector('#modal-root [name='+n+']');return e?(e.type==='checkbox'?e.checked:e.value):''};
 const opts=(arr,sel)=>arr.map(([v,l])=>`<option value="${esc(v)}" ${v==sel?'selected':''}>${esc(l)}</option>`).join('');
 const tipoOpts=sel=>opts(S.tipos.filter(t=>t.visible||t.id===sel).map(t=>[t.id,t.icono+' '+t.nombre]),sel);
-const hdr=(t,back)=>`<header class="top">${back?'<button class="btn s" data-a="back">‹</button>':''}<h1>${esc(t)}</h1></header>`;
+const fld=(l,h)=>`<div class="field"><label class="lbl">${l}</label>${h}</div>`;
+const mact=(...b)=>`<div class="modal-actions">${b.join('')}</div>`;
+const B=(a,l,c='',x='')=>`<button class="btn ${c}" data-a="${a}" ${x}>${l}</button>`;
+const topbar=(mid,o={})=>`<header class="topbar">${o.back?'<button class="icon-btn" data-a="back">‹</button>':''}${mid}<div class="topbar-actions">${o.right||''}<button class="icon-btn" data-a="theme">${S.theme==='dark'?'☀️':'🌙'}</button></div></header>`;
+const ttl=t=>`<h1>${esc(t)}</h1>`;
+const ib=(a,l,x='')=>`<button class="icon-btn" data-a="${a}" ${x}>${l}</button>`;
 
-/* ---------- Eventos de un día ---------- */
-function evDia(k,pl,pn){const d=dow(pk(k));
- return[...pl.filter(p=>+p.dia===d).map(p=>({...p,ref:String(p.id),store:'plantilla',fecha:k})),
-  ...pn.filter(p=>p.fecha===k).map(p=>({...p,ref:'p'+p.id,store:'planes',puntual:1,fecha:k}))].sort((a,b)=>mn(a.hora_inicio)-mn(b.hora_inicio))}
-const nombre=e=>{const t=tipo(e.tipo_id);return t.icono+' '+t.nombre+(e.subcategoria?' · '+e.subcategoria:'')+(e.puntual?' 📅':'')};
+/* ---- Eventos ---- */
+function evDia(k,ru,pl){const d=dow(pk(k));
+ return[...ru.filter(p=>+p.dia===d).map(p=>({...p,ref:String(p.id),store:'rutina',fecha:k})),
+  ...pl.filter(p=>p.fecha===k).map(p=>({...p,ref:'p'+p.id,store:'plan',puntual:1,fecha:k}))].sort((a,b)=>mn(a.ini)-mn(b.ini))}
+const nom=e=>{const t=tipo(e.tipo_id);return t.icono+' '+t.nombre+(e.sub?' · '+e.sub:'')+(e.puntual?' 📅':'')};
+function ficha(e,k,HM){const t=tipo(e.tipo_id),h=HM.get(e.ref+'_'+k),solo=t.soloTiempo;
+ return`<div class="fi ${h?'hecha':''} ${solo?'solo':''}" style="border-left-color:${t.color}">
+  ${solo?'':`<div class="box ${h?'on':''}" data-a="marcar" data-ref="${e.ref}" data-k="${k}">${h?'✓':''}</div>`}
+  <div class="grow"><div class="t1">${esc(nom(e))}</div><div class="t2"><b style="color:${t.color}">${e.ini}–${e.fin}</b>${solo?' · tiempo reservado':''}${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>
+  <div class="fa">${solo?'':`<button class="mini" data-a="chk" data-t="${e.tipo_id}" title="Checklist">🎒</button>`}${h&&!solo?`<button class="mini" data-a="datos" data-id="${h.act_id}" title="Datos">＋</button>`:''}<button class="mini" data-a="edit" data-s="${e.store}" data-id="${e.id}" title="Editar">✎</button></div></div>`}
 
-/* ---------- DÍA ---------- */
-async function vDia(){
- const k=S.fecha,[pl,pn,H,deb,ck]=await Promise.all([all('plantilla'),all('planes'),all('hechos'),all('deberes'),0]);
- const HM=new Map(H.filter(h=>!h.omitido).map(h=>[h.id,h])),ev=evDia(k,pl,pn);
- const diff=Math.round((pk(k)-pk(hoyK()))/864e5),rel={0:'Hoy',1:'Mañana','-1':'Ayer'}[diff]||'';
- const pend=deb.filter(d=>d.estado!=='hecho').length;
- const card=e=>{const t=tipo(e.tipo_id),h=HM.get(e.ref+'_'+k),solo=t.soloTiempo;
-  return`<div class="ev ${h?'done':''} ${solo?'solo':''}" style="border-left-color:${col(t)}"><div class="g">
-   <div class="tt">${esc(nombre(e))}</div><div class="hh" style="color:${col(t)}">${e.hora_inicio}–${e.hora_fin}${solo?' · tiempo reservado':''}</div>
-   ${e.nota?`<div class="m" style="white-space:pre-wrap">${esc(e.nota)}</div>`:''}
-   <div class="acts">${solo?'':`<button class="btn s" data-a="chk" data-t="${e.tipo_id}">🎒 Qué llevar</button>`}
-    <button class="btn s" data-a="edit" data-s="${e.store}" data-id="${e.id}">✎ Editar</button>
-    ${h&&!solo?`<button class="btn s" data-a="datos" data-id="${h.actividad_id}">＋ Datos</button>`:''}</div></div>
-   ${solo?'':`<div class="ck ${h?'on':''}" data-a="marcar" data-ref="${e.ref}" data-k="${k}">${h?'✓':''}</div>`}</div>`};
- return hdr('Día')+`<div class="w">${S.ban?`<div class="ban">💾 ${esc(S.ban)}. ¿Hacer copia de seguridad?<div class="row" style="margin-top:8px"><button class="btn s p" data-a="exportar">Exportar ahora</button><button class="btn s" data-a="snooze">Más tarde</button></div></div>`:''}
-  <div class="nav"><button class="btn" data-a="dia" data-n="-1">‹</button><div class="mid">${rel?rel+'<br>':''}<span class="${rel?'m':''}" style="font-size:${rel?14:18}px">${DN[dow(pk(k))-1]} ${fl(k,{day:'numeric',month:'long'})}</span></div><button class="btn" data-a="dia" data-n="1">›</button></div>
-  <div class="chips">${diff!==0?'<button class="chip" data-a="dia" data-n="0">Volver a hoy</button>':''}<label class="chip" style="margin:0">📅 Elegir fecha<input type="date" value="${k}" data-a-ch="fecha" style="position:absolute;opacity:0;width:1px;height:1px"></label></div>
-  ${ev.length?ev.map(card).join(''):'<div class="empty">No hay nada este día.</div>'}
-  <button class="btn f" data-a="nueva" data-f="${k}">＋ Añadir algo a este día</button>
-  ${pend?`<div class="card m" style="margin-top:14px;cursor:pointer" data-a="go" data-v="deb">📌 ${pend} deber${pend>1?'es':''} pendiente${pend>1?'s':''} ›</div>`:''}</div>`}
+/* ---- DÍA ---- */
+async function vDia(){const k=S.fecha,[ru,pl,H]=await Promise.all([all('rutina'),all('plan'),all('hechos')]);
+ const HM=new Map(H.map(h=>[h.id,h])),ev=evDia(k,ru,pl),diff=Math.round((pk(k)-pk(hoyK()))/864e5),rel={0:'Hoy','1':'Mañana','-1':'Ayer'}[diff];
+ const tit=(rel?rel+' · ':'')+fl(k,{weekday:'short',day:'numeric',month:'short'});
+ return topbar(ib('dia','‹','data-n="-1"')+`<label class="nav-title">${tit}<input type="date" value="${k}" data-ch="fecha"></label>`+ib('dia','›','data-n="1"'),{right:diff?ib('dia','↺','data-n="0" title="Hoy"'):''})+
+ `<div class="wrap">${S.ban?bannerCopia():''}${ev.length?ev.map(e=>ficha(e,k,HM)).join(''):'<div class="empty">Nada este día.</div>'}</div>`}
+const bannerCopia=()=>`<div class="banner-copia"><div class="bc-text">💾 ${esc(S.ban)}. ¿Hacer copia de seguridad?</div><div class="bc-actions">${B('exportar','Exportar ahora','btn-warn btn-sm')}${B('snooze','Más tarde','btn-sm')}</div></div>`;
 
-/* ---------- SEMANA ---------- */
+/* ---- SEMANA ---- */
 function layout(evs){const out=[];let cl=null;const cs=[];
- for(const e of evs){if(!cl||mn(e.hora_inicio)>=cl.fin){cl={ev:[],fin:0};cs.push(cl)}cl.ev.push(e);cl.fin=Math.max(cl.fin,mn(e.hora_fin))}
- for(const c of cs){const ln=[];for(const e of c.ev){let l=ln.findIndex(f=>f<=mn(e.hora_inicio));if(l<0){l=ln.length;ln.push(0)}ln[l]=mn(e.hora_fin);out.push({e,l,n:0,c})}c.n=ln.length}
- return out.map(o=>({...o,n:o.c.n}))}
-async function vSem(){
- const[pl,pn,H]=await Promise.all([all('plantilla'),all('planes'),all('hechos')]);
- const HM=new Map(H.filter(h=>!h.omitido).map(h=>[h.id,h])),l0=pk(S.sem),kh=hoyK();
- const dias=[0,1,2,3,4,5,6].map(i=>{const d=add(l0,i),k=dk(d);return{i,d,k,ev:evDia(k,pl,pn)}});
- const vista=P('semVista','lista'),hp=+P('hpx',64),paso=+P('paso',1),l6=add(l0,6);
- const tit=`${l0.getDate()}${l0.getMonth()!==l6.getMonth()?' '+l0.toLocaleDateString('es-ES',{month:'short'}):''} – ${l6.getDate()} ${l6.toLocaleDateString('es-ES',{month:'long'})}`;
- let cuerpo='';
- if(vista==='lista')cuerpo=dias.map(({i,k,ev,d})=>`<div class="drow ${k===kh?'hoy':''}"><div class="dh ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}">${DN[i]} ${d.getDate()}${k===kh?' · hoy':''} ›</div>
-   ${ev.length?ev.map(e=>{const t=tipo(e.tipo_id);return`<div class="mini" style="border-left-color:${col(t)};${HM.has(e.ref+'_'+k)?'opacity:.55':''}" data-a="edit" data-s="${e.store}" data-id="${e.id}"><div class="g"><b>${esc(nombre(e))}</b><div class="m"><b style="color:${col(t)}">${e.hora_inicio}–${e.hora_fin}</b>${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>${HM.has(e.ref+'_'+k)?'✓':''}</div>`}).join(''):'<div class="m">Libre</div>'}</div>`).join('');
+ for(const e of evs){if(!cl||mn(e.ini)>=cl.fin){cl={ev:[],fin:0};cs.push(cl)}cl.ev.push(e);cl.fin=Math.max(cl.fin,mn(e.fin))}
+ for(const c of cs){const ln=[];for(const e of c.ev){let l=ln.findIndex(f=>f<=mn(e.ini));if(l<0){l=ln.length;ln.push(0)}ln[l]=mn(e.fin);out.push({e,l,c})}c.n=ln.length}
+ return out.map(o=>({e:o.e,l:o.l,n:o.c.n}))}
+const ZL=[24,30,38,50,66,90,120];
+async function vSem(){const[ru,pl,H]=await Promise.all([all('rutina'),all('plan'),all('hechos')]);
+ const HM=new Map(H.map(h=>[h.id,h])),l0=pk(S.sem),kh=hoyK(),l6=add(l0,6),vista=P('semVista','lista'),hp=+P('hpx',30);
+ const dias=[0,1,2,3,4,5,6].map(i=>{const d=add(l0,i),k=dk(d);return{i,d,k,ev:evDia(k,ru,pl)}});
+ const tit=`${l0.getDate()}${l0.getMonth()!==l6.getMonth()?' '+l0.toLocaleDateString('es-ES',{month:'short'}):''} – ${l6.getDate()} ${l6.toLocaleDateString('es-ES',{month:'short'})}`;
+ let c='';
+ if(vista==='lista')c=dias.map(({i,d,k,ev})=>`<div class="dh2 ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}">${DN[i]} ${d.getDate()}${k===kh?' · hoy':''}</div>${ev.length?ev.map(e=>ficha(e,k,HM)).join(''):'<div class="t2 muted" style="padding:0 4px 4px">Libre</div>'}`).join('');
  else{let a=mn(P('jornadaIni','07:00')),b=mn(P('jornadaFin','23:00'));
-  for(const e of dias.flatMap(x=>x.ev)){a=Math.min(a,Math.floor(mn(e.hora_inicio)/60)*60);b=Math.max(b,Math.ceil(mn(e.hora_fin)/60)*60)}
-  const nh=Math.ceil((b-a)/60),tot=nh*hp;let hc='';
-  for(let h=0;h<nh;h+=paso)hc+=`<div style="height:${Math.min(paso,nh-h)*hp}px">${pad(Math.floor(a/60)+h)}:00</div>`;
-  let g=`<div class="hd" style="cursor:default">Hora</div>`+dias.map(({i,d,k})=>`<div class="hd ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}">${DS[i]} ${d.getDate()}</div>`).join('')+`<div class="hc" style="height:${tot}px">${hc}</div>`;
-  for(const{k,ev}of dias){let lines='';for(let h=paso;h<=nh;h+=paso)lines+=`<div class="hl" style="top:${h*hp-1}px"></div>`;let es='';
-   for(const{e,l,n}of layout(ev)){const t=tipo(e.tipo_id),w=100/n,top=(mn(e.hora_inicio)-a)/60*hp,h=Math.max(36,(mn(e.hora_fin)-mn(e.hora_inicio))/60*hp-2);
-    es+=`<div class="ge ${HM.has(e.ref+'_'+k)?'done':''}" style="top:${top}px;height:${h}px;left:calc(${l*w}% + 2px);width:calc(${w}% - 4px);background:${col(t)}" data-a="edit" data-s="${e.store}" data-id="${e.id}"><b>${esc(e.hora_inicio)}–${esc(e.hora_fin)}</b>${esc(nombre(e))}${e.nota&&h>60?`<div style="opacity:.9">${esc(e.nota.split('\n')[0])}</div>`:''}</div>`}
-   g+=`<div class="col" style="height:${tot}px">${lines}${es}</div>`}
-  cuerpo=`<div class="row" style="margin-bottom:8px"><span class="m">Tamaño:</span><button class="btn s" data-a="zoom" data-n="-1">－</button><button class="btn s" data-a="zoom" data-n="1">＋</button>
-   <select data-p="paso" style="flex:2">${opts([[1,'Marcas cada 1 h'],[2,'Marcas cada 2 h'],[3,'Marcas cada 3 h']],paso)}</select></div><div class="sc"><div class="gr">${g}</div></div>`}
- return hdr('Semana')+`<div class="w"><div class="nav"><button class="btn" data-a="sem" data-n="-1">‹</button><div class="mid">${tit}</div><button class="btn" data-a="sem" data-n="1">›</button></div>
-  <div class="chips"><button class="chip ${vista==='lista'?'on':''}" data-a="vista" data-v="lista">☰ Lista</button><button class="chip ${vista==='horas'?'on':''}" data-a="vista" data-v="horas">▦ Por horas</button>
-  ${S.sem!==dk(lun(new Date()))?'<button class="chip" data-a="sem" data-n="0">Esta semana</button>':''}</div>${cuerpo}
-  <div class="m" style="text-align:center;margin-top:10px">Toca una actividad para editarla · toca el día para verlo</div></div>`}
+  for(const e of dias.flatMap(x=>x.ev)){a=Math.min(a,Math.floor(mn(e.ini)/60)*60);b=Math.max(b,Math.ceil(mn(e.fin)/60)*60)}
+  const nh=Math.ceil((b-a)/60),tot=nh*hp,cw=Math.round(hp*1.9),fs=Math.max(8.5,Math.min(13,hp/3.6)),gt=`36px repeat(7,minmax(${cw}px,1fr))`,mw=36+7*cw;
+  let hc='',lines='';for(let h=0;h<nh;h++){hc+=`<div class="hour-cell" style="height:${hp}px;font-size:${Math.min(10,fs)}px;padding-right:3px">${pad(Math.floor(a/60)+h)}</div>`;lines+=`<div class="hour-line" style="top:${h*hp}px;height:${hp}px"></div>`}
+  const head=`<div class="plantilla-head" style="grid-template-columns:${gt};min-width:${mw}px"><div class="corner"></div>${dias.map(({i,d,k})=>`<div class="day-head ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}" style="cursor:pointer"><span class="dname">${DS[i]}</span><span class="dnum">${d.getDate()}</span></div>`).join('')}</div>`;
+  let body=`<div class="plantilla-body" style="grid-template-columns:${gt};min-width:${mw}px"><div class="hours-col">${hc}</div>`;
+  for(const{k,ev}of dias){let es='';for(const{e,l,n}of layout(ev)){const t=tipo(e.tipo_id),w=100/n,top=(mn(e.ini)-a)/60*hp,h=Math.max(14,(mn(e.fin)-mn(e.ini))/60*hp-1);
+    es+=`<div class="evento-plantilla ${HM.has(e.ref+'_'+k)?'hecha':''}" data-a="edit" data-s="${e.store}" data-id="${e.id}" style="top:${top}px;height:${h}px;left:calc(${l*w}% + 1px);width:calc(${w}% - 2px);background:${t.color};font-size:${fs}px;padding:2px 3px"><div class="ev-title">${t.icono} ${esc(t.nombre)}</div>${h>fs*2.6?`<div style="font-size:${fs-1}px;opacity:.9">${e.ini}–${e.fin}</div>`:''}${e.sub&&h>fs*3.8?`<div class="ev-nota" style="font-size:${fs-1}px">${esc(e.sub)}</div>`:''}</div>`}
+   body+=`<div class="day-body" style="height:${tot}px">${lines}${es}</div>`}
+  c=`<div class="plantilla-container">${head}${body}</div></div>`}
+ const cur=S.sem===dk(lun(new Date()));
+ return topbar(ib('sem','‹','data-n="-1"')+`<div class="nav-title" data-a="sem" data-n="0">${tit}</div>`+ib('sem','›','data-n="1"'),{right:(cur?'':ib('sem','↺','data-n="0"'))+(vista==='horas'?ib('zoom','−','data-n="-1"')+ib('zoom','+','data-n="1"'):'')+ib('vista',vista==='lista'?'▦':'☰')})+`<div class="wrap">${c}</div>`}
 
-/* ---------- Añadir / editar actividad ---------- */
-function evModal(e){const once=e.store==='planes',subs=null;
- modal(`<h2>${e.id?'Editar':'Nueva'} actividad</h2>
- <label>Tipo</label><select name="tipo">${tipoOpts(e.tipo_id)}</select>
- <label>¿Cuándo?</label><select name="modo">${opts([['plantilla','🔁 Todas las semanas (rutina)'],['planes','📅 Solo un día concreto']],e.store)}</select>
- <div id="fd" ${once?'hidden':''}><label>Día de la semana</label><select name="dia">${opts(DN.map((n,i)=>[i+1,n]),e.dia)}</select></div>
- <div id="ff" ${once?'':'hidden'}><label>Fecha</label><input type="date" name="fecha" value="${esc(e.fecha||hoyK())}"></div>
- <div class="row"><div><label>Desde</label><input type="time" name="ini" value="${esc(e.hora_inicio)}"></div><div><label>Hasta</label><input type="time" name="fin" value="${esc(e.hora_fin)}"></div></div>
- <label>Detalle (opcional)</label><input name="sub" value="${esc(e.subcategoria||'')}" placeholder="Ej: Spinning, Clase, Casa">
- <label>Nota (opcional)</label><textarea name="nota" placeholder="Lugar, profesor…">${esc(e.nota||'')}</textarea>
- <div class="ma"><button class="btn" data-a="close">Cancelar</button>${e.id?'<button class="btn d" data-a="evdel">Borrar</button>':''}<button class="btn p" data-a="evsave">Guardar</button></div>`);
- S.ev=e}
+/* ---- Actividad (rutina / un día) ---- */
+function evModal(e){const once=e.store==='plan';
+ modal(`<h2>${e.id?'Editar':'Nueva'} actividad</h2>${fld('Tipo',`<select class="input" name="tipo">${tipoOpts(e.tipo_id)}</select>`)}
+ ${fld('¿Cuándo?',`<select class="input" name="modo">${opts([['rutina','🔁 Todas las semanas'],['plan','📅 Solo un día']],e.store)}</select>`)}
+ <div id="fd" ${once?'hidden':''}>${fld('Día de la semana',`<select class="input" name="dia">${opts(DN.map((n,i)=>[i+1,n]),e.dia)}</select>`)}</div>
+ <div id="ff" ${once?'':'hidden'}>${fld('Fecha',`<input class="input" type="date" name="fecha" value="${esc(e.fecha||hoyK())}">`)}</div>
+ <div class="row">${fld('Desde',`<input class="input" type="time" name="ini" value="${esc(e.ini)}">`)}${fld('Hasta',`<input class="input" type="time" name="fin" value="${esc(e.fin)}">`)}</div>
+ ${fld('Detalle (opcional)',`<input class="input" name="sub" value="${esc(e.sub||'')}" placeholder="Ej: Pilates, Asociación A">`)}
+ ${fld('Nota (opcional)',`<textarea class="input" name="nota">${esc(e.nota||'')}</textarea>`)}
+ ${mact(B('close','Cancelar'),e.id?B('evdel','Borrar','btn-danger'):'',B('evsave','Guardar','btn-primary'))}`);S.ev=e}
 async function evSave(){const e=S.ev,store=q('modo'),ini=q('ini'),fin=q('fin');
  if(!ini||!fin||mn(fin)<=mn(ini))return toast('La hora de fin debe ser posterior');
- if(store==='planes'&&!q('fecha'))return toast('Falta la fecha');
- const o={tipo_id:q('tipo'),hora_inicio:ini,hora_fin:fin,subcategoria:q('sub').trim(),nota:q('nota').trim()};
- if(store==='planes')o.fecha=q('fecha');else o.dia=+q('dia');
+ if(store==='plan'&&!q('fecha'))return toast('Falta la fecha');
+ const o={tipo_id:q('tipo'),ini,fin,sub:q('sub').trim(),nota:q('nota').trim()};
+ if(store==='plan')o.fecha=q('fecha');else o.dia=+q('dia');
  if(e.id&&e.store===store)o.id=e.id;else if(e.id)await del(e.store,e.id);
- await put(store,o);close();toast('Guardado');
- if(store==='planes'){S.fecha=o.fecha}render()}
+ await put(store,o);close();toast('Guardado');if(store==='plan')S.fecha=o.fecha;render()}
+const nuevoEv=f=>({id:null,store:f?'plan':'rutina',dia:dow(f?pk(f):new Date()),fecha:f||hoyK(),tipo_id:firstAct(),ini:'10:00',fin:'11:00'});
 
-/* ---------- Marcar hecho (se puede desmarcar tocando otra vez) ---------- */
+/* ---- Marcar hecho (tocar otra vez = desmarcar) ---- */
 const busy=new Set();
 async function marcar(ref,k){const id=ref+'_'+k;if(busy.has(id))return;busy.add(id);
  try{const ex=await get('hechos',id);
-  if(ex&&!ex.omitido){await del('hechos',id);if(ex.actividad_id)await del('actividades',ex.actividad_id);toast('Desmarcada')}
-  else{if(ex)await del('hechos',id);const esP=ref[0]==='p',p=esP?await get('planes',+ref.slice(1)):await get('plantilla',+ref);if(!p)return;
-   const aid=await put('actividades',{tipo_id:p.tipo_id,fecha:k,subcategoria:p.subcategoria||'',duracion_min:mn(p.hora_fin)-mn(p.hora_inicio),hora_inicio:p.hora_inicio,hora_fin:p.hora_fin,notas:p.nota||'',origen:esP?'puntual':'plantilla'});
-   await raw('hechos',{id,plantilla_id:ref,fecha:k,actividad_id:aid});toast('¡Hecho! Toca otra vez para desmarcar')}
+  if(ex){await del('hechos',id);if(ex.act_id)await del('actividades',ex.act_id);toast('Desmarcada')}
+  else{const esP=ref[0]==='p',p=esP?await get('plan',+ref.slice(1)):await get('rutina',+ref);if(!p)return;
+   const aid=await put('actividades',{tipo_id:p.tipo_id,fecha:k,sub:p.sub||'',min:mn(p.fin)-mn(p.ini),nota:p.nota||''});
+   await raw('hechos',{id,fecha:k,act_id:aid});toast('¡Hecho!')}
  }finally{busy.delete(id)}render()}
 
-/* ---------- Datos de una actividad hecha / registrar ---------- */
-function datosModal(a){S.act=a;
- modal(`<h2>${a.id?'Datos de la actividad':'Registrar algo que ya hice'}</h2>
- ${a.id?`<div class="m">${esc(nombre(a))} · ${fl(a.fecha,{day:'numeric',month:'short',year:'numeric'})}</div>`:`<label>Tipo</label><select name="tipo">${tipoOpts(a.tipo_id)}</select><label>Fecha</label><input type="date" name="fecha" value="${a.fecha}">`}
- <div class="row"><div><label>Minutos</label><input name="dur" type="number" inputmode="numeric" value="${esc(a.duracion_min??'')}"></div><div><label>Km</label><input name="km" type="number" inputmode="decimal" step="0.01" value="${esc(a.distancia_km??'')}"></div><div><label>Desnivel m</label><input name="desn" type="number" inputmode="numeric" value="${esc(a.desnivel_m??'')}"></div></div>
- <label>Notas</label><textarea name="notas">${esc(a.notas||'')}</textarea>
- <div class="ma"><button class="btn" data-a="close">Cancelar</button>${a.id?'<button class="btn d" data-a="actdel">Borrar</button>':''}<button class="btn p" data-a="actsave">Guardar</button></div>`)}
-async function actSave(){const a=S.act,n=v=>v===''?null:num(v);
- const o={...a,duracion_min:n(q('dur')),distancia_km:n(q('km')),desnivel_m:n(q('desn')),notas:q('notas').trim()};
+/* ---- Datos de actividad hecha ---- */
+function ruteFields(a,t){return`<div id="rf" ${t.ruta?'':'hidden'}>${fld('Nombre de la ruta',`<input class="input" name="ruta" value="${esc(a.ruta||'')}">`)}${fld('Enlace Wikiloc',`<input class="input" name="wiki" inputmode="url" placeholder="https://…" value="${esc(a.wikiloc||'')}">`)}
+ <div class="row">${fld('Km',`<input class="input" name="km" type="number" step="0.01" inputmode="decimal" value="${esc(a.km??'')}">`)}${fld('Desnivel (m)',`<input class="input" name="desn" type="number" inputmode="numeric" value="${esc(a.desn??'')}">`)}</div></div>`}
+function datosModal(a){S.act=a;const t=tipo(a.tipo_id);
+ modal(`<h2>${a.id?'Datos de la actividad':'Registrar actividad hecha'}</h2>
+ ${a.id?`<div class="muted" style="margin-bottom:10px">${esc(nom(a))} · ${fc(a.fecha)}</div>`:fld('Tipo',`<select class="input" name="tipo">${opts(act().map(t=>[t.id,t.icono+' '+t.nombre]),a.tipo_id)}</select>`)+fld('Fecha',`<input class="input" type="date" name="fecha" value="${a.fecha}">`)}
+ ${fld('Minutos',`<input class="input" name="min" type="number" inputmode="numeric" value="${esc(a.min??'')}">`)}${ruteFields(a,t)}
+ ${fld('Notas',`<textarea class="input" name="nota" placeholder="Qué se ha hecho, aprendido…">${esc(a.nota||'')}</textarea>`)}
+ ${mact(B('close','Cancelar'),a.id?B('actdel','Borrar','btn-danger'):'',B('actsave','Guardar','btn-primary'))}`)}
+async function actSave(){const a=S.act,n=v=>v===''?null:num(v);let w=q('wiki').trim();if(w&&!/^https?:/i.test(w))w='https://'+w;
+ const o={...a,min:n(q('min')),nota:q('nota').trim(),ruta:q('ruta').trim(),wikiloc:w,km:n(q('km')),desn:n(q('desn'))};
  if(!a.id){o.tipo_id=q('tipo');o.fecha=q('fecha');if(!o.fecha)return toast('Falta la fecha')}
  await put('actividades',o);close();toast('Guardado');render()}
 
-/* ---------- Qué llevar ---------- */
-async function vChk(){const tv=S.tipos.filter(t=>t.visible&&!t.soloTiempo);if(!tv.some(t=>t.id===S.chkT))S.chkT=tv[0]?.id;
- const it=(await all('checklist')).filter(i=>i.tipo_id===S.chkT).sort((a,b)=>(a.orden||0)-(b.orden||0)),est={};(await all('checkEstado')).forEach(e=>est[e.id]=e.marcado);
- const bl=(s,tt)=>{const l=it.filter(i=>i.seccion===s);return`<div class="card"><div class="h3" style="margin-top:0">${tt} (${l.filter(i=>est[i.id]).length}/${l.length})</div>
-  ${l.map(i=>`<div class="row" style="margin-bottom:6px"><div class="ck ${est[i.id]?'on':''}" style="width:40px;height:40px;font-size:20px" data-a="ctog" data-id="${i.id}">${est[i.id]?'✓':''}</div><div class="g" style="${est[i.id]?'text-decoration:line-through;opacity:.6':''}">${esc(i.texto)}</div><button class="btn s" style="flex:none" data-a="cdel" data-id="${i.id}">✕</button></div>`).join('')||'<div class="m">Vacío</div>'}
-  <div class="row" style="margin-top:8px"><input id="n_${s}" placeholder="Añadir…"><button class="btn s" style="flex:none" data-a="cadd" data-s="${s}">＋</button></div></div>`};
- return hdr('Qué llevar',1)+`<div class="w"><div class="chips">${tv.map(t=>`<button class="chip ${t.id===S.chkT?'on':''}" data-a="ctipo" data-id="${t.id}">${t.icono} ${esc(t.nombre)}</button>`).join('')}</div>
-  ${bl('imprescindible','Imprescindible')}${bl('opcional','Opcional')}<button class="btn f" data-a="creset">↺ Desmarcar todo</button></div>`}
+/* ---- DEBERES ---- */
+async function vDeb(){const d=await all('deberes'),f=S.df;
+ let l=d.filter(x=>f==='todos'||(f==='hechos')===!!x.hecho);
+ l=f==='hechos'?l.sort((a,b)=>(b.hecho_en||'').localeCompare(a.hecho_en||'')):l.sort((a,b)=>(a.fecha||'9').localeCompare(b.fecha||'9'));
+ const it=x=>{const t=tipo(x.tipo_id);return`<div class="fi ${x.hecho?'hecha':''}" style="border-left-color:${t.color}"><div class="box ${x.hecho?'on':''}" data-a="dtog" data-id="${x.id}">${x.hecho?'✓':''}</div>
+  <div class="grow"><div class="t1">${esc(x.titulo)}</div><div class="t2">${t.icono} ${esc(t.nombre)}${x.fecha?' · para '+fcs(x.fecha):''}</div>${x.desc?`<div class="t2" style="white-space:pre-wrap">${esc(x.desc)}</div>`:''}</div>
+  <div class="fa"><button class="mini" data-a="dedit" data-id="${x.id}">✎</button></div></div>`};
+ return topbar(ttl('Deberes'))+`<div class="wrap"><div class="chips" style="margin-bottom:10px">${[['pend','Pendientes'],['hechos','Hechos'],['todos','Todos']].map(([k,t])=>`<button class="chip ${f===k?'sel':''}" data-a="df" data-v="${k}">${t}</button>`).join('')}<button class="chip" style="margin-left:auto" data-a="dnuevo">＋ Deber</button></div>
+ ${l.map(it).join('')||'<div class="empty">Nada por aquí.</div>'}</div>`}
+function dModal(d){S.deb=d;modal(`<h2>${d.id?'Editar':'Nuevo'} deber</h2>${fld('¿Qué hay que hacer?',`<input class="input" name="tit" value="${esc(d.titulo||'')}">`)}
+ ${fld('Categoría',`<select class="input" name="tipo">${tipoOpts(d.tipo_id)}</select>`)}${fld('Para el día (opcional)',`<input class="input" type="date" name="fecha" value="${esc(d.fecha||'')}">`)}
+ ${fld('Detalles (opcional)',`<textarea class="input" name="desc">${esc(d.desc||'')}</textarea>`)}
+ ${mact(B('close','Cancelar'),d.id?B('ddel','Borrar','btn-danger'):'',B('dsave','Guardar','btn-primary'))}`)}
+async function dSave(){const t=q('tit').trim();if(!t)return toast('Falta el título');
+ await put('deberes',{...S.deb,titulo:t,tipo_id:q('tipo'),fecha:q('fecha')||null,desc:q('desc').trim(),hecho:!!S.deb.hecho});close();S.df=S.df==='hechos'?'pend':S.df;render()}
 
-/* ---------- Historial (antes Resumen + Histórico) ---------- */
-async function vHis(){const h=new Date(),hp=S.hp;
- const ini=hp==='semana'?dk(lun(h)):hp==='mes'?dk(new Date(h.getFullYear(),h.getMonth(),1)):hp==='año'?h.getFullYear()+'-01-01':'0000';
- const ac=(await all('actividades')).filter(a=>a.fecha>=ini).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id),tot={};
- for(const a of ac){const x=tot[a.tipo_id]=tot[a.tipo_id]||{n:0,km:0,d:0};x.n++;x.km+=num(a.distancia_km);x.d+=num(a.desnivel_m)}
- return hdr('Lo que he hecho',1)+`<div class="w"><div class="chips">${[['semana','Esta semana'],['mes','Este mes'],['año','Este año'],['todo','Todo']].map(([k,l])=>`<button class="chip ${hp===k?'on':''}" data-a="hp" data-v="${k}">${l}</button>`).join('')}</div>
- <button class="btn f" data-a="registrar" style="margin-bottom:12px">＋ Registrar algo que ya hice</button>
- ${Object.keys(tot).length?`<div class="card">${Object.entries(tot).map(([t,x])=>`<div>${esc(tipo(t).icono+' '+tipo(t).nombre)}: <b>${x.n}</b> ${x.n>1?'veces':'vez'}${x.km?' · '+fmt(x.km)+' km':''}${x.d?' · '+fmt(x.d)+' m':''}</div>`).join('')}</div>`:''}
- ${ac.map(a=>{const p=[];if(a.hora_inicio)p.push(a.hora_inicio+'–'+a.hora_fin);else if(a.duracion_min)p.push(a.duracion_min+' min');if(a.distancia_km)p.push(fmt(a.distancia_km)+' km');if(a.desnivel_m)p.push(fmt(a.desnivel_m)+' m↑');if(a.notas)p.push(a.notas.split('\n')[0]);
-  return`<div class="card" style="cursor:pointer" data-a="datos" data-id="${a.id}"><b>${esc(nombre(a))}</b><div class="m">${fl(a.fecha,{weekday:'short',day:'numeric',month:'short'})}${p.length?' · '+esc(p.join(' · ')):''}</div></div>`}).join('')||'<div class="empty">Nada registrado en este periodo.</div>'}</div>`}
+/* ---- APRENDIDO (música) ---- */
+async function vApr(){const l=(await all('aprendido')).filter(x=>(S.af==='todo'||x.cat===S.af)&&(!S.aq||(x.titulo+' '+(x.notas||'')).toLowerCase().includes(S.aq.toLowerCase()))).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id);
+ return topbar(ttl('🎸 Aprendido'),{back:1})+`<div class="wrap"><div class="chips" style="margin-bottom:8px">${[['todo','Todo'],...APR].map(([k,t])=>`<button class="chip ${S.af===k?'sel':''}" data-a="af" data-v="${k}">${t}</button>`).join('')}</div>
+ <div class="row" style="margin-bottom:10px"><input class="input" id="aq" placeholder="Buscar…" value="${esc(S.aq)}">${B('anueva','＋ Añadir','btn-primary btn-sm','style="flex:0 0 auto"')}</div>
+ ${l.map(x=>`<div class="fi" style="border-left-color:var(--primary);align-items:flex-start"><div class="grow"><div class="t1">${esc(x.titulo)}</div><div class="t2">${esc(APR.find(a=>a[0]===x.cat)?.[1]||'')} · ${fc(x.fecha)}</div>${x.notas?`<div class="t2" style="white-space:pre-wrap;margin-top:3px">${esc(x.notas)}</div>`:''}${x.enlace?`<div class="t2"><a href="${esc(x.enlace)}" target="_blank" rel="noopener" style="color:var(--accent)">🔗 Enlace</a></div>`:''}</div><div class="fa"><button class="mini" data-a="aedit" data-id="${x.id}">✎</button></div></div>`).join('')||'<div class="empty">Aún no hay nada apuntado.</div>'}</div>`}
+function aModal(a){S.apr=a;modal(`<h2>${a.id?'Editar':'Apuntar algo aprendido'}</h2>${fld('Título',`<input class="input" name="tit" value="${esc(a.titulo||'')}" placeholder="Ej: Escala pentatónica de La menor">`)}
+ <div class="row">${fld('Tipo',`<select class="input" name="cat">${opts(APR,a.cat||'cancion')}</select>`)}${fld('Fecha',`<input class="input" type="date" name="fecha" value="${esc(a.fecha||hoyK())}">`)}</div>
+ ${fld('Notas',`<textarea class="input" name="notas" style="min-height:140px" placeholder="Digitación, compases, trucos…">${esc(a.notas||'')}</textarea>`)}
+ ${fld('Enlace (opcional)',`<input class="input" name="enl" inputmode="url" value="${esc(a.enlace||'')}" placeholder="https://…">`)}
+ ${mact(B('close','Cancelar'),a.id?B('adel','Borrar','btn-danger'):'',B('asave','Guardar','btn-primary'))}`)}
+async function aSave(){const t=q('tit').trim();if(!t)return toast('Falta el título');let e=q('enl').trim();if(e&&!/^https?:/i.test(e))e='https://'+e;
+ await put('aprendido',{...S.apr,titulo:t,cat:q('cat'),fecha:q('fecha')||hoyK(),notas:q('notas').trim(),enlace:e});close();render()}
 
-/* ---------- Deberes (lista aparte y sencilla) ---------- */
-async function vDeb(){const d=await all('deberes'),pe=d.filter(x=>x.estado!=='hecho').sort((a,b)=>(a.fecha_limite||'9').localeCompare(b.fecha_limite||'9')),he=d.filter(x=>x.estado==='hecho').sort((a,b)=>(b.hecho_en||'').localeCompare(a.hecho_en||''));
- const it=x=>{const t=tipo(x.tipo_id),venc=x.estado!=='hecho'&&x.fecha_limite&&x.fecha_limite<hoyK();
-  return`<div class="card row" style="${x.estado==='hecho'?'opacity:.6':''}"><div class="ck ${x.estado==='hecho'?'on':''}" style="width:44px;height:44px;font-size:22px;flex:none" data-a="dtog" data-id="${x.id}">${x.estado==='hecho'?'✓':''}</div>
-  <div class="g" data-a="dedit" data-id="${x.id}" style="cursor:pointer"><div style="font-weight:700;${x.estado==='hecho'?'text-decoration:line-through':''}">${esc(x.titulo)}</div><div class="m">${t.icono} ${esc(t.nombre)}${x.fecha_limite?` · <span style="${venc?'color:var(--bad);font-weight:700':''}">${fl(x.fecha_limite,{day:'numeric',month:'short'})}${venc?' (vencido)':''}</span>`:''}</div></div></div>`};
- return hdr('Deberes',1)+`<div class="w"><div class="m" style="margin-bottom:10px">Tareas que te mandan (inglés, guitarra…). Toca el cuadro para marcarlo o desmarcarlo.</div><button class="btn p f" data-a="dnuevo" style="margin-bottom:12px">＋ Nuevo deber</button>
- ${pe.map(it).join('')||'<div class="empty">Sin deberes pendientes 🎉</div>'}${he.length?`<div class="h3">Hechos</div>${he.slice(0,15).map(it).join('')}`:''}</div>`}
-function dModal(d){S.deb=d;modal(`<h2>${d.id?'Editar':'Nuevo'} deber</h2><label>¿Qué hay que hacer?</label><input name="tit" value="${esc(d.titulo||'')}">
- <label>Categoría</label><select name="tipo">${tipoOpts(d.tipo_id)}</select><label>Para el día (opcional)</label><input type="date" name="fecha" value="${esc(d.fecha_limite||'')}">
- <label>Detalles (opcional)</label><textarea name="desc">${esc(d.descripcion||'')}</textarea>
- <div class="ma"><button class="btn" data-a="close">Cancelar</button>${d.id?'<button class="btn d" data-a="ddel">Borrar</button>':''}<button class="btn p" data-a="dsave">Guardar</button></div>`)}
-async function dSave(){const t=q('tit').trim();if(!t)return toast('Falta el título');const o={...S.deb,titulo:t,tipo_id:q('tipo'),fecha_limite:q('fecha')||null,descripcion:q('desc').trim(),estado:S.deb.estado||'pendiente',prioridad:S.deb.prioridad||'media'};
- await put('deberes',o);close();render()}
+/* ---- CHECKLIST ---- */
+async function vChk(){const tv=act();if(!tv.some(t=>t.id===S.chkT))S.chkT=(tv[0]||{}).id;
+ const it=(await all('checklist')).filter(i=>i.tipo_id===S.chkT),est={};(await all('checkEstado')).forEach(e=>est[e.id]=e.marcado);
+ const bl=(s,tt)=>{const l=it.filter(i=>i.seccion===s);return`<div class="sec-title">${tt} · ${l.filter(i=>est[i.id]).length}/${l.length}</div>
+  ${l.map(i=>`<div class="chk-compact ${est[i.id]?'on':''}"><div class="box" style="width:18px;height:18px;font-size:11px" data-a="ctog" data-id="${i.id}">${est[i.id]?'✓':''}</div><span class="txt" data-a="ctog" data-id="${i.id}">${esc(i.texto)}</span><button class="mini" data-a="cdel" data-id="${i.id}">✕</button></div>`).join('')}
+  <div class="row" style="margin-top:6px"><input class="input" id="n_${s}" placeholder="Añadir…" style="padding:7px 10px">${B('cadd','＋','btn-sm','data-s="'+s+'" style="flex:0 0 auto"')}</div>`};
+ return topbar(ttl('🎒 Checklist'),{back:1})+`<div class="wrap"><div class="chips">${tv.map(t=>`<button class="chip ${t.id===S.chkT?'sel':''}" data-a="ctipo" data-id="${t.id}">${t.icono} ${esc(t.nombre)}</button>`).join('')}</div>${bl('imprescindible','Imprescindible')}${bl('opcional','Opcional')}${B('creset','↺ Desmarcar todo','btn-sm btn-block','style="margin-top:12px"')}</div>`}
 
-/* ---------- Peso, Ideas ---------- */
-async function vPeso(){const p=(await all('peso')).sort((a,b)=>b.fecha.localeCompare(a.fecha));
- return hdr('Peso',1)+`<div class="w"><div class="card"><div class="row"><div><label>Fecha</label><input type="date" id="pf" value="${hoyK()}"></div><div><label>Kg</label><input type="number" step="0.1" inputmode="decimal" id="pk"></div></div><button class="btn p f" style="margin-top:10px" data-a="psave">Guardar</button></div>
- ${p.map(x=>`<div class="card row"><div class="g"><b>${fmt(x.kg)} kg</b><div class="m">${fl(x.fecha,{day:'numeric',month:'short',year:'numeric'})}</div></div><button class="btn s" style="flex:none" data-a="pdel" data-id="${x.id}">✕</button></div>`).join('')||'<div class="empty">Sin registros.</div>'}</div>`}
+/* ---- RESUMEN ---- */
+const RANGOS=[['semana','Esta semana'],['2sem','2 semanas'],['mes','Este mes'],['mespasado','Mes pasado'],['trim','Trimestre'],['año','Año'],['todo','Todo'],['pers','Personalizar']];
+function rango(){const h=new Date(),r=S.rr;
+ if(r==='pers')return[S.desde||dk(add(h,-29)),S.hasta||dk(h)];
+ if(r==='semana')return[dk(lun(h)),dk(h)];if(r==='2sem')return[dk(add(h,-13)),dk(h)];
+ if(r==='mes')return[dk(new Date(h.getFullYear(),h.getMonth(),1)),dk(h)];
+ if(r==='mespasado')return[dk(new Date(h.getFullYear(),h.getMonth()-1,1)),dk(new Date(h.getFullYear(),h.getMonth(),0))];
+ if(r==='trim')return[dk(new Date(h.getFullYear(),h.getMonth()-3,h.getDate())),dk(h)];
+ if(r==='año')return[h.getFullYear()+'-01-01',dk(h)];return['0000-00-00','9999-99-99']}
+async function vRes(){const[d,h]=rango(),ac=(await all('actividades')).filter(a=>a.fecha>=d&&a.fecha<=h);
+ const tipos=S.tipos.filter(t=>!t.soloTiempo&&(t.visible||ac.some(a=>a.tipo_id===t.id)));
+ const cards=tipos.map(t=>{const l=ac.filter(a=>a.tipo_id===t.id),m=l.reduce((s,a)=>s+num(a.min),0),km=l.reduce((s,a)=>s+num(a.km),0),dn=l.reduce((s,a)=>s+num(a.desn),0);
+  const mb=(lb,v)=>`<div class="m-box"><span class="m-lbl">${lb}</span><span class="m-val">${v}</span></div>`;
+  return`<div class="card res-card"><div class="res-head">${t.icono} ${esc(t.nombre)}</div><div class="res-metrics">${mb('Sesiones',l.length)}${m?mb('Tiempo',fmt(m/60)+' h'):''}${km?mb('Distancia',fmt(km)+' km'):''}${dn?mb('Desnivel',fmt(dn,0)+' m'):''}</div></div>`}).join('');
+ const wk=S.tipos.filter(t=>t.ruta).map(t=>{const l=ac.filter(a=>a.tipo_id===t.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return`<div class="sec-title">${t.icono} ${esc(t.nombre)}</div>${l.length?`<div class="card" style="padding:6px;overflow-x:auto"><table class="tb"><tr><th>Fecha</th><th>Ruta</th><th>Km</th><th>Desn.</th><th>Wikiloc</th></tr>${l.map(a=>`<tr data-a="datos" data-id="${a.id}"><td>${fc(a.fecha)}</td><td>${esc(a.ruta||'—')}</td><td>${a.km?fmt(a.km):''}</td><td>${a.desn?fmt(a.desn,0):''}</td><td>${a.wikiloc?`<a href="${esc(a.wikiloc)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗</a>`:''}</td></tr>`).join('')}</table></div>`:'<div class="empty">Sin rutas en este periodo.</div>'}`}).join('');
+ return topbar(ttl('📊 Resumen'),{back:1})+`<div class="wrap"><div class="chips" style="margin-bottom:10px">${RANGOS.map(([k,l])=>`<button class="chip ${S.rr===k?'sel':''}" data-a="rr" data-v="${k}">${l}</button>`).join('')}</div>
+ ${S.rr==='pers'?`<div class="card"><div class="row">${fld('Desde',`<input class="input" type="date" data-ch="desde" value="${esc(S.desde)}">`)}${fld('Hasta',`<input class="input" type="date" data-ch="hasta" value="${esc(S.hasta)}">`)}</div></div>`:''}
+ ${S.rr!=='todo'?`<div class="muted center" style="font-size:12px;margin-bottom:10px">Del ${fc(d)} al ${fc(h)}</div>`:''}${cards||'<div class="empty">Sin categorías.</div>'}
+ <div class="sec-title" style="font-size:13px;margin-top:20px">Wikiloc · rutas realizadas</div>${wk}</div>`}
+
+/* ---- PESO ---- */
+async function vPeso(){const e=(await all('peso')).sort((a,b)=>a.fecha.localeCompare(b.fecha));S.pc=e;
+ return topbar(ttl('⚖️ Peso'),{back:1})+`<div class="wrap"><div class="card"><div class="sec-title" style="margin-top:0">Registro de peso</div><div class="row">${fld('Fecha',`<input class="input" type="date" id="pf" value="${hoyK()}">`)}${fld('Peso (kg)',`<input class="input" type="number" step="0.1" inputmode="decimal" id="pk">`)}</div>${B('psave','Guardar','btn-primary btn-block')}</div>
+ <div class="card"><div class="sec-title" style="margin-top:0">Evolución</div>${e.length>=2?'<canvas id="pc" style="width:100%;height:160px;display:block"></canvas>':'<div class="empty">2 datos mínimo.</div>'}</div>
+ <div class="sec-title">Historial</div>${e.slice().reverse().map(x=>`<div class="item"><div class="ico">⚖️</div><div class="grow"><div class="t1">${fmt(x.kg)} kg</div><div class="t2">${fc(x.fecha)} ${pk(x.fecha).getFullYear()}</div></div><button class="mini" data-a="pdel" data-id="${x.id}">✕</button></div>`).join('')||'<div class="empty">Sin registros.</div>'}</div>`}
+function drawPeso(){const cv=document.getElementById('pc');if(!cv||S.pc.length<2)return;const D=S.pc,dpr=devicePixelRatio||1,w=cv.clientWidth||300,h=160;
+ cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+ const kg=D.map(d=>d.kg),mi=Math.min(...kg)-.5,ma=Math.max(...kg)+.5,px=35,py=20,X=i=>px+(w-px*2)*(i/(D.length-1)),Y=v=>h-py-(h-py*2)*((v-mi)/((ma-mi)||1)),dk_=S.theme==='dark';
+ c.strokeStyle=dk_?'#1e2c46':'#cbd5e1';for(let i=0;i<=3;i++){const y=py+(h-py*2)*(i/3);c.beginPath();c.moveTo(px,y);c.lineTo(w-px,y);c.stroke()}
+ c.fillStyle=dk_?'#93a3bd':'#475569';c.font='10px system-ui';c.textAlign='right';c.fillText(fmt(ma),px-6,py+3);c.fillText(fmt(mi),px-6,h-py+3);
+ c.strokeStyle='#2563eb';c.lineWidth=2.5;c.beginPath();D.forEach((d,i)=>i?c.lineTo(X(i),Y(d.kg)):c.moveTo(X(i),Y(d.kg)));c.stroke();
+ c.fillStyle='#0284c7';D.forEach((d,i)=>{c.beginPath();c.arc(X(i),Y(d.kg),3.5,0,7);c.fill()})}
+
+/* ---- IDEAS ---- */
 async function vIdeas(){const i=(await all('ideas')).sort((a,b)=>b.id-a.id);
- return hdr('Ideas de mejora',1)+`<div class="w"><div class="card"><label style="margin-top:0">Nueva idea</label><textarea id="ni" placeholder="Escribe aquí (admite varias líneas)"></textarea><button class="btn p f" style="margin-top:10px" data-a="isave">Guardar</button></div>
- ${i.map(x=>`<div class="card" style="${x.implementado?'opacity:.6':''}"><div style="white-space:pre-wrap">${esc(x.texto)}</div><div class="row" style="margin-top:8px"><span class="m">${x.fecha?fl(x.fecha,{day:'numeric',month:'short'}):''}${x.implementado?' · ✓ implementada':''}</span><button class="btn s" data-a="itog" data-id="${x.id}">${x.implementado?'↺ Reabrir':'✓ Implementada'}</button><button class="btn s" data-a="iedit" data-id="${x.id}">✎</button><button class="btn s d" data-a="idel" data-id="${x.id}">🗑</button></div></div>`).join('')||'<div class="empty">Aún no hay ideas.</div>'}</div>`}
+ return topbar(ttl('💡 Ideas de mejora'),{back:1})+`<div class="wrap"><div class="card"><textarea class="input" id="ni" placeholder="Escribe una idea (admite varias líneas)"></textarea>${B('isave','Guardar','btn-primary btn-block','style="margin-top:8px"')}</div>
+ ${i.map(x=>`<div class="card" style="${x.hecha?'opacity:.6':''}"><div style="white-space:pre-wrap">${esc(x.texto)}</div><div class="row" style="margin-top:8px;align-items:center"><span class="muted" style="font-size:12px">${x.fecha?fc(x.fecha):''}${x.hecha?' · ✓ implementada':''}</span>${B('itog',x.hecha?'↺ Reabrir':'✓ Implementada','btn-sm','data-id="'+x.id+'"')}${B('iedit','✎','btn-sm','data-id="'+x.id+'"')}${B('idel','🗑','btn-sm btn-danger','data-id="'+x.id+'"')}</div></div>`).join('')||'<div class="empty">Aún no hay ideas.</div>'}</div>`}
 
-/* ---------- Más y Ajustes ---------- */
-const vMas=async()=>hdr('Más')+`<div class="w">${[['chk','🎒 Qué llevar','Listas por actividad'],['his','🗂️ Lo que he hecho','Historial y totales'],['deb','📌 Deberes','Tareas que te mandan'],['peso','⚖️ Peso',''],['ideas','💡 Ideas de mejora','Tus notas para mejorar la app'],['aj','⚙️ Ajustes','Vista por horas, categorías, copia']].map(([v,t,s])=>`<button class="btn tile" data-a="go" data-v="${v}">${t}<div class="m" style="font-weight:400">${s}</div></button>`).join('')}</div>`;
-async function vAj(){const C=S.prefs,pp=(k,d)=>esc(P(k,d));
- return hdr('Ajustes',1)+`<div class="w"><div class="h3">Vista semanal por horas</div><div class="card">
-  <label style="margin-top:0">Tamaño de cada hora</label><select data-p="hpx">${opts([[44,'Pequeño'],[64,'Normal'],[90,'Grande'],[120,'Muy grande'],[160,'Enorme']],+P('hpx',64))}</select>
-  <label>Marcas de hora cada</label><select data-p="paso">${opts([[1,'1 hora'],[2,'2 horas'],[3,'3 horas']],+P('paso',1))}</select>
-  <div class="row"><div><label>Empieza a las</label><input type="time" data-p="jornadaIni" value="${pp('jornadaIni','07:00')}"></div><div><label>Termina a las</label><input type="time" data-p="jornadaFin" value="${pp('jornadaFin','23:00')}"></div></div></div>
-  <div class="h3">Categorías</div>${S.tipos.map(t=>`<div class="card row" style="cursor:pointer" data-a="cedit" data-id="${t.id}"><span style="font-size:22px;flex:none">${t.icono}</span><div class="g"><b>${esc(t.nombre)}</b><div class="m">${t.soloTiempo?'Solo reserva de tiempo':'Actividad'}${t.visible?'':' · oculta'}</div></div><span style="background:${col(t)};width:18px;height:18px;border-radius:5px;flex:none"></span></div>`).join('')}
-  <button class="btn f" data-a="cnueva">＋ Nueva categoría</button>
-  <div class="h3">General</div><div class="card"><label style="margin-top:0">Tamaño de letra</label><select data-p="fuente">${opts([['normal','Normal'],['grande','Grande'],['muygrande','Muy grande']],P('fuente','normal'))}</select>
-  <label>Tema</label><select data-p="theme">${opts([['dark','Oscuro'],['light','Claro']],P('theme','dark'))}</select></div>
-  <div class="h3">Copia de seguridad</div><div class="card"><div class="row"><div><label style="margin-top:0">Avisar tras N datos nuevos</label><input type="number" min="1" data-p="umbralCambiosCopia" value="${pp('umbralCambiosCopia',1)}"></div><div><label style="margin-top:0">Avisar tras N días</label><input type="number" min="1" data-p="umbralDiasCopia" value="${pp('umbralDiasCopia',30)}"></div></div>
-  <div class="m" style="margin:8px 0">Última copia: ${C.ultimaCopia?fl(C.ultimaCopia.slice(0,10),{day:'numeric',month:'short',year:'numeric'}):'ninguna'} · Cambios desde entonces: ${C.cambiosDesdeCopia||0}</div>
-  <button class="btn f" data-a="exportar">⬇ Exportar copia (JSON)</button><button class="btn f" style="margin-top:8px" data-a="importar">⬆ Importar copia</button><input type="file" id="fi" accept=".json,application/json" hidden></div>
-  <div class="m" style="text-align:center;margin-top:16px">Ocio y Deporte · <b>v4.0.0</b></div></div>`}
-function cModal(c){S.cat=c;modal(`<h2>${c.id?'Editar':'Nueva'} categoría</h2><label>Nombre</label><input name="nom" value="${esc(c.nombre||'')}">
- <div class="row"><div><label>Icono (emoji)</label><input name="ico" value="${esc(c.icono||'🏷️')}" maxlength="4"></div><div><label>Color</label><input type="color" name="col" value="${col(c)}" style="height:44px;padding:2px"></div></div>
- <label style="display:flex;gap:10px;align-items:center;margin-top:14px"><input type="checkbox" name="solo" ${c.soloTiempo?'checked':''}> Solo reservar tiempo (sin marcar hecho ni qué llevar)</label>
- <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" name="vis" ${c.visible!==0?'checked':''}> Visible al añadir actividades</label>
- <div class="ma"><button class="btn" data-a="close">Cancelar</button><button class="btn p" data-a="csave">Guardar</button></div>`)}
-async function cSave(){const c=S.cat,n=q('nom').trim();if(!n)return toast('Falta el nombre');
- let id=c.id;if(!id){id=n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cat';while(S.tipos.some(t=>t.id===id))id+='-2'}
- await put('tipos',{...c,id,nombre:n,icono:q('ico').trim()||'🏷️',color:q('col'),soloTiempo:q('solo'),visible:q('vis')?1:0,orden:c.orden||S.tipos.length+1});close();render()}
+/* ---- MÁS ---- */
+const vMas=async()=>topbar(ttl('Más'))+`<div class="wrap"><div class="tiles">${[['chk','🎒','Checklist','Qué llevar'],['res','📊','Resumen','Totales y rutas'],['apr','🎸','Aprendido','Música'],['peso','⚖️','Peso','Gráfica'],['ideas','💡','Ideas','Mejoras'],['aj','⚙️','Ajustes','Categorías y copia']].map(([v,i,t,s])=>`<div class="tile" data-a="go" data-v="${v}"><div class="ti">${i}</div><div class="tt">${t}</div><div class="ts">${s}</div></div>`).join('')}</div></div>`;
 
-/* ---------- Copia ---------- */
-function motivoCopia(){const c=+P('cambiosDesdeCopia',0),uc=+P('umbralCambiosCopia',1),ud=+P('umbralDiasCopia',30),u=P('ultimaCopia',''),m=[];
- if(P('snoozeCopia','')>new Date().toISOString())return'';
- if(c>=uc)m.push(c+(c>1?' datos nuevos':' dato nuevo')+' desde la última copia');
- if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=ud)m.push(d+' días sin copia')}else if(c>0&&!m.length)m.push('aún no has hecho ninguna copia');
- return m.join(' · ')}
-async function exportar(){const d={};for(const s of DATOS)d[s]=await all(s);d.exportado=new Date().toISOString();d.version='4.0.0';
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='ocio-deporte-'+hoyK()+'.json';a.click();
- await setP('ultimaCopia',new Date().toISOString());await setP('cambiosDesdeCopia',0);await setP('snoozeCopia','');S.ban='';toast('Copia exportada');render()}
-async function importar(f){try{const d=JSON.parse(await f.text());if(!d||(!Array.isArray(d.tipos)&&!Array.isArray(d.actividades)))throw Error('No parece una copia de Ocio y Deporte');
+/* ---- AJUSTES ---- */
+async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.prefs;
+ return topbar(ttl('Ajustes'),{back:1})+`<div class="wrap">
+ <details class="sec-fold" data-fold="cat" ${o('cat')}><summary>Categorías</summary><div class="fold-body">${S.tipos.map(t=>`<div class="chk-compact" style="margin-bottom:8px"><span class="cat-color" style="background:${t.color}"></span><span class="txt">${t.icono} ${esc(t.nombre)}${t.soloTiempo?' · solo tiempo':''}${t.ruta?' · rutas':''}</span><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted)">Ver <input type="checkbox" data-vis="${t.id}" ${t.visible?'checked':''} style="width:16px;height:16px;accent-color:var(--primary)"></label><button class="mini" data-a="cedit" data-id="${t.id}">✎</button></div>`).join('')}${B('cnueva','＋ Nueva categoría','btn-sm','style="width:100%;margin-top:6px"')}</div></details>
+ <details class="sec-fold" data-fold="jor" ${o('jor')}><summary>Jornada visible de la semana por horas</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Desde qué hora hasta qué hora se dibuja la cuadrícula.</div><div class="row">${fld('Hora inicio',`<input class="input" type="time" data-pref="jornadaIni" value="${pp('jornadaIni','07:00')}">`)}${fld('Hora fin',`<input class="input" type="time" data-pref="jornadaFin" value="${pp('jornadaFin','23:00')}">`)}</div></div></details>
+ <details class="sec-fold" data-fold="pref" ${o('pref')}><summary>Preferencias generales</summary><div class="fold-body">${fld('Tamaño de letra',`<select class="input" data-pref="fuente">${opts([['normal','Normal'],['grande','Grande'],['muygrande','Muy grande']],P('fuente','normal'))}</select>`)}</div></details>
+ <details class="sec-fold" data-fold="copia" ${o('copia')}><summary>Copias de seguridad · recordatorio</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Al abrir, la app te propondrá hacer copia si se superan estos valores.</div><div class="row">${fld('Cada N datos nuevos',`<input class="input" type="number" min="1" data-pref="umbralCambios" value="${pp('umbralCambios',1)}">`)}${fld('Cada N días',`<input class="input" type="number" min="1" data-pref="umbralDias" value="${pp('umbralDias',30)}">`)}</div>
+  <div class="muted" style="font-size:12px;margin-top:8px">Cambios desde la última copia: <b>${C.cambios||0}</b><br>Última copia: <b>${C.ultimaCopia?fc(C.ultimaCopia.slice(0,10)):'—'}</b></div></div></details>
+ ${B('go','💡 Ideas de mejora','btn-block','data-v="ideas" style="margin-bottom:10px"')}
+ <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}</div></details>
+ <div class="center muted" style="margin-top:24px;font-size:12px">Ocio y Deporte · <b>v4.1.0</b></div></div>`}
+function cModal(c){S.cat={...c};modal(`<h2>${c.id?'Editar':'Nueva'} categoría</h2>${fld('Nombre',`<input class="input" name="nom" value="${esc(c.nombre||'')}">`)}${fld('Icono (emoji)',`<input class="input" name="ico" value="${esc(c.icono||'🏷️')}" maxlength="4">`)}
+ ${fld('Color',`<div class="paleta">${PALETA.map(p=>`<div class="sw ${p===S.cat.color?'sel':''}" data-a="sw" data-c="${p}" style="background:${p}"></div>`).join('')}</div>`)}
+ <label style="display:flex;gap:10px;align-items:center;margin:8px 0"><input type="checkbox" name="solo" ${c.soloTiempo?'checked':''} style="width:20px;height:20px"> Solo reservar tiempo (sin marcar hecho ni checklist)</label>
+ <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" name="ruta" ${c.ruta?'checked':''} style="width:20px;height:20px"> Registra rutas (nombre, Wikiloc, km, desnivel)</label>
+ ${mact(B('close','Cancelar'),c.id?B('cdel','Borrar','btn-danger'):'',B('csave','Guardar','btn-primary'))}`)}
+async function cSave(){const c=S.cat,n=q('nom').trim();if(!n)return toast('Falta el nombre');let id=c.id;
+ if(!id){id=n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cat';while(S.tipos.some(t=>t.id===id))id+='-2'}
+ await put('tipos',{id,nombre:n,icono:q('ico').trim()||'🏷️',color:c.color||PALETA[0],visible:c.visible??1,orden:c.orden||S.tipos.length+1,soloTiempo:q('solo'),ruta:q('ruta')});close();render()}
+
+/* ---- Copia ---- */
+function motivoCopia(){if(P('snooze','')>new Date().toISOString())return'';const c=+P('cambios',0),m=[],u=P('ultimaCopia','');
+ if(c>=+P('umbralCambios',1))m.push(c+(c>1?' datos nuevos':' dato nuevo')+' desde la última copia');
+ if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=+P('umbralDias',30))m.push(d+' días sin copia')}return m.join(' · ')}
+async function exportar(){const d={version:'4.1.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='ocio-deporte-'+hoyK()+'.json';a.click();
+ await setP('ultimaCopia',new Date().toISOString());await setP('cambios',0);await setP('snooze','');toast('Copia exportada');render()}
+async function importar(f){try{const d=JSON.parse(await f.text());if(!String(d.version||'').startsWith('4.1'))throw Error('Este archivo es de otra versión de la app');
  if(!confirm('Importar reemplazará TODOS los datos actuales. ¿Continuar?'))return;
- for(const s of DATOS)if(Array.isArray(d[s])){await clr(s);for(const it of d[s])await raw(s,it)}
- await raw('prefs',{k:'seeded',v:1});await seed();toast('Importado');render()}catch(e){alert('Error: '+e.message)}finally{$('#fi')&&($('#fi').value='')}}
+ for(const s of DATOS){await clr(s);if(Array.isArray(d[s]))for(const it of d[s])await raw(s,it)}
+ await raw('prefs',{k:'seeded',v:1});await raw('prefs',{k:'cambios',v:0});toast('Importado');render()}catch(e){alert('Error: '+e.message)}finally{const i=$('#fi');if(i)i.value=''}}
 
-/* ---------- Navegación y render ---------- */
-const VISTAS={dia:vDia,sem:vSem,mas:vMas,chk:vChk,his:vHis,deb:vDeb,peso:vPeso,ideas:vIdeas,aj:vAj};
+/* ---- Render / navegación ---- */
+const VIS={dia:vDia,sem:vSem,mas:vMas,chk:vChk,res:vRes,apr:vApr,deb:vDeb,peso:vPeso,ideas:vIdeas,aj:vAj};
 async function render(){await load();S.ban=motivoCopia();
- const sc=document.querySelector('.sc'),sx=sc?sc.scrollLeft:0,sy=S.reset?0:scrollY;S.reset=false;
- $('#app').innerHTML=await VISTAS[S.v]();const s2=document.querySelector('.sc');if(s2)s2.scrollLeft=sx;scrollTo(0,sy);
- const m=['dia','sem'].includes(S.v)?S.v:'mas',b=(v,i,t)=>`<button class="${m===v?'on':''}" data-a="go" data-v="${v}"><span>${i}</span>${t}</button>`;
- $('#tab').innerHTML=`<nav class="tab">${b('dia','🏠','Día')}${b('sem','🗓️','Semana')}<button class="plus" data-a="nueva"><span>＋</span>Añadir</button>${b('mas','☰','Más')}</nav>`;
- const z={normal:1,grande:1.15,muygrande:1.3}[P('fuente','normal')]||1;$('#app').style.zoom=z;$('#modal').style.zoom=z}
+ const sc=document.querySelector('.plantilla-container'),sx=sc?sc.scrollLeft:0,sy=S.reset?0:scrollY;S.reset=false;
+ $('#app').innerHTML=await VIS[S.v]();const s2=document.querySelector('.plantilla-container');if(s2)s2.scrollLeft=sx;scrollTo(0,sy);
+ if(S.v==='peso')drawPeso();
+ const m=['dia','sem','deb'].includes(S.v)?S.v:'mas',b=(v,i,t)=>`<button class="${m===v?'on':''}" data-a="go" data-v="${v}"><span class="tb-i">${i}</span>${t}</button>`;
+ $('#tab').innerHTML=`<nav class="tabbar">${b('dia','🏠','Día')}${b('sem','🗓️','Semana')}<button class="tb-add" data-a="menu"><span class="tb-i">＋</span>Añadir</button>${b('deb','📌','Deberes')}${b('mas','☰','Más')}</nav>`;
+ const z={normal:1,grande:1.15,muygrande:1.3}[P('fuente','normal')]||1;$('#app').style.zoom=z;$('#modal-root').style.zoom=z}
 function go(v,np){S.v=v;S.reset=true;if(!np)try{history.pushState({v},'')}catch(e){}render()}
 addEventListener('popstate',e=>{close();go((e.state&&e.state.v)||'dia',1)});
-const nuevoEv=(f)=>({id:null,store:f?'planes':'plantilla',dia:dow(f?pk(f):new Date()),fecha:f||hoyK(),tipo_id:(S.tipos.find(t=>t.visible&&!t.soloTiempo)||S.tipos[0]||{}).id,hora_inicio:'09:00',hora_fin:'10:00'});
+function menu(){modal(`<h2>Añadir</h2>${B('nueva','🗓️ Actividad (rutina o un día)','btn-block','style="margin-bottom:8px"')}${B('registrar','✅ Registrar actividad ya hecha','btn-block','style="margin-bottom:8px"')}${B('dnuevo','📌 Deber','btn-block','style="margin-bottom:8px"')}${B('anueva','🎸 Aprendido (música)','btn-block')}${mact(B('close','Cancelar'))}`)}
 
+document.addEventListener('toggle',e=>{if(e.target.dataset&&e.target.dataset.fold)S.aj[e.target.dataset.fold]=e.target.open},true);
+document.addEventListener('input',e=>{if(e.target.id==='aq'){S.aq=e.target.value;clearTimeout(S.t);S.t=setTimeout(async()=>{const p=e.target.selectionStart;await render();const i=$('#aq');if(i){i.focus();i.setSelectionRange(p,p)}},250)}});
 document.addEventListener('change',async e=>{const t=e.target;
- if(t.name==='modo'){$('#fd').hidden=t.value==='planes';$('#ff').hidden=t.value!=='planes';return}
- if(t.dataset.aCh==='fecha'&&t.value){S.fecha=t.value;render();return}
- if(t.dataset.p){await setP(t.dataset.p,t.value);render();return}
+ if(t.name==='modo'){$('#fd').hidden=t.value==='plan';$('#ff').hidden=t.value!=='plan';return}
+ if(t.name==='tipo'&&$('#rf')){$('#rf').hidden=!tipo(t.value).ruta;return}
+ if(t.dataset.ch==='fecha'&&t.value){S.fecha=t.value;render();return}
+ if(t.dataset.ch==='desde'||t.dataset.ch==='hasta'){S[t.dataset.ch]=t.value;render();return}
+ if(t.dataset.pref){await setP(t.dataset.pref,t.value);render();return}
+ if(t.dataset.vis){const c=await get('tipos',t.dataset.vis);c.visible=t.checked?1:0;await put('tipos',c);render();return}
  if(t.id==='fi'&&t.files[0])importar(t.files[0])});
 document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,D=el.dataset,id=+D.id;
  switch(a){
- case 'go':go(D.v);break;case 'back':history.back();break;case 'close':close();break;
+ case 'go':close();go(D.v);break;case 'back':history.back();break;case 'close':close();break;
+ case 'theme':await setP('theme',S.theme==='dark'?'light':'dark');render();break;
  case 'dia':S.fecha=D.n==='0'?hoyK():dk(add(pk(S.fecha),+D.n));render();break;
  case 'verdia':S.fecha=D.k;go('dia');break;
  case 'sem':S.sem=D.n==='0'?dk(lun(new Date())):dk(add(pk(S.sem),7*D.n));render();break;
- case 'vista':await setP('semVista',D.v);render();break;
- case 'zoom':{const L=[44,64,90,120,160];let i=L.indexOf(+P('hpx',64));if(i<0)i=1;await setP('hpx',L[Math.max(0,Math.min(4,i+ +D.n))]);render();break}
+ case 'vista':await setP('semVista',P('semVista','lista')==='lista'?'horas':'lista');render();break;
+ case 'zoom':{let i=ZL.indexOf(+P('hpx',30));if(i<0)i=1;await setP('hpx',ZL[Math.max(0,Math.min(ZL.length-1,i+ +D.n))]);render();break}
  case 'marcar':marcar(D.ref,D.k);break;
  case 'chk':S.chkT=D.t;go('chk');break;
- case 'nueva':evModal(nuevoEv(D.f));break;
+ case 'menu':menu();break;
+ case 'nueva':evModal(nuevoEv(D.f||null));break;
  case 'edit':{const p=await get(D.s,id);if(p)evModal({...p,store:D.s});break}
  case 'evsave':evSave();break;
  case 'evdel':{const x=S.ev;close();delUndo(x.store,x.id,'Actividad borrada');break}
  case 'datos':{const x=await get('actividades',id);if(x)datosModal(x);break}
- case 'registrar':datosModal({id:null,tipo_id:(S.tipos.find(t=>t.visible&&!t.soloTiempo)||{}).id,fecha:hoyK()});break;
+ case 'registrar':datosModal({id:null,tipo_id:firstAct(),fecha:S.v==='dia'?S.fecha:hoyK()});break;
  case 'actsave':actSave();break;
- case 'actdel':{const x=S.act;close();const hs=(await all('hechos')).filter(h=>h.actividad_id===x.id);for(const h of hs)await del('hechos',h.id);await del('actividades',x.id);render();
+ case 'actdel':{const x=S.act;close();const hs=(await all('hechos')).filter(h=>h.act_id===x.id);for(const h of hs)await del('hechos',h.id);await del('actividades',x.id);render();
   toast('Borrada','Deshacer',async()=>{await put('actividades',x);for(const h of hs)await raw('hechos',h);render()});break}
- case 'hp':S.hp=D.v;render();break;
+ case 'rr':S.rr=D.v;render();break;
  case 'ctipo':S.chkT=D.id;render();break;
  case 'ctog':{const c=await get('checkEstado',id);await raw('checkEstado',{id,marcado:!(c&&c.marcado)});render();break}
  case 'cdel':delUndo('checklist',id,'Elemento borrado');break;
- case 'cadd':{const i=$('#n_'+D.s),v=i.value.trim();if(!v)return;await put('checklist',{tipo_id:S.chkT,seccion:D.s,texto:v,orden:Date.now()});render();break}
+ case 'cadd':{const i=$('#n_'+D.s),v=i.value.trim();if(!v)return;await put('checklist',{tipo_id:S.chkT,seccion:D.s,texto:v});render();break}
  case 'creset':for(const i of (await all('checklist')).filter(i=>i.tipo_id===S.chkT))await raw('checkEstado',{id:i.id,marcado:false});render();break;
- case 'dnuevo':dModal({id:null,tipo_id:(S.tipos.find(t=>t.visible&&!t.soloTiempo)||{}).id});break;
+ case 'df':S.df=D.v;render();break;
+ case 'dnuevo':dModal({id:null,tipo_id:firstAct()});break;
  case 'dedit':{const x=await get('deberes',id);if(x)dModal(x);break}
  case 'dsave':dSave();break;
  case 'ddel':{const x=S.deb;close();delUndo('deberes',x.id,'Deber borrado');break}
- case 'dtog':{const x=await get('deberes',id);if(x){const h=x.estado==='hecho';x.estado=h?'pendiente':'hecho';x.hecho_en=h?null:hoyK();await put('deberes',x);render()}break}
+ case 'dtog':{const x=await get('deberes',id);if(x){x.hecho=!x.hecho;x.hecho_en=x.hecho?hoyK():null;await put('deberes',x);render()}break}
+ case 'af':S.af=D.v;render();break;
+ case 'anueva':aModal({id:null});break;
+ case 'aedit':{const x=await get('aprendido',id);if(x)aModal(x);break}
+ case 'asave':aSave();break;
+ case 'adel':{const x=S.apr;close();delUndo('aprendido',x.id,'Borrado');break}
  case 'psave':{const kg=num($('#pk').value);if(!kg)return toast('Falta el peso');await put('peso',{fecha:$('#pf').value||hoyK(),kg});render();break}
  case 'pdel':delUndo('peso',id,'Registro borrado');break;
- case 'isave':{const v=$('#ni').value.trim();if(!v)return toast('Escribe algo');await put('ideas',{texto:v,fecha:hoyK(),implementado:false});render();break}
- case 'itog':{const x=await get('ideas',id);x.implementado=!x.implementado;await put('ideas',x);render();break}
+ case 'isave':{const v=$('#ni').value.trim();if(!v)return toast('Escribe algo');await put('ideas',{texto:v,fecha:hoyK(),hecha:false});render();break}
+ case 'itog':{const x=await get('ideas',id);x.hecha=!x.hecha;await put('ideas',x);render();break}
  case 'idel':delUndo('ideas',id,'Idea borrada');break;
- case 'iedit':{const x=await get('ideas',id);S.idea=x;modal(`<h2>Editar idea</h2><textarea name="t" style="min-height:160px">${esc(x.texto)}</textarea><div class="ma"><button class="btn" data-a="close">Cancelar</button><button class="btn p" data-a="isv2">Guardar</button></div>`);break}
+ case 'iedit':{const x=await get('ideas',id);S.idea=x;modal(`<h2>Editar idea</h2><textarea class="input" name="t" style="min-height:160px">${esc(x.texto)}</textarea>${mact(B('close','Cancelar'),B('isv2','Guardar','btn-primary'))}`);break}
  case 'isv2':{const v=q('t').trim();if(!v)return;S.idea.texto=v;await put('ideas',S.idea);close();render();break}
  case 'cedit':{const c=S.tipos.find(t=>t.id===D.id);if(c)cModal(c);break}
- case 'cnueva':cModal({id:'',color:'#2563eb'});break;
+ case 'cnueva':cModal({id:'',color:PALETA[8]});break;
+ case 'sw':S.cat.color=D.c;document.querySelectorAll('#modal-root .sw').forEach(s=>s.classList.toggle('sel',s.dataset.c===D.c));break;
  case 'csave':cSave();break;
+ case 'cdel':{const c=S.cat,u=(await Promise.all(['rutina','plan','actividades','deberes'].map(all))).flat().some(x=>x.tipo_id===c.id);if(u)return toast('Está en uso: mejor desmarca "Ver"');const o=c;await del('tipos',c.id);close();render();toast('Categoría borrada','Deshacer',async()=>{await put('tipos',o);render()});break}
  case 'exportar':exportar();break;case 'importar':$('#fi').click();break;
- case 'snooze':await setP('snoozeCopia',new Date(Date.now()+864e5).toISOString());render();break;
+ case 'borrar':if(confirm('¿Borrar TODOS los datos? Se descargará antes una copia.')){await exportar();for(const s of DATOS)await clr(s);await seed();S.reset=true;render()}break;
+ case 'snooze':await setP('snooze',new Date(Date.now()+864e5).toISOString());render();break;
  }});
-
 (async()=>{try{await openDB();await seed();try{navigator.storage?.persist?.()}catch(e){}
  try{history.replaceState({v:'dia'},'')}catch(e){}
- document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#modal').innerHTML&&['dia','sem','deb'].includes(S.v))render()});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#modal-root').innerHTML&&['dia','sem','deb'].includes(S.v))render()});
  await render()}catch(e){document.getElementById('app').innerHTML=`<div style="padding:40px;text-align:center"><h2>Error al iniciar</h2><p>${esc(e.message)}</p></div>`}})();
 </script></body></html>
