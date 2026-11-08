@@ -2,6 +2,11 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clases y Deporte</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1220">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clases y Deporte"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root{
     --bg-main:#0b1220;--bg-card:#151f33;--bg-card-alt:#0e1728;
@@ -316,7 +321,7 @@ async function seed(){const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);
 
 /* ---- Estado ---- */
 const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',rr:'mes',ct:'peso',cp:'3m',sq:{deb:'',acts:''},desde:'',hasta:'',df:'pend',af:'todo',aq:'',aj:{},reset:true};
-async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);S.prefs=p;S.theme=P('theme','dark');document.documentElement.dataset.theme=S.theme;S.NO=new Map((await all('notasOcurrencia')).map(n=>[n.id,n]))}
+async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);S.prefs=p;S.theme=P('theme','dark');document.documentElement.dataset.theme=S.theme;{const m=document.querySelector('meta[name=theme-color]');if(m)m.content=S.theme==='light'?'#f1f5f9':'#0b1220'}S.NO=new Map((await all('notasOcurrencia')).map(n=>[n.id,n]))}
 const tipo=id=>S.tipos.find(t=>t.id===id)||{id,nombre:'—',icono:'•',color:'#d97706'};
 const act=()=>S.tipos.filter(t=>t.visible&&!t.soloTiempo),firstAct=()=>(act()[0]||S.tipos[0]||{}).id;
 function toast(m,lbl,fn){document.querySelectorAll('.toast').forEach(x=>x.remove());const x=document.createElement('div');x.className='toast';x.textContent=m;
@@ -597,7 +602,7 @@ async function vIdeas(){const i=(await all('ideas')).sort((a,b)=>b.id-a.id);
 const vMas=async()=>topbar(ttl('Más'))+`<div class="wrap"><div class="tiles">${[['acts','🔁','Actividades','Rutinas y cursos'],['chk','🎒','Checklist','Qué llevar'],['res','📊','Resumen','Totales y rutas'],['apr','🎸','Aprendido','Música'],['cond','💓','Condición física','Peso, tensión, pulso'],['ideas','💡','Ideas','Mejoras'],['aj','⚙️','Ajustes','Categorías y copia']].map(([v,i,t,s])=>`<div class="tile" data-a="go" data-v="${v}"><div class="ti">${i}</div><div class="tt">${t}</div><div class="ts">${s}</div></div>`).join('')}</div></div>`;
 
 /* ---- AJUSTES ---- */
-async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.prefs;
+async function vAj(){let pers=null;try{pers=await navigator.storage.persisted()}catch(e){}const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.prefs;
  return topbar(ttl('Ajustes'),{back:1})+`<div class="wrap">
  <details class="sec-fold" data-fold="cat" ${o('cat')}><summary>Categorías</summary><div class="fold-body">${S.tipos.map(t=>`<div class="chk-compact" style="margin-bottom:8px"><span class="cat-color" style="background:${t.color}"></span><span class="txt">${t.icono} ${esc(t.nombre)}${t.soloTiempo?' · solo tiempo':''}${t.ruta?' · rutas':''}</span><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted)">Ver <input type="checkbox" data-vis="${t.id}" ${t.visible?'checked':''} style="width:16px;height:16px;accent-color:var(--primary)"></label><button class="mini" data-a="cedit" data-id="${t.id}">✎</button></div>`).join('')}${B('cnueva','＋ Nueva categoría','btn-sm','style="width:100%;margin-top:6px"')}</div></details>
  <details class="sec-fold" data-fold="jor" ${o('jor')}><summary>Jornada visible de la semana por horas</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Desde qué hora hasta qué hora se dibuja la cuadrícula.</div><div class="row">${fld('Hora inicio',`<input class="input" type="time" data-pref="jornadaIni" value="${pp('jornadaIni','07:00')}">`)}${fld('Hora fin',`<input class="input" type="time" data-pref="jornadaFin" value="${pp('jornadaFin','23:00')}">`)}</div></div></details>
@@ -613,8 +618,9 @@ async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.pref
  <details class="sec-fold" data-fold="curso" ${o('curso')}><summary>Curso y periodos sin clase</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Fechas aproximadas: cámbialas cuando las sepas. Se usan en los atajos «Inicio/Fin de curso» al crear actividades y en «Renovar».</div><div class="row">${fld('Inicio de curso',`<input class="input" type="date" data-pref="iniCurso" value="${pp('iniCurso','')}">`)}${fld('Fin de curso',`<input class="input" type="date" data-pref="finCurso" value="${pp('finCurso','')}">`)}</div>
  <div class="sec-title">Periodos sin clase</div>${getPer().map((p,i)=>`<div class="card" style="padding:10px"><div class="row" style="margin-bottom:8px;align-items:center"><input class="input" data-per="${i}" data-f="n" value="${esc(p.n)}" placeholder="Nombre"><button class="btn btn-sm btn-danger" data-a="perdel" data-i="${i}" style="flex:0 0 auto">✕</button></div><div class="row"><input class="input" type="date" data-per="${i}" data-f="d" value="${esc(p.d)}"><input class="input" type="date" data-per="${i}" data-f="h" value="${esc(p.h)}"></div></div>`).join('')}${B('peradd','＋ Añadir periodo','btn-sm btn-block')}</div></details>
  ${B('go','💡 Ideas de mejora','btn-block','data-v="ideas" style="margin-bottom:10px"')}
- <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('gest','🧹 Gestionar datos','btn-block','style="margin-top:8px"')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}</div></details>
- <div class="center muted" style="margin-top:24px;font-size:12px">Clases y Deporte · <b>v4.4.0</b></div></div>`}
+ <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('gest','🧹 Gestionar datos','btn-block','style="margin-top:8px"')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}<div class="muted" style="font-size:12px;margin-top:10px">Almacenamiento protegido contra borrado automático: <b>${pers===null?'no disponible':pers?'sí':'no'}</b>. Haz copias de seguridad con regularidad.</div></div></details>
+ ${S.inst?B('instalar','📲 Instalar como app','btn-block btn-primary','style="margin-bottom:10px"'):''}
+ <div class="center muted" style="margin-top:24px;font-size:12px">Clases y Deporte · <b>v4.5.0</b> · ${matchMedia('(display-mode: standalone)').matches?'app instalada':'en el navegador'}</div></div>`}
 function cModal(c){S.cat={...c};modal(`<h2>${c.id?'Editar':'Nueva'} categoría</h2>${fld('Nombre',`<input class="input" name="nom" value="${esc(c.nombre||'')}">`)}${fld('Icono (emoji)',`<input class="input" name="ico" value="${esc(c.icono||'🏷️')}" maxlength="4">`)}
  ${fld('Color',`<div class="paleta">${PALETA.map(p=>`<div class="sw ${p===S.cat.color?'sel':''}" data-a="sw" data-c="${p}" style="background:${p}"></div>`).join('')}</div>`)}
  <label style="display:flex;gap:10px;align-items:center;margin:8px 0"><input type="checkbox" name="solo" ${c.soloTiempo?'checked':''} style="width:20px;height:20px"> Solo reservar tiempo (sin marcar hecho ni checklist)</label>
@@ -664,7 +670,7 @@ function motivoCopia(){if(P('snooze','')>new Date().toISOString())return'';const
  if(c>=+P('umbralCambios',1))m.push(c+(c>1?' datos nuevos':' dato nuevo')+' desde la última copia');
  if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=+P('umbralDias',30))m.push(d+' días sin copia')}
  const fcu=P('finCurso','');if(fcu&&fcu<hoyK()&&P('copiaCurso','')!==fcu)m.push('Ha terminado el curso');return m.join(' · ')}
-async function exportar(){const d={version:'4.4.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
+async function exportar(){const d={version:'4.5.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='clases-y-deporte-'+hoyK()+'.json';a.click();
  await setP('ultimaCopia',new Date().toISOString());if(P('finCurso','')&&P('finCurso','')<hoyK())await setP('copiaCurso',P('finCurso',''));await setP('cambios',0);await setP('snooze','');toast('Copia exportada');render()}
 async function importar(f){try{const d=JSON.parse(await f.text());if(!String(d.version||'').startsWith('4.'))throw Error('Este archivo es de otra versión de la app');
@@ -775,10 +781,16 @@ document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]'
  case 'vaciarok':if(q('conf').trim().toUpperCase()!=='BORRAR')return toast('Escribe BORRAR');vaciarSel(S.vac);break;
  case 'exc':modal(`<h2>Vaciar todo excepto…</h2><div class="muted" style="margin-bottom:10px">Marca lo que quieres <b>conservar</b>; se vaciará el resto, con copia antes.</div>${GC.map(c=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input type="checkbox" name="k_${c[0]}" checked style="width:20px;height:20px"> ${c[1]}</label>`).join('')}${confCampo()}${mact(B('gest','Atrás'),B('excok','Vaciar el resto','btn-danger'))}`);break
  case 'excok':{if(q('conf').trim().toUpperCase()!=='BORRAR')return toast('Escribe BORRAR');const v=GC.filter(c=>!q('k_'+c[0])).map(c=>c[0]);if(!v.length)return toast('No hay nada que vaciar');vaciarSel(v);break}
+ case 'instalar':{const e=S.inst;if(!e)break;e.prompt();try{await e.userChoice}catch(x){}S.inst=null;render();break}
  case 'exportar':exportar();break;case 'importar':$('#fi').click();break;
  case 'borrar':if(confirm('¿Borrar TODOS los datos? Se descargará antes una copia.')){await exportar();for(const s of DATOS)await clr(s);await seed();S.reset=true;render()}break;
  case 'snooze':await setP('snooze',new Date(Date.now()+864e5).toISOString());render();break;
  }});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();S.inst=e;if(S.v==='aj')render()});
+window.addEventListener('appinstalled',()=>{S.inst=null;toast('App instalada');if(S.v==='aj')render()});
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){const had=!!navigator.serviceWorker.controller;
+ navigator.serviceWorker.register('./sw.js').catch(()=>{});
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)toast('Nueva versión instalada','Recargar',()=>location.reload())})}
 (async()=>{try{await openDB();await seed();try{navigator.storage?.persist?.()}catch(e){}
  try{history.replaceState({v:'dia'},'')}catch(e){}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#modal-root').innerHTML&&['dia','sem','deb'].includes(S.v))render()});
