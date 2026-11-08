@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ocio y Deporte</title>
+<title>Clases y Deporte</title>
 <style>
   :root{
     --bg-main:#0b1220;--bg-card:#151f33;--bg-card-alt:#0e1728;
@@ -262,6 +262,11 @@
   .plantilla-head .day-head{padding:3px 2px}
   .plantilla-head>div{padding:3px 2px;font-size:11px}
   .evento-plantilla{overflow:hidden;line-height:1.1}
+  /* IDEAS: botones sin desbordar */
+  .idea-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .idea-acts .st{flex:1 1 70px;min-width:0;font-size:12px;color:var(--text-muted)}
+  .idea-acts .btn{flex:0 0 auto;min-height:36px;white-space:nowrap}
+  label.chip input{margin-right:4px;accent-color:var(--primary)}
 </style></head><body>
 <div id="app"></div><div id="modal-root"></div><div id="tab"></div>
 <script>
@@ -302,7 +307,8 @@ async function seed(){const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);
  if(!p.seeded&&!(await all('tipos')).length){
   for(let i=0;i<TB.length;i++){const[id,nombre,icono,color,soloTiempo,ruta]=TB[i];await raw('tipos',{id,nombre,icono,color,visible:1,orden:i+1,soloTiempo:!!soloTiempo,ruta:!!ruta})}
   for(const t in CHK)for(const x of CHK[t])await raw('checklist',{tipo_id:t,seccion:'imprescindible',texto:x});
-  await raw('prefs',{k:'seeded',v:1})}}
+  await raw('prefs',{k:'seeded',v:1})}
+ await ensurePrefs()}
 
 /* ---- Estado ---- */
 const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',rr:'mes',desde:'',hasta:'',df:'pend',af:'todo',aq:'',aj:{},reset:true};
@@ -326,15 +332,44 @@ const ttl=t=>`<h1>${esc(t)}</h1>`;
 const ib=(a,l,x='')=>`<button class="icon-btn" data-a="${a}" ${x}>${l}</button>`;
 
 /* ---- Eventos ---- */
-function evDia(k,ru,pl){const d=dow(pk(k));
- return[...ru.filter(p=>+p.dia===d).map(p=>({...p,ref:String(p.id),store:'rutina',fecha:k})),
-  ...pl.filter(p=>p.fecha===k).map(p=>({...p,ref:'p'+p.id,store:'plan',puntual:1,fecha:k}))].sort((a,b)=>mn(a.ini)-mn(b.ini))}
+/* ===== MOTOR DE FECHAS (único): todas las vistas pasan por ocurrenciasEnRango ===== */
+const RESP=['guitarra','ingles'];
+function pascua(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+ return new Date(y,Math.floor((h+l-7*m+114)/31)-1,(h+l-7*m+114)%31+1)}
+const perDef=y=>{const p=pascua(y+1);return[{n:'Navidad',d:y+'-12-22',h:(y+1)+'-01-07'},{n:'Semana Santa',d:dk(add(p,-6)),h:dk(p)}]};
+async function ensurePrefs(){const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);const t=new Date(),y=t.getMonth()>=6?t.getFullYear():t.getFullYear()-1,
+ def={iniCurso:y+'-09-15',finCurso:(y+1)+'-06-15',periodos:perDef(y)};
+ for(const k in def)if(p[k]===undefined)await raw('prefs',{k,v:def[k]})}
+const getPer=()=>(P('periodos',[])||[]).map(p=>({...p}));
+const masAnio=k=>{const d=pk(k);d.setFullYear(d.getFullYear()+1);return dk(d)};
+/* ¿La rutina r ocurre el día k? -> 0 (no) | 'ok' | 'salt' (día saltado) */
+function ocurre(r,k,d,per){
+ if((r.inicioRep&&k<r.inicioRep)||(r.finRep&&k>r.finRep))return 0;
+ const rep=r.rep||'sem',w=dow(d);let ok=false;
+ if(rep==='sem')ok=w===+r.dia;
+ else if(rep==='nsem'){const n=Math.round((lun(d)-lun(pk(r.ancla||k)))/6048e5);ok=w===+r.dia&&n>=0&&n%(r.cada||2)===0}
+ else if(rep==='mesdia')ok=w===+r.dia&&(r.ords||[]).some(n=>n===5?add(d,7).getMonth()!==d.getMonth():Math.ceil(d.getDate()/7)===n);
+ else if(rep==='mesnum')ok=d.getDate()===Math.min(+r.diaMes||1,new Date(d.getFullYear(),d.getMonth()+1,0).getDate());
+ if(!ok)return 0;
+ if((r.excep||[]).includes(k))return 'salt';
+ if((r.respeta??RESP.includes(r.tipo_id))&&per.some(p=>p.d&&p.h&&k>=p.d&&k<=p.h))return 0;
+ return 'ok'}
+function ocurrenciasEnRango(desde,hasta,ru,pl){const per=getPer(),out=new Map();
+ for(let d=pk(desde);dk(d)<=hasta;d=add(d,1)){const k=dk(d),l=[];
+  for(const r of ru){const o=ocurre(r,k,d,per);if(o)l.push({...r,ref:String(r.id),store:'rutina',fecha:k,salt:o==='salt'})}
+  for(const p of pl)if(p.fecha===k)l.push({...p,ref:'p'+p.id,store:'plan',puntual:1,fecha:k});
+  out.set(k,l.sort((a,b)=>mn(a.ini)-mn(b.ini)))}
+ return out}
+const evDia=(k,ru,pl)=>ocurrenciasEnRango(k,k,ru,pl).get(k);
+const descRep=r=>{const dn=(DN[(+r.dia||1)-1]||'').toLowerCase(),rp=r.rep||'sem';
+ return rp==='nsem'?`Cada ${r.cada||2} semanas · ${dn}`:rp==='mesdia'?`${(r.ords||[]).map(o=>o===5?'último':o+'.º').join(' y ')} ${dn} de cada mes`:rp==='mesnum'?`Día ${r.diaMes||1} de cada mes`:`Todos los ${dn}`};
+
 const nom=e=>{const t=tipo(e.tipo_id);return t.icono+' '+t.nombre+(e.sub?' · '+e.sub:'')+(e.puntual?' 📅':'')};
 function ficha(e,k,HM){const t=tipo(e.tipo_id),h=HM.get(e.ref+'_'+k),solo=t.soloTiempo;
- return`<div class="fi ${h?'hecha':''} ${solo?'solo':''}" style="border-left-color:${t.color}">
-  ${solo?'':`<div class="box ${h?'on':''}" data-a="marcar" data-ref="${e.ref}" data-k="${k}">${h?'✓':''}</div>`}
-  <div class="grow"><div class="t1">${esc(nom(e))}</div><div class="t2"><b style="color:${t.color}">${e.ini}–${e.fin}</b>${solo?' · tiempo reservado':''}${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>
-  <div class="fa">${solo?'':`<button class="mini" data-a="chk" data-t="${e.tipo_id}" title="Checklist">🎒</button>`}${h&&!solo?`<button class="mini" data-a="datos" data-id="${h.act_id}" title="Datos">＋</button>`:''}<button class="mini" data-a="edit" data-s="${e.store}" data-id="${e.id}" title="Editar">✎</button></div></div>`}
+ return`<div class="fi ${h||e.salt?'hecha':''} ${solo?'solo':''}" style="border-left-color:${t.color}">
+  ${solo||e.salt?'':`<div class="box ${h?'on':''}" data-a="marcar" data-ref="${e.ref}" data-k="${k}">${h?'✓':''}</div>`}
+  <div class="grow"><div class="t1">${esc(nom(e))}</div><div class="t2"><b style="color:${t.color}">${e.ini}–${e.fin}</b>${e.salt?' · 🚫 sin clase':solo?' · tiempo reservado':''}${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>
+  <div class="fa">${solo||e.salt?'':`<button class="mini" data-a="chk" data-t="${e.tipo_id}" title="Checklist">🎒</button>`}${h&&!solo?`<button class="mini" data-a="datos" data-id="${h.act_id}" title="Datos">＋</button>`:''}<button class="mini" data-a="edit" data-s="${e.store}" data-id="${e.id}" data-k="${k}" title="Editar">✎</button></div></div>`}
 
 /* ---- DÍA ---- */
 async function vDia(){const k=S.fecha,[ru,pl,H]=await Promise.all([all('rutina'),all('plan'),all('hechos')]);
@@ -352,7 +387,7 @@ function layout(evs){const out=[];let cl=null;const cs=[];
 const ZL=[24,30,38,50,66,90,120];
 async function vSem(){const[ru,pl,H]=await Promise.all([all('rutina'),all('plan'),all('hechos')]);
  const HM=new Map(H.map(h=>[h.id,h])),l0=pk(S.sem),kh=hoyK(),l6=add(l0,6),vista=P('semVista','lista'),hp=+P('hpx',30);
- const dias=[0,1,2,3,4,5,6].map(i=>{const d=add(l0,i),k=dk(d);return{i,d,k,ev:evDia(k,ru,pl)}});
+ const M=ocurrenciasEnRango(dk(l0),dk(l6),ru,pl),dias=[0,1,2,3,4,5,6].map(i=>{const d=add(l0,i),k=dk(d);return{i,d,k,ev:M.get(k)}});
  const tit=`${l0.getDate()}${l0.getMonth()!==l6.getMonth()?' '+l0.toLocaleDateString('es-ES',{month:'short'}):''} – ${l6.getDate()} ${l6.toLocaleDateString('es-ES',{month:'short'})}`;
  let c='';
  if(vista==='lista')c=dias.map(({i,d,k,ev})=>`<div class="dh2 ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}">${DN[i]} ${d.getDate()}${k===kh?' · hoy':''}</div>${ev.length?ev.map(e=>ficha(e,k,HM)).join(''):'<div class="t2 muted" style="padding:0 4px 4px">Libre</div>'}`).join('');
@@ -363,30 +398,55 @@ async function vSem(){const[ru,pl,H]=await Promise.all([all('rutina'),all('plan'
   const head=`<div class="plantilla-head" style="grid-template-columns:${gt};min-width:${mw}px"><div class="corner"></div>${dias.map(({i,d,k})=>`<div class="day-head ${k===kh?'hoy':''}" data-a="verdia" data-k="${k}" style="cursor:pointer"><span class="dname">${DS[i]}</span><span class="dnum">${d.getDate()}</span></div>`).join('')}</div>`;
   let body=`<div class="plantilla-body" style="grid-template-columns:${gt};min-width:${mw}px"><div class="hours-col">${hc}</div>`;
   for(const{k,ev}of dias){let es='';for(const{e,l,n}of layout(ev)){const t=tipo(e.tipo_id),w=100/n,top=(mn(e.ini)-a)/60*hp,h=Math.max(14,(mn(e.fin)-mn(e.ini))/60*hp-1);
-    es+=`<div class="evento-plantilla ${HM.has(e.ref+'_'+k)?'hecha':''}" data-a="edit" data-s="${e.store}" data-id="${e.id}" style="top:${top}px;height:${h}px;left:calc(${l*w}% + 1px);width:calc(${w}% - 2px);background:${t.color};font-size:${fs}px;padding:2px 3px"><div class="ev-title">${t.icono} ${esc(t.nombre)}</div>${h>fs*2.6?`<div style="font-size:${fs-1}px;opacity:.9">${e.ini}–${e.fin}</div>`:''}${e.sub&&h>fs*3.8?`<div class="ev-nota" style="font-size:${fs-1}px">${esc(e.sub)}</div>`:''}</div>`}
+    es+=`<div class="evento-plantilla ${HM.has(e.ref+'_'+k)||e.salt?'hecha':''}" data-a="edit" data-s="${e.store}" data-id="${e.id}" data-k="${k}" style="top:${top}px;height:${h}px;left:calc(${l*w}% + 1px);width:calc(${w}% - 2px);background:${t.color};font-size:${fs}px;padding:2px 3px"><div class="ev-title">${t.icono} ${esc(t.nombre)}</div>${h>fs*2.6?`<div style="font-size:${fs-1}px;opacity:.9">${e.ini}–${e.fin}</div>`:''}${e.sub&&h>fs*3.8?`<div class="ev-nota" style="font-size:${fs-1}px">${esc(e.sub)}</div>`:''}</div>`}
    body+=`<div class="day-body" style="height:${tot}px">${lines}${es}</div>`}
   c=`<div class="plantilla-container">${head}${body}</div></div>`}
  const cur=S.sem===dk(lun(new Date()));
  return topbar(ib('sem','‹','data-n="-1"')+`<div class="nav-title" data-a="sem" data-n="0">${tit}</div>`+ib('sem','›','data-n="1"'),{right:(cur?'':ib('sem','↺','data-n="0"'))+(vista==='horas'?ib('zoom','−','data-n="-1"')+ib('zoom','+','data-n="1"'):'')+ib('vista',vista==='lista'?'▦':'☰')})+`<div class="wrap">${c}</div>`}
 
 /* ---- Actividad (rutina / un día) ---- */
-function evModal(e){const once=e.store==='plan';
+const REPS=[['plan','📅 Solo un día'],['sem','🔁 Cada semana'],['nsem','🔁 Cada N semanas'],['mesdia','🗓️ Mensual: 1.º y 3.er sábado…'],['mesnum','🗓️ Mensual: un día del mes']];
+function togModo(){const m=q('modo'),sh=(id,c)=>{const x=$('#'+id);if(x)x.hidden=!c};sh('ff',m==='plan');sh('fd',['sem','nsem','mesdia'].includes(m));sh('fn',m==='nsem');sh('fo',m==='mesdia');sh('fm',m==='mesnum');sh('fv',m!=='plan')}
+function evModal(e){const m=e.store==='plan'?'plan':(e.rep||'sem'),ords=e.ords||[1],sal=e.store==='rutina'&&e.k,
+ vm=(v,c)=>!v?'no':v===P(c,'')?'curso':'fecha',im=vm(e.inicioRep,'iniCurso'),fm=vm(e.finRep,'finCurso'),
+ sel=(n,v,lb,c)=>`<select class="input" name="${n}_m">${opts([['no',lb],['curso',(c==='iniCurso'?'Inicio':'Fin')+' de curso ('+(P(c,'')?fc(P(c,'')):'sin fecha')+')'],['fecha','Elegir fecha']],v)}</select><input class="input" type="date" name="${n}_f" value="${esc(v==='fecha'?(n==='vi'?e.inicioRep:e.finRep):'')}" style="margin-top:6px" ${v==='fecha'?'':'hidden'}>`;
  modal(`<h2>${e.id?'Editar':'Nueva'} actividad</h2>${fld('Tipo',`<select class="input" name="tipo">${tipoOpts(e.tipo_id)}</select>`)}
- ${fld('¿Cuándo?',`<select class="input" name="modo">${opts([['rutina','🔁 Todas las semanas'],['plan','📅 Solo un día']],e.store)}</select>`)}
- <div id="fd" ${once?'hidden':''}>${fld('Día de la semana',`<select class="input" name="dia">${opts(DN.map((n,i)=>[i+1,n]),e.dia)}</select>`)}</div>
- <div id="ff" ${once?'':'hidden'}>${fld('Fecha',`<input class="input" type="date" name="fecha" value="${esc(e.fecha||hoyK())}">`)}</div>
+ ${fld('Se repite',`<select class="input" name="modo">${opts(REPS,m)}</select>`)}
+ <div id="ff">${fld('Fecha',`<input class="input" type="date" name="fecha" value="${esc(e.fecha||hoyK())}">`)}</div>
+ <div id="fd">${fld('Día de la semana',`<select class="input" name="dia">${opts(DN.map((n,i)=>[i+1,n]),e.dia)}</select>`)}</div>
+ <div id="fn">${fld('Cada cuántas semanas',`<input class="input" type="number" min="2" max="12" name="cada" value="${e.cada||2}">`)}<div class="muted" style="font-size:12px;margin:-6px 0 10px">Se cuenta desde la semana de «Empieza» (o desde esta semana).</div></div>
+ <div id="fo">${fld('Qué semanas del mes',`<div class="chips">${[1,2,3,4,5].map(n=>`<label class="chip"><input type="checkbox" name="o${n}" ${ords.includes(n)?'checked':''}>${n===5?'Último':n+'.º'}</label>`).join('')}</div>`)}</div>
+ <div id="fm">${fld('Día del mes',`<input class="input" type="number" min="1" max="31" name="dm" value="${e.diaMes||new Date().getDate()}">`)}</div>
  <div class="row">${fld('Desde',`<input class="input" type="time" name="ini" value="${esc(e.ini)}">`)}${fld('Hasta',`<input class="input" type="time" name="fin" value="${esc(e.fin)}">`)}</div>
  ${fld('Detalle (opcional)',`<input class="input" name="sub" value="${esc(e.sub||'')}" placeholder="Ej: Pilates, Asociación A">`)}
  ${fld('Nota (opcional)',`<textarea class="input" name="nota">${esc(e.nota||'')}</textarea>`)}
- ${mact(B('close','Cancelar'),e.id?B('evdel','Borrar','btn-danger'):'',B('evsave','Guardar','btn-primary'))}`);S.ev=e}
-async function evSave(){const e=S.ev,store=q('modo'),ini=q('ini'),fin=q('fin');
+ <div id="fv">${fld('Empieza',sel('vi',im,'Desde ya','iniCurso'))}${fld('Termina',sel('vf',fm,'Sin caducidad','finCurso'))}
+ <label style="display:flex;gap:10px;align-items:center;margin:4px 0 8px"><input type="checkbox" name="resp" ${(e.respeta??RESP.includes(e.tipo_id))?'checked':''} style="width:20px;height:20px"> Respeta periodos sin clase (Navidad, Semana Santa…)</label></div>
+ ${sal?B('salta',(e.excep||[]).includes(e.k)?'↺ Restaurar el '+fc(e.k):'🚫 Hoy no hay clase ('+fc(e.k)+')','btn-block','style="margin-bottom:6px"'):''}
+ ${mact(B('close','Cancelar'),e.id?B('evdel','Borrar','btn-danger'):'',B('evsave','Guardar','btn-primary'))}`);S.ev=e;togModo()}
+async function evSave(){const e=S.ev,m=q('modo'),ini=q('ini'),fin=q('fin');
  if(!ini||!fin||mn(fin)<=mn(ini))return toast('La hora de fin debe ser posterior');
- if(store==='plan'&&!q('fecha'))return toast('Falta la fecha');
  const o={tipo_id:q('tipo'),ini,fin,sub:q('sub').trim(),nota:q('nota').trim()};
- if(store==='plan')o.fecha=q('fecha');else o.dia=+q('dia');
+ if(m==='plan'){o.fecha=q('fecha');if(!o.fecha)return toast('Falta la fecha')}
+ else{const vm=(a,b,c)=>{const v=q(a);return v==='curso'?P(c,''):v==='fecha'?q(b):''};
+  o.rep=m;o.dia=+q('dia');o.inicioRep=vm('vi_m','vi_f','iniCurso')||null;o.finRep=vm('vf_m','vf_f','finCurso')||null;
+  if(o.inicioRep&&o.finRep&&o.finRep<o.inicioRep)return toast('El fin es anterior al inicio');
+  o.respeta=!!q('resp');o.excep=e.excep||[];
+  if(m==='nsem'){o.cada=Math.max(2,Math.round(num(q('cada')))||2);o.ancla=dk(lun(pk(o.inicioRep||e.ancla||hoyK())))}
+  if(m==='mesdia'){o.ords=[1,2,3,4,5].filter(n=>q('o'+n));if(!o.ords.length)return toast('Elige al menos una semana')}
+  if(m==='mesnum')o.diaMes=Math.min(31,Math.max(1,Math.round(num(q('dm')))||1))}
+ const store=m==='plan'?'plan':'rutina';
  if(e.id&&e.store===store)o.id=e.id;else if(e.id)await del(e.store,e.id);
  await put(store,o);close();toast('Guardado');if(store==='plan')S.fecha=o.fecha;render()}
 const nuevoEv=f=>({id:null,store:f?'plan':'rutina',dia:dow(f?pk(f):new Date()),fecha:f||hoyK(),tipo_id:firstAct(),ini:'10:00',fin:'11:00'});
+
+/* ---- ACTIVIDADES (rutinas, cursos, finalizadas) ---- */
+async function vAct(){const ru=await all('rutina'),h=hoyK(),cer=r=>r.finRep&&r.finRep<h,fy=k=>fl(k,{day:'numeric',month:'short',year:'numeric'});
+ const vig=r=>[r.inicioRep?(r.inicioRep>h?'empieza el ':'desde el ')+fy(r.inicioRep):'',r.finRep?(cer(r)?'terminó el ':'hasta el ')+fy(r.finRep):'sin caducidad'].filter(Boolean).join(' · ');
+ const fila=r=>{const t=tipo(r.tipo_id);return`<div class="fi" style="border-left-color:${t.color}" data-a="edit" data-s="rutina" data-id="${r.id}"><div class="grow"><div class="t1">${esc(nom(r))}</div><div class="t2">${esc(descRep(r))} · ${r.ini}–${r.fin}</div><div class="t2">${vig(r)}${(r.respeta??RESP.includes(r.tipo_id))?' · respeta periodos sin clase':''}</div></div>${cer(r)?`<div class="fa" style="flex-direction:column;gap:6px">${B('react','Reactivar','btn-sm','data-id="'+r.id+'"')}${B('renov','Renovar','btn-sm btn-ok','data-id="'+r.id+'"')}</div>`:''}</div>`};
+ const ac=ru.filter(r=>!cer(r)).sort((a,b)=>(+a.dia)-(+b.dia)||mn(a.ini)-mn(b.ini)),fi=ru.filter(cer).sort((a,b)=>b.finRep.localeCompare(a.finRep));
+ return topbar(ttl('🔁 Actividades'),{back:1,right:ib('nueva','＋')})+`<div class="wrap"><div class="sec-title" style="margin-top:0">Activas</div>${ac.map(fila).join('')||'<div class="empty">No hay actividades repetidas.</div>'}
+ <div class="sec-title">Finalizadas</div>${fi.map(fila).join('')||'<div class="empty">Ninguna todavía. Al pasar su fecha de fin aparecerán aquí con su histórico.</div>'}</div>`}
 
 /* ---- Marcar hecho (tocar otra vez = desmarcar) ---- */
 const busy=new Set();
@@ -486,10 +546,10 @@ function drawPeso(){const cv=document.getElementById('pc');if(!cv||S.pc.length<2
 /* ---- IDEAS ---- */
 async function vIdeas(){const i=(await all('ideas')).sort((a,b)=>b.id-a.id);
  return topbar(ttl('💡 Ideas de mejora'),{back:1})+`<div class="wrap"><div class="card"><textarea class="input" id="ni" placeholder="Escribe una idea (admite varias líneas)"></textarea>${B('isave','Guardar','btn-primary btn-block','style="margin-top:8px"')}</div>
- ${i.map(x=>`<div class="card" style="${x.hecha?'opacity:.6':''}"><div style="white-space:pre-wrap">${esc(x.texto)}</div><div class="row" style="margin-top:8px;align-items:center"><span class="muted" style="font-size:12px">${x.fecha?fc(x.fecha):''}${x.hecha?' · ✓ implementada':''}</span>${B('itog',x.hecha?'↺ Reabrir':'✓ Implementada','btn-sm','data-id="'+x.id+'"')}${B('iedit','✎','btn-sm','data-id="'+x.id+'"')}${B('idel','🗑','btn-sm btn-danger','data-id="'+x.id+'"')}</div></div>`).join('')||'<div class="empty">Aún no hay ideas.</div>'}</div>`}
+ ${i.map(x=>`<div class="card" style="${x.hecha?'opacity:.6':''}"><div style="white-space:pre-wrap">${esc(x.texto)}</div><div class="idea-acts"><span class="st">${x.fecha?fc(x.fecha):''}${x.hecha?' · ✓ implementada':''}</span>${B('itog',x.hecha?'↺ Reabrir':'✓ Implementada','btn-sm','data-id="'+x.id+'"')}${B('iedit','✎','btn-sm','data-id="'+x.id+'"')}${B('idel','🗑','btn-sm btn-danger','data-id="'+x.id+'"')}</div></div>`).join('')||'<div class="empty">Aún no hay ideas.</div>'}</div>`}
 
 /* ---- MÁS ---- */
-const vMas=async()=>topbar(ttl('Más'))+`<div class="wrap"><div class="tiles">${[['chk','🎒','Checklist','Qué llevar'],['res','📊','Resumen','Totales y rutas'],['apr','🎸','Aprendido','Música'],['peso','⚖️','Peso','Gráfica'],['ideas','💡','Ideas','Mejoras'],['aj','⚙️','Ajustes','Categorías y copia']].map(([v,i,t,s])=>`<div class="tile" data-a="go" data-v="${v}"><div class="ti">${i}</div><div class="tt">${t}</div><div class="ts">${s}</div></div>`).join('')}</div></div>`;
+const vMas=async()=>topbar(ttl('Más'))+`<div class="wrap"><div class="tiles">${[['acts','🔁','Actividades','Rutinas y cursos'],['chk','🎒','Checklist','Qué llevar'],['res','📊','Resumen','Totales y rutas'],['apr','🎸','Aprendido','Música'],['peso','⚖️','Peso','Gráfica'],['ideas','💡','Ideas','Mejoras'],['aj','⚙️','Ajustes','Categorías y copia']].map(([v,i,t,s])=>`<div class="tile" data-a="go" data-v="${v}"><div class="ti">${i}</div><div class="tt">${t}</div><div class="ts">${s}</div></div>`).join('')}</div></div>`;
 
 /* ---- AJUSTES ---- */
 async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.prefs;
@@ -499,9 +559,11 @@ async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.pref
  <details class="sec-fold" data-fold="pref" ${o('pref')}><summary>Preferencias generales</summary><div class="fold-body">${fld('Tamaño de letra',`<select class="input" data-pref="fuente">${opts([['normal','Normal'],['grande','Grande'],['muygrande','Muy grande']],P('fuente','normal'))}</select>`)}</div></details>
  <details class="sec-fold" data-fold="copia" ${o('copia')}><summary>Copias de seguridad · recordatorio</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Al abrir, la app te propondrá hacer copia si se superan estos valores.</div><div class="row">${fld('Cada N datos nuevos',`<input class="input" type="number" min="1" data-pref="umbralCambios" value="${pp('umbralCambios',1)}">`)}${fld('Cada N días',`<input class="input" type="number" min="1" data-pref="umbralDias" value="${pp('umbralDias',30)}">`)}</div>
   <div class="muted" style="font-size:12px;margin-top:8px">Cambios desde la última copia: <b>${C.cambios||0}</b><br>Última copia: <b>${C.ultimaCopia?fc(C.ultimaCopia.slice(0,10)):'—'}</b></div></div></details>
+ <details class="sec-fold" data-fold="curso" ${o('curso')}><summary>Curso y periodos sin clase</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Fechas aproximadas: cámbialas cuando las sepas. Se usan en los atajos «Inicio/Fin de curso» al crear actividades y en «Renovar».</div><div class="row">${fld('Inicio de curso',`<input class="input" type="date" data-pref="iniCurso" value="${pp('iniCurso','')}">`)}${fld('Fin de curso',`<input class="input" type="date" data-pref="finCurso" value="${pp('finCurso','')}">`)}</div>
+ <div class="sec-title">Periodos sin clase</div>${getPer().map((p,i)=>`<div class="card" style="padding:10px"><div class="row" style="margin-bottom:8px;align-items:center"><input class="input" data-per="${i}" data-f="n" value="${esc(p.n)}" placeholder="Nombre"><button class="btn btn-sm btn-danger" data-a="perdel" data-i="${i}" style="flex:0 0 auto">✕</button></div><div class="row"><input class="input" type="date" data-per="${i}" data-f="d" value="${esc(p.d)}"><input class="input" type="date" data-per="${i}" data-f="h" value="${esc(p.h)}"></div></div>`).join('')}${B('peradd','＋ Añadir periodo','btn-sm btn-block')}</div></details>
  ${B('go','💡 Ideas de mejora','btn-block','data-v="ideas" style="margin-bottom:10px"')}
  <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}</div></details>
- <div class="center muted" style="margin-top:24px;font-size:12px">Ocio y Deporte · <b>v4.1.0</b></div></div>`}
+ <div class="center muted" style="margin-top:24px;font-size:12px">Clases y Deporte · <b>v4.2.0</b></div></div>`}
 function cModal(c){S.cat={...c};modal(`<h2>${c.id?'Editar':'Nueva'} categoría</h2>${fld('Nombre',`<input class="input" name="nom" value="${esc(c.nombre||'')}">`)}${fld('Icono (emoji)',`<input class="input" name="ico" value="${esc(c.icono||'🏷️')}" maxlength="4">`)}
  ${fld('Color',`<div class="paleta">${PALETA.map(p=>`<div class="sw ${p===S.cat.color?'sel':''}" data-a="sw" data-c="${p}" style="background:${p}"></div>`).join('')}</div>`)}
  <label style="display:flex;gap:10px;align-items:center;margin:8px 0"><input type="checkbox" name="solo" ${c.soloTiempo?'checked':''} style="width:20px;height:20px"> Solo reservar tiempo (sin marcar hecho ni checklist)</label>
@@ -514,17 +576,18 @@ async function cSave(){const c=S.cat,n=q('nom').trim();if(!n)return toast('Falta
 /* ---- Copia ---- */
 function motivoCopia(){if(P('snooze','')>new Date().toISOString())return'';const c=+P('cambios',0),m=[],u=P('ultimaCopia','');
  if(c>=+P('umbralCambios',1))m.push(c+(c>1?' datos nuevos':' dato nuevo')+' desde la última copia');
- if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=+P('umbralDias',30))m.push(d+' días sin copia')}return m.join(' · ')}
-async function exportar(){const d={version:'4.1.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='ocio-deporte-'+hoyK()+'.json';a.click();
- await setP('ultimaCopia',new Date().toISOString());await setP('cambios',0);await setP('snooze','');toast('Copia exportada');render()}
-async function importar(f){try{const d=JSON.parse(await f.text());if(!String(d.version||'').startsWith('4.1'))throw Error('Este archivo es de otra versión de la app');
+ if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=+P('umbralDias',30))m.push(d+' días sin copia')}
+ const fcu=P('finCurso','');if(fcu&&fcu<hoyK()&&P('copiaCurso','')!==fcu)m.push('Ha terminado el curso');return m.join(' · ')}
+async function exportar(){const d={version:'4.2.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='clases-y-deporte-'+hoyK()+'.json';a.click();
+ await setP('ultimaCopia',new Date().toISOString());if(P('finCurso','')&&P('finCurso','')<hoyK())await setP('copiaCurso',P('finCurso',''));await setP('cambios',0);await setP('snooze','');toast('Copia exportada');render()}
+async function importar(f){try{const d=JSON.parse(await f.text());if(!String(d.version||'').startsWith('4.'))throw Error('Este archivo es de otra versión de la app');
  if(!confirm('Importar reemplazará TODOS los datos actuales. ¿Continuar?'))return;
  for(const s of DATOS){await clr(s);if(Array.isArray(d[s]))for(const it of d[s])await raw(s,it)}
- await raw('prefs',{k:'seeded',v:1});await raw('prefs',{k:'cambios',v:0});toast('Importado');render()}catch(e){alert('Error: '+e.message)}finally{const i=$('#fi');if(i)i.value=''}}
+ await raw('prefs',{k:'seeded',v:1});await raw('prefs',{k:'cambios',v:0});await ensurePrefs();toast('Importado');render()}catch(e){alert('Error: '+e.message)}finally{const i=$('#fi');if(i)i.value=''}}
 
 /* ---- Render / navegación ---- */
-const VIS={dia:vDia,sem:vSem,mas:vMas,chk:vChk,res:vRes,apr:vApr,deb:vDeb,peso:vPeso,ideas:vIdeas,aj:vAj};
+const VIS={acts:vAct,dia:vDia,sem:vSem,mas:vMas,chk:vChk,res:vRes,apr:vApr,deb:vDeb,peso:vPeso,ideas:vIdeas,aj:vAj};
 async function render(){await load();S.ban=motivoCopia();
  const sc=document.querySelector('.plantilla-container'),sx=sc?sc.scrollLeft:0,sy=S.reset?0:scrollY;S.reset=false;
  $('#app').innerHTML=await VIS[S.v]();const s2=document.querySelector('.plantilla-container');if(s2)s2.scrollLeft=sx;scrollTo(0,sy);
@@ -539,7 +602,10 @@ function menu(){modal(`<h2>Añadir</h2>${B('nueva','🗓️ Actividad (rutina o 
 document.addEventListener('toggle',e=>{if(e.target.dataset&&e.target.dataset.fold)S.aj[e.target.dataset.fold]=e.target.open},true);
 document.addEventListener('input',e=>{if(e.target.id==='aq'){S.aq=e.target.value;clearTimeout(S.t);S.t=setTimeout(async()=>{const p=e.target.selectionStart;await render();const i=$('#aq');if(i){i.focus();i.setSelectionRange(p,p)}},250)}});
 document.addEventListener('change',async e=>{const t=e.target;
- if(t.name==='modo'){$('#fd').hidden=t.value==='plan';$('#ff').hidden=t.value!=='plan';return}
+ if(t.name==='modo'){togModo();return}
+ if(t.name==='vi_m'||t.name==='vf_m'){const x=document.querySelector('#modal-root [name='+t.name.replace('_m','_f')+']');if(x)x.hidden=t.value!=='fecha';return}
+ if(t.dataset.per!==undefined){const l=getPer(),p=l[+t.dataset.per];if(p){p[t.dataset.f]=t.value;await setP('periodos',l)}return}
+ if(t.name==='tipo'&&S.ev&&!S.ev.id&&$('#fv')){const r=document.querySelector('#modal-root [name=resp]');if(r)r.checked=RESP.includes(t.value)}
  if(t.name==='tipo'&&$('#rf')){$('#rf').hidden=!tipo(t.value).ruta;return}
  if(t.dataset.ch==='fecha'&&t.value){S.fecha=t.value;render();return}
  if(t.dataset.ch==='desde'||t.dataset.ch==='hasta'){S[t.dataset.ch]=t.value;render();return}
@@ -559,7 +625,7 @@ document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]'
  case 'chk':S.chkT=D.t;go('chk');break;
  case 'menu':menu();break;
  case 'nueva':evModal(nuevoEv(D.f||null));break;
- case 'edit':{const p=await get(D.s,id);if(p)evModal({...p,store:D.s});break}
+ case 'edit':{const p=await get(D.s,id);if(p)evModal({...p,store:D.s,k:D.k});break}
  case 'evsave':evSave();break;
  case 'evdel':{const x=S.ev;close();delUndo(x.store,x.id,'Actividad borrada');break}
  case 'datos':{const x=await get('actividades',id);if(x)datosModal(x);break}
@@ -596,6 +662,14 @@ document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]'
  case 'sw':S.cat.color=D.c;document.querySelectorAll('#modal-root .sw').forEach(s=>s.classList.toggle('sel',s.dataset.c===D.c));break;
  case 'csave':cSave();break;
  case 'cdel':{const c=S.cat,u=(await Promise.all(['rutina','plan','actividades','deberes'].map(all))).flat().some(x=>x.tipo_id===c.id);if(u)return toast('Está en uso: mejor desmarca "Ver"');const o=c;await del('tipos',c.id);close();render();toast('Categoría borrada','Deshacer',async()=>{await put('tipos',o);render()});break}
+ case 'salta':{const r=await get('rutina',S.ev.id),k=S.ev.k;if(!r)break;const l=r.excep||[];r.excep=l.includes(k)?l.filter(x=>x!==k):[...l,k];await put('rutina',r);close();toast(l.includes(k)?'Día restaurado':'Día saltado');render();break}
+ case 'react':{const r=await get('rutina',id);if(!r)break;S.ren=r;const f=P('finCurso','');modal(`<h2>Reactivar</h2><div class="muted" style="margin-bottom:10px">${esc(nom(r))}</div>${fld('Nueva fecha de fin (vacío = sin caducidad)',`<input class="input" type="date" name="rf2" value="${f>hoyK()?f:''}">`)}${mact(B('close','Cancelar'),B('reok','Reactivar','btn-primary'))}`);break}
+ case 'reok':{const r=S.ren,f=q('rf2')||null;if(f&&f<hoyK())return toast('La fecha ya ha pasado');r.finRep=f;await put('rutina',r);close();toast('Reactivada');render();break}
+ case 'renov':{const r=await get('rutina',id);if(!r)break;S.ren=r;let i=P('iniCurso',''),f=P('finCurso','');if(i&&r.finRep)while(i<=r.finRep){i=masAnio(i);if(f)f=masAnio(f)}
+  modal(`<h2>Renovar para el nuevo curso</h2><div class="muted" style="margin-bottom:10px">${esc(nom(r))} · ${esc(descRep(r))}. Se crea una copia con las mismas opciones; la actual y su histórico no se tocan.</div><div class="row">${fld('Empieza',`<input class="input" type="date" name="ri" value="${i}">`)}${fld('Termina',`<input class="input" type="date" name="rf" value="${f}">`)}</div>${mact(B('close','Cancelar'),B('renok','Crear copia','btn-primary'))}`);break}
+ case 'renok':{const r=S.ren,i=q('ri')||null,f=q('rf')||null;if(i&&f&&f<i)return toast('El fin es anterior al inicio');const n={...r,inicioRep:i,finRep:f,excep:[]};delete n.id;if(n.rep==='nsem')n.ancla=dk(lun(pk(i||hoyK())));await put('rutina',n);close();toast('Curso renovado');render();break}
+ case 'perdel':{const l=getPer();l.splice(+D.i,1);await setP('periodos',l);render();break}
+ case 'peradd':{const l=getPer();l.push({n:'Nuevo periodo',d:'',h:''});await setP('periodos',l);render();break}
  case 'exportar':exportar();break;case 'importar':$('#fi').click();break;
  case 'borrar':if(confirm('¿Borrar TODOS los datos? Se descargará antes una copia.')){await exportar();for(const s of DATOS)await clr(s);await seed();S.reset=true;render()}break;
  case 'snooze':await setP('snooze',new Date(Date.now()+864e5).toISOString());render();break;
