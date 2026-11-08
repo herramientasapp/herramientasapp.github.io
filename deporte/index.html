@@ -267,6 +267,10 @@
   .idea-acts .st{flex:1 1 70px;min-width:0;font-size:12px;color:var(--text-muted)}
   .idea-acts .btn{flex:0 0 auto;min-height:36px;white-space:nowrap}
   label.chip input{margin-right:4px;accent-color:var(--primary)}
+  #print-root{display:none}
+  .plan-txt{white-space:pre-wrap;margin-top:2px}
+  @media print{html,body{background:#fff!important}body.printing>*:not(#print-root){display:none!important}body.printing #print-root{display:block;color:#000;font:12px system-ui,sans-serif}
+   #print-root h1{font-size:16px;margin:0 0 8px}#print-root table{width:100%;border-collapse:collapse}#print-root th,#print-root td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top;word-break:break-all}}
 </style></head><body>
 <div id="app"></div><div id="modal-root"></div><div id="tab"></div>
 <script>
@@ -287,18 +291,18 @@ const APR=[['cancion','🎵 Canción'],['acorde','🎼 Acorde'],['escala','🎹 
 
 /* ---- Base de datos simplificada (nueva: ocio_deporte_v41) ---- */
 let db;const AI={keyPath:'id',autoIncrement:true};
-const ST={tipos:{keyPath:'id'},rutina:AI,plan:AI,hechos:{keyPath:'id'},actividades:AI,deberes:AI,aprendido:AI,checklist:AI,checkEstado:{keyPath:'id'},peso:AI,mediciones:AI,ideas:AI,prefs:{keyPath:'k'}};
+const ST={tipos:{keyPath:'id'},rutina:AI,plan:AI,hechos:{keyPath:'id'},actividades:AI,deberes:AI,aprendido:AI,checklist:AI,checkEstado:{keyPath:'id'},peso:AI,mediciones:AI,notasOcurrencia:{keyPath:'id'},ideas:AI,prefs:{keyPath:'k'}};
 const DATOS=Object.keys(ST);
 const rq=r=>new Promise((o,e)=>{r.onsuccess=()=>o(r.result);r.onerror=()=>e(r.error)});
 const st=(s,m)=>db.transaction(s,m||'readonly').objectStore(s);
-const all=s=>rq(st(s).getAll()),get=(s,k)=>rq(st(s).get(k)),clr=s=>rq(st(s,'readwrite').clear()),raw=(s,v)=>rq(st(s,'readwrite').put(v));
+const all=s=>rq(st(s).getAll()),get=(s,k)=>rq(st(s).get(k)),clr=s=>rq(st(s,'readwrite').clear()),raw=(s,v)=>{if(v&&v.id==null&&'id' in v){v={...v};delete v.id}return rq(st(s,'readwrite').put(v))};
 const SIN=['hechos','checkEstado','prefs'];
 async function chg(){const n=(+S.prefs.cambios||0)+1;S.prefs.cambios=n;await raw('prefs',{k:'cambios',v:n})}
 async function put(s,v){const r=await raw(s,v);if(!SIN.includes(s))chg();return r}
 async function del(s,k){await rq(st(s,'readwrite').delete(k));if(!SIN.includes(s))chg()}
 const setP=async(k,v)=>{S.prefs[k]=v;await raw('prefs',{k,v})};
 const P=(k,d)=>S.prefs[k]??d;
-const openDB=()=>new Promise((o,e)=>{const r=indexedDB.open('ocio_deporte_v41',2);
+const openDB=()=>new Promise((o,e)=>{const r=indexedDB.open('ocio_deporte_v41',3);
  r.onupgradeneeded=ev=>{const d=ev.target.result;for(const n in ST)if(!d.objectStoreNames.contains(n))d.createObjectStore(n,ST[n])};
  r.onsuccess=()=>{db=r.result;o()};r.onerror=()=>e(r.error)});
 const TB=[['senderismo','Senderismo','🥾','#059669',0,1],['paseo','Paseo','🚶','#0284c7',0,1],['gimnasio','Gimnasio','🏋️','#7c3aed'],['guitarra','Guitarra','🎸','#be185d'],['ingles','Inglés','🗣️','#0891b2'],['limpieza','Limpieza','🧹','#65a30d',1],['otro','Otro','✨','#d97706']];
@@ -311,8 +315,8 @@ async function seed(){const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);
  await ensurePrefs();await migrarPeso()}
 
 /* ---- Estado ---- */
-const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',rr:'mes',ct:'peso',cp:'3m',desde:'',hasta:'',df:'pend',af:'todo',aq:'',aj:{},reset:true};
-async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);S.prefs=p;S.theme=P('theme','dark');document.documentElement.dataset.theme=S.theme}
+const S={v:'dia',fecha:hoyK(),sem:dk(lun(new Date())),prefs:{},tipos:[],chkT:'senderismo',rr:'mes',ct:'peso',cp:'3m',sq:{deb:'',acts:''},desde:'',hasta:'',df:'pend',af:'todo',aq:'',aj:{},reset:true};
+async function load(){S.tipos=(await all('tipos')).sort((a,b)=>a.orden-b.orden);const p={};(await all('prefs')).forEach(x=>p[x.k]=x.v);S.prefs=p;S.theme=P('theme','dark');document.documentElement.dataset.theme=S.theme;S.NO=new Map((await all('notasOcurrencia')).map(n=>[n.id,n]))}
 const tipo=id=>S.tipos.find(t=>t.id===id)||{id,nombre:'—',icono:'•',color:'#d97706'};
 const act=()=>S.tipos.filter(t=>t.visible&&!t.soloTiempo),firstAct=()=>(act()[0]||S.tipos[0]||{}).id;
 function toast(m,lbl,fn){document.querySelectorAll('.toast').forEach(x=>x.remove());const x=document.createElement('div');x.className='toast';x.textContent=m;
@@ -365,11 +369,11 @@ const descRep=r=>{const dn=(DN[(+r.dia||1)-1]||'').toLowerCase(),rp=r.rep||'sem'
  return rp==='nsem'?`Cada ${r.cada||2} semanas · ${dn}`:rp==='mesdia'?`${(r.ords||[]).map(o=>o===5?'último':o+'.º').join(' y ')} ${dn} de cada mes`:rp==='mesnum'?`Día ${r.diaMes||1} de cada mes`:`Todos los ${dn}`};
 
 const nom=e=>{const t=tipo(e.tipo_id);return t.icono+' '+t.nombre+(e.sub?' · '+e.sub:'')+(e.puntual?' 📅':'')};
-function ficha(e,k,HM){const t=tipo(e.tipo_id),h=HM.get(e.ref+'_'+k),solo=t.soloTiempo;
+function ficha(e,k,HM){const t=tipo(e.tipo_id),h=HM.get(e.ref+'_'+k),solo=t.soloTiempo,pn=S.NO&&S.NO.get(e.ref+'_'+k);
  return`<div class="fi ${h||e.salt?'hecha':''} ${solo?'solo':''}" style="border-left-color:${t.color}">
   ${solo||e.salt?'':`<div class="box ${h?'on':''}" data-a="marcar" data-ref="${e.ref}" data-k="${k}">${h?'✓':''}</div>`}
-  <div class="grow"><div class="t1">${esc(nom(e))}</div><div class="t2"><b style="color:${t.color}">${e.ini}–${e.fin}</b>${e.salt?' · 🚫 sin clase':solo?' · tiempo reservado':''}${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div></div>
-  <div class="fa">${solo||e.salt?'':`<button class="mini" data-a="chk" data-t="${e.tipo_id}" title="Checklist">🎒</button>`}${h&&!solo?`<button class="mini" data-a="datos" data-id="${h.act_id}" title="Datos">＋</button>`:''}<button class="mini" data-a="edit" data-s="${e.store}" data-id="${e.id}" data-k="${k}" title="Editar">✎</button></div></div>`}
+  <div class="grow"><div class="t1">${esc(nom(e))}</div><div class="t2"><b style="color:${t.color}">${e.ini}–${e.fin}</b>${e.salt?' · 🚫 sin clase':solo?' · tiempo reservado':''}${e.nota?' · '+esc(e.nota.split('\n')[0]):''}</div>${pn?`<div class="t2 plan-txt">📝 ${esc(pn.texto||'')}${pn.enlace?` <a href="${esc(pn.enlace)}" target="_blank" rel="noopener" style="color:var(--accent)">🔗</a>`:''}</div>`:''}</div>
+  <div class="fa">${e.salt?'':`<button class="mini" data-a="plan" data-ref="${e.ref}" data-k="${k}" title="Plan del día" style="${pn?'border-color:var(--primary)':''}">📝</button>`}${solo||e.salt?'':`<button class="mini" data-a="chk" data-t="${e.tipo_id}" title="Checklist">🎒</button>`}${h&&!solo?`<button class="mini" data-a="datos" data-id="${h.act_id}" title="Datos">＋</button>`:''}<button class="mini" data-a="edit" data-s="${e.store}" data-id="${e.id}" data-k="${k}" title="Editar">✎</button></div></div>`}
 
 /* ---- DÍA ---- */
 async function vDia(){const k=S.fecha,[ru,pl,H]=await Promise.all([all('rutina'),all('plan'),all('hechos')]);
@@ -405,6 +409,7 @@ async function vSem(){const[ru,pl,H]=await Promise.all([all('rutina'),all('plan'
  return topbar(ib('sem','‹','data-n="-1"')+`<div class="nav-title" data-a="sem" data-n="0">${tit}</div>`+ib('sem','›','data-n="1"'),{right:(cur?'':ib('sem','↺','data-n="0"'))+(vista==='horas'?ib('zoom','−','data-n="-1"')+ib('zoom','+','data-n="1"'):'')+ib('vista',vista==='lista'?'▦':'☰')})+`<div class="wrap">${c}</div>`}
 
 /* ---- Actividad (rutina / un día) ---- */
+const searchBox=k=>`<input class="input" data-sq="${k}" placeholder="Buscar…" value="${esc(S.sq[k]||'')}" style="margin-bottom:10px">`;
 const REPS=[['plan','📅 Solo un día'],['sem','🔁 Cada semana'],['nsem','🔁 Cada N semanas'],['mesdia','🗓️ Mensual: 1.º y 3.er sábado…'],['mesnum','🗓️ Mensual: un día del mes']];
 function togModo(){const m=q('modo'),sh=(id,c)=>{const x=$('#'+id);if(x)x.hidden=!c};sh('ff',m==='plan');sh('fd',['sem','nsem','mesdia'].includes(m));sh('fn',m==='nsem');sh('fo',m==='mesdia');sh('fm',m==='mesnum');sh('fv',m!=='plan')}
 function evModal(e){const m=e.store==='plan'?'plan':(e.rep||'sem'),ords=e.ords||[1],sal=e.store==='rutina'&&e.k,
@@ -444,8 +449,8 @@ const nuevoEv=f=>({id:null,store:f?'plan':'rutina',dia:dow(f?pk(f):new Date()),f
 async function vAct(){const ru=await all('rutina'),h=hoyK(),cer=r=>r.finRep&&r.finRep<h,fy=k=>fl(k,{day:'numeric',month:'short',year:'numeric'});
  const vig=r=>[r.inicioRep?(r.inicioRep>h?'empieza el ':'desde el ')+fy(r.inicioRep):'',r.finRep?(cer(r)?'terminó el ':'hasta el ')+fy(r.finRep):'sin caducidad'].filter(Boolean).join(' · ');
  const fila=r=>{const t=tipo(r.tipo_id);return`<div class="fi" style="border-left-color:${t.color}" data-a="edit" data-s="rutina" data-id="${r.id}"><div class="grow"><div class="t1">${esc(nom(r))}</div><div class="t2">${esc(descRep(r))} · ${r.ini}–${r.fin}</div><div class="t2">${vig(r)}${(r.respeta??RESP.includes(r.tipo_id))?' · respeta periodos sin clase':''}</div></div>${cer(r)?`<div class="fa" style="flex-direction:column;gap:6px">${B('react','Reactivar','btn-sm','data-id="'+r.id+'"')}${B('renov','Renovar','btn-sm btn-ok','data-id="'+r.id+'"')}</div>`:''}</div>`};
- const ac=ru.filter(r=>!cer(r)).sort((a,b)=>(+a.dia)-(+b.dia)||mn(a.ini)-mn(b.ini)),fi=ru.filter(cer).sort((a,b)=>b.finRep.localeCompare(a.finRep));
- return topbar(ttl('🔁 Actividades'),{back:1,right:ib('nueva','＋')})+`<div class="wrap"><div class="sec-title" style="margin-top:0">Activas</div>${ac.map(fila).join('')||'<div class="empty">No hay actividades repetidas.</div>'}
+ const qq=(S.sq.acts||'').toLowerCase(),sf=r=>!qq||(nom(r)+' '+descRep(r)).toLowerCase().includes(qq),ac=ru.filter(r=>!cer(r)&&sf(r)).sort((a,b)=>(+a.dia)-(+b.dia)||mn(a.ini)-mn(b.ini)),fi=ru.filter(r=>cer(r)&&sf(r)).sort((a,b)=>b.finRep.localeCompare(a.finRep));
+ return topbar(ttl('🔁 Actividades'),{back:1,right:ib('nueva','＋')})+`<div class="wrap">${searchBox('acts')}<div class="sec-title" style="margin-top:0">Activas</div>${ac.map(fila).join('')||'<div class="empty">No hay actividades repetidas.</div>'}
  <div class="sec-title">Finalizadas</div>${fi.map(fila).join('')||'<div class="empty">Ninguna todavía. Al pasar su fecha de fin aparecerán aquí con su histórico.</div>'}</div>`}
 
 /* ---- Marcar hecho (tocar otra vez = desmarcar) ---- */
@@ -473,20 +478,20 @@ async function actSave(){const a=S.act,n=v=>v===''?null:num(v);let w=q('wiki').t
  await put('actividades',o);close();toast('Guardado');render()}
 
 /* ---- DEBERES ---- */
-async function vDeb(){const d=await all('deberes'),f=S.df;
+async function vDeb(){const d=await all('deberes'),f=S.df,qq=(S.sq.deb||'').toLowerCase(),sf=x=>!qq||(x.titulo+' '+(x.desc||'')+' '+tipo(x.tipo_id).nombre).toLowerCase().includes(qq);
  let l=d.filter(x=>f==='todos'||(f==='hechos')===!!x.hecho);
  l=f==='hechos'?l.sort((a,b)=>(b.hecho_en||'').localeCompare(a.hecho_en||'')):l.sort((a,b)=>(a.fecha||'9').localeCompare(b.fecha||'9'));
  const it=x=>{const t=tipo(x.tipo_id);return`<div class="fi ${x.hecho?'hecha':''}" style="border-left-color:${t.color}"><div class="box ${x.hecho?'on':''}" data-a="dtog" data-id="${x.id}">${x.hecho?'✓':''}</div>
   <div class="grow"><div class="t1">${esc(x.titulo)}</div><div class="t2">${t.icono} ${esc(t.nombre)}${x.fecha?' · para '+fcs(x.fecha):''}</div>${x.desc?`<div class="t2" style="white-space:pre-wrap">${esc(x.desc)}</div>`:''}</div>
   <div class="fa"><button class="mini" data-a="dedit" data-id="${x.id}">✎</button></div></div>`};
  return topbar(ttl('Deberes'))+`<div class="wrap"><div class="chips" style="margin-bottom:10px">${[['pend','Pendientes'],['hechos','Hechos'],['todos','Todos']].map(([k,t])=>`<button class="chip ${f===k?'sel':''}" data-a="df" data-v="${k}">${t}</button>`).join('')}<button class="chip" style="margin-left:auto" data-a="dnuevo">＋ Deber</button></div>
- ${l.map(it).join('')||'<div class="empty">Nada por aquí.</div>'}</div>`}
+ ${searchBox('deb')}${l.filter(sf).map(it).join('')||'<div class="empty">Nada por aquí.</div>'}</div>`}
 function dModal(d){S.deb=d;modal(`<h2>${d.id?'Editar':'Nuevo'} deber</h2>${fld('¿Qué hay que hacer?',`<input class="input" name="tit" value="${esc(d.titulo||'')}">`)}
  ${fld('Categoría',`<select class="input" name="tipo">${tipoOpts(d.tipo_id)}</select>`)}${fld('Para el día (opcional)',`<input class="input" type="date" name="fecha" value="${esc(d.fecha||'')}">`)}
  ${fld('Detalles (opcional)',`<textarea class="input" name="desc">${esc(d.desc||'')}</textarea>`)}
  ${mact(B('close','Cancelar'),d.id?B('ddel','Borrar','btn-danger'):'',B('dsave','Guardar','btn-primary'))}`)}
 async function dSave(){const t=q('tit').trim();if(!t)return toast('Falta el título');
- await put('deberes',{...S.deb,titulo:t,tipo_id:q('tipo'),fecha:q('fecha')||null,desc:q('desc').trim(),hecho:!!S.deb.hecho});close();S.df=S.df==='hechos'?'pend':S.df;render()}
+ await put('deberes',{...S.deb,titulo:t,tipo_id:q('tipo'),fecha:q('fecha')||null,desc:q('desc').trim(),hecho:!!S.deb.hecho});close();if(!S.deb.id&&S.df==='hechos')S.df='pend';render()}
 
 /* ---- APRENDIDO (música) ---- */
 async function vApr(){const l=(await all('aprendido')).filter(x=>(S.af==='todo'||x.cat===S.af)&&(!S.aq||(x.titulo+' '+(x.notas||'')).toLowerCase().includes(S.aq.toLowerCase()))).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id);
@@ -528,7 +533,7 @@ async function vRes(){const[d,h]=rango(),ac=(await all('actividades')).filter(a=
  return topbar(ttl('📊 Resumen'),{back:1})+`<div class="wrap"><div class="chips" style="margin-bottom:10px">${RANGOS.map(([k,l])=>`<button class="chip ${S.rr===k?'sel':''}" data-a="rr" data-v="${k}">${l}</button>`).join('')}</div>
  ${S.rr==='pers'?`<div class="card"><div class="row">${fld('Desde',`<input class="input" type="date" data-ch="desde" value="${esc(S.desde)}">`)}${fld('Hasta',`<input class="input" type="date" data-ch="hasta" value="${esc(S.hasta)}">`)}</div></div>`:''}
  ${S.rr!=='todo'?`<div class="muted center" style="font-size:12px;margin-bottom:10px">Del ${fc(d)} al ${fc(h)}</div>`:''}${cards||'<div class="empty">Sin categorías.</div>'}
- <div class="sec-title" style="font-size:13px;margin-top:20px">Wikiloc · rutas realizadas</div>${wk}</div>`}
+ <div class="sec-title" style="font-size:13px;margin-top:20px">Wikiloc · rutas realizadas</div><div class="row" style="margin:0 0 8px">${B('rutaspdf','🖨️ PDF','btn-sm')}${B('rutascsv','⬇ CSV','btn-sm')}</div>${wk}</div>`}
 
 /* ---- CONDICIÓN FÍSICA ---- */
 async function migrarPeso(){const p=await all('peso');if(!p.length)return;
@@ -608,8 +613,8 @@ async function vAj(){const o=k=>S.aj[k]?'open':'',pp=(k,d)=>esc(P(k,d)),C=S.pref
  <details class="sec-fold" data-fold="curso" ${o('curso')}><summary>Curso y periodos sin clase</summary><div class="fold-body"><div class="muted" style="font-size:12px;margin-bottom:10px">Fechas aproximadas: cámbialas cuando las sepas. Se usan en los atajos «Inicio/Fin de curso» al crear actividades y en «Renovar».</div><div class="row">${fld('Inicio de curso',`<input class="input" type="date" data-pref="iniCurso" value="${pp('iniCurso','')}">`)}${fld('Fin de curso',`<input class="input" type="date" data-pref="finCurso" value="${pp('finCurso','')}">`)}</div>
  <div class="sec-title">Periodos sin clase</div>${getPer().map((p,i)=>`<div class="card" style="padding:10px"><div class="row" style="margin-bottom:8px;align-items:center"><input class="input" data-per="${i}" data-f="n" value="${esc(p.n)}" placeholder="Nombre"><button class="btn btn-sm btn-danger" data-a="perdel" data-i="${i}" style="flex:0 0 auto">✕</button></div><div class="row"><input class="input" type="date" data-per="${i}" data-f="d" value="${esc(p.d)}"><input class="input" type="date" data-per="${i}" data-f="h" value="${esc(p.h)}"></div></div>`).join('')}${B('peradd','＋ Añadir periodo','btn-sm btn-block')}</div></details>
  ${B('go','💡 Ideas de mejora','btn-block','data-v="ideas" style="margin-bottom:10px"')}
- <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}</div></details>
- <div class="center muted" style="margin-top:24px;font-size:12px">Clases y Deporte · <b>v4.3.0</b></div></div>`}
+ <details class="sec-fold" data-fold="datos" ${o('datos')}><summary>Datos</summary><div class="fold-body">${B('exportar','⬇ Exportar JSON','btn-block')}${B('gest','🧹 Gestionar datos','btn-block','style="margin-top:8px"')}${B('importar','⬆ Importar JSON','btn-block','style="margin-top:8px"')}<input type="file" id="fi" accept="application/json,.json" hidden>${B('borrar','Borrar todo','btn-danger btn-block','style="margin-top:12px"')}</div></details>
+ <div class="center muted" style="margin-top:24px;font-size:12px">Clases y Deporte · <b>v4.4.0</b></div></div>`}
 function cModal(c){S.cat={...c};modal(`<h2>${c.id?'Editar':'Nueva'} categoría</h2>${fld('Nombre',`<input class="input" name="nom" value="${esc(c.nombre||'')}">`)}${fld('Icono (emoji)',`<input class="input" name="ico" value="${esc(c.icono||'🏷️')}" maxlength="4">`)}
  ${fld('Color',`<div class="paleta">${PALETA.map(p=>`<div class="sw ${p===S.cat.color?'sel':''}" data-a="sw" data-c="${p}" style="background:${p}"></div>`).join('')}</div>`)}
  <label style="display:flex;gap:10px;align-items:center;margin:8px 0"><input type="checkbox" name="solo" ${c.soloTiempo?'checked':''} style="width:20px;height:20px"> Solo reservar tiempo (sin marcar hecho ni checklist)</label>
@@ -620,11 +625,46 @@ async function cSave(){const c=S.cat,n=q('nom').trim();if(!n)return toast('Falta
  await put('tipos',{id,nombre:n,icono:q('ico').trim()||'🏷️',color:c.color||PALETA[0],visible:c.visible??1,orden:c.orden||S.tipos.length+1,soloTiempo:q('solo'),ruta:q('ruta')});close();render()}
 
 /* ---- Copia ---- */
+/* ---- RUTAS: PDF / CSV ---- */
+async function rutasPeriodo(){const[d,h]=rango(),rt=new Set(S.tipos.filter(t=>t.ruta).map(t=>t.id));
+ return{d,h,l:(await all('actividades')).filter(a=>rt.has(a.tipo_id)&&a.fecha>=d&&a.fecha<=h).sort((a,b)=>a.fecha.localeCompare(b.fecha))}}
+async function rutasCSV(){const{l}=await rutasPeriodo();if(!l.length)return toast('No hay rutas en este periodo');
+ const c=v=>'"'+String(v??'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"',n=v=>v==null||v===''?'':String(v).replace('.',',');
+ const t='Fecha;Categoría;Ruta;Enlace;Km;Desnivel (m);Notas\n'+l.map(a=>[a.fecha,tipo(a.tipo_id).nombre,a.ruta||'',a.wikiloc||'',n(a.km),n(a.desn),a.nota||''].map(c).join(';')).join('\n');
+ const x=document.createElement('a');x.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}));x.download='rutas-'+hoyK()+'.csv';x.click()}
+async function rutasPDF(){const{d,h,l}=await rutasPeriodo();if(!l.length)return toast('No hay rutas en este periodo');
+ const o=$('#print-root')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'print-root'}));
+ o.innerHTML=`<h1>Rutas realizadas${S.rr!=='todo'?' · del '+fc(d)+' al '+fc(h):''}</h1><table><tr><th>Fecha</th><th>Categoría</th><th>Ruta</th><th>Enlace</th><th>Km</th><th>Desn.</th><th>Notas</th></tr>${l.map(a=>`<tr><td>${fc(a.fecha)} ${a.fecha.slice(0,4)}</td><td>${esc(tipo(a.tipo_id).nombre)}</td><td>${esc(a.ruta||'')}</td><td>${esc(a.wikiloc||'')}</td><td>${a.km?fmt(a.km):''}</td><td>${a.desn?fmt(a.desn,0):''}</td><td>${esc(a.nota||'')}</td></tr>`).join('')}</table>`;
+ document.body.classList.add('printing');window.print()}
+window.addEventListener('afterprint',()=>{document.body.classList.remove('printing')});
+
+/* ---- PLAN POR OCURRENCIA ---- */
+async function planModal(ref,k){const p=ref[0]==='p'?await get('plan',+ref.slice(1)):await get('rutina',+ref);if(!p)return;const n=await get('notasOcurrencia',ref+'_'+k);S.pl={ref,k,existe:!!n};
+ modal(`<h2>📝 Plan del día</h2><div class="muted" style="margin-bottom:10px">${esc(nom(p))} · ${fc(k)}</div>${fld('Plan (ruta prevista, lección, qué repasar…)',`<textarea class="input" name="ptxt" style="min-height:120px">${esc(n?n.texto:'')}</textarea>`)}${fld('Enlace (opcional)',`<input class="input" name="penl" inputmode="url" placeholder="https://…" value="${esc(n?n.enlace||'':'')}">`)}
+ ${mact(B('close','Cancelar'),n?B('plandel','Borrar','btn-danger'):'',B('plansave','Guardar','btn-primary'))}`)}
+
+/* ---- GESTIONAR DATOS ---- */
+const delTipo=async tp=>{for(const m of await all('mediciones'))if(m.tipo===tp)await rq(st('mediciones','readwrite').delete(m.id))};
+const GC=[['rutina','Actividades repetidas',async()=>(await all('rutina')).length,async()=>{await clr('rutina')}],
+ ['plan','Actividades de un solo día',async()=>(await all('plan')).length,async()=>{await clr('plan')}],
+ ['hist','Histórico realizado (sesiones y marcas)',async()=>(await all('actividades')).length,async()=>{await clr('actividades');await clr('hechos')}],
+ ['notas','Planes por día',async()=>(await all('notasOcurrencia')).length,async()=>{await clr('notasOcurrencia')}],
+ ['deb','Deberes',async()=>(await all('deberes')).length,async()=>{await clr('deberes')}],
+ ['apr','Música aprendida',async()=>(await all('aprendido')).length,async()=>{await clr('aprendido')}],
+ ['ide','Ideas de mejora',async()=>(await all('ideas')).length,async()=>{await clr('ideas')}],
+ ...CT.map(([tp,l])=>['m_'+tp,'Mediciones · '+l.replace(/^\S+\s/,''),async()=>(await all('mediciones')).filter(m=>m.tipo===tp).length,()=>delTipo(tp)]),
+ ['per','Periodos sin clase',async()=>getPer().length,async()=>{await setP('periodos',[])}]];
+async function gestModal(){const n=await Promise.all(GC.map(c=>c[2]()));
+ modal(`<h2>🧹 Gestionar datos</h2><div class="muted" style="font-size:12px;margin-bottom:10px">Antes de vaciar se descarga una copia. Categorías, checklist y ajustes no se tocan.</div>${GC.map((c,i)=>`<div class="chk-compact" style="margin-bottom:6px"><span class="txt">${c[1]} · <b>${n[i]}</b></span><button class="btn btn-sm btn-danger" data-a="vaciar" data-c="${c[0]}" ${n[i]?'':'disabled'} style="flex:0 0 auto">Vaciar</button></div>`).join('')}
+ ${B('exc','Vaciar todo excepto…','btn-block','style="margin-top:10px"')}${mact(B('close','Cerrar'))}`)}
+const confCampo=()=>fld('Escribe BORRAR para confirmar',`<input class="input" name="conf" autocomplete="off">`);
+async function vaciarSel(ids){await exportar();for(const id of ids)await GC.find(c=>c[0]===id)[3]();close();toast('Vaciado');render()}
+
 function motivoCopia(){if(P('snooze','')>new Date().toISOString())return'';const c=+P('cambios',0),m=[],u=P('ultimaCopia','');
  if(c>=+P('umbralCambios',1))m.push(c+(c>1?' datos nuevos':' dato nuevo')+' desde la última copia');
  if(u){const d=Math.floor((Date.now()-new Date(u))/864e5);if(d>=+P('umbralDias',30))m.push(d+' días sin copia')}
  const fcu=P('finCurso','');if(fcu&&fcu<hoyK()&&P('copiaCurso','')!==fcu)m.push('Ha terminado el curso');return m.join(' · ')}
-async function exportar(){const d={version:'4.3.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
+async function exportar(){const d={version:'4.4.0',exportado:new Date().toISOString()};for(const s of DATOS)d[s]=await all(s);
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='clases-y-deporte-'+hoyK()+'.json';a.click();
  await setP('ultimaCopia',new Date().toISOString());if(P('finCurso','')&&P('finCurso','')<hoyK())await setP('copiaCurso',P('finCurso',''));await setP('cambios',0);await setP('snooze','');toast('Copia exportada');render()}
 async function importar(f){try{const d=JSON.parse(await f.text());if(!String(d.version||'').startsWith('4.'))throw Error('Este archivo es de otra versión de la app');
@@ -645,7 +685,8 @@ addEventListener('popstate',e=>{close();go((e.state&&e.state.v)||'dia',1)});
 function menu(){modal(`<h2>Añadir</h2>${B('nueva','🗓️ Actividad (rutina o un día)','btn-block','style="margin-bottom:8px"')}${B('registrar','✅ Registrar actividad ya hecha','btn-block','style="margin-bottom:8px"')}${B('dnuevo','📌 Deber','btn-block','style="margin-bottom:8px"')}${B('anueva','🎸 Aprendido (música)','btn-block')}${mact(B('close','Cancelar'))}`)}
 
 document.addEventListener('toggle',e=>{if(e.target.dataset&&e.target.dataset.fold)S.aj[e.target.dataset.fold]=e.target.open},true);
-document.addEventListener('input',e=>{if(e.target.id==='aq'){S.aq=e.target.value;clearTimeout(S.t);S.t=setTimeout(async()=>{const p=e.target.selectionStart;await render();const i=$('#aq');if(i){i.focus();i.setSelectionRange(p,p)}},250)}});
+document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.sq){const k=e.target.dataset.sq;S.sq[k]=e.target.value;clearTimeout(S.t);S.t=setTimeout(async()=>{const p=e.target.selectionStart;await render();const i=document.querySelector('[data-sq='+k+']');if(i){i.focus();i.setSelectionRange(p,p)}},250);return}
+ if(e.target.id==='aq'){S.aq=e.target.value;clearTimeout(S.t);S.t=setTimeout(async()=>{const p=e.target.selectionStart;await render();const i=$('#aq');if(i){i.focus();i.setSelectionRange(p,p)}},250)}});
 document.addEventListener('change',async e=>{const t=e.target;
  if(t.name==='modo'){togModo();return}
  if(t.name==='vi_m'||t.name==='vf_m'){const x=document.querySelector('#modal-root [name='+t.name.replace('_m','_f')+']');if(x)x.hidden=t.value!=='fecha';return}
@@ -722,6 +763,18 @@ document.addEventListener('click',async e=>{const el=e.target.closest('[data-a]'
   const pl=num(($('#c3')||{}).value);if(pl&&(tp==='tension'||tp==='spo2'))await put('mediciones',{...base,tipo:'pulso',valor:pl,valor2:null,contexto:'reposo'});
   await setP('fuente_'+tp,$('#cs').value);toast('Guardado');render();break}
  case 'mdel':delUndo('mediciones',id,'Registro borrado');break;
+ case 'plan':planModal(D.ref,D.k);break;
+ case 'plansave':{const{ref,k}=S.pl,t=q('ptxt').trim();let e=q('penl').trim();if(e&&!/^https?:/i.test(e))e='https://'+e;
+  if(!t&&!e){if(S.pl.existe)await del('notasOcurrencia',ref+'_'+k);close();render();break}
+  await put('notasOcurrencia',{id:ref+'_'+k,ref,fecha:k,texto:t,enlace:e});close();toast('Plan guardado');render();break}
+ case 'plandel':{await del('notasOcurrencia',S.pl.ref+'_'+S.pl.k);close();render();break}
+ case 'rutascsv':rutasCSV();break;
+ case 'rutaspdf':rutasPDF();break;
+ case 'gest':gestModal();break;
+ case 'vaciar':{const c=GC.find(x=>x[0]===D.c);S.vac=[D.c];modal(`<h2>Vaciar «${c[1]}»</h2><div class="muted" style="margin-bottom:10px">Se hará una copia de seguridad antes. Esta acción no se puede deshacer.</div>${confCampo()}${mact(B('gest','Atrás'),B('vaciarok','Vaciar','btn-danger'))}`);break}
+ case 'vaciarok':if(q('conf').trim().toUpperCase()!=='BORRAR')return toast('Escribe BORRAR');vaciarSel(S.vac);break;
+ case 'exc':modal(`<h2>Vaciar todo excepto…</h2><div class="muted" style="margin-bottom:10px">Marca lo que quieres <b>conservar</b>; se vaciará el resto, con copia antes.</div>${GC.map(c=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input type="checkbox" name="k_${c[0]}" checked style="width:20px;height:20px"> ${c[1]}</label>`).join('')}${confCampo()}${mact(B('gest','Atrás'),B('excok','Vaciar el resto','btn-danger'))}`);break
+ case 'excok':{if(q('conf').trim().toUpperCase()!=='BORRAR')return toast('Escribe BORRAR');const v=GC.filter(c=>!q('k_'+c[0])).map(c=>c[0]);if(!v.length)return toast('No hay nada que vaciar');vaciarSel(v);break}
  case 'exportar':exportar();break;case 'importar':$('#fi').click();break;
  case 'borrar':if(confirm('¿Borrar TODOS los datos? Se descargará antes una copia.')){await exportar();for(const s of DATOS)await clr(s);await seed();S.reset=true;render()}break;
  case 'snooze':await setP('snooze',new Date(Date.now()+864e5).toISOString());render();break;
