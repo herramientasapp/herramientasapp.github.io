@@ -1,1 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15171d">
+<title>Tareas del hogar v6</title>
+<style>
+:root{--bg:#15171d;--panel:#1e2128;--line:#32363f;--amber:#ffb224;--ok:#6fd68e;--bad:#ff5a4d;--tx:#f4f2ec;--dim:#9a9ca6}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);display:flex;justify-content:center}
+#app{width:100%;max-width:560px;height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 14px 0}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;flex:none;font-weight:700;color:var(--amber)}
+header small{color:var(--dim);font-weight:400}
+main{flex:1;min-height:0;overflow-y:auto;padding-bottom:12px}
+h3{font-size:.95rem;margin:12px 0 5px}
+.d{font-size:.82rem;color:var(--dim);line-height:1.4;margin:4px 0}
+select,input,textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--tx);font-size:16px;padding:0 10px;height:40px;max-width:100%}
+textarea{width:100%;height:70px;padding:8px;margin:6px 0}
+input[type=number]{width:70px;text-align:center}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--amber)}
+.btn,.chip{min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:.95rem;display:inline-flex;align-items:center}
+.chip.sel{background:var(--amber);color:#111;border-color:var(--amber);font-weight:700}
+.row{display:flex;align-items:center;gap:8px;min-height:44px;flex-wrap:wrap;font-size:.92rem}
+.r{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 10px;margin-bottom:5px}
+.rn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;cursor:pointer}
+.rn b{font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rn span{font-size:.78rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bad{color:var(--bad)}.am{color:var(--amber)}
+.tag{font-style:normal;font-size:.7rem;color:#8fb4ff;border:1px solid #8fb4ff66;border-radius:6px;padding:0 5px;margin-right:2px}
+.chip.cat{border-color:#8fb4ff66;color:#8fb4ff;border-radius:8px;min-height:34px;font-size:.88rem}
+.chip.cat.sel{background:#8fb4ff;color:#111;border-color:#8fb4ff}
+.sc>input{display:block;width:100%;margin:0 0 6px}.sc .row{margin:2px 0}.sc select,.sc input{min-width:0}
+.ck{width:38px;height:38px;border-radius:50%;border:2px solid var(--ok);background:none;color:var(--ok);font-size:1.1rem;font-weight:800;flex:none}
+.ck.u{border-color:var(--dim);color:var(--dim)}
+.r.dn{opacity:.55}.r.dn b{text-decoration:line-through}
+.idea{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px}
+.idea textarea{height:auto;min-height:56px;overflow:hidden;resize:none;margin:0}
+.idea.dn textarea{text-decoration:line-through;opacity:.6}
+footer{flex:none;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+nav{display:flex}nav button{flex:1;height:46px;background:none;border:0;border-top:3px solid transparent;color:var(--dim);font-size:.88rem;font-weight:600}
+nav .sel{color:var(--tx);border-color:var(--amber)}
+#sh{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sc{width:100%;max-width:560px;max-height:88dvh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+.sc>.btn,.sc .row .btn{margin:4px 6px 4px 0}
+#tt{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#2a2e37;border:1px solid var(--line);border-radius:14px;padding:6px 8px 6px 14px;display:flex;align-items:center;gap:10px;z-index:6;white-space:nowrap}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.x{float:right;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:1rem}
+.rt.pl{border-color:var(--amber)}
+</style>
+</head>
+<body>
+<div id="app">
+<header><span>Tareas del hogar <small>v6</small></span><button class="btn" id="hp" aria-label="Nueva tarea" style="min-height:36px;padding:0 12px">＋</button></header>
+<div id="hc" class="row" style="flex:none"></div>
+<main id="mn"></main>
+<footer><nav><button data-v="0" class="sel">Hoy</button><button data-v="1">Próximas</button><button data-v="2">Historial</button><button data-v="3">Más</button></nav></footer>
+</div>
+<div id="sh" hidden><div class="sc"></div></div>
+<div id="tt" hidden></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fresh=()=>({homes:[{id:'h1',n:'Casa principal'},{id:'h2',n:'Segunda casa'}],people:[{id:'p1',n:'Yo'}],tasks:[],log:[],h:'h1',me:'p1',ideas:[],
+  cats:[{id:'c1',n:'Limpieza'},{id:'c2',n:'Mantenimiento'},{id:'c3',n:'Extraordinaria'}],px:{cuts:[1,2,7,30],lg:1,ln:1,lu:30},bk:'',rt:{},bp:{n:15,d:14},ch:0,t0:''});
+let S=fresh(),V=0,MP=0,PO=0,CF='',HF='a',HL=100,HQ='',IC=0,RK='';
+try{Object.assign(S,JSON.parse(localStorage.getItem('hogar1')||'{}'))}catch(e){}
+/* c=0: ajuste de pantalla o dato efímero, no cuenta como cambio pendiente de copia */
+const save=(c=1)=>{if(c)S.ch=(+S.ch||0)+1;try{localStorage.setItem('hogar1',JSON.stringify(S))}catch(e){}};
 
+/* ---------- fechas ---------- */
+const dn=s=>{const[y,m,d]=s.split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/864e5)};
+const ds=n=>new Date(n*864e5).toISOString().slice(0,10);
+const tk=()=>{const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5)};
+const wd=n=>((n+3)%7+7)%7,DN=['L','M','X','J','V','S','D'],W3=['lun','mar','mié','jue','vie','sáb','dom'];
+const fd=n=>{const s=ds(n);return W3[wd(n)]+' '+s.slice(8)+'/'+s.slice(5,7)+(s.slice(0,4)!==ds(tk()).slice(0,4)?'/'+s.slice(2,4):'')};
+const ws=n=>n-wd(n);
+const fixOn=(t,n)=>{if(!t.w.includes(wd(n)))return false;const k=t.fw||1;return k<2||((((ws(n)-ws(t.fa||0))/7)%k)+k)%k===0};
+const pn=id=>(S.people.find(p=>p.id===id)||{n:'?'}).n;
+const hn=id=>(S.homes.find(h=>h.id===id)||{n:'?'}).n;
+const cn=id=>(S.cats.find(c=>c.id===id)||{n:''}).n;
+const hs=()=>[S.h];
+const R=(h,k)=>{S.rt[h]=S.rt[h]||{};return S.rt[h][k]=S.rt[h][k]||{st:[],w:[],d:'',x:[],g:0}};
+const lg=(t,h)=>S.log.filter(l=>l.t===t.id&&l.h===h).sort((a,b)=>b.d.localeCompare(a.d));
+/* fecha en la que toca. t.nx[casa] = fecha manual SOLO para la ocurrencia actual: sustituye a la calculada (antes o después) y se borra al registrar la tarea */
+function due(t,h,T){const L=lg(t,h)[0],ld=L?dn(L.d):null;let d=null;
+  if(t.m==='o'){if(L)return null;return dn(t.dt||ds(T))}
+  else if(t.m==='s')d=ld==null?T:ld+t.e;
+  else if(t.m==='f'&&t.w.length){const K=(t.fw||1)*7;let p=null;for(let i=0;i<K;i++)if(fixOn(t,T-i)){p=T-i;break}
+    if(p!=null&&(ld==null?p===T:ld<p))d=p;else for(let i=1;i<=K;i++)if(fixOn(t,T+i)){d=T+i;break}}
+  const nx=t.nx&&t.nx[h];if(d!=null&&nx)d=dn(nx);return d}
+const items=()=>{const T=tk();return S.tasks.filter(t=>t.h===S.h).map(t=>({t,h:t.h,d:due(t,t.h,T)}))};
+const ago=n=>n<=0?'hoy':n===1?'ayer':'hace '+n+' d';
+const when=(L,T)=>L?ago(T-dn(L.d))+' · '+esc(pn(L.w)):'nunca hecha';
+const pl=(n,a,b)=>n+' '+(n===1?a:b);
+const frq=t=>t.m==='o'?'Una vez'+(t.dt?' · '+fd(dn(t.dt)):''):t.m==='f'?((t.fw||1)>1?'Cada '+t.fw+' sem · ':'')+'Días: '+t.w.map(d=>DN[d]).join(' '):
+  'Cada '+(t.e%365===0?pl(t.e/365,'año','años'):t.e%30===0?pl(t.e/30,'mes','meses'):t.e%7===0?pl(t.e/7,'semana','semanas'):pl(t.e,'día','días'));
+const dl=(d,T)=>d==null?'':d<T?`<b class="bad">atrasada ${pl(T-d,'día','días')}</b>`:d===T?'toca hoy':d===T+1?'mañana':'en '+(d-T)+' d';
+
+/* ---------- copia de seguridad ---------- */
+function need(){if(!S.tasks.length)return'';const T=tk(),n=S.bp.n,d=S.bp.d,dd=T-dn(S.bk||S.t0||ds(T));
+  if(n>0&&S.ch>n)return S.ch+' cambios sin guardar';
+  if(d>0&&dd>=d)return S.bk?'Hace '+dd+' días de la última copia':'Todavía no has hecho ninguna copia';return''}
+function exportar(){S.bk=ds(tk());S.ch=0;save(0);const u=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='tareas-hogar-'+S.bk+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);render()}
+function avisoCopia(r){sheet(`<h3>Copia de seguridad</h3><p class="d">${esc(r)}. Los datos solo están en este navegador, conviene guardar una copia.</p><button class="btn" id="bx">Hacer copia ahora</button><button class="btn" id="bl">Más tarde</button>`);$('#bx').onclick=()=>{close();exportar()};$('#bl').onclick=close}
+
+/* ---------- componentes ---------- */
+function row(i,T,pre,done){const{t,h}=i,L=lg(t,h)[0],k=t.id+'|'+h,s=(t.c?`<i class="tag">${esc(cn(t.c))}</i> `:'')+pre+(done?'':when(L,T));
+  return `<div class="r${done?' dn':''}"><div class="rn" data-t="${k}"><b>${esc(t.n)}</b><span>${s}</span></div>${done?`<button class="ck u" data-un="${done}" aria-label="Volver a pendiente">↺</button>`:`<button class="ck" data-ok="${k}" aria-label="Marcar hecha">✓</button>`}</div>`}
+const cch=()=>S.cats.length?`<div class="row">${[['','Todas'],...S.cats.map(c=>[c.id,c.n])].map(([v,n])=>`<button class="chip cat${v===CF?' sel':''}" data-cf="${v}">${esc(n)}</button>`).join('')}</div>`:'';
+
+/* ---------- pantallas ---------- */
+function hoy(){const T=tk(),td=ds(T),I=items(),G=[[],[]];let o='';
+  I.forEach(i=>{if(i.d!=null&&i.d<=T)G[i.d<T?0:1].push(i)});
+  const hh=S.log.filter(l=>l.d===td&&l.h===S.h&&S.tasks.some(t=>t.id===l.t)).reverse(),pend=G[0].length+G[1].length;
+  const nb=need();if(nb)o+=`<div class="r"><div class="rn"><b>Haz una copia de seguridad</b><span>${esc(nb)}</span></div><button class="btn" id="ex">Exportar</button></div>`;
+  o+=[['s','salida'],['a','llegada']].map(([k,n])=>{const r=R(S.h,k),vis=r.st.filter(s=>s.n&&(!s.l||(r.d===td&&r.g))),d_=r.d===td?vis.filter(s=>r.x.includes(s.id)).length:0,p=r.w.includes(wd(T));
+    return r.st.length?[p,`<div class="r rt${p?' pl':''}${vis.length&&d_===vis.length?' dn':''}"><div class="rn" data-rt="${k}"><b>Rutina de ${n}</b><span>${p?'Prevista hoy · ':''}${d_}/${vis.length} pasos</span></div><span class="am">›</span></div>`]:null}).filter(Boolean).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).join('');
+  if(hh.length+pend)o+=`<p class="d">${hh.length} de ${hh.length+pend} hechas hoy</p>`;
+  ['Atrasadas','Para hoy'].forEach((n,i)=>{const g=G[i].sort((a,b)=>a.d-b.d);if(g.length)o+=`<h3>${n}</h3>`+g.map(x=>row(x,T,i?'':`<b class="bad">${pl(T-x.d,'día','días')} de retraso</b> · `)).join('')});
+  if(!I.length)o+='<p class="d">Esta casa no tiene tareas todavía.</p><div class="row"><button class="btn" id="tp">Añadir desde plantilla</button><button class="btn" id="nt">＋ Nueva tarea</button></div>';
+  else if(!pend)o+='<p class="d">Nada pendiente para hoy.</p>';
+  const av=I.filter(i=>i.d!=null&&i.t.ld&&i.d>T&&i.d-T<=i.t.ld).sort((a,b)=>a.d-b.d);
+  if(av.length)o+='<h3>Se acerca</h3>'+av.map(i=>row(i,T,`<b class="am">${fd(i.d)} · ${dl(i.d,T)}</b> · `)).join('');
+  if(hh.length)o+='<h3>Hechas hoy</h3>'+hh.map(l=>row({t:S.tasks.find(t=>t.id===l.t),h:l.h},T,esc(pn(l.w)),l.i)).join('');
+  return o}
+function prox(){const T=tk(),P=S.px,I=items().filter(i=>i.d!=null&&(!CF||i.t.c===CF)),lu=P.ln*P.lu,
+  L=[[1,'Mañana'],[2,'Pasado mañana'],[7,'Próximos 7 días'],[14,'Próximas 2 semanas'],[30,'Próximo mes'],[90,'Próximos 3 meses']];
+  let o=`<div class="row" style="justify-content:space-between"><h3 style="margin:0">Próximas</h3><button class="btn" id="pg" aria-label="Configurar vistas">⚙</button></div>`;
+  if(PO)o+=`<div class="r" style="display:block"><p class="d">Vistas a mostrar</p><div class="row">${L.map(([c,n])=>`<button class="chip${P.cuts.includes(c)?' sel':''}" data-cut="${c}">${n}</button>`).join('')}</div>
+<div class="row"><button class="chip${P.lg?' sel':''}" id="lg">Tareas largas</button><span>desde</span><input type="number" id="pln" min="1" value="${P.ln}"><select id="plu">${[[7,'semanas'],[30,'meses'],[365,'años']].map(([v,n])=>`<option value="${v}"${v===P.lu?' selected':''}>${n}</option>`).join('')}</select></div></div>`;
+  o+=cch();let p=0,any=0;
+  L.filter(([c])=>P.cuts.includes(c)).forEach(([c,n])=>{const g=I.filter(i=>i.d>T+p&&i.d<=T+c).sort((a,b)=>a.d-b.d);if(c===2&&p!==1)n='Próximos 2 días';p=c;
+    if(g.length){any=1;o+=`<h3>${n}</h3>`+g.map(i=>row(i,T,`<b class="am">${fd(i.d)}</b> · ${frq(i.t)} · `)).join('')}});
+  if(P.lg){const g=I.filter(i=>i.t.m==='s'&&i.t.e>=lu).sort((a,b)=>a.d-b.d);
+    o+=`<h3>Tareas largas (${P.ln} ${({7:'sem.',30:'mes(es)',365:'año(s)'})[P.lu]} o más)</h3>`+(g.map(i=>row(i,T,`<b class="am">${fd(i.d)}</b> · ${dl(i.d,T)}${i.t.ld?' · aviso desde '+fd(i.d-i.t.ld):''} · `)).join('')||'<p class="d">Ninguna.</p>')}
+  else if(!any)o+='<p class="d">Nada previsto en las vistas elegidas.</p>';
+  return o}
+function lista(){const I=items(),g=[...S.cats.map(c=>[c.n,c.id]),['Sin categoría','']].map(([n,c])=>[n,I.filter(i=>(S.cats.some(x=>x.id===i.t.c)?i.t.c:'')===c).sort((a,b)=>a.t.n.localeCompare(b.t.n))]).filter(x=>x[1].length);
+  return `<div class="row"><button class="btn" id="nt">＋ Nueva tarea</button><button class="btn" id="tp">Desde plantilla</button></div><p class="d">Toca una tarea para editarla.</p>`+(g.map(([n,l])=>`<h3>${esc(n)}</h3>`+l.map(i=>`<div class="r${i.t.m==='o'&&lg(i.t,i.h)[0]?' dn':''}"><div class="rn" data-e="${i.t.id}"><b>${esc(i.t.n)}</b><span>${frq(i.t)}</span></div></div>`).join('')).join('')||'<p class="d">Todavía no hay tareas.</p>')}
+function hist(){const T=tk(),q=HQ.toLowerCase(),I=items().filter(i=>i.t.n.toLowerCase().includes(q)),H=i=>S.h==='all'?esc(hn(i.h))+' · ':'';
+  const lt=i=>{const L=lg(i.t,i.h)[0];return L?fd(dn(L.d))+' ('+ago(T-dn(L.d))+') · '+esc(pn(L.w)):'nunca hecha'};
+  const hr=(i,s,un)=>`<div class="r"><div class="rn" data-t="${i.t.id}|${i.h}"><b>${esc(i.t.n)}</b><span>${H(i)}${s}</span></div>${un?`<button class="ck u" data-un="${un}" aria-label="Volver a pendiente">↺</button>`:''}</div>`;
+  let o=`<input id="hq" placeholder="Buscar tarea…" value="${esc(HQ)}" style="width:100%;margin:8px 0"><div class="row">${[['a','Todas'],['r','Realizadas'],['u','Última vez'],['p','Pendientes']].map(([v,n])=>`<button class="chip${v===HF?' sel':''}" data-hf="${v}">${n}</button>`).join('')}</div>`,b='';
+  if(HF==='a')b=I.sort((a,c)=>(a.d==null)-(c.d==null)||a.d-c.d).map(i=>hr(i,'Última: '+lt(i)+(i.d!=null?' · Próxima: '+fd(i.d):''))).join('');
+  else if(HF==='u')b=I.filter(i=>lg(i.t,i.h)[0]).sort((a,c)=>lg(c.t,c.h)[0].d.localeCompare(lg(a.t,a.h)[0].d)).map(i=>hr(i,lt(i))).join('');
+  else if(HF==='p'){b=I.filter(i=>i.d!=null).sort((a,c)=>a.d-c.d).map(i=>hr(i,fd(i.d)+' · '+dl(i.d,T))).join('');}
+  else{const ids=new Set(I.map(i=>i.t.id+'|'+i.h)),lo=S.log.map((l,n)=>[l,n]).filter(([l])=>ids.has(l.t+'|'+l.h)).sort((a,c)=>c[0].d.localeCompare(a[0].d)||c[1]-a[1]);
+    b=lo.slice(0,HL).map(([l])=>hr({t:S.tasks.find(x=>x.id===l.t),h:l.h},fd(dn(l.d))+' · '+esc(pn(l.w)),l.i)).join('');if(lo.length>HL)b+='<button class="btn" id="hm">Mostrar más</button>'}
+  return o+(b||'<p class="d">Nada que mostrar.</p>')}
+function ideas(){const l=[...S.ideas.filter(i=>!i.k),...S.ideas.filter(i=>i.k)];
+  return `<div class="row"><button class="btn" id="ni">＋ Nueva idea</button><button class="btn" id="cp">Copiar pendientes</button></div><p class="d">Escribe mejoras (admite saltos de línea). «Copiar pendientes» prepara un texto listo para pegar en la IA.</p>`+
+  l.map(i=>`<div class="idea${i.k?' dn':''}"><textarea data-ix="${i.id}" rows="2" placeholder="Describe la mejora…">${esc(i.x)}</textarea><div class="row"><label class="row"><input type="checkbox" data-ik="${i.id}"${i.k?' checked':''}>Implementada</label><span style="flex:1"></span><button class="btn" data-ic="${i.id}">Copiar</button><button class="btn" data-id="${i.id}" aria-label="Borrar idea">✕</button></div></div>`).join('')}
+function ajustes(){return `<h3>Yo soy</h3><div class="row"><select id="me">${S.people.map(p=>`<option value="${p.id}"${p.id===S.me?' selected':''}>${esc(p.n)}</option>`).join('')}</select></div>
+<h3>Personas</h3>${S.people.map(p=>`<div class="row"><input data-pn="${p.id}" value="${esc(p.n)}"></div>`).join('')}<button class="btn" id="ap">＋ Persona</button>
+<h3>Domicilios</h3>${S.homes.map(h=>`<div class="row"><input data-hn="${h.id}" value="${esc(h.n)}"></div>`).join('')}<button class="btn" id="ah">＋ Domicilio</button>
+<h3>Categorías</h3>${S.cats.map(c=>`<div class="row"><input data-cn="${c.id}" value="${esc(c.n)}"><button class="btn" data-cd="${c.id}" aria-label="Eliminar categoría">✕</button></div>`).join('')}<button class="btn" id="ac">＋ Categoría</button>
+`}
+function copia(){const T=tk(),n=S.bp.n,d=S.bp.d;return `<h3>Copia de seguridad</h3><p class="d">Los datos se guardan solo en este navegador.</p>
+<p class="d">Última copia: <b>${S.bk?fd(dn(S.bk))+' ('+ago(T-dn(S.bk))+')':'nunca'}</b><br>Cambios desde la última copia: <b>${S.ch||0}</b></p>
+<div class="row"><button class="btn" id="ex">Exportar</button><label class="btn">Importar<input type="file" id="im" accept=".json" hidden></label></div>
+<h3>Avisos al entrar</h3><p class="d">La app propone hacer una copia al abrirla si se cumple alguna condición. Pon 0 para desactivarla.</p>
+<div class="row"><span>Más de</span><input type="number" min="0" data-bp="n" value="${n}"><span>cambios sin guardar</span></div>
+<div class="row"><span>O</span><input type="number" min="0" data-bp="d" value="${d}"><span>días o más sin copia</span></div>`}
+function rutinas(){let o='';[['s','salida'],['a','llegada']].forEach(([k,n])=>{const r=R(S.h,k);o+=`<h3>Rutina de ${n}</h3>`+r.st.map(s=>`<div class="row"><input data-sn="${k}|${s.id}" value="${esc(s.n)}" placeholder="Paso (ej. cerrar el agua)" style="flex:1">${k==='s'?`<label class="row"><input type="checkbox" data-sl="${k}|${s.id}"${s.l?' checked':''}>larga</label>`:''}<button class="btn" data-sd="${k}|${s.id}" aria-label="Quitar paso">✕</button></div>`).join('')+`<button class="btn" data-sa="${k}">＋ Paso</button><p class="d">Días previstos de ${n}: resaltan la rutina en Hoy. Puedes usarla cualquier día.${k==='s'?' «larga» = solo si te vas varios días.':''}</p><div class="row">${DN.map((d,i)=>`<button class="chip${r.w.includes(i)?' sel':''}" data-sw="${k}|${i}">${d}</button>`).join('')}</div>`});return o}
+const mas=()=>MP?`<button class="btn" data-mp="0">‹ Volver</button>`+[0,lista,rutinas,ideas,ajustes,copia][MP]():`<h3>Más</h3>`+[['Tareas','Crear y editar tareas'],['Rutinas','Pasos al salir y al llegar'],['Ideas de mejora',''],['Ajustes',''],['Copia de seguridad',need()?'<b class="am">'+esc(need())+'</b>':'Exportar, importar y avisos']].map(([n,d],i)=>`<div class="r"><div class="rn" data-mp="${i+1}"><b>${n}</b>${d?`<span>${d}</span>`:''}</div></div>`).join('')
+const hc=()=>$('#hc').innerHTML=S.homes.map(h=>[h.id,h.n]).map(([i,n])=>`<button class="chip${i===S.h?' sel':''}" data-home="${i}">${esc(n)}</button>`).join('');
+const as=e=>{e.style.height='auto';e.style.height=e.scrollHeight+'px'};
+function render(){const m=$('#mn'),st=m.scrollTop,rk=V+'|'+MP;hc();$('#hc').hidden=V===3&&MP!==1&&MP!==2;$('#hp').hidden=V!==0;m.innerHTML=[hoy,prox,hist,mas][V]();if(rk===RK)m.scrollTop=st;RK=rk;
+  $$('nav button').forEach(b=>b.classList.toggle('sel',+b.dataset.v===V));if(V===3&&MP===3)$$('.idea textarea').forEach(as)}
+
+/* ---------- registro ---------- */
+let tmr;
+function toast(msg,undo){const e=$('#tt');e.hidden=false;e.innerHTML=`<span>${msg}</span>${undo?'<button class="btn" id="un">Deshacer</button>':''}`;
+  if(undo)$('#un').onclick=()=>{rmLog(undo);save();e.hidden=true;render()};clearTimeout(tmr);tmr=setTimeout(()=>e.hidden=true,5000)}
+function addLog(t,h,d,w){const T0=S.tasks.find(x=>x.id===t),z=T0&&T0.nx&&T0.nx[h];if(z)delete T0.nx[h];
+  const l={i:uid(),t,h,d,w,c:ds(tk())};if(z)l.z=z;S.log.push(l);save();render();return l}
+function rmLog(i){const l=S.log.find(x=>x.i===i);if(!l)return;const last=(lg({id:l.t},l.h)[0]||{}).i===i;S.log=S.log.filter(x=>x.i!==i);const t=S.tasks.find(x=>x.id===l.t);if(l.z&&t&&last&&(!l.c||l.c===ds(tk()))){t.nx=t.nx||{};t.nx[l.h]=l.z}save()}
+function sheet(h){const s=$('#sh');s.hidden=false;s.querySelector('.sc').innerHTML='<button class="x" id="sx" aria-label="Cerrar">✕</button>'+h;$('#sx').onclick=close;s.onclick=e=>{if(e.target===s)s.hidden=true}}
+const close=()=>$('#sh').hidden=true;
+function cop(x){const f=()=>{const a=document.createElement('textarea');a.value=x;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(_){}a.remove();toast('Copiado')};
+  navigator.clipboard?navigator.clipboard.writeText(x).then(()=>toast('Copiado'),f):f()}
+function rutina(k){const td=ds(tk()),r=R(S.h,k);if(r.d!==td){r.d=td;r.x=[];r.g=0;save(0)}
+  const vis=r.st.filter(s=>s.n&&(!s.l||r.g));
+  sheet(`<h3>Rutina de ${k==='s'?'salida':'llegada'} · ${esc(hn(S.h))}</h3>${k==='s'&&r.st.some(s=>s.l)?`<label class="row"><input type="checkbox" id="rgl"${r.g?' checked':''}>Salida larga (varios días)</label>`:''}`+(vis.map(s=>`<label class="row"><input type="checkbox" data-rs="${s.id}"${r.x.includes(s.id)?' checked':''}>${esc(s.n)}</label>`).join('')||'<p class="d">Sin pasos. Añádelos en Más › Rutinas.</p>')+`<button class="btn" id="rr">Reiniciar</button><button class="btn" id="cc">Cerrar</button>`);
+  $$('[data-rs]').forEach(c=>c.onchange=()=>{r.x=c.checked?[...r.x,c.dataset.rs]:r.x.filter(v=>v!==c.dataset.rs);save(0);render()});
+  if($('#rgl'))$('#rgl').onchange=e=>{r.g=+e.target.checked;save(0);render();rutina(k)};
+  $('#rr').onclick=()=>{r.x=[];r.g=0;save(0);render();rutina(k)};$('#cc').onclick=close}
+function det(k){const[id,h]=k.split('|'),t=S.tasks.find(x=>x.id===id);if(!t)return;const L=lg(t,h),T=tk(),d=due(t,h,T),nx=t.nx&&t.nx[h];
+  sheet(`<h3>${esc(t.n)}</h3><p class="d">${frq(t)}${S.h==='all'?' · '+esc(hn(h)):''}${t.c?' · '+esc(cn(t.c)):''}</p>${d!=null?`<p class="d">Próxima: ${fd(d)} (${dl(d,T)})</p>`:''}${t.note?`<p class="d">${esc(t.note)}</p>`:''}
+<div class="row"><input type="date" id="dd" value="${ds(T)}" max="${ds(T)}"><select id="dw">${S.people.map(p=>`<option value="${p.id}"${p.id===S.me?' selected':''}>${esc(p.n)}</option>`).join('')}</select></div>
+<button class="btn" id="rg">Registrar como hecha</button><button class="btn" id="ed">Editar tarea</button><button class="btn" id="cc">Cerrar</button>
+${d!=null?`<h3>Cambiar la fecha (solo esta vez)</h3><div class="row">${d!==T?'<button class="btn" data-pp="0">Hoy</button>':''}<button class="btn" data-pp="1">+1 día</button><button class="btn" data-pp="7">+1 semana</button>${nx&&t.m!=='o'?'<button class="btn" id="pq">Volver a la fecha automática</button>':''}</div><div class="row"><input type="date" id="pd" value="${ds(d>T?T:Math.max(d,T)+1)}"><button class="btn" id="pu">Mover a esta fecha</button></div>`:''}
+<h3>Historial</h3>${L.slice(0,10).map((l,n)=>`<div class="row">${fd(dn(l.d))} · ${esc(pn(l.w))}<button class="btn" data-del="${l.i}"${n?'':' data-first="1"'} aria-label="${n?'Borrar registro':'Volver a pendiente'}">${n?'✕':'↺ Volver a pendiente'}</button></div>`).join('')||'<p class="d">Sin registros</p>'}`);
+  const pz=v=>{if(t.m==='o')t.dt=v;else{t.nx=t.nx||{};if(v)t.nx[h]=v;else delete t.nx[h]}save();render();close();toast(v?'Fecha cambiada a '+fd(dn(v)):'Vuelve a la fecha automática')};
+  $('#rg').onclick=()=>{const v=$('#dd').value;addLog(id,h,v&&dn(v)<T?v:ds(T),$('#dw').value);close()};
+  $('#ed').onclick=()=>edit(id,h,1);$('#cc').onclick=close;
+  $$('[data-pp]').forEach(b=>b.onclick=()=>pz(+b.dataset.pp?ds(Math.max(d,T)+ +b.dataset.pp):ds(T)));
+  if($('#pu'))$('#pu').onclick=()=>$('#pd').value&&pz($('#pd').value);
+  if($('#pq'))$('#pq').onclick=()=>pz('');
+  $$('[data-del]').forEach(b=>b.onclick=()=>{if(!b.dataset.first&&!confirm('¿Borrar este registro?'))return;rmLog(b.dataset.del);render();if(b.dataset.first){close();toast('Vuelve a pendiente')}else det(k)})}
+function edit(id,h,from){const t=id?S.tasks.find(x=>x.id===id):{n:'',m:'s',e:14,w:[],h:S.h,c:'',ld:0,nx:{},dt:ds(tk()),fw:1,fa:ws(tk())},
+  u=t.e%365===0?365:t.e%30===0?30:t.e%7===0?7:1,lu=t.ld&&t.ld%30===0?30:t.ld&&t.ld%7===0?7:1,d0=id&&t.m!=='o'?due(t,t.h,tk()):null,n0=d0!=null?ds(d0):'',
+  O=(a,v)=>a.map(([x,n])=>`<option value="${x}"${x===v?' selected':''}>${n}</option>`).join('');
+  sheet(`<h3>${id?'Editar':'Nueva'} tarea <small class="d">· ${esc(hn(t.h))}</small></h3><input id="en" value="${esc(t.n)}" placeholder="Nombre de la tarea" autocomplete="off">
+<div class="row"><select id="em">${O([['s','Cada cierto tiempo'],['f','Días fijos'],['o','Una sola vez']],t.m)}</select><select id="ec"><option value="">Sin categoría</option>${O(S.cats.map(c=>[c.id,esc(c.n)]),t.c)}</select></div>
+<div class="row" id="fs"><span>Cada</span><input type="number" id="en2" min="1" value="${t.e/u}"><select id="eu">${O([[1,'días'],[7,'semanas'],[30,'meses'],[365,'años']],u)}</select></div>
+<div class="row" id="fw">${DN.map((d,i)=>`<button class="chip${t.w.includes(i)?' sel':''}" data-wd="${i}">${d}</button>`).join('')}</div>
+<div class="row" id="ff"><span>Repetir cada</span><input type="number" id="efw" min="1" max="52" value="${t.fw||1}"><span>semana(s)</span></div>
+<div class="row" id="fsr"><span>Contar desde</span><select id="efs">${O((t.fw>1?[['k','Mantener el ritmo actual']]:[]).concat([['t','Esta semana'],['n','La próxima semana']]),t.fw>1?'k':'t')}</select></div>
+<div class="row" id="fo"><span>Fecha</span><input type="date" id="edt" value="${t.dt||ds(tk())}"></div>
+<div class="row" id="fx"><span>Próxima vez</span><input type="date" id="enx" value="${n0}"><span class="d">Cambiarla mueve solo la próxima vez</span></div>
+<div class="row" id="fl"><span>Avisarme con</span><input type="number" id="eld" min="0" value="${t.ld/lu}"><select id="elu">${O([[1,'días'],[7,'semanas'],[30,'meses']],lu)}</select><span class="d">(0 = sin aviso)</span></div>
+${id?'':'<div class="row" id="fa"><span>Última vez que se hizo</span><input type="date" id="ela"></div>'}
+<textarea id="eno" placeholder="Notas (producto, temperatura…)">${esc(t.note||'')}</textarea>
+<button class="btn" id="sv">Guardar</button><button class="btn" id="cc">Cancelar</button>${id?'<button class="btn" id="dt">Eliminar</button>':''}${id?S.homes.filter(x=>x.id!==t.h).map(x=>`<div class="row"><button class="btn" data-cp="${x.id}">Copiar a ${esc(x.n)}</button></div>`).join(''):''}`);
+  const sy=()=>{const m=$('#em').value;$('#fs').hidden=m!=='s';$('#fw').hidden=m!=='f';$('#ff').hidden=m!=='f';$('#fsr').hidden=m!=='f'||(+$('#efw').value||1)<2;$('#fo').hidden=m!=='o';$('#fx').hidden=!'sf'.includes(m);const a=$('#fa');if(a)a.hidden=m==='o'};sy();$('#em').onchange=sy;$('#efw').oninput=sy;
+  $$('[data-wd]').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
+  $('#sv').onclick=()=>{const n=$('#en').value.trim(),m=$('#em').value,w=$$('[data-wd]').filter(b=>b.classList.contains('sel')).map(b=>+b.dataset.wd);
+    if(!n||(m==='f'&&!w.length)){alert('Pon un nombre (y los días si son fijos)');return}
+    const hh=id?t.h:S.h,nv=$('#enx').value,o={id:id||uid(),n,m,e:Math.max(1,+$('#en2').value||1)*+$('#eu').value,w,h:hh,note:$('#eno').value.trim(),c:$('#ec').value,
+      ld:Math.max(0,+$('#eld').value||0)*+$('#elu').value,dt:$('#edt').value||ds(tk()),nx:m==='o'?{}:{...t.nx},fw:1,fa:t.fa==null?ws(tk()):t.fa};
+    if(m==='f'){const fw=Math.min(52,Math.max(1,Math.floor(+$('#efw').value)||1)),fs=$('#efs').value;o.fw=fw;if(fw<2)o.fa=ws(tk());else if(!(fs==='k'&&t.fa!=null&&(t.fw||1)===fw))o.fa=ws(tk())+(fs==='n'?7:0)}
+    if(nv!==n0){if(nv)o.nx[hh]=nv;else delete o.nx[hh]}
+    if(id)S.tasks[S.tasks.findIndex(x=>x.id===id)]=o;else{S.tasks.push(o);const la=$('#ela');if(la&&la.value&&m!=='o')S.log.push({i:uid(),t:o.id,h:hh,d:la.value,w:S.me})}
+    save();render();close()};
+  $('#cc').onclick=from?()=>det(id+'|'+h):close;
+  $$('[data-cp]').forEach(b=>b.onclick=()=>{S.tasks.push({...t,id:uid(),h:b.dataset.cp,w:[...t.w],nx:{}});save();render();close();toast('Copiada a '+esc(hn(b.dataset.cp)))});
+  if(id)$('#dt').onclick=()=>{if(confirm('¿Eliminar la tarea y su historial?')){S.tasks=S.tasks.filter(x=>x.id!==id);S.log=S.log.filter(l=>l.t!==id);save();render();close()}}}
+const TP=[['Cambiar sábanas','s',14,'c1'],['Cambiar toallas','s',7,'c1'],['Limpiar baños','s',7,'c1'],['Aspirar','s',7,'c1'],['Fregar suelos','s',7,'c1'],['Quitar el polvo','s',7,'c1'],['Limpiar nevera','s',30,'c1'],['Limpiar cristales','s',30,'c1'],['Limpiar horno','s',60,'c1'],['Lavar cortinas','s',90,'c1'],['Cambiar ropa de temporada','s',182,'c3'],['Revisar detectores de humo','s',182,'c2'],['Rebarnizar muebles de exterior','s',365,'c3'],['Sacar la basura','f',[1,4],'c1']];
+function plantilla(){sheet(`<h3>Plantilla de tareas</h3><p class="d">Marca las que quieras añadir a ${esc(hn(S.h))}. Luego puedes ajustar la frecuencia.</p>`+
+  TP.map((x,i)=>`<label class="row"><input type="checkbox" data-tp="${i}">${x[0]} <span class="d">${x[1]==='s'?'cada '+x[2]+' d':x[1]==='f'?'martes y viernes':x[1]==='l'?'al llegar':'al salir'}</span></label>`).join('')+`<button class="btn" id="ad">Añadir</button>`);
+  $('#ad').onclick=()=>{$$('[data-tp]').filter(c=>c.checked).forEach(c=>{const[n,m,v,k]=TP[+c.dataset.tp];if(!S.tasks.some(t=>t.n===n&&t.h===S.h))S.tasks.push({id:uid(),n,m,e:m==='s'?v:14,w:m==='f'?v:[],h:S.h,note:'',c:S.cats.some(x=>x.id===k)?k:'',ld:m==='s'&&v>=90?14:0,nx:{},dt:'',fw:1,fa:ws(tk())})});save();render();close()}}
+
+/* ---------- eventos ---------- */
+$('#mn').onclick=e=>{const b=e.target.closest('button,[data-t],[data-e],[data-rt],[data-mp]'),x=b?b.dataset:{},id=b?b.id:'',P=S.px,ix=k=>S.ideas.find(i=>i.id===x[k]);if(!b)return;
+  if(x.ok){const[t,h]=x.ok.split('|'),l=addLog(t,h,ds(tk()),S.me);toast('Marcada ✓',l.i)}
+  else if(x.un){if(V===2&&!confirm('¿Volver esta tarea a pendiente?'))return;rmLog(x.un);render();toast('Vuelve a pendiente')}
+  else if(x.t)det(x.t);
+  else if(x.rt)rutina(x.rt);
+  else if('mp' in x){MP=+x.mp;render()}
+  else if(x.sa){R(S.h,x.sa).st.push({id:uid(),n:'',l:0});save();render();const q=$$('[data-sn^="'+x.sa+'|"]');if(q.length)q[q.length-1].focus()}
+  else if(x.sd){const[k,i]=x.sd.split('|'),r=R(S.h,k);r.st=r.st.filter(z=>z.id!==i);save();render()}
+  else if(x.sw){const[k,i]=x.sw.split('|'),r=R(S.h,k),n=+i;r.w=r.w.includes(n)?r.w.filter(v=>v!==n):[...r.w,n];save();render()}
+  else if(x.e){const t=S.tasks.find(z=>z.id===x.e);if(t)edit(t.id,t.h)}
+  else if('cf' in x){CF=x.cf;render()}
+  else if(x.cut){const c=+x.cut;P.cuts=P.cuts.includes(c)?P.cuts.filter(v=>v!==c):[...P.cuts,c].sort((a,b)=>a-b);save(0);render()}
+  else if(x.hf){HF=x.hf;HL=100;render()}
+  else if(id==='lg'){P.lg=+!P.lg;save(0);render()}
+  else if(id==='pg'){PO=!PO;render()}
+  else if(id==='hm'){HL+=100;render()}
+  else if(id==='nt')edit();else if(id==='tp')plantilla();
+  else if(id==='ap'){S.people.push({id:uid(),n:'Nueva persona'});save();render()}
+  else if(id==='ah'){S.homes.push({id:uid(),n:'Nuevo domicilio'});save();render()}
+  else if(id==='ac'){S.cats.push({id:uid(),n:'Nueva categoría'});save();render()}
+  else if(x.cd){if(confirm('¿Eliminar la categoría? Las tareas quedarán sin categoría.')){S.cats=S.cats.filter(c=>c.id!==x.cd);S.tasks.forEach(t=>{if(t.c===x.cd)t.c=''});if(CF===x.cd)CF='';save();render()}}
+  else if(id==='ni'){S.ideas.unshift({id:uid(),x:'',k:0});save();render();const a=$('.idea textarea');if(a)a.focus()}
+  else if(id==='cp'){const l=S.ideas.filter(i=>!i.k&&i.x.trim());if(!l.length)toast('No hay ideas pendientes');else cop('Estas son mejoras que quiero aplicar a mi app web «Tareas del hogar» (un único archivo HTML, datos en localStorage). Te adjunto el archivo actual. Aplícalas sin romper lo existente y pregúntame si tienes dudas:\n\n'+l.map((i,n)=>(n+1)+') '+i.x.trim()).join('\n\n'))}
+  else if(x.ic){const i=ix('ic');if(i)cop(i.x)}
+  else if(x.id){if(confirm('¿Borrar esta idea?')){S.ideas=S.ideas.filter(i=>i.id!==x.id);save();render()}}
+  else if(id==='ex')exportar()};
+$('#mn').onchange=e=>{const t=e.target,P=S.px;
+  if(t.id==='me'){S.me=t.value;save(0)}
+  else if(t.dataset.pn){S.people.find(p=>p.id===t.dataset.pn).n=t.value.trim()||'?';save()}
+  else if(t.dataset.hn){S.homes.find(h=>h.id===t.dataset.hn).n=t.value.trim()||'?';save();hc()}
+  else if(t.dataset.cn){S.cats.find(c=>c.id===t.dataset.cn).n=t.value.trim()||'?';save()}
+  else if(t.dataset.sn){const[k,i]=t.dataset.sn.split('|');R(S.h,k).st.find(z=>z.id===i).n=t.value.trim();save()}
+  else if(t.dataset.sl){const[k,i]=t.dataset.sl.split('|');R(S.h,k).st.find(z=>z.id===i).l=+t.checked;save()}
+  else if(t.dataset.ik){S.ideas.find(i=>i.id===t.dataset.ik).k=+t.checked;save();render()}
+  else if(t.id==='pln'){P.ln=Math.max(1,+t.value||1);save(0);render()}
+  else if(t.id==='plu'){P.lu=+t.value;save(0);render()}
+  else if(t.dataset.bp){S.bp[t.dataset.bp]=Math.max(0,Math.floor(+t.value)||0);save(0)}
+  else if(t.id==='im'){const f=t.files[0];if(!f)return;f.text().then(x=>{try{const o=JSON.parse(x);if(!o||!Array.isArray(o.tasks))throw 0;
+    if(!confirm('Importar reemplazará todos los datos actuales por los de la copia. ¿Continuar?')){t.value='';return}
+    S=Object.assign(fresh(),o);mig();S.ch=0;save(0);t.value='';render();toast('Copia importada')}catch(_){t.value='';alert('Archivo no válido')}})}};
+$('#hc').onclick=e=>{const b=e.target.closest('[data-home]');if(b){S.h=b.dataset.home;save(0);render()}};
+$('#mn').oninput=e=>{const t=e.target;
+  if(t.id==='hq'){HQ=t.value;render();const i=$('#hq');i.focus();i.setSelectionRange(i.value.length,i.value.length)}
+  else if(t.dataset.ix){S.ideas.find(i=>i.id===t.dataset.ix).x=t.value;save(IC?0:1);IC=1;as(t)}};
+$('#mn').addEventListener('focusout',()=>{IC=0});
+$$('nav button').forEach(b=>b.onclick=()=>{V=+b.dataset.v;MP=0;render()});$('#hp').onclick=()=>edit();
+function mig(){S.px=Object.assign({cuts:[1,2,7,30],lg:1,ln:1,lu:30},S.px);S.ideas=S.ideas||[];S.cats=S.cats||[];S.rt=S.rt||{};S.bk=S.bk||'';S.t0=S.t0||ds(tk());S.bp=Object.assign({n:15,d:14},S.bp);S.ch=+S.ch||0;
+  S.tasks=S.tasks.flatMap(t=>{if(t.h||!t.hs)return[t];const H=t.hs;delete t.hs;return H.map((h,k)=>{const c=k?{...t,id:uid(),nx:{...t.nx}}:t;c.h=h;if(k)S.log.filter(l=>l.t===t.id&&l.h===h).forEach(l=>l.t=c.id);return c})});
+  S.tasks.forEach(t=>{if(!t.h)t.h=S.homes[0].id;t.nx=t.nx||{};t.c=t.c||'';t.ld=t.ld||0;t.dt=t.dt||'';t.fw=Math.max(1,+t.fw||1);if(typeof t.fa!=='number')t.fa=ws(tk())});
+  S.tasks=S.tasks.filter(t=>{if(t.m==='l'||t.m==='x'){const r=R(t.h,t.m==='x'?'s':'a');if(!r.st.some(z=>z.n===t.n))r.st.push({id:uid(),n:t.n,l:0});return false}return true});
+  S.log=S.log.filter(l=>S.tasks.some(t=>t.id===l.t));
+  if(!S.homes.some(h=>h.id===S.h))S.h=S.homes[0].id}
+mig();render();{const r=need();if(r)avisoCopia(r)}
+</script>
+</body>
+</html>
