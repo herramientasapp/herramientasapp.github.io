@@ -4,7 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#15171d">
-<title>Tareas del hogar v6</title>
+<title>Tareas del hogar</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tareas">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{--bg:#15171d;--panel:#1e2128;--line:#32363f;--amber:#ffb224;--ok:#6fd68e;--bad:#ff5a4d;--tx:#f4f2ec;--dim:#9a9ca6}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -49,11 +56,15 @@ nav .sel{color:var(--tx);border-color:var(--amber)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .x{float:right;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:1rem}
 .rt.pl{border-color:var(--amber)}
+.ck.p{width:34px;height:34px;font-size:.8rem;font-weight:400;border-width:1px;border-color:var(--line);color:var(--dim)}
+.r.dz{border-style:dashed}
+.r.dz .rn b,.r.dz .rn span{white-space:normal;overflow:visible;text-overflow:clip}
+.ck.p{font-size:1rem}
 </style>
 </head>
 <body>
 <div id="app">
-<header><span>Tareas del hogar <small>v6</small></span><button class="btn" id="hp" aria-label="Nueva tarea" style="min-height:36px;padding:0 12px">＋</button></header>
+<header><span>Tareas del hogar <small>v7</small></span><button class="btn" id="hp" aria-label="Nueva tarea" style="min-height:36px;padding:0 12px">＋</button></header>
 <div id="hc" class="row" style="flex:none"></div>
 <main id="mn"></main>
 <footer><nav><button data-v="0" class="sel">Hoy</button><button data-v="1">Próximas</button><button data-v="2">Historial</button><button data-v="3">Más</button></nav></footer>
@@ -65,11 +76,11 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fresh=()=>({homes:[{id:'h1',n:'Casa principal'},{id:'h2',n:'Segunda casa'}],people:[{id:'p1',n:'Yo'}],tasks:[],log:[],h:'h1',me:'p1',ideas:[],
-  cats:[{id:'c1',n:'Limpieza'},{id:'c2',n:'Mantenimiento'},{id:'c3',n:'Extraordinaria'}],px:{cuts:[1,2,7,30],lg:1,ln:1,lu:30},bk:'',rt:{},bp:{n:15,d:14},ch:0,t0:''});
-let S=fresh(),V=0,MP=0,PO=0,CF='',HF='a',HL=100,HQ='',IC=0,RK='';
-try{Object.assign(S,JSON.parse(localStorage.getItem('hogar1')||'{}'))}catch(e){}
+  cats:[{id:'c1',n:'Limpieza'},{id:'c2',n:'Mantenimiento'},{id:'c3',n:'Extraordinaria'}],px:{cuts:[1,2,7,30],lg:1,ln:1,lu:30},bk:'',rt:{},bp:{n:15,d:14},ch:0,t0:'',cd:null,rv:'p',pd:3});
+let S=fresh(),V=0,MP=0,PO=0,CF='',HF='a',HL=100,HQ='',IC=0,RK='',BLK=0,LE=[],SE=0,DP=null;
+/* BLK=1 = modo seguro: los datos guardados no eran válidos; no se escribe nada hasta resolverlo (ver cargar/avisoDatos) */
 /* c=0: ajuste de pantalla o dato efímero, no cuenta como cambio pendiente de copia */
-const save=(c=1)=>{if(c)S.ch=(+S.ch||0)+1;try{localStorage.setItem('hogar1',JSON.stringify(S))}catch(e){}};
+const save=(c=1)=>{if(BLK)return;if(c)S.ch=(+S.ch||0)+1;try{localStorage.setItem('hogar1',JSON.stringify(S));SE=0}catch(e){if(!SE){SE=1;alert('No se ha podido guardar en este navegador (¿almacenamiento lleno?). Haz una copia de seguridad cuanto antes.')}}};
 
 /* ---------- fechas ---------- */
 const dn=s=>{const[y,m,d]=s.split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/864e5)};
@@ -85,14 +96,20 @@ const cn=id=>(S.cats.find(c=>c.id===id)||{n:''}).n;
 const hs=()=>[S.h];
 const R=(h,k)=>{S.rt[h]=S.rt[h]||{};return S.rt[h][k]=S.rt[h][k]||{st:[],w:[],d:'',x:[],g:0}};
 const lg=(t,h)=>S.log.filter(l=>l.t===t.id&&l.h===h).sort((a,b)=>b.d.localeCompare(a.d));
+/* ---- pausas (tareas detenibles): t.pz=1 detenible; t.fz=[{a:'AAAA-MM-DD' inicio, b:'AAAA-MM-DD' fin (el día b ya cuenta) o '' si es hasta que se active, o:1 si ya tocaba al detenerla}] ---- */
+const fzl=t=>t.pz?(t.fz||[]).map(p=>({a:dn(p.a),b:p.b?dn(p.b):Infinity,o:p.o?1:0})).filter(p=>p.b>p.a).sort((x,y)=>x.a-y.a):[];
+const fzNow=(t,T)=>fzl(t).find(p=>T>=p.a&&T<p.b)||null;
+/* desplaza la fecha D por los días detenidos (lo = primer día que puede contar como detenido) */
+function shift(t,D,lo){for(const p of fzl(t)){const a=Math.max(p.a,lo);if(p.b<=a)continue;if(p.o||D>=a){if(p.b===Infinity)return null;D=Math.max(D,a)+(p.b-a)}}return D}
 /* fecha en la que toca. t.nx[casa] = fecha manual SOLO para la ocurrencia actual: sustituye a la calculada (antes o después) y se borra al registrar la tarea */
-function due(t,h,T){const L=lg(t,h)[0],ld=L?dn(L.d):null;let d=null;
-  if(t.m==='o'){if(L)return null;return dn(t.dt||ds(T))}
-  else if(t.m==='s')d=ld==null?T:ld+t.e;
-  else if(t.m==='f'&&t.w.length){const K=(t.fw||1)*7;let p=null;for(let i=0;i<K;i++)if(fixOn(t,T-i)){p=T-i;break}
-    if(p!=null&&(ld==null?p===T:ld<p))d=p;else for(let i=1;i<=K;i++)if(fixOn(t,T+i)){d=T+i;break}}
-  const nx=t.nx&&t.nx[h];if(d!=null&&nx)d=dn(nx);return d}
-const items=()=>{const T=tk();return S.tasks.filter(t=>t.h===S.h).map(t=>({t,h:t.h,d:due(t,t.h,T)}))};
+function due(t,h,T){const L=lg(t,h)[0],ld=L?dn(L.d):null,nx=t.nx&&t.nx[h];let d=null;
+  if(t.m==='o'){if(L)return null;return shift(t,dn(t.dt||ds(T)),-Infinity)}
+  else if(t.m==='s'){if(ld==null){const p=fzNow(t,T);d=p?(p.b===Infinity?null:p.b):T}else d=shift(t,ld+t.e,ld+1)}
+  else if(t.m==='f'&&t.w.length){const K=(t.fw||1)*7,z=fzl(t),ok=n=>fixOn(t,n)&&!z.some(p=>n>=p.a&&n<p.b);let L0=ld;z.forEach(p=>{if(p.o&&(L0==null||p.a-1>L0))L0=p.a-1});
+    let p=null;for(let i=0;i<K;i++)if(ok(T-i)){p=T-i;break}
+    if(p!=null&&(L0==null?p===T:L0<p))d=p;else for(let i=1;i<=K+800;i++)if(ok(T+i)){d=T+i;break}}
+  if(d!=null&&nx)d=dn(nx);return d}
+const items=()=>{const T=tk();return S.tasks.filter(t=>t.h===S.h).map(t=>({t,h:t.h,d:due(t,t.h,T),z:fzNow(t,T)}))};
 const ago=n=>n<=0?'hoy':n===1?'ayer':'hace '+n+' d';
 const when=(L,T)=>L?ago(T-dn(L.d))+' · '+esc(pn(L.w)):'nunca hecha';
 const pl=(n,a,b)=>n+' '+(n===1?a:b);
@@ -100,34 +117,136 @@ const frq=t=>t.m==='o'?'Una vez'+(t.dt?' · '+fd(dn(t.dt)):''):t.m==='f'?((t.fw|
   'Cada '+(t.e%365===0?pl(t.e/365,'año','años'):t.e%30===0?pl(t.e/30,'mes','meses'):t.e%7===0?pl(t.e/7,'semana','semanas'):pl(t.e,'día','días'));
 const dl=(d,T)=>d==null?'':d<T?`<b class="bad">atrasada ${pl(T-d,'día','días')}</b>`:d===T?'toca hoy':d===T+1?'mañana':'en '+(d-T)+' d';
 
+/* ---------- validación de datos (al arrancar y al importar) ---------- */
+/* err = problemas que bloquean (no se toca nada); av = cosas que se corrigen solas y se avisan */
+const isO=x=>x!==null&&typeof x==='object'&&!Array.isArray(x),isS=x=>typeof x==='string',isD=x=>isS(x)&&/^\d{4}-\d{2}-\d{2}$/.test(x)&&ds(dn(x))===x;
+const ni=(v,lo,hi,df)=>{v=(typeof v==='number'||(isS(v)&&v.trim()!==''))?Math.floor(+v):NaN;return Number.isFinite(v)&&v>=lo&&v<=hi?v:df};
+function validar(o){const err=[],av=[],A=m=>{if(!av.includes(m))av.push(m)},E=m=>{if(err.length<30)err.push(m)};
+  if(!isO(o))return{err:['No es una copia de esta app (el contenido no es un objeto de datos)'],av,d:null};
+  if(!Array.isArray(o.tasks))return{err:['No es una copia de esta app (falta la lista de tareas)'],av,d:null};
+  const d={...fresh(),...o};
+  const list=(k,df,ext)=>{if(!Array.isArray(d[k])){E('«'+k+'» no es una lista');d[k]=[];return}const ids=new Set();
+    d[k]=d[k].map((x,n)=>{if(!isO(x)||!isS(x.id)||!x.id){E(k+' #'+(n+1)+': falta el identificador');return null}
+      if(ids.has(x.id)){E(k+' #'+(n+1)+': identificador repetido');return null}ids.add(x.id);x={...x};
+      if(df!==undefined&&(!isS(x.n)||!x.n.trim())){x.n=df;A('nombres vacíos sustituidos por uno genérico')}
+      return ext?ext(x,n):x}).filter(Boolean)};
+  list('homes','Casa');list('people','Persona');list('cats','Categoría');
+  if(!d.homes.length)E('No hay ningún domicilio');if(!d.people.length)E('No hay ninguna persona');
+  const H=new Set(d.homes.map(h=>h.id)),h0=d.homes[0]?d.homes[0].id:'';
+  list('tasks',undefined,x=>{
+    if(!isS(x.n)||!x.n.trim()){E('hay una tarea sin nombre');return null}
+    if(!(isS(x.m)&&x.m.length===1&&'sfolx'.includes(x.m))){x.m='s';A('frecuencia no válida en alguna tarea: se usa «cada cierto tiempo»')}
+    const e=ni(x.e,1,36500,0);if(e)x.e=e;else{x.e=14;if(x.m==='s')A('intervalo no válido en alguna tarea: se usan 14 días')}
+    const wo=x.w;x.w=[...new Set((Array.isArray(wo)?wo:[]).filter(v=>Number.isInteger(v)&&v>=0&&v<=6))];if(!Array.isArray(wo)||x.w.length!==wo.length)A('días de la semana corregidos en alguna tarea');
+    if(x.h!==undefined&&(!isS(x.h)||!H.has(x.h))){x.h=h0;A('tareas de un domicilio inexistente pasadas al primero')}
+    x.note=isS(x.note)?x.note:'';x.c=isS(x.c)&&d.cats.some(c=>c.id===x.c)?x.c:'';
+    x.ld=ni(x.ld,0,36500,0);x.fw=ni(x.fw,1,52,1);if(typeof x.fa!=='number'||!Number.isFinite(x.fa))delete x.fa;
+    if(x.dt!==''&&x.dt!==undefined&&!isD(x.dt)){x.dt='';A('fechas no válidas corregidas en alguna tarea')}
+    const nx={};if(isO(x.nx))for(const k of Object.keys(x.nx)){if(k!=='__proto__'&&isD(x.nx[k]))nx[k]=x.nx[k];else A('fechas manuales no válidas descartadas')}x.nx=nx;
+    x.pz=x.pz?1:0;
+    const fz=(Array.isArray(x.fz)?x.fz:[]).filter(p=>isO(p)&&isD(p.a)&&(p.b===''||(isD(p.b)&&p.b>p.a))).map(p=>({a:p.a,b:p.b,o:p.o?1:0}));if(Array.isArray(x.fz)&&fz.length!==x.fz.length)A('periodos de pausa no válidos descartados');x.fz=fz.sort((p,q)=>p.a.localeCompare(q.a));
+    return x});
+  {const ids=new Set(),th=new Map(d.tasks.map(t=>[t.id,t.h])),p0=d.people[0]?d.people[0].id:'';let lost=0;
+   d.log=(Array.isArray(d.log)?d.log:(E('«log» no es una lista'),[])).map((x,n)=>{
+     if(!isO(x)||!isS(x.t)||!isD(x.d)){E('registro #'+(n+1)+': tarea o fecha no válidas');return null}
+     if(!th.has(x.t)){lost++;return null}x={...x};
+     if(!isS(x.i)||!x.i||ids.has(x.i)){x.i=uid();A('identificadores de registros regenerados')}ids.add(x.i);
+     if(!isS(x.h)||!x.h){x.h=th.get(x.t)||h0;A('registros sin domicilio: se asignó el de su tarea')}
+     if(!isS(x.w)||!x.w){x.w=p0;A('registros sin persona: se asignó la primera')}
+     if(x.c!==undefined&&!isD(x.c))delete x.c;if(x.z!==undefined&&!isD(x.z))delete x.z;return x}).filter(Boolean);
+   if(lost)A(lost+' registros de tareas que ya no existen se descartan')}
+  d.ideas=(Array.isArray(d.ideas)?d.ideas:[]).filter(isO).map(i=>({...i,id:isS(i.id)&&i.id?i.id:uid(),x:isS(i.x)?i.x:'',k:i.k?1:0}));
+  d.h=isS(d.h)&&H.has(d.h)?d.h:h0;d.me=isS(d.me)&&d.people.some(p=>p.id===d.me)?d.me:(d.people[0]?d.people[0].id:'');
+  {const q=isO(d.px)?d.px:{};d.px={...q,cuts:Array.isArray(q.cuts)?q.cuts.filter(v=>[1,2,7,14,30,90].includes(v)):[1,2,7,30],lg:q.lg===undefined?1:(q.lg?1:0),ln:ni(q.ln,1,999,1),lu:[7,30,365].includes(q.lu)?q.lu:30}}
+  d.bk=isD(d.bk)?d.bk:'';d.t0=isD(d.t0)?d.t0:'';{const q=isO(d.bp)?d.bp:{};d.bp={n:ni(q.n,0,99999,15),d:ni(q.d,0,99999,14)}}d.ch=ni(d.ch,0,1e9,0);
+  {const rt={};if(isO(d.rt))for(const h of Object.keys(d.rt)){if(h==='__proto__'||!isO(d.rt[h]))continue;const r={};
+     for(const k of['s','a']){const q=d.rt[h][k];if(q===undefined)continue;if(!isO(q)){A('rutinas dañadas reiniciadas');continue}
+       r[k]={st:(Array.isArray(q.st)?q.st:[]).filter(z=>isO(z)&&isS(z.id)&&z.id).map(z=>({id:z.id,n:isS(z.n)?z.n:'',l:z.l?1:0})),w:(Array.isArray(q.w)?q.w:[]).filter(v=>Number.isInteger(v)&&v>=0&&v<=6),d:isD(q.d)?q.d:'',x:(Array.isArray(q.x)?q.x:[]).filter(isS),g:q.g?1:0}}
+     rt[h]=r}d.rt=rt}
+  d.cd=isO(d.cd)&&isD(d.cd.d)&&H.has(d.cd.f)&&H.has(d.cd.t)?{d:d.cd.d,f:d.cd.f,t:d.cd.t}:null;
+  d.pd=ni(d.pd,0,365,3);d.rv=['p','c','s'].includes(d.rv)?d.rv:'p';
+  return{d,err,av}}
+/* carga de los datos guardados: si no son válidos NO se sobrescriben (modo seguro) y se guarda una copia en hogar1_rescate */
+function cargar(){let raw=null;try{raw=localStorage.getItem('hogar1')}catch(e){BLK=1;LE=['El navegador no deja leer el almacenamiento.'];return}
+  if(!raw)return;let r;try{r=validar(JSON.parse(raw))}catch(e){r={err:['Los datos guardados no se pueden leer (JSON dañado).']}}
+  if(r.err.length){BLK=1;LE=r.err;try{localStorage.setItem('hogar1_rescate',raw)}catch(_){}}else S=r.d}
+function importar(txt){let o;try{o=JSON.parse(txt)}catch(_){alert('El archivo no es un JSON legible. No se ha cambiado nada.');return}
+  const r=validar(o);if(r.err.length){alert('No se ha importado nada: la copia tiene errores.\n\n• '+r.err.slice(0,6).join('\n• ')+(r.err.length>6?'\n• …y '+(r.err.length-6)+' más':'')+'\n\nTus datos actuales siguen intactos.');return}
+  if(!confirm('Se importará: '+r.d.tasks.length+' tareas, '+r.d.log.length+' registros y '+r.d.homes.length+' domicilios.'+(r.av.length?'\n\nSe corregirá automáticamente:\n• '+r.av.slice(0,6).join('\n• '):'')+'\n\nEsto reemplaza todos los datos actuales (se guarda una copia por si quieres deshacerlo). ¿Continuar?'))return;
+  if(!BLK)try{localStorage.setItem('hogar1_prev',JSON.stringify(S))}catch(_){}
+  S=r.d;mig();S.ch=0;BLK=0;save(0);close();render();toast('Copia importada')}
+const hasPrev=()=>{try{return!!localStorage.getItem('hogar1_prev')}catch(e){return false}};
+function restPrev(){let raw=null;try{raw=localStorage.getItem('hogar1_prev')}catch(e){}if(!raw){alert('No hay estado anterior guardado.');return}
+  let r;try{r=validar(JSON.parse(raw))}catch(e){r={err:['ilegible']}}
+  if(r.err.length){alert('El estado anterior no es válido. No se toca nada.');return}
+  if(!confirm('Se volverá al estado de justo antes de la última importación ('+r.d.tasks.length+' tareas). El estado actual se guardará por si quieres volver a él. ¿Continuar?'))return;
+  try{localStorage.setItem('hogar1_prev',JSON.stringify(S))}catch(e){}
+  S=r.d;mig();BLK=0;save(0);render();toast('Estado anterior restaurado')}
+function avisoDatos(){sheet(`<h3>⚠ Datos guardados con problemas</h3><p class="d">No se ha tocado nada: la app está en <b>modo seguro</b> y no guardará cambios hasta que lo resuelvas. Problemas detectados:</p><p class="d">• ${LE.slice(0,4).map(esc).join('<br>• ')}</p>
+<label class="btn">Importar una copia<input type="file" id="im2" accept=".json" hidden></label><button class="btn" id="dr">Descargar los datos dañados</button><button class="btn" id="e0">Empezar de cero</button><button class="btn" id="cc">Cerrar sin resolver</button>`);
+  $('#im2').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(x=>{e.target.value='';importar(x)})};
+  $('#dr').onclick=()=>{let r='';try{r=localStorage.getItem('hogar1_rescate')||localStorage.getItem('hogar1')||''}catch(_){}descargar(r||'{}','tareas-hogar-danado.json')};
+  $('#e0').onclick=()=>{if(confirm('Se empezará con una base vacía. Los datos dañados quedan guardados aparte (descárgalos antes si quieres). ¿Empezar de cero?')){BLK=0;S=fresh();mig();save(0);close();render()}};
+  $('#cc').onclick=close}
+
+/* ---------- pausas: acciones ---------- */
+function fzEnd(t,T){t.fz=(t.fz||[]).map(p=>{const a=dn(p.a),b=p.b?dn(p.b):Infinity;if(T>=a&&T<b)return a>=T?null:{...p,b:ds(T)};return p}).filter(Boolean)}
+function pausar(t,N){const T=tk(),h=t.h;fzEnd(t,T);const nx=t.nx&&t.nx[h];if(nx)delete t.nx[h];
+  const d1=due(t,h,T),o=d1!=null&&d1<=T?1:0;if(nx&&N>0&&dn(nx)>T)t.nx[h]=ds(dn(nx)+N);
+  t.fz=(t.fz||[]).slice(-40);t.fz.push({a:ds(T),b:N?ds(T+N):'',o})}
+const snapPz=L=>L.map(t=>[t.id,JSON.stringify(t.fz||[]),JSON.stringify(t.nx||{})]);
+const restPz=s=>s.forEach(([id,f,n])=>{const t=S.tasks.find(x=>x.id===id);if(t){t.fz=JSON.parse(f);t.nx=JSON.parse(n)}});
+function activar(t){const s=snapPz([t]);fzEnd(t,tk());save();render();toast('Activada: vuelve a contar desde hoy',()=>{restPz(s);save()})}
+function psheet(k){const[id,h]=k.split('|'),t=S.tasks.find(x=>x.id===id);if(!t||!t.pz)return;const T=tk(),O=S.tasks.filter(x=>x.h===h&&x.pz&&x.id!==id&&!fzNow(x,T));let N=S.pd;
+  sheet(`<h3>Detener «${esc(t.n)}»</h3><p class="d">Mientras está detenida no cuenta el tiempo ni aparece en Hoy. Al terminar los días (o al activarla tú) sigue por donde iba.</p><div class="row">${[1,2,3,5,7,14,30].map(n=>`<button class="chip" data-pd="${n}">${n} ${n===1?'día':'días'}</button>`).join('')}<button class="chip" data-pd="0">Hasta que la active</button></div><div class="row"><span>Otro:</span><input type="number" id="pdn" min="1" max="365"><span>días</span></div>${O.length?`<label class="row" style="flex-wrap:nowrap;align-items:center;gap:10px"><input type="checkbox" id="pall" style="flex:none"><span>Detener también ${O.length===1?'la otra tarea detenible':'las otras '+O.length+' tareas detenibles'} de ${esc(hn(h))}</span></label>`:''}<p class="d" id="pdi"></p><button class="btn" id="pok">Detener</button><button class="btn" id="cc">Cancelar</button>`);
+  const info=()=>{$$('[data-pd]').forEach(b=>b.classList.toggle('sel',+b.dataset.pd===N&&!$('#pdn').value));$('#pdi').textContent=N?'Se detiene hoy y vuelve a contar el '+fd(T+N)+'.':'Sin fecha: la reactivas tú desde Hoy o Próximas.'};
+  $$('[data-pd]').forEach(b=>b.onclick=()=>{N=+b.dataset.pd;$('#pdn').value='';info()});
+  $('#pdn').oninput=e=>{const v=Math.floor(+e.target.value);if(v>=1&&v<=365)N=v;info()};
+  $('#cc').onclick=close;
+  $('#pok').onclick=()=>{const L=[t,...($('#pall')&&$('#pall').checked?O:[])],s=snapPz(L);L.forEach(x=>pausar(x,N));S.pd=N;save();render();close();toast('Detenida'+(L.length>1?'s ('+L.length+')':'')+(N?' · '+pl(N,'día','días'):''),()=>{restPz(s);save()})};
+  info()}
+/* ---------- cambio de casa (S.cd = {d:fecha de hoy, f:casa de la que sales, t:casa a la que vas}; caduca solo a medianoche) ---------- */
+const cdOn=()=>S.cd&&S.cd.d===ds(tk())?S.cd:null;
+function cdSheet(){const O=S.homes.filter(h=>h.id!==S.h);
+  sheet(`<h3>Cambio de casa</h3><p class="d">Hoy sales de <b>${esc(hn(S.h))}</b>. ¿A cuál vas? Verás la rutina de salida aquí y la de llegada en la otra casa, solo por hoy.</p>`+O.map(h=>`<button class="btn" data-cdt="${h.id}">${esc(h.n)}</button>`).join('')+`<button class="btn" id="cc">Cancelar</button>`);
+  $$('[data-cdt]').forEach(b=>b.onclick=()=>{S.cd={d:ds(tk()),f:S.h,t:b.dataset.cdt};save(0);close();render();toast('Cambio de casa anotado',()=>{S.cd=null;save(0)})});$('#cc').onclick=close}
+const sa=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e;if(V===3&&MP===4)render()});addEventListener('appinstalled',()=>{DP=null});
+
 /* ---------- copia de seguridad ---------- */
 function need(){if(!S.tasks.length)return'';const T=tk(),n=S.bp.n,d=S.bp.d,dd=T-dn(S.bk||S.t0||ds(T));
   if(n>0&&S.ch>n)return S.ch+' cambios sin guardar';
   if(d>0&&dd>=d)return S.bk?'Hace '+dd+' días de la última copia':'Todavía no has hecho ninguna copia';return''}
-function exportar(){S.bk=ds(tk());S.ch=0;save(0);const u=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='tareas-hogar-'+S.bk+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);render()}
+function descargar(txt,nombre){const u=URL.createObjectURL(new Blob([txt],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function exportar(){const r=validar(S);if(r.err.length&&!confirm('Atención: los datos actuales tienen problemas ('+r.err[0]+'). ¿Exportar igualmente?'))return;S.bk=ds(tk());S.ch=0;save(0);descargar(JSON.stringify(S),'tareas-hogar-'+S.bk+'.json');render()}
 function avisoCopia(r){sheet(`<h3>Copia de seguridad</h3><p class="d">${esc(r)}. Los datos solo están en este navegador, conviene guardar una copia.</p><button class="btn" id="bx">Hacer copia ahora</button><button class="btn" id="bl">Más tarde</button>`);$('#bx').onclick=()=>{close();exportar()};$('#bl').onclick=close}
 
 /* ---------- componentes ---------- */
 function row(i,T,pre,done){const{t,h}=i,L=lg(t,h)[0],k=t.id+'|'+h,s=(t.c?`<i class="tag">${esc(cn(t.c))}</i> `:'')+pre+(done?'':when(L,T));
-  return `<div class="r${done?' dn':''}"><div class="rn" data-t="${k}"><b>${esc(t.n)}</b><span>${s}</span></div>${done?`<button class="ck u" data-un="${done}" aria-label="Volver a pendiente">↺</button>`:`<button class="ck" data-ok="${k}" aria-label="Marcar hecha">✓</button>`}</div>`}
+  return `<div class="r${done?' dn':''}"><div class="rn" data-t="${k}"><b>${esc(t.n)}</b><span>${s}</span></div>${done?`<button class="ck u" data-un="${done}" aria-label="Volver a pendiente">↺</button>`:`${t.pz?`<button class="ck p" data-pz="${k}" aria-label="Detener tarea">⏸</button>`:''}<button class="ck" data-ok="${k}" aria-label="Marcar hecha">✓</button>`}</div>`}
+const zrow=(i,T)=>{const{t,h,z}=i,k=t.id+'|'+h;return `<div class="r dz"><div class="rn" data-t="${k}"><b>${esc(t.n)}</b><span><b class="am">❄ Detenida ${z.b===Infinity?'hasta que la actives':'hasta '+fd(z.b)+' · '+dl(z.b,T)}</b>${i.d!=null?' · tocará '+fd(i.d):''}</span></div><button class="btn" data-fz="${k}">Activar</button></div>`};
+const zsec=(Z,T)=>Z.length?`<h3>❄ Detenidas (${Z.length})</h3>`+Z.sort((a,b)=>a.z.b-b.z.b||a.t.n.localeCompare(b.t.n)).map(i=>zrow(i,T)).join(''):''
 const cch=()=>S.cats.length?`<div class="row">${[['','Todas'],...S.cats.map(c=>[c.id,c.n])].map(([v,n])=>`<button class="chip cat${v===CF?' sel':''}" data-cf="${v}">${esc(n)}</button>`).join('')}</div>`:'';
 
 /* ---------- pantallas ---------- */
-function hoy(){const T=tk(),td=ds(T),I=items(),G=[[],[]];let o='';
+function hoy(){const T=tk(),td=ds(T),I0=items(),I=I0.filter(i=>!i.z),Z=I0.filter(i=>i.z),G=[[],[]],cd=cdOn();let o='';
   I.forEach(i=>{if(i.d!=null&&i.d<=T)G[i.d<T?0:1].push(i)});
   const hh=S.log.filter(l=>l.d===td&&l.h===S.h&&S.tasks.some(t=>t.id===l.t)).reverse(),pend=G[0].length+G[1].length;
+  if(BLK)o+=`<div class="r"><div class="rn"><b class="bad">Modo seguro: no se guarda nada</b><span>Los datos guardados tienen problemas</span></div><button class="btn" id="sf">Resolver</button></div>`;
   const nb=need();if(nb)o+=`<div class="r"><div class="rn"><b>Haz una copia de seguridad</b><span>${esc(nb)}</span></div><button class="btn" id="ex">Exportar</button></div>`;
-  o+=[['s','salida'],['a','llegada']].map(([k,n])=>{const r=R(S.h,k),vis=r.st.filter(s=>s.n&&(!s.l||(r.d===td&&r.g))),d_=r.d===td?vis.filter(s=>r.x.includes(s.id)).length:0,p=r.w.includes(wd(T));
-    return r.st.length?[p,`<div class="r rt${p?' pl':''}${vis.length&&d_===vis.length?' dn':''}"><div class="rn" data-rt="${k}"><b>Rutina de ${n}</b><span>${p?'Prevista hoy · ':''}${d_}/${vis.length} pasos</span></div><span class="am">›</span></div>`]:null}).filter(Boolean).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).join('');
+  if(cd)o+=`<div class="r"><div class="rn"><b>🏠 Hoy cambias de casa</b><span>${esc(hn(cd.f))} → ${esc(hn(cd.t))}</span></div><button class="btn" id="cdx">Cancelar</button></div>`;
+  else if(S.homes.length>1)o+=`<div class="row"><button class="btn" id="cdb">🏠 Hoy cambio de casa</button></div>`;
+  o+=[['s','salida'],['a','llegada']].map(([k,n])=>{const r=R(S.h,k),vis=r.st.filter(s=>s.n&&(!s.l||(r.d===td&&r.g))),d_=r.d===td?vis.filter(s=>r.x.includes(s.id)).length:0,p=r.w.includes(wd(T)),cm=!!cd&&(k==='s'?cd.f===S.h:cd.t===S.h),sh=S.rv==='s'||cm||(S.rv==='p'&&p);
+    return r.st.length&&sh?[cm||p,`<div class="r rt${cm||p?' pl':''}${vis.length&&d_===vis.length?' dn':''}"><div class="rn" data-rt="${k}"><b>Rutina de ${n}</b><span>${cm?'Cambio de casa · ':p?'Prevista hoy · ':''}${d_}/${vis.length} pasos</span></div><span class="am">›</span></div>`]:null}).filter(Boolean).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).join('');
   if(hh.length+pend)o+=`<p class="d">${hh.length} de ${hh.length+pend} hechas hoy</p>`;
   ['Atrasadas','Para hoy'].forEach((n,i)=>{const g=G[i].sort((a,b)=>a.d-b.d);if(g.length)o+=`<h3>${n}</h3>`+g.map(x=>row(x,T,i?'':`<b class="bad">${pl(T-x.d,'día','días')} de retraso</b> · `)).join('')});
-  if(!I.length)o+='<p class="d">Esta casa no tiene tareas todavía.</p><div class="row"><button class="btn" id="tp">Añadir desde plantilla</button><button class="btn" id="nt">＋ Nueva tarea</button></div>';
+  if(!I0.length)o+='<p class="d">Esta casa no tiene tareas todavía.</p><div class="row"><button class="btn" id="tp">Añadir desde plantilla</button><button class="btn" id="nt">＋ Nueva tarea</button></div>';
   else if(!pend)o+='<p class="d">Nada pendiente para hoy.</p>';
   const av=I.filter(i=>i.d!=null&&i.t.ld&&i.d>T&&i.d-T<=i.t.ld).sort((a,b)=>a.d-b.d);
   if(av.length)o+='<h3>Se acerca</h3>'+av.map(i=>row(i,T,`<b class="am">${fd(i.d)} · ${dl(i.d,T)}</b> · `)).join('');
   if(hh.length)o+='<h3>Hechas hoy</h3>'+hh.map(l=>row({t:S.tasks.find(t=>t.id===l.t),h:l.h},T,esc(pn(l.w)),l.i)).join('');
-  return o}
-function prox(){const T=tk(),P=S.px,I=items().filter(i=>i.d!=null&&(!CF||i.t.c===CF)),lu=P.ln*P.lu,
+  return o+zsec(Z,T)}
+function prox(){const T=tk(),P=S.px,I0=items().filter(i=>!CF||i.t.c===CF),I=I0.filter(i=>i.d!=null&&!i.z),Z=I0.filter(i=>i.z),lu=P.ln*P.lu,
   L=[[1,'Mañana'],[2,'Pasado mañana'],[7,'Próximos 7 días'],[14,'Próximas 2 semanas'],[30,'Próximo mes'],[90,'Próximos 3 meses']];
   let o=`<div class="row" style="justify-content:space-between"><h3 style="margin:0">Próximas</h3><button class="btn" id="pg" aria-label="Configurar vistas">⚙</button></div>`;
   if(PO)o+=`<div class="r" style="display:block"><p class="d">Vistas a mostrar</p><div class="row">${L.map(([c,n])=>`<button class="chip${P.cuts.includes(c)?' sel':''}" data-cut="${c}">${n}</button>`).join('')}</div>
@@ -138,16 +257,16 @@ function prox(){const T=tk(),P=S.px,I=items().filter(i=>i.d!=null&&(!CF||i.t.c==
   if(P.lg){const g=I.filter(i=>i.t.m==='s'&&i.t.e>=lu).sort((a,b)=>a.d-b.d);
     o+=`<h3>Tareas largas (${P.ln} ${({7:'sem.',30:'mes(es)',365:'año(s)'})[P.lu]} o más)</h3>`+(g.map(i=>row(i,T,`<b class="am">${fd(i.d)}</b> · ${dl(i.d,T)}${i.t.ld?' · aviso desde '+fd(i.d-i.t.ld):''} · `)).join('')||'<p class="d">Ninguna.</p>')}
   else if(!any)o+='<p class="d">Nada previsto en las vistas elegidas.</p>';
-  return o}
+  return o+zsec(Z,T)}
 function lista(){const I=items(),g=[...S.cats.map(c=>[c.n,c.id]),['Sin categoría','']].map(([n,c])=>[n,I.filter(i=>(S.cats.some(x=>x.id===i.t.c)?i.t.c:'')===c).sort((a,b)=>a.t.n.localeCompare(b.t.n))]).filter(x=>x[1].length);
-  return `<div class="row"><button class="btn" id="nt">＋ Nueva tarea</button><button class="btn" id="tp">Desde plantilla</button></div><p class="d">Toca una tarea para editarla.</p>`+(g.map(([n,l])=>`<h3>${esc(n)}</h3>`+l.map(i=>`<div class="r${i.t.m==='o'&&lg(i.t,i.h)[0]?' dn':''}"><div class="rn" data-e="${i.t.id}"><b>${esc(i.t.n)}</b><span>${frq(i.t)}</span></div></div>`).join('')).join('')||'<p class="d">Todavía no hay tareas.</p>')}
-function hist(){const T=tk(),q=HQ.toLowerCase(),I=items().filter(i=>i.t.n.toLowerCase().includes(q)),H=i=>S.h==='all'?esc(hn(i.h))+' · ':'';
+  return `<div class="row"><button class="btn" id="nt">＋ Nueva tarea</button><button class="btn" id="tp">Desde plantilla</button></div><p class="d">Toca una tarea para editarla.</p>`+(g.map(([n,l])=>`<h3>${esc(n)}</h3>`+l.map(i=>`<div class="r${i.t.m==='o'&&lg(i.t,i.h)[0]?' dn':''}"><div class="rn" data-e="${i.t.id}"><b>${esc(i.t.n)}</b><span>${frq(i.t)}${i.z?' · ❄ detenida':i.t.pz?' · detenible':''}</span></div></div>`).join('')).join('')||'<p class="d">Todavía no hay tareas.</p>')}
+function hist(){const T=tk(),q=HQ.toLowerCase(),I=items().filter(i=>i.t.n.toLowerCase().includes(q)),H=i=>S.h==='all'?esc(hn(i.h))+' · ':'',zt=i=>i.z?' · ❄ detenida':'';
   const lt=i=>{const L=lg(i.t,i.h)[0];return L?fd(dn(L.d))+' ('+ago(T-dn(L.d))+') · '+esc(pn(L.w)):'nunca hecha'};
   const hr=(i,s,un)=>`<div class="r"><div class="rn" data-t="${i.t.id}|${i.h}"><b>${esc(i.t.n)}</b><span>${H(i)}${s}</span></div>${un?`<button class="ck u" data-un="${un}" aria-label="Volver a pendiente">↺</button>`:''}</div>`;
   let o=`<input id="hq" placeholder="Buscar tarea…" value="${esc(HQ)}" style="width:100%;margin:8px 0"><div class="row">${[['a','Todas'],['r','Realizadas'],['u','Última vez'],['p','Pendientes']].map(([v,n])=>`<button class="chip${v===HF?' sel':''}" data-hf="${v}">${n}</button>`).join('')}</div>`,b='';
-  if(HF==='a')b=I.sort((a,c)=>(a.d==null)-(c.d==null)||a.d-c.d).map(i=>hr(i,'Última: '+lt(i)+(i.d!=null?' · Próxima: '+fd(i.d):''))).join('');
+  if(HF==='a')b=I.sort((a,c)=>(a.d==null)-(c.d==null)||a.d-c.d).map(i=>hr(i,'Última: '+lt(i)+(i.d!=null?' · Próxima: '+fd(i.d):'')+zt(i))).join('');
   else if(HF==='u')b=I.filter(i=>lg(i.t,i.h)[0]).sort((a,c)=>lg(c.t,c.h)[0].d.localeCompare(lg(a.t,a.h)[0].d)).map(i=>hr(i,lt(i))).join('');
-  else if(HF==='p'){b=I.filter(i=>i.d!=null).sort((a,c)=>a.d-c.d).map(i=>hr(i,fd(i.d)+' · '+dl(i.d,T))).join('');}
+  else if(HF==='p'){b=I.filter(i=>i.d!=null).sort((a,c)=>a.d-c.d).map(i=>hr(i,fd(i.d)+' · '+dl(i.d,T)+zt(i))).join('');}
   else{const ids=new Set(I.map(i=>i.t.id+'|'+i.h)),lo=S.log.map((l,n)=>[l,n]).filter(([l])=>ids.has(l.t+'|'+l.h)).sort((a,c)=>c[0].d.localeCompare(a[0].d)||c[1]-a[1]);
     b=lo.slice(0,HL).map(([l])=>hr({t:S.tasks.find(x=>x.id===l.t),h:l.h},fd(dn(l.d))+' · '+esc(pn(l.w)),l.i)).join('');if(lo.length>HL)b+='<button class="btn" id="hm">Mostrar más</button>'}
   return o+(b||'<p class="d">Nada que mostrar.</p>')}
@@ -158,14 +277,16 @@ function ajustes(){return `<h3>Yo soy</h3><div class="row"><select id="me">${S.p
 <h3>Personas</h3>${S.people.map(p=>`<div class="row"><input data-pn="${p.id}" value="${esc(p.n)}"></div>`).join('')}<button class="btn" id="ap">＋ Persona</button>
 <h3>Domicilios</h3>${S.homes.map(h=>`<div class="row"><input data-hn="${h.id}" value="${esc(h.n)}"></div>`).join('')}<button class="btn" id="ah">＋ Domicilio</button>
 <h3>Categorías</h3>${S.cats.map(c=>`<div class="row"><input data-cn="${c.id}" value="${esc(c.n)}"><button class="btn" data-cd="${c.id}" aria-label="Eliminar categoría">✕</button></div>`).join('')}<button class="btn" id="ac">＋ Categoría</button>
+<h3>Rutinas en Hoy</h3><p class="d">Cuándo se muestran las rutinas de salida y llegada en la pantalla Hoy.</p><div class="row"><select id="rv">${[['p','Al cambiar de casa y en los días previstos'],['c','Solo al cambiar de casa'],['s','Siempre']].map(([v,n])=>`<option value="${v}"${v===S.rv?' selected':''}>${n}</option>`).join('')}</select></div>
+<h3>Aplicación</h3><p class="d">Versión 7 · ${sa()?'abierta como app instalada':'abierta en el navegador'}</p>${DP?'<button class="btn" id="ins">Instalar en este dispositivo</button>':'<p class="d">Para instalarla usa el menú del navegador: «Instalar aplicación» o «Añadir a pantalla de inicio».</p>'}
 `}
 function copia(){const T=tk(),n=S.bp.n,d=S.bp.d;return `<h3>Copia de seguridad</h3><p class="d">Los datos se guardan solo en este navegador.</p>
 <p class="d">Última copia: <b>${S.bk?fd(dn(S.bk))+' ('+ago(T-dn(S.bk))+')':'nunca'}</b><br>Cambios desde la última copia: <b>${S.ch||0}</b></p>
-<div class="row"><button class="btn" id="ex">Exportar</button><label class="btn">Importar<input type="file" id="im" accept=".json" hidden></label></div>
+<div class="row"><button class="btn" id="ex">Exportar</button><label class="btn">Importar<input type="file" id="im" accept=".json" hidden></label></div>${hasPrev()?'<div class="row"><button class="btn" id="rv2">Deshacer la última importación</button></div>':''}<p class="d">Al importar se comprueba que el archivo sea válido antes de tocar nada; si tiene errores, tus datos siguen intactos.</p>
 <h3>Avisos al entrar</h3><p class="d">La app propone hacer una copia al abrirla si se cumple alguna condición. Pon 0 para desactivarla.</p>
 <div class="row"><span>Más de</span><input type="number" min="0" data-bp="n" value="${n}"><span>cambios sin guardar</span></div>
 <div class="row"><span>O</span><input type="number" min="0" data-bp="d" value="${d}"><span>días o más sin copia</span></div>`}
-function rutinas(){let o='';[['s','salida'],['a','llegada']].forEach(([k,n])=>{const r=R(S.h,k);o+=`<h3>Rutina de ${n}</h3>`+r.st.map(s=>`<div class="row"><input data-sn="${k}|${s.id}" value="${esc(s.n)}" placeholder="Paso (ej. cerrar el agua)" style="flex:1">${k==='s'?`<label class="row"><input type="checkbox" data-sl="${k}|${s.id}"${s.l?' checked':''}>larga</label>`:''}<button class="btn" data-sd="${k}|${s.id}" aria-label="Quitar paso">✕</button></div>`).join('')+`<button class="btn" data-sa="${k}">＋ Paso</button><p class="d">Días previstos de ${n}: resaltan la rutina en Hoy. Puedes usarla cualquier día.${k==='s'?' «larga» = solo si te vas varios días.':''}</p><div class="row">${DN.map((d,i)=>`<button class="chip${r.w.includes(i)?' sel':''}" data-sw="${k}|${i}">${d}</button>`).join('')}</div>`});return o}
+function rutinas(){let o='';[['s','salida'],['a','llegada']].forEach(([k,n])=>{const r=R(S.h,k);o+=`<h3>Rutina de ${n}</h3>`+r.st.map(s=>`<div class="row"><input data-sn="${k}|${s.id}" value="${esc(s.n)}" placeholder="Paso (ej. cerrar el agua)" style="flex:1">${k==='s'?`<label class="row"><input type="checkbox" data-sl="${k}|${s.id}"${s.l?' checked':''}>larga</label>`:''}<button class="btn" data-sd="${k}|${s.id}" aria-label="Quitar paso">✕</button></div>`).join('')+`<button class="btn" data-sa="${k}">＋ Paso</button><p class="d">Días previstos de ${n}: la rutina aparece en Hoy esos días (según Ajustes › Rutinas en Hoy). Cualquier otro día la tienes con «Hoy cambio de casa».${k==='s'?' «larga» = solo si te vas varios días.':''}</p><div class="row">${DN.map((d,i)=>`<button class="chip${r.w.includes(i)?' sel':''}" data-sw="${k}|${i}">${d}</button>`).join('')}</div>`});return o}
 const mas=()=>MP?`<button class="btn" data-mp="0">‹ Volver</button>`+[0,lista,rutinas,ideas,ajustes,copia][MP]():`<h3>Más</h3>`+[['Tareas','Crear y editar tareas'],['Rutinas','Pasos al salir y al llegar'],['Ideas de mejora',''],['Ajustes',''],['Copia de seguridad',need()?'<b class="am">'+esc(need())+'</b>':'Exportar, importar y avisos']].map(([n,d],i)=>`<div class="r"><div class="rn" data-mp="${i+1}"><b>${n}</b>${d?`<span>${d}</span>`:''}</div></div>`).join('')
 const hc=()=>$('#hc').innerHTML=S.homes.map(h=>[h.id,h.n]).map(([i,n])=>`<button class="chip${i===S.h?' sel':''}" data-home="${i}">${esc(n)}</button>`).join('');
 const as=e=>{e.style.height='auto';e.style.height=e.scrollHeight+'px'};
@@ -175,8 +296,8 @@ function render(){const m=$('#mn'),st=m.scrollTop,rk=V+'|'+MP;hc();$('#hc').hidd
 /* ---------- registro ---------- */
 let tmr;
 function toast(msg,undo){const e=$('#tt');e.hidden=false;e.innerHTML=`<span>${msg}</span>${undo?'<button class="btn" id="un">Deshacer</button>':''}`;
-  if(undo)$('#un').onclick=()=>{rmLog(undo);save();e.hidden=true;render()};clearTimeout(tmr);tmr=setTimeout(()=>e.hidden=true,5000)}
-function addLog(t,h,d,w){const T0=S.tasks.find(x=>x.id===t),z=T0&&T0.nx&&T0.nx[h];if(z)delete T0.nx[h];
+  if(undo)$('#un').onclick=()=>{if(typeof undo==='function')undo();else{rmLog(undo);save()}e.hidden=true;render()};clearTimeout(tmr);tmr=setTimeout(()=>e.hidden=true,5000)}
+function addLog(t,h,d,w){const T0=S.tasks.find(x=>x.id===t),z=T0&&T0.nx&&T0.nx[h];if(z)delete T0.nx[h];if(T0&&T0.pz)fzEnd(T0,tk());
   const l={i:uid(),t,h,d,w,c:ds(tk())};if(z)l.z=z;S.log.push(l);save();render();return l}
 function rmLog(i){const l=S.log.find(x=>x.i===i);if(!l)return;const last=(lg({id:l.t},l.h)[0]||{}).i===i;S.log=S.log.filter(x=>x.i!==i);const t=S.tasks.find(x=>x.id===l.t);if(l.z&&t&&last&&(!l.c||l.c===ds(tk()))){t.nx=t.nx||{};t.nx[l.h]=l.z}save()}
 function sheet(h){const s=$('#sh');s.hidden=false;s.querySelector('.sc').innerHTML='<button class="x" id="sx" aria-label="Cerrar">✕</button>'+h;$('#sx').onclick=close;s.onclick=e=>{if(e.target===s)s.hidden=true}}
@@ -189,20 +310,20 @@ function rutina(k){const td=ds(tk()),r=R(S.h,k);if(r.d!==td){r.d=td;r.x=[];r.g=0
   $$('[data-rs]').forEach(c=>c.onchange=()=>{r.x=c.checked?[...r.x,c.dataset.rs]:r.x.filter(v=>v!==c.dataset.rs);save(0);render()});
   if($('#rgl'))$('#rgl').onchange=e=>{r.g=+e.target.checked;save(0);render();rutina(k)};
   $('#rr').onclick=()=>{r.x=[];r.g=0;save(0);render();rutina(k)};$('#cc').onclick=close}
-function det(k){const[id,h]=k.split('|'),t=S.tasks.find(x=>x.id===id);if(!t)return;const L=lg(t,h),T=tk(),d=due(t,h,T),nx=t.nx&&t.nx[h];
-  sheet(`<h3>${esc(t.n)}</h3><p class="d">${frq(t)}${S.h==='all'?' · '+esc(hn(h)):''}${t.c?' · '+esc(cn(t.c)):''}</p>${d!=null?`<p class="d">Próxima: ${fd(d)} (${dl(d,T)})</p>`:''}${t.note?`<p class="d">${esc(t.note)}</p>`:''}
+function det(k){const[id,h]=k.split('|'),t=S.tasks.find(x=>x.id===id);if(!t)return;const L=lg(t,h),T=tk(),d=due(t,h,T),nx=t.nx&&t.nx[h],z=t.pz?fzNow(t,T):null;
+  sheet(`<h3>${esc(t.n)}</h3><p class="d">${frq(t)}${S.h==='all'?' · '+esc(hn(h)):''}${t.c?' · '+esc(cn(t.c)):''}</p>${z?`<p class="d"><b class="am">❄ Detenida ${z.b===Infinity?'hasta que la actives':'hasta '+fd(z.b)}</b></p>`:''}${d!=null?`<p class="d">Próxima: ${fd(d)} (${dl(d,T)})</p>`:''}${t.note?`<p class="d">${esc(t.note)}</p>`:''}
 <div class="row"><input type="date" id="dd" value="${ds(T)}" max="${ds(T)}"><select id="dw">${S.people.map(p=>`<option value="${p.id}"${p.id===S.me?' selected':''}>${esc(p.n)}</option>`).join('')}</select></div>
-<button class="btn" id="rg">Registrar como hecha</button><button class="btn" id="ed">Editar tarea</button><button class="btn" id="cc">Cerrar</button>
+<button class="btn" id="rg">Registrar como hecha</button><button class="btn" id="ed">Editar tarea</button>${t.pz?(z?'<button class="btn" id="fa">Activar de nuevo</button>':'<button class="btn" id="fp">Detener…</button>'):''}<button class="btn" id="cc">Cerrar</button>
 ${d!=null?`<h3>Cambiar la fecha (solo esta vez)</h3><div class="row">${d!==T?'<button class="btn" data-pp="0">Hoy</button>':''}<button class="btn" data-pp="1">+1 día</button><button class="btn" data-pp="7">+1 semana</button>${nx&&t.m!=='o'?'<button class="btn" id="pq">Volver a la fecha automática</button>':''}</div><div class="row"><input type="date" id="pd" value="${ds(d>T?T:Math.max(d,T)+1)}"><button class="btn" id="pu">Mover a esta fecha</button></div>`:''}
 <h3>Historial</h3>${L.slice(0,10).map((l,n)=>`<div class="row">${fd(dn(l.d))} · ${esc(pn(l.w))}<button class="btn" data-del="${l.i}"${n?'':' data-first="1"'} aria-label="${n?'Borrar registro':'Volver a pendiente'}">${n?'✕':'↺ Volver a pendiente'}</button></div>`).join('')||'<p class="d">Sin registros</p>'}`);
   const pz=v=>{if(t.m==='o')t.dt=v;else{t.nx=t.nx||{};if(v)t.nx[h]=v;else delete t.nx[h]}save();render();close();toast(v?'Fecha cambiada a '+fd(dn(v)):'Vuelve a la fecha automática')};
   $('#rg').onclick=()=>{const v=$('#dd').value;addLog(id,h,v&&dn(v)<T?v:ds(T),$('#dw').value);close()};
-  $('#ed').onclick=()=>edit(id,h,1);$('#cc').onclick=close;
+  $('#ed').onclick=()=>edit(id,h,1);$('#cc').onclick=close;if($('#fp'))$('#fp').onclick=()=>psheet(k);if($('#fa'))$('#fa').onclick=()=>{activar(t);close()};
   $$('[data-pp]').forEach(b=>b.onclick=()=>pz(+b.dataset.pp?ds(Math.max(d,T)+ +b.dataset.pp):ds(T)));
   if($('#pu'))$('#pu').onclick=()=>$('#pd').value&&pz($('#pd').value);
   if($('#pq'))$('#pq').onclick=()=>pz('');
   $$('[data-del]').forEach(b=>b.onclick=()=>{if(!b.dataset.first&&!confirm('¿Borrar este registro?'))return;rmLog(b.dataset.del);render();if(b.dataset.first){close();toast('Vuelve a pendiente')}else det(k)})}
-function edit(id,h,from){const t=id?S.tasks.find(x=>x.id===id):{n:'',m:'s',e:14,w:[],h:S.h,c:'',ld:0,nx:{},dt:ds(tk()),fw:1,fa:ws(tk())},
+function edit(id,h,from){const t=id?S.tasks.find(x=>x.id===id):{n:'',m:'s',e:14,w:[],h:S.h,c:'',ld:0,nx:{},dt:ds(tk()),fw:1,fa:ws(tk()),pz:0,fz:[]},
   u=t.e%365===0?365:t.e%30===0?30:t.e%7===0?7:1,lu=t.ld&&t.ld%30===0?30:t.ld&&t.ld%7===0?7:1,d0=id&&t.m!=='o'?due(t,t.h,tk()):null,n0=d0!=null?ds(d0):'',
   O=(a,v)=>a.map(([x,n])=>`<option value="${x}"${x===v?' selected':''}>${n}</option>`).join('');
   sheet(`<h3>${id?'Editar':'Nueva'} tarea <small class="d">· ${esc(hn(t.h))}</small></h3><input id="en" value="${esc(t.n)}" placeholder="Nombre de la tarea" autocomplete="off">
@@ -214,6 +335,7 @@ function edit(id,h,from){const t=id?S.tasks.find(x=>x.id===id):{n:'',m:'s',e:14,
 <div class="row" id="fo"><span>Fecha</span><input type="date" id="edt" value="${t.dt||ds(tk())}"></div>
 <div class="row" id="fx"><span>Próxima vez</span><input type="date" id="enx" value="${n0}"><span class="d">Cambiarla mueve solo la próxima vez</span></div>
 <div class="row" id="fl"><span>Avisarme con</span><input type="number" id="eld" min="0" value="${t.ld/lu}"><select id="elu">${O([[1,'días'],[7,'semanas'],[30,'meses']],lu)}</select><span class="d">(0 = sin aviso)</span></div>
+<div class="row" id="efzr"><span>Detenible</span><select id="epz">${O([[0,'No: siempre toca'],[1,'Sí: se puede detener']],t.pz?1:0)}</select></div><p class="d">Detenible = puedes congelarla (al irte de casa, de vacaciones…) y los días detenida no cuentan.</p>
 ${id?'':'<div class="row" id="fa"><span>Última vez que se hizo</span><input type="date" id="ela"></div>'}
 <textarea id="eno" placeholder="Notas (producto, temperatura…)">${esc(t.note||'')}</textarea>
 <button class="btn" id="sv">Guardar</button><button class="btn" id="cc">Cancelar</button>${id?'<button class="btn" id="dt">Eliminar</button>':''}${id?S.homes.filter(x=>x.id!==t.h).map(x=>`<div class="row"><button class="btn" data-cp="${x.id}">Copiar a ${esc(x.n)}</button></div>`).join(''):''}`);
@@ -222,13 +344,13 @@ ${id?'':'<div class="row" id="fa"><span>Última vez que se hizo</span><input typ
   $('#sv').onclick=()=>{const n=$('#en').value.trim(),m=$('#em').value,w=$$('[data-wd]').filter(b=>b.classList.contains('sel')).map(b=>+b.dataset.wd);
     if(!n||(m==='f'&&!w.length)){alert('Pon un nombre (y los días si son fijos)');return}
     const hh=id?t.h:S.h,nv=$('#enx').value,o={id:id||uid(),n,m,e:Math.max(1,+$('#en2').value||1)*+$('#eu').value,w,h:hh,note:$('#eno').value.trim(),c:$('#ec').value,
-      ld:Math.max(0,+$('#eld').value||0)*+$('#elu').value,dt:$('#edt').value||ds(tk()),nx:m==='o'?{}:{...t.nx},fw:1,fa:t.fa==null?ws(tk()):t.fa};
+      ld:Math.max(0,+$('#eld').value||0)*+$('#elu').value,dt:$('#edt').value||ds(tk()),nx:m==='o'?{}:{...t.nx},fw:1,fa:t.fa==null?ws(tk()):t.fa,pz:+$('#epz').value,fz:+$('#epz').value?[...(t.fz||[])]:[]};
     if(m==='f'){const fw=Math.min(52,Math.max(1,Math.floor(+$('#efw').value)||1)),fs=$('#efs').value;o.fw=fw;if(fw<2)o.fa=ws(tk());else if(!(fs==='k'&&t.fa!=null&&(t.fw||1)===fw))o.fa=ws(tk())+(fs==='n'?7:0)}
     if(nv!==n0){if(nv)o.nx[hh]=nv;else delete o.nx[hh]}
     if(id)S.tasks[S.tasks.findIndex(x=>x.id===id)]=o;else{S.tasks.push(o);const la=$('#ela');if(la&&la.value&&m!=='o')S.log.push({i:uid(),t:o.id,h:hh,d:la.value,w:S.me})}
     save();render();close()};
   $('#cc').onclick=from?()=>det(id+'|'+h):close;
-  $$('[data-cp]').forEach(b=>b.onclick=()=>{S.tasks.push({...t,id:uid(),h:b.dataset.cp,w:[...t.w],nx:{}});save();render();close();toast('Copiada a '+esc(hn(b.dataset.cp)))});
+  $$('[data-cp]').forEach(b=>b.onclick=()=>{S.tasks.push({...t,id:uid(),h:b.dataset.cp,w:[...t.w],nx:{},fz:[]});save();render();close();toast('Copiada a '+esc(hn(b.dataset.cp)))});
   if(id)$('#dt').onclick=()=>{if(confirm('¿Eliminar la tarea y su historial?')){S.tasks=S.tasks.filter(x=>x.id!==id);S.log=S.log.filter(l=>l.t!==id);save();render();close()}}}
 const TP=[['Cambiar sábanas','s',14,'c1'],['Cambiar toallas','s',7,'c1'],['Limpiar baños','s',7,'c1'],['Aspirar','s',7,'c1'],['Fregar suelos','s',7,'c1'],['Quitar el polvo','s',7,'c1'],['Limpiar nevera','s',30,'c1'],['Limpiar cristales','s',30,'c1'],['Limpiar horno','s',60,'c1'],['Lavar cortinas','s',90,'c1'],['Cambiar ropa de temporada','s',182,'c3'],['Revisar detectores de humo','s',182,'c2'],['Rebarnizar muebles de exterior','s',365,'c3'],['Sacar la basura','f',[1,4],'c1']];
 function plantilla(){sheet(`<h3>Plantilla de tareas</h3><p class="d">Marca las que quieras añadir a ${esc(hn(S.h))}. Luego puedes ajustar la frecuencia.</p>`+
@@ -240,6 +362,8 @@ $('#mn').onclick=e=>{const b=e.target.closest('button,[data-t],[data-e],[data-rt
   if(x.ok){const[t,h]=x.ok.split('|'),l=addLog(t,h,ds(tk()),S.me);toast('Marcada ✓',l.i)}
   else if(x.un){if(V===2&&!confirm('¿Volver esta tarea a pendiente?'))return;rmLog(x.un);render();toast('Vuelve a pendiente')}
   else if(x.t)det(x.t);
+  else if(x.pz)psheet(x.pz);
+  else if(x.fz){const t=S.tasks.find(z=>z.id===x.fz.split('|')[0]);if(t)activar(t)}
   else if(x.rt)rutina(x.rt);
   else if('mp' in x){MP=+x.mp;render()}
   else if(x.sa){R(S.h,x.sa).st.push({id:uid(),n:'',l:0});save();render();const q=$$('[data-sn^="'+x.sa+'|"]');if(q.length)q[q.length-1].focus()}
@@ -258,9 +382,14 @@ $('#mn').onclick=e=>{const b=e.target.closest('button,[data-t],[data-e],[data-rt
   else if(id==='ac'){S.cats.push({id:uid(),n:'Nueva categoría'});save();render()}
   else if(x.cd){if(confirm('¿Eliminar la categoría? Las tareas quedarán sin categoría.')){S.cats=S.cats.filter(c=>c.id!==x.cd);S.tasks.forEach(t=>{if(t.c===x.cd)t.c=''});if(CF===x.cd)CF='';save();render()}}
   else if(id==='ni'){S.ideas.unshift({id:uid(),x:'',k:0});save();render();const a=$('.idea textarea');if(a)a.focus()}
-  else if(id==='cp'){const l=S.ideas.filter(i=>!i.k&&i.x.trim());if(!l.length)toast('No hay ideas pendientes');else cop('Estas son mejoras que quiero aplicar a mi app web «Tareas del hogar» (un único archivo HTML, datos en localStorage). Te adjunto el archivo actual. Aplícalas sin romper lo existente y pregúntame si tienes dudas:\n\n'+l.map((i,n)=>(n+1)+') '+i.x.trim()).join('\n\n'))}
+  else if(id==='cp'){const l=S.ideas.filter(i=>!i.k&&i.x.trim());if(!l.length)toast('No hay ideas pendientes');else cop('Estas son mejoras que quiero aplicar a mi PWA «Tareas del hogar». Te adjunto index.html y el archivo INSTRUCCIONES_tareas_hogar.md (léelo primero: contiene las reglas del proyecto). Aplícalas sin romper lo existente, actualiza también el MD y pregúntame si tienes dudas:\n\n'+l.map((i,n)=>(n+1)+') '+i.x.trim()).join('\n\n'))}
   else if(x.ic){const i=ix('ic');if(i)cop(i.x)}
   else if(x.id){if(confirm('¿Borrar esta idea?')){S.ideas=S.ideas.filter(i=>i.id!==x.id);save();render()}}
+  else if(id==='cdb')cdSheet();
+  else if(id==='cdx'){S.cd=null;save(0);render();toast('Cambio de casa cancelado')}
+  else if(id==='sf')avisoDatos();
+  else if(id==='rv2')restPrev();
+  else if(id==='ins'){if(DP){DP.prompt();DP=null;render()}}
   else if(id==='ex')exportar()};
 $('#mn').onchange=e=>{const t=e.target,P=S.px;
   if(t.id==='me'){S.me=t.value;save(0)}
@@ -273,22 +402,22 @@ $('#mn').onchange=e=>{const t=e.target,P=S.px;
   else if(t.id==='pln'){P.ln=Math.max(1,+t.value||1);save(0);render()}
   else if(t.id==='plu'){P.lu=+t.value;save(0);render()}
   else if(t.dataset.bp){S.bp[t.dataset.bp]=Math.max(0,Math.floor(+t.value)||0);save(0)}
-  else if(t.id==='im'){const f=t.files[0];if(!f)return;f.text().then(x=>{try{const o=JSON.parse(x);if(!o||!Array.isArray(o.tasks))throw 0;
-    if(!confirm('Importar reemplazará todos los datos actuales por los de la copia. ¿Continuar?')){t.value='';return}
-    S=Object.assign(fresh(),o);mig();S.ch=0;save(0);t.value='';render();toast('Copia importada')}catch(_){t.value='';alert('Archivo no válido')}})}};
+  else if(t.id==='rv'){S.rv=t.value;save(0)}
+  else if(t.id==='im'){const f=t.files[0];if(!f)return;f.text().then(x=>{t.value='';importar(x)})}};
 $('#hc').onclick=e=>{const b=e.target.closest('[data-home]');if(b){S.h=b.dataset.home;save(0);render()}};
 $('#mn').oninput=e=>{const t=e.target;
   if(t.id==='hq'){HQ=t.value;render();const i=$('#hq');i.focus();i.setSelectionRange(i.value.length,i.value.length)}
   else if(t.dataset.ix){S.ideas.find(i=>i.id===t.dataset.ix).x=t.value;save(IC?0:1);IC=1;as(t)}};
 $('#mn').addEventListener('focusout',()=>{IC=0});
 $$('nav button').forEach(b=>b.onclick=()=>{V=+b.dataset.v;MP=0;render()});$('#hp').onclick=()=>edit();
-function mig(){S.px=Object.assign({cuts:[1,2,7,30],lg:1,ln:1,lu:30},S.px);S.ideas=S.ideas||[];S.cats=S.cats||[];S.rt=S.rt||{};S.bk=S.bk||'';S.t0=S.t0||ds(tk());S.bp=Object.assign({n:15,d:14},S.bp);S.ch=+S.ch||0;
+function mig(){S.px=Object.assign({cuts:[1,2,7,30],lg:1,ln:1,lu:30},S.px);S.ideas=S.ideas||[];S.cats=S.cats||[];S.rt=S.rt||{};S.bk=S.bk||'';S.t0=S.t0||ds(tk());S.bp=Object.assign({n:15,d:14},S.bp);S.ch=+S.ch||0;S.rv=['p','c','s'].includes(S.rv)?S.rv:'p';S.pd=Number.isInteger(S.pd)&&S.pd>=0?S.pd:3;S.cd=S.cd||null;
   S.tasks=S.tasks.flatMap(t=>{if(t.h||!t.hs)return[t];const H=t.hs;delete t.hs;return H.map((h,k)=>{const c=k?{...t,id:uid(),nx:{...t.nx}}:t;c.h=h;if(k)S.log.filter(l=>l.t===t.id&&l.h===h).forEach(l=>l.t=c.id);return c})});
-  S.tasks.forEach(t=>{if(!t.h)t.h=S.homes[0].id;t.nx=t.nx||{};t.c=t.c||'';t.ld=t.ld||0;t.dt=t.dt||'';t.fw=Math.max(1,+t.fw||1);if(typeof t.fa!=='number')t.fa=ws(tk())});
+  S.tasks.forEach(t=>{if(!t.h)t.h=S.homes[0].id;t.nx=t.nx||{};t.c=t.c||'';t.ld=t.ld||0;t.dt=t.dt||'';t.fw=Math.max(1,+t.fw||1);t.pz=t.pz?1:0;t.fz=Array.isArray(t.fz)?t.fz:[];if(typeof t.fa!=='number')t.fa=ws(tk())});
   S.tasks=S.tasks.filter(t=>{if(t.m==='l'||t.m==='x'){const r=R(t.h,t.m==='x'?'s':'a');if(!r.st.some(z=>z.n===t.n))r.st.push({id:uid(),n:t.n,l:0});return false}return true});
   S.log=S.log.filter(l=>S.tasks.some(t=>t.id===l.t));
   if(!S.homes.some(h=>h.id===S.h))S.h=S.homes[0].id}
-mig();render();{const r=need();if(r)avisoCopia(r)}
+cargar();mig();render();if(BLK)avisoDatos();else{const r=need();if(r)avisoCopia(r)}
+if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>

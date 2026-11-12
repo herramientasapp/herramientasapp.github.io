@@ -1,0 +1,17 @@
+{
+  "name": "Tareas del hogar",
+  "short_name": "Tareas",
+  "description": "Tareas del hogar para dos domicilios: qué toca hoy, quién lo hizo y qué viene.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15171d",
+  "theme_color": "#15171d",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
