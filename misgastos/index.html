@@ -23,7 +23,7 @@ tr.wr td{color:var(--o);font-weight:600}tr.best td{background:rgba(22,163,74,.18
 </style></head><body><main id="app"></main><nav id="nav"></nav><div id="mod"></div><div id="mod2"></div>
 <script>
 /* ===== 1. UTILIDADES ===== */
-const APP_VERSION='2.5',SCHEMA=5,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
+const APP_VERSION='2.6',SCHEMA=6,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
 let BOOT_ERR=null,IMP=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -51,7 +51,8 @@ const IDEAS_21=['Previsión de pagos de los próximos 12 meses','Exportar inform
 const IDEAS_22=['Aviso de consumo de agua anómalo (posibles fugas) frente a la media','Consumo de agua por mes natural estimado (reparto diario de cada factura)','Comparar el consumo de agua con el mismo periodo del año anterior','Facturas de agua con cuota fija y tramos para detectar subidas de tarifa'];
 const IDEAS_23=['Pagos periódicos sin contrato (IBI, IRPF, ITV): repetir cada año y avisar en Inicio','Filtro por contrato y por concepto también en Informes → Resumen','Gráfico de evolución anual por concepto (IBI de cada inmueble, comunidad…)'];
 const IDEAS_24=['Avisar de contratos periódicos sin factura apuntada en su último periodo (pendientes de apuntar)','Mostrar el fin de permanencia en «Qué vigilar»'];
-const defAj=()=>({rojo:15,naranja:60,rec:[30,7],bak:14,bakN:15,catGas:'Vehículo',impElec:5.11269632,iva:21,umbral:5,pagGastos:20});
+const IDEAS_26=['Avisar si una lectura de agua o calefacción se desvía mucho de lo habitual','Comparar tu consumo con el del edificio cuando haya datos del edificio','Coste de calefacción por temporada comparado con la anterior'];
+const defAj=()=>({rojo:15,naranja:60,rec:[30,7],bak:14,bakN:15,catGas:'Vehículo',impElec:5.11269632,iva:21,umbral:5,pagGastos:20,refLitros:130});
 /* Migración automática. Antes de migrar se guarda (si no existe) una copia del JSON original en mis_servicios_prev_v<esquema anterior>. */
 function migrate(d){const v0=d.version=d.version||1;
  if(v0<SCHEMA){try{const k='mis_servicios_prev_v'+v0;if(!localStorage.getItem(k)){localStorage.setItem(k,JSON.stringify(d));Object.keys(localStorage).filter(x=>x.startsWith('mis_servicios_prev_v')&&x!==k).forEach(x=>localStorage.removeItem(x))}}catch(e){}}
@@ -62,6 +63,7 @@ function migrate(d){const v0=d.version=d.version||1;
   IDEAS_22.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed22=1}
  if(!d.seed23){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i.texto||'').toLowerCase()));IDEAS_23.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed23=1}
  if(!d.seed24){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').toLowerCase()));IDEAS_24.forEach(t=>{if(!ya.has(t.toLowerCase()))d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'})});d.seed24=1}
+ if(!d.seed26){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').toLowerCase()));IDEAS_26.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed26=1}
  if(v0<5){if(d.ajustes.bak===30)d.ajustes.bak=14;(d.contratos||[]).forEach(c=>{delete c.contarPor;if(c.tipoSuministro==='internet'||c.tipoSuministro==='otro')c.tipoSuministro='ninguno'});
   if(Array.isArray(d.categorias)&&!d.categorias.some(c=>String(c).toLowerCase()==='banca y comisiones'))d.categorias.push('Banca y comisiones')}
  if(!Array.isArray(d.conceptos)||!d.conceptos.length)d.conceptos=buildConc(d);
@@ -98,7 +100,7 @@ function modal(title,fields,vals,ok,host){
   for(const f of fields){if(!f.oo)continue;const el=$('#'+pre+f.k),L=f.oo(c),k=JSON.stringify(L);if(dk[f.k]!==k){dk[f.k]=k;el.innerHTML=oh(L,el.value)}}
   c=rd();
   for(const f of fields){if(!f.chg)continue;const v=c[f.k];if(prev[f.k]!==undefined&&prev[f.k]!==v)f.chg(c,(k2,x)=>{const e=$('#'+pre+k2);if(e)e.value=x});prev[f.k]=v}
-  c=rd();for(const f of fields){const w=$('#L_'+pre+f.k);if(f.t==='sec'){w.textContent=(COL[pre+f.k]?'▸ ':'▾ ')+f.l;continue}const vis=(!f.vis||f.vis(c))&&!(f.sc&&COL[f.sc]);w.style.display=vis?'':'none';const q=w.querySelector('.rq');if(q)q.textContent=vis&&reqOf(f,c)?' *':''}};
+  c=rd();for(const f of fields){const w=$('#L_'+pre+f.k);if(f.t==='sec'){w.textContent=(COL[pre+f.k]?'▸ ':'▾ ')+f.l;w.style.display=(!f.vis||f.vis(c))?'':'none';continue}const vis=(!f.vis||f.vis(c))&&!(f.sc&&COL[f.sc]);w.style.display=vis?'':'none';const q=w.querySelector('.rq');if(q)q.textContent=vis&&reqOf(f,c)?' *':''}};
  $(H).oninput=ref;$(H).onchange=ref;
  $('#'+pre+'ok').onclick=()=>{const c=rd(),o={};for(const f of fields){if(f.t==='html'||f.t==='sec')continue;if(f.vis&&!f.vis(c))continue;
   const e=$('#'+pre+f.k);let v=f.t==='check'?e.checked:e.value.trim();
@@ -111,26 +113,61 @@ const closeM=()=>{$('#mod').innerHTML=''};
 const ask=m=>confirm(m);
 /* ===== 5. CRUD GENÉRICO ===== */
 const meses=['mensual','bimestral','trimestral','semestral','anual'];
-const SERV=[['ninguno','Ninguno'],['electricidad','Electricidad'],['agua','Agua'],['gas','Gas'],['movil','Móvil']];
+const SERV=[['ninguno','Ninguno'],['electricidad','Electricidad'],['agua','Agua'],['gas','Gas'],['movil','Móvil'],['calefaccion','Calefacción y ACS comunitarias']];
 const perU=p=>({mensual:'mes',bimestral:'bimestre',trimestral:'trimestre',semestral:'semestre',anual:'año'})[p]||'mes';
 const unitFor=c=>({electricidad:'kWh',agua:'m³',gas:'kWh'})[c?.tipoSuministro]||null;
 const contrList=c=>S.contratos.filter(x=>(!c.fa||x.asociado===c.fa)&&(!c.fs||(x.tipoSuministro||'ninguno')===c.fs)).sort((a,b)=>(a.estado==='cancelado')-(b.estado==='cancelado')||String(a.nombre).localeCompare(String(b.nombre),'es'));
 const FIELDS={
 contratos:()=>[{k:'s1',t:'sec',l:'Datos básicos'},{k:'nombre',l:'Nombre',r:1},{k:'proveedor',l:'Proveedor'},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},
-{k:'tipoSuministro',l:'Tipo de servicio (solo si necesita funciones propias: consumo de luz, agua o gas, o línea móvil; si no, Ninguno)',t:'select',o:SERV,chg:(c,set)=>{const m={electricidad:'Suministros',agua:'Suministros',gas:'Suministros',movil:'Telecomunicaciones'}[c.tipoSuministro];if(m&&S.categorias.includes(m))set('categoria',m)}},
+{k:'tipoSuministro',l:'Tipo de servicio (solo si necesita funciones propias: consumo de luz, agua o gas, o línea móvil; si no, Ninguno)',t:'select',o:SERV,chg:(c,set)=>{const m={electricidad:'Suministros',agua:'Suministros',gas:'Suministros',movil:'Telecomunicaciones',calefaccion:'Suministros'}[c.tipoSuministro];if(m&&S.categorias.includes(m))set('categoria',m);if(c.tipoSuministro==='calefaccion')set('tipoImporte','variable')}},
 {k:'avElec',t:'html',h:()=>`<div class="card warn m">⚠️ Para usar tarifas y consumos de electricidad, el asociado debe ser de tipo casa.</div>`,vis:c=>c.tipoSuministro==='electricidad'&&!esElec(c.tipoSuministro,c.asociado)},
 {k:'linea',l:'Móvil: nº de línea',vis:c=>c.tipoSuministro==='movil'},{k:'usuaria',l:'Móvil: persona usuaria',vis:c=>c.tipoSuministro==='movil'},
 {k:'tar',t:'html',h:tarBlock,vis:c=>esElec(c.tipoSuministro,c.asociado)},
+{k:'avCal',t:'html',h:()=>`<div class="card warn m">⚠️ Para usar calefacción y ACS comunitarias, el asociado debe ser de tipo casa.</div>`,vis:c=>c.tipoSuministro==='calefaccion'&&!esCal(c.tipoSuministro,c.asociado)},
+{k:'calNote',t:'html',h:()=>`<div class="tc m"><b>🔥 Calefacción y ACS comunitarias</b><br>Contrato «ficticio» para los recibos del administrador. Cada recibo se apunta como una factura de este contrato (Gastos → + Añadir → Factura).</div>`,vis:c=>esCal(c.tipoSuministro,c.asociado)},
+{k:'coefCal',l:'Coeficiente de calefacción (%)',t:'number',vis:c=>esCal(c.tipoSuministro,c.asociado)},{k:'coefAgua',l:'Coeficiente de agua (%)',t:'number',vis:c=>esCal(c.tipoSuministro,c.asociado)},
+{k:'caudal',l:'Caudal de calefacción (m³/h) · opcional: sin él solo se omite el coste por hora',t:'number',vis:c=>esCal(c.tipoSuministro,c.asociado)},
+{k:'kwBomba',l:'Bomba de calor: consumo medio (kW) · opcional',t:'number',vis:c=>esCal(c.tipoSuministro,c.asociado)},
+{k:'casaElec',l:'Selecciona la casa Alameda (de ella se toma el precio de la electricidad de la bomba de calor)',t:'select',o:[['','— La propia casa del contrato —'],...aOpts(null,'casa')],vis:c=>esCal(c.tipoSuministro,c.asociado)},
+{k:'kwhManual',l:'Precio manual del kWh (€/kWh, sin impuestos) · opcional: sustituye al de la tarifa',t:'number',vis:c=>esCal(c.tipoSuministro,c.asociado)},
 {k:'tipoImporte',l:'Importe: fijo (suele ser siempre el mismo; se propone al apuntar) o variable',t:'select',o:['fijo','variable']},{k:'importe',l:'Importe / precio actual (€) · para registrar una subida usa el botón «Precios»',t:'number'},{k:'periodicidad',l:'Periodicidad',t:'select',o:meses,d:'mensual'},{k:'estado',l:'Estado',t:'select',o:['activo','en revisión','cancelado']},
 {k:'s2',t:'sec',l:'Vigencia y avisos'},{k:'inicio',l:'Fecha de inicio',t:'date'},{k:'vence',l:'Vencimiento / renovación',t:'date'},{k:'renovAuto',l:'Renovación automática',t:'check'},{k:'renMeses',l:'Periodo de renovación (meses)',t:'number',d:12},{k:'preaviso',l:'Preaviso (días)',t:'number',d:30},{k:'finPerm',l:'Fin de permanencia',t:'date'},
 {k:'s3',t:'sec',l:'Otros datos',open:false},{k:'pago',l:'Forma de pago'},{k:'nContrato',l:'Nº contrato / póliza'},{k:'telefono',l:'Teléfono de atención'},{k:'documento',l:'Dónde está el documento'},{k:'notas',l:'Notas',t:'area'}],
-recibos:()=>{const E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c),TS=c=>gc(c.contrato)?.tipoSuministro,PER=c=>EC(c)||TS(c)==='agua'||TS(c)==='gas',CON=c=>TS(c)==='agua',CS=c=>NE(c)&&(TS(c)==='agua'||TS(c)==='gas');return[
-{k:'contrato',l:'Contrato',t:'select',oo:c=>{const l=contrList(c);if(!l.length)return[['','— Aún no hay contratos —']];const g={};l.forEach(x=>(g[an(x.asociado)]=g[an(x.asociado)]||[]).push([x.id,x.nombre+(x.estado==='cancelado'?' (cancelado)':'')]));return Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([k,v])=>({g:k,o:v}))},chg:(c,set)=>{const k=gc(c.contrato),u=unitFor(k);if(u)set('unidad',u);const np=k&&k.tipoImporte!=='variable'&&num(k.importe)?k.importe:null;if(c.importe===''||String(c.importe)===String(TMP.pref))set('importe',np==null?'':np);TMP.pref=np;const e=$('#rinfo');if(e)e.innerHTML=recInfo(c.contrato)},r:1},{k:'rinfo',t:'html',h:()=>`<div class="m" id="rinfo" style="margin:-2px 0 8px">${recInfo(TMP.rc)}</div>`},
+recibos:()=>{const CAL=c=>isCalC(gc(c.contrato)),E=c=>isElecC(gc(c.contrato)),EC=c=>E(c)&&c.conDatos,NE=c=>!E(c),TS=c=>gc(c.contrato)?.tipoSuministro,PER=c=>EC(c)||TS(c)==='agua'||TS(c)==='gas',CON=c=>TS(c)==='agua',CS=c=>NE(c)&&(TS(c)==='agua'||TS(c)==='gas');return[
+{k:'contrato',l:'Contrato',t:'select',oo:c=>{const l=contrList(c);if(!l.length)return[['','— Aún no hay contratos —']];const g={};l.forEach(x=>(g[an(x.asociado)]=g[an(x.asociado)]||[]).push([x.id,x.nombre+(x.estado==='cancelado'?' (cancelado)':'')]));return Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([k,v])=>({g:k,o:v}))},chg:(c,set)=>{const k=gc(c.contrato),u=unitFor(k);if(u)set('unidad',u);const np=k&&k.tipoImporte!=='variable'&&num(k.importe)?k.importe:null;if(c.importe===''||String(c.importe)===String(TMP.pref))set('importe',np==null?'':np);TMP.pref=np;const e=$('#rinfo');if(e)e.innerHTML=recInfo(c.contrato);calChg(c,set)},r:1},{k:'rinfo',t:'html',h:()=>`<div class="m" id="rinfo" style="margin:-2px 0 8px">${recInfo(TMP.rc)}</div>`},
 {k:'conDatos',l:'Voy a introducir los datos de consumo eléctrico (si lo desmarcas, el recibo se guarda igual pero no cuenta en los cálculos de consumo)',t:'check',d:true,vis:E},
+{k:'calG',t:'html',h:()=>'<div class="m">Calefacción y ACS: aquí va el <b>periodo del gas</b> (el del agua, más abajo).</div>',vis:CAL},
 {k:'desde',l:'Periodo desde',t:'date',r:PER},{k:'hasta',l:'Periodo hasta',t:'date',r:PER},
-{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'importe',l:'Importe (€)',t:'number',r:1},
+{k:'fecha',l:'Fecha',t:'date',r:1,d:today(),chg:calChg},{k:'importe',l:'Importe (€)',t:'number',r:1,vis:c=>!CAL(c)},
 {k:'kwh1',l:'Consumo punta P1 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh2',l:'Consumo llano P2 (kWh)',t:'number',r:EC,vis:EC},{k:'kwh3',l:'Consumo valle P3 (kWh)',t:'number',r:EC,vis:EC},
-{k:'consumo',l:'Consumo',t:'number',r:CON,vis:CS},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:CS},{k:'notas',l:'Notas',t:'area'}]},
+{k:'consumo',l:'Consumo',t:'number',r:CON,vis:CS},{k:'unidad',l:'Unidad',t:'select',o:['kWh','m³','litros'],vis:CS},
+{k:'calS1',t:'html',h:()=>'<h2>🔥 Calefacción (gas)</h2>',vis:CAL},
+{k:'lcAnt',l:'Contador de calefacción (m³ recirculados): lectura anterior',t:'number',vis:CAL,chg:calChg},
+{k:'calHintC',t:'html',h:()=>calBlk('calHintC'),vis:CAL},
+{k:'lcAct',l:'Contador de calefacción (m³ recirculados): lectura actual',t:'number',vis:CAL,chg:calChg},
+{k:'cambioContadorCal',l:'He cambiado el contador de calefacción (no avisar si la lectura baja)',t:'check',vis:CAL,chg:calChg},
+{k:'consCal',l:'Consumo de calefacción (m³): se calcula solo, pero puedes corregirlo',t:'number',vis:CAL,chg:calChg},
+{k:'calDifC',t:'html',h:()=>calBlk('calDifC'),vis:CAL},
+{k:'gasFijo',l:'Gas: importe fijo (€)',t:'number',vis:CAL,chg:calChg},
+{k:'gasVar',l:'Gas: importe variable (€)',t:'number',vis:CAL,chg:calChg},
+{k:'calS2',t:'html',h:()=>'<h2>💧 Agua caliente (ACS)</h2>',vis:CAL},
+{k:'aDesde',l:'Periodo del agua desde',t:'date',vis:CAL},{k:'aHasta',l:'Periodo del agua hasta',t:'date',vis:CAL},
+{k:'laAnt',l:'Contador de ACS (m³): lectura anterior',t:'number',vis:CAL,chg:calChg},
+{k:'calHintA',t:'html',h:()=>calBlk('calHintA'),vis:CAL},
+{k:'laAct',l:'Contador de ACS (m³): lectura actual',t:'number',vis:CAL,chg:calChg},
+{k:'cambioContadorAcs',l:'He cambiado el contador de ACS (no avisar si la lectura baja)',t:'check',vis:CAL,chg:calChg},
+{k:'consAcs',l:'Consumo de ACS (m³): se calcula solo, pero puedes corregirlo',t:'number',vis:CAL,chg:calChg},
+{k:'calDifA',t:'html',h:()=>calBlk('calDifA'),vis:CAL},
+{k:'aguaCons',l:'Agua: importe consumido (€)',t:'number',vis:CAL,chg:calChg},
+{k:'aguaFija',l:'Agua: cuota fija (€)',t:'number',vis:CAL,chg:calChg},
+{k:'calTot',t:'html',h:()=>calBlk('calTot'),vis:CAL},
+{k:'notas',l:'Notas',t:'area'},
+{k:'sEd',t:'sec',l:'Datos del edificio (solo si hay problemas)',open:false,vis:CAL},
+{k:'edGas',l:'Edificio: total de gas facturado (€)',t:'number',vis:CAL},
+{k:'edCal',l:'Edificio: total de m³ de calefacción',t:'number',vis:CAL},
+{k:'edAcs',l:'Edificio: total de m³ de ACS',t:'number',vis:CAL},
+{k:'edAguaCons',l:'Edificio: total de agua consumida (€)',t:'number',vis:CAL},
+{k:'edAguaFija',l:'Edificio: total de cuota fija de agua (€)',t:'number',vis:CAL}]},
 repostajes:()=>[{k:'coche',l:'Coche',t:'select',o:aOpts(null,'vehiculo'),r:1},{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'litros',l:'Litros',t:'number',r:1},{k:'importe',l:'Importe (€)',t:'number',r:1},
 {k:'ppl',l:'€/litro (vacío = calculado)',t:'number'},{k:'km',l:'Kilómetros (cuentakilómetros)',t:'number'},{k:'lleno',l:'Depósito lleno',t:'check',d:true},{k:'notas',l:'Notas',t:'area'}],
 gastos:()=>[{k:'fecha',l:'Fecha',t:'date',r:1,d:today()},{k:'concepto',l:'Concepto',t:'select',r:1,oo:c=>{const L=S.conceptos.slice().sort((a,b)=>a.n.localeCompare(b.n,'es')).map(x=>[x.n,x.n]);if(c.concepto&&c.concepto!=='__new'&&!L.some(x=>x[0]===c.concepto))L.push([c.concepto,c.concepto]);return[['','— Elige un concepto —'],...L,['__new','+ Nuevo concepto…']]},chg:concChg},{k:'asociado',l:'Asociado',t:'select',o:aOpts()},{k:'desc',l:'Descripción (opcional, p. ej. Garaje 14)'},{k:'importe',l:'Importe (€)',t:'number',r:1},{k:'categoria',l:'Categoría',t:'select',o:S.categorias},{k:'notas',l:'Notas',t:'area'}]};
@@ -147,9 +184,11 @@ function edit(kind,id,dup){
   else{vals.fa=f.a||'';vals.fs=f.s||'';if(pre&&gc(pre)){vals.fa='';vals.fs=''}else if(!c0&&(f.a||f.s)){vals.fa='';vals.fs='';c0=contrList({})[0]}if(c0){vals.contrato=c0.id;const u=unitFor(c0);if(u)vals.unidad=u}}TMP.rc=c0?.id||'';TMP.pref=null;if(!cur&&c0&&c0.tipoImporte!=='variable'&&num(c0.importe)){vals.importe=c0.importe;TMP.pref=c0.importe}}
  else if(!cur&&ui.tab==='gastos'){const f=ui.gf;if(kind==='repostajes'&&A(f.a)?.tipo==='vehiculo')vals.coche=f.a;if(kind==='gastos'){if(f.a)vals.asociado=f.a;if(f.c)vals.categoria=f.c}}
  if(kind==='contratos')TMP.tar=JSON.parse(JSON.stringify(cur?.tarifas||[]));
+ if(kind==='recibos'){TMP.rv=vals;TMP.recId=cur&&!dup?cur.id:null;TMP.pc1=calCalc(vals.lcAnt,vals.lcAct);TMP.pc2=calCalc(vals.laAnt,vals.laAct)}
  modal((cur&&!dup?'Editar':'Nuevo')+' registro',FIELDS[kind](),vals,o=>{
   delete o.fa;delete o.fs;
   if(kind==='recibos'&&o.desde&&o.hasta&&o.hasta<o.desde){alert('El periodo «hasta» no puede ser anterior a «desde».');return false}
+  if(kind==='recibos'&&o.aDesde&&o.aHasta&&o.aHasta<o.aDesde){alert('El periodo del agua «hasta» no puede ser anterior a «desde».');return false}
   if(kind==='repostajes'&&!o.ppl&&o.litros)o.ppl=o.importe/o.litros;
   if(kind==='contratos'&&esElec(o.tipoSuministro,o.asociado)){o.tarifas=TMP.tar.slice().sort((a,b)=>a.desde.localeCompare(b.desde));
    if(!o.tarifas.length)setTimeout(()=>alert('Aviso: este contrato eléctrico no tiene tarifas. Añade al menos una para poder calcular el importe teórico.'),50)}
@@ -157,12 +196,17 @@ function edit(kind,id,dup){
    if(isElecC(c)){if(o.conDatos){if(o.hasta<o.desde){alert('El periodo «hasta» no puede ser anterior a «desde».');return false}
      o.consumo=o.kwh1+o.kwh2+o.kwh3;o.unidad='kWh'}
     else{o.kwh1=o.kwh2=o.kwh3=null;o.consumo=null;o.unidad='kWh'}}
-   else if(cur){['kwh1','kwh2','kwh3','conDatos'].forEach(k=>delete cur[k])}}
+   else if(isCalC(c)){const s=['gasFijo','gasVar','aguaCons','aguaFija'].map(k=>o[k]);if(s.every(v=>v==null)){alert('Falta algún importe del recibo (gas o agua).');return false}
+    o.importe=rnd2(s.reduce((t,v)=>t+(v||0),0));
+    [['Cal','lcAnt','lcAct','consCal','cambioContadorCal'],['Acs','laAnt','laAct','consAcs','cambioContadorAcs']].forEach(([m,a,b,k,f])=>{o['dif'+m]=(!o[f]&&num(o[a])&&num(o[b])&&num(o[k]))?rnd3(o[k]-(o[b]-o[a])):null});
+    if(cur)['kwh1','kwh2','kwh3','conDatos','consumo','unidad'].forEach(k=>delete cur[k])}
+   else if(cur){['kwh1','kwh2','kwh3','conDatos'].forEach(k=>delete cur[k]);CALK.forEach(k=>delete cur[k])}}
   if(cur&&!dup)Object.assign(cur,o);else{const n={id:uid(),...o,aviso:false};if(kind==='contratos'&&o.tipoImporte!=='variable'&&num(o.importe))n.precios=[{id:uid(),desde:o.inicio||today(),importe:o.importe,unidad:'€/'+perU(o.periodicidad),nota:'Precio inicial'}];list.push(n)}
-  if(save())go();else return false})}
+  if(save())go();else return false});
+ if(kind==='recibos')calMark(TMP.rv||{})}
 function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
 /* ===== 6. PANTALLAS ===== */
-const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'todos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:'',k:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:'',pre:null,ex:{a:'',c:'',k:'',n:'',q:'',g:'mes',dim:'aso',est:1}};
+const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'todos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:'',k:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:'',cc:'',cv:'res',cs:'',pre:null,ex:{a:'',c:'',k:'',n:'',q:'',g:'mes',dim:'aso',est:1}};
 const TABS=[['inicio','Inicio'],['contratos','Contratos'],['gastos','Gastos'],['informes','Informes'],['mas','Más']];
 function go(t,s){const ch=!!t&&(t!==ui.tab||(s||'')!==ui.sub),y=window.scrollY;if(t){ui.tab=t;ui.sub=s||''}
  $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" onclick="go('${k}');scrollTo(0,0)">${l}</button>`).join('');
@@ -190,7 +234,7 @@ function contratos(){const q=ui.q.toLowerCase();
 ${l.length?l.map(c=>{const i=c.estado==='activo'?info(c):null;return`<div class="card"><div class="row sp"><b>${i?`<span class="dot ${i.sem}"></span>`:''}${esc(c.nombre)}</b><span>${c.tipoImporte==='variable'?'variable':eur(c.importe)+' / '+c.periodicidad}</span></div>
 <div class="m">${esc(c.proveedor)} · ${esc(c.categoria)} · ${esc(an(c.asociado))} · ${c.estado}${i?` · vence ${fd(i.v)} · límite ${fd(i.lim)}`:''}${c.aviso?' · aviso gestionado':''}</div>
 ${priceLine(c)}${c.documento?`<div class="m">📄 ${esc(c.documento)}</div>`:''}
-${isElecC(c)?`<div class="m">⚡ ${(c.tarifas||[]).length} tarifa(s)</div>`:''}
+${isElecC(c)?`<div class="m">⚡ ${(c.tarifas||[]).length} tarifa(s)</div>`:''}${isCalC(c)?`<div class="m">🔥 Calefacción y ACS · coef. ${num(c.coefCal)?NUM.format(c.coefCal):'—'} % / ${num(c.coefAgua)?NUM.format(c.coefAgua):'—'} %${num(c.caudal)?' · caudal '+NUM.format(c.caudal)+' m³/h':''}</div>`:''}
 <div class="row" style="margin-top:6px"><button class="s p" onclick="addRec('${c.id}')">+ Factura</button><button class="s" onclick="verFact('${c.id}')">Facturas (${S.recibos.filter(r=>r.contrato===c.id).length})</button><button class="s" onclick="expK('${c.id}')">Informe</button><button class="s" onclick="verPrecios('${c.id}')">Precios</button></div><div class="row" style="margin-top:6px"><button class="s" onclick="edit('contratos','${c.id}')">Editar</button><button class="s" onclick="edit('contratos','${c.id}',1)">Duplicar</button>
 <button class="s" onclick="renew('${c.id}')">Renovado</button><button class="s" onclick="gest('${c.id}')">${c.aviso?'Quitar aviso':'Aviso gestionado'}</button>
 <button class="s" onclick="cancel('${c.id}')">Cancelar</button><button class="s" onclick="icsOne('${c.id}')">📅</button><button class="s d" onclick="del('contratos','${c.id}')">Borrar</button></div></div>`}).join(''):'<div class="card m">No hay contratos con estos filtros.</div>'}`}
@@ -248,7 +292,7 @@ conc:()=>concScreen(),ayuda:()=>ayudaScreen(),
 aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Editar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
 cat:()=>`${back}<h1>Categorías</h1><button class="p" onclick="addCat()">+ Añadir</button>${S.categorias.map((c,i)=>`<div class="card row sp"><span>${esc(c)} <span class="m">(${catUse(c)} usos${c===S.ajustes.catGas?' · gasolina':''})</span></span><span><button class="s" onclick="renCat(${i})">Editar</button><button class="s d" onclick="delCat(${i})">Eliminar</button></span></div>`).join('')}`,
 borrar:()=>`${back}<h1>Borrar datos de esta app</h1><div class="card warn"><p>Se borrarán contratos, recibos, gastos y ajustes de <b>Mis servicios</b> en este navegador, y también sus copias internas (antes de importar, rescate). No se puede deshacer y no afecta a otras apps.</p><button class="p" onclick="exportJ();go('mas','borrar')">1. Descargar copia de seguridad ahora</button><label>2. Escribe BORRAR para confirmar<input id="bq" autocomplete="off" oninput="$('#bb').disabled=this.value.trim()!=='BORRAR'"></label><button class="d" id="bb" disabled onclick="wipe()">Borrar todo</button></div>`,
-ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bakN',l:'Proponer copia al superar (cambios sin guardar)',t:'number',r:1},{k:'bak',l:'Proponer copia tras (días sin copia)',t:'number',r:1},{k:'catGas',l:'Categoría para gasolina',t:'select',o:S.categorias},{k:'impElec',l:'Impuesto eléctrico (%)',t:'number',r:1},{k:'iva',l:'IVA (%)',t:'number',r:1},{k:'umbral',l:'Umbral de desviación real/teórico (%)',t:'number',r:1},{k:'pagGastos',l:'Gastos: registros por página',t:'select',o:[10,20,50,100]}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak,bakN:a.bakN,catGas:a.catGas,impElec:a.impElec,iva:a.iva,umbral:a.umbral,pagGastos:a.pagGastos||20},o=>{S.ajustes=Object.assign({},S.ajustes,{rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak,bakN:o.bakN,catGas:o.catGas,impElec:o.impElec,iva:o.iva,umbral:o.umbral,pagGastos:+o.pagGastos||20});ui.gsig=null;save();go('mas')})});return back},
+ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bakN',l:'Proponer copia al superar (cambios sin guardar)',t:'number',r:1},{k:'bak',l:'Proponer copia tras (días sin copia)',t:'number',r:1},{k:'catGas',l:'Categoría para gasolina',t:'select',o:S.categorias},{k:'impElec',l:'Impuesto eléctrico (%)',t:'number',r:1},{k:'iva',l:'IVA (%)',t:'number',r:1},{k:'umbral',l:'Umbral de desviación real/teórico (%)',t:'number',r:1},{k:'pagGastos',l:'Gastos: registros por página',t:'select',o:[10,20,50,100]},{k:'refLitros',l:'Referencia de consumo de agua (litros/persona/día)',t:'number',r:1}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak,bakN:a.bakN,catGas:a.catGas,impElec:a.impElec,iva:a.iva,umbral:a.umbral,pagGastos:a.pagGastos||20,refLitros:a.refLitros||130},o=>{S.ajustes=Object.assign({},S.ajustes,{rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak,bakN:o.bakN,catGas:o.catGas,impElec:o.impElec,iva:o.iva,umbral:o.umbral,pagGastos:+o.pagGastos||20,refLitros:o.refLitros||130});ui.gsig=null;save();go('mas')})});return back},
 bak:()=>`${back}<h1>Copia de seguridad</h1><div class="card"><p><b>Última copia:</b> ${S.lastBackup?fd(S.lastBackup)+' (hace '+pl(bakDias())+')':'ninguna todavía'}<br><b>Cambios desde entonces:</b> ${S.cambios||0}</p><p class="m">Al entrar te propondré hacer copia si hay más de ${S.ajustes.bakN} cambios sin guardar o han pasado ${S.ajustes.bak} días o más. Ambos valores se cambian en Ajustes.</p><button class="p" onclick="exportJ()">Exportar JSON</button><p><button onclick="go('mas','imp')">Importar JSON…</button> <button onclick="go('mas','ajustes')">Ajustes…</button></p></div>`,
 imp:()=>{const u=undoInfo();return`${back}<h1>Importar datos (JSON)</h1>${u?`<div class="card"><b>↩️ Deshacer la última importación</b><div class="m">${u.modo==='fusion'?'Fusionar':'Reemplazar'} · ${new Date(u.t).toLocaleString('es-ES')} · se puede deshacer hasta el ${fd(ISO(new Date(u.t+UNDO_DIAS*864e5)))}</div><button class="d" onclick="undoImp()">Deshacer importación</button></div>`:''}<div class="card"><p class="m">Elige un archivo exportado desde «Mis servicios» (Más → Copia de seguridad). Antes de importar verás un resumen y se revisará que el archivo esté sano; además se guarda una copia interna de tus datos actuales.</p><label style="color:var(--t)"><input type="radio" name="impm" value="fusion" checked> <b>Fusionar</b>: añade solo lo que no tengas. No borra ni modifica nada de lo actual.</label><label style="color:var(--t)"><input type="radio" name="impm" value="reemplazar"> <b>Reemplazar</b>: sustituye todos los datos actuales por los del archivo.</label><button class="p" onclick="$('#impf').click()">Elegir archivo JSON…</button><input type="file" id="impf" accept=".json,application/json" style="display:none" onchange="importJ(this.files[0]);this.value=''"></div><p class="m">«Fusionar» reconoce lo repetido por su identificador interno, así que funciona bien con copias de esta misma app (por ejemplo, la de otro dispositivo).</p>`},
 ics:()=>`${back}<h1>Exportar al calendario</h1><div class="card"><p class="m">Eventos de día completo con límite de aviso y vencimiento, con dos alarmas.</p><button class="p" onclick="icsAll()">Descargar .ics de todos los contratos activos</button></div>`,
@@ -262,9 +306,10 @@ calc:()=>{const a=S.ajustes;return`${back}<h1>Cómo se calcula</h1><div class="c
 <li><b>impuesto eléctrico</b> = ${NUM.format(a.impElec)} % · (potencia + energía)</li><li><b>IVA</b> = ${NUM.format(a.iva)} % · (potencia + energía + impuesto + contador + otros)</li><li><b>total</b> = potencia + energía + impuesto + contador + otros + IVA</li></ol>
 <p class="m">«Otros» es el importe mensual antes de impuestos que se suma a cada recibo. Los porcentajes se cambian en Más → Ajustes. El umbral de desviación (${NUM.format(a.umbral)} %) marca en naranja los recibos cuyo importe real difiere del teórico.</p>
 <p class="warn card">⚠️ Es una estimación orientativa: no incluye bono social, exceso de potencia ni servicios extra. Los recibos sin desglose de franjas o marcados como pendientes de consumo quedan fuera del cálculo teórico y de la comparativa.</p></div>
-<h2>Agua y gas</h2><div class="card"><p>Cada factura cubre un periodo (desde–hasta). Por factura: <b>consumo/mes</b> = consumo ÷ días · 30,4375 y <b>€/mes</b> = importe ÷ días · 30,4375. Para el intervalo elegido, cada factura se <b>prorratea por días</b> (si solo una parte del periodo cae dentro del intervalo, cuenta esa parte) y las medias mensuales se calculan solo sobre los días cubiertos por facturas. Si hay varios contratos (por ejemplo dos casas), se suman sus medias mensuales.</p><p class="m">Las facturas sin periodo o sin consumo no entran en las medias (se avisa y se pueden editar desde la tabla).</p></div>`},
+<h2>Agua y gas</h2><div class="card"><p>Cada factura cubre un periodo (desde–hasta). Por factura: <b>consumo/mes</b> = consumo ÷ días · 30,4375 y <b>€/mes</b> = importe ÷ días · 30,4375. Para el intervalo elegido, cada factura se <b>prorratea por días</b> (si solo una parte del periodo cae dentro del intervalo, cuenta esa parte) y las medias mensuales se calculan solo sobre los días cubiertos por facturas. Si hay varios contratos (por ejemplo dos casas), se suman sus medias mensuales.</p><p class="m">Las facturas sin periodo o sin consumo no entran en las medias (se avisa y se pueden editar desde la tabla).</p></div>
+<h2>Calefacción y ACS comunitarias</h2><div class="card"><p>Cada recibo del administrador se apunta como una factura del contrato «Calefacción y ACS»: <b>importe</b> = gas fijo + gas variable + agua consumida + cuota fija de agua. El <b>consumo</b> de cada contador es lectura actual − lectura anterior; si escribes otro valor se marca en rojo con la diferencia (sirve para reclamar).</p><ol><li><b>Litros/persona/día</b>: agua fría (facturas de agua) y agua caliente (m³ de ACS) por separado, prorrateadas por días de su periodo; el conjunto es solo su suma. Referencia en Ajustes (${NUM.format(a.refLitros||130)} L/persona/día).</li><li><b>Precio del m³ de ACS</b> = Σ agua consumida ÷ Σ m³ (con cuota fija: + Σ cuota).</li><li><b>€/m³ recirculado</b> = Σ gas variable ÷ Σ m³ de calefacción.</li><li><b>Coste por hora</b> = €/m³ recirculado × caudal (m³/h). Estimación por arriba.</li><li><b>Bomba de calor</b> = kW × precio del kWh (último contrato y tarifa de la casa elegida, con descuento, impuesto eléctrico e IVA).</li></ol><p class="m">Se compara por hora encendida, no por calor entregado. El bloque de gas incluye el gas del agua caliente, cuyo coste marginal para ti es 0.</p></div>`},
 acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v${APP_VERSION} · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (localStorage).</span></div>`};
-const asoF=()=>[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','trastero','garaje','vehiculo','persona','general']},{k:'perteneceA',l:'Pertenece a (casa; para trastero/garaje)',t:'select',o:[['','—'],...aOpts(null,'casa')]}];
+const asoF=()=>[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','trastero','garaje','vehiculo','persona','general']},{k:'perteneceA',l:'Pertenece a (casa; para trastero/garaje)',t:'select',o:[['','—'],...aOpts(null,'casa')]},{k:'personas',l:'Personas que viven (opcional; para litros por persona y día)',t:'number',vis:c=>c.tipo==='casa'}];
 function addAso(){modal('Nuevo asociado',asoF(),{},o=>{S.asociados.push({id:uid(),...o,archivado:false});save();go('mas','aso')})}
 function renAso(id){const a=A(id);modal('Editar asociado',asoF(),a,o=>{Object.assign(a,o);save();go('mas','aso')})}
 function arcAso(id){const a=A(id);a.archivado=!a.archivado;save();go('mas','aso')}
@@ -286,7 +331,7 @@ function delConc(id){const c=S.conceptos.find(x=>x.id===id),n=concUse(c.n),otros
  if(!n){if(ask('¿Eliminar «'+c.n+'»?')){S.conceptos=otros;save();go('mas','conc')}return}
  if(!otros.length){alert('Hay gastos con este concepto y no queda otro al que pasarlos.');return}
  modal('Eliminar «'+c.n+'» ('+n+' gastos)',[{k:'dest',l:'Pasar sus gastos a',t:'select',o:otros.map(x=>x.n).sort((a,b)=>a.localeCompare(b,'es')),r:1}],{},v=>{S.gastos.forEach(g=>{if(g.concepto===c.n)g.concepto=v.dest});S.conceptos=S.conceptos.filter(x=>x.id!==id);save();go('mas','conc')})}
-function ayudaScreen(){const T=[['Electricidad, agua, gas','Sí (variable, con su tipo)','Factura de cada recibo, con periodo y consumos'],['Internet, TV, fijo','Sí','Factura (el importe se propone solo si es fijo)'],['Móvil de cada persona','Sí, uno por línea','Asociado la persona (o General); tipo Móvil'],['Netflix, Spotify, iCloud, Prime','Sí, asociado General','Factura mensual o anual'],['Gimnasio, clubes, ONG, academia','Sí, asociado la persona','Una factura por cuota'],['Seguros (casa, coche, vida, salud, decesos)','Sí; es donde más rinde (vencimiento y preaviso)','Una factura por recibo'],['Cuenta o tarjeta con comisiones','Sí, uno por producto','Factura por cada comisión cobrada; si es suelta, gasto suelto «Comisión bancaria»'],['Hipoteca o alquiler','Sí','Factura por cuota'],['Mantenimiento con proveedor (caldera, ascensor, alarma)','Sí','Factura'],['Renting, leasing, parking mensual','Sí, asociado el coche','Factura'],['Comunidad y derramas','No','Gasto suelto: concepto «Comunidad» o «Derrama», asociado casa, garaje o trastero, descripción «Garaje 14»'],['IBI, basuras, plusvalía, vado','No','Gasto suelto con concepto'],['IRPF y otros impuestos','No','Gasto suelto, asociado persona o General'],['Reparaciones, obras, electrodomésticos','No','Gasto suelto con concepto'],['Gasolina','No','Repostaje (litros y km)'],['ITV, impuesto de circulación, multas, peajes, taller, neumáticos','No','Gasto suelto con concepto, asociado el coche']];
+function ayudaScreen(){const T=[['Electricidad, agua, gas','Sí (variable, con su tipo)','Factura de cada recibo, con periodo y consumos'],['Internet, TV, fijo','Sí','Factura (el importe se propone solo si es fijo)'],['Móvil de cada persona','Sí, uno por línea','Asociado la persona (o General); tipo Móvil'],['Netflix, Spotify, iCloud, Prime','Sí, asociado General','Factura mensual o anual'],['Gimnasio, clubes, ONG, academia','Sí, asociado la persona','Una factura por cuota'],['Seguros (casa, coche, vida, salud, decesos)','Sí; es donde más rinde (vencimiento y preaviso)','Una factura por recibo'],['Cuenta o tarjeta con comisiones','Sí, uno por producto','Factura por cada comisión cobrada; si es suelta, gasto suelto «Comisión bancaria»'],['Hipoteca o alquiler','Sí','Factura por cuota'],['Mantenimiento con proveedor (caldera, ascensor, alarma)','Sí','Factura'],['Renting, leasing, parking mensual','Sí, asociado el coche','Factura'],['Comunidad y derramas','No','Gasto suelto: concepto «Comunidad» o «Derrama», asociado casa, garaje o trastero, descripción «Garaje 14»'],['IBI, basuras, plusvalía, vado','No','Gasto suelto con concepto'],['IRPF y otros impuestos','No','Gasto suelto, asociado persona o General'],['Reparaciones, obras, electrodomésticos','No','Gasto suelto con concepto'],['Calefacción y agua caliente comunitarias (recibo del administrador)','Sí, uno por casa, tipo «Calefacción y ACS comunitarias»','Una factura por recibo: periodos, lecturas e importes de gas y de agua'],['Gasolina','No','Repostaje (litros y km)'],['ITV, impuesto de circulación, multas, peajes, taller, neumáticos','No','Gasto suelto con concepto, asociado el coche']];
  return`${back}<h1>Ayuda: tipos de gasto</h1><div class="card"><p><b>Los informes suman solo lo que tú apuntas.</b> Ningún contrato genera cargos ni estimaciones por sí solo.</p><p><b>Regla rápida:</b> si se contrata con un proveedor y quiero vigilar vencimiento o precio, es un <b>contrato</b>. Si es una obligación o un pago puntual, es un <b>gasto suelto</b>. La gasolina va como <b>repostaje</b>.</p></div>
 <div class="card" style="overflow-x:auto;font-size:13px"><table><tr><th>Gasto</th><th>¿Contrato?</th><th>Cómo apuntarlo</th></tr>${T.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
 <div class="card m"><b>Asociado, categoría y concepto.</b> El asociado dice de qué casa, coche o persona es; la categoría, qué naturaleza tiene; y el concepto (solo en gastos sueltos) agrupa lo común, como IBI o comunidad. Editas categorías y conceptos en Más.<br><br><b>Precios.</b> En cada contrato, «Precios» guarda el histórico de subidas. Es solo informativo y no cambia ningún gasto apuntado.<br><br><b>Fuera de esta app:</b> ingresos (alquileres cobrados), supermercado y salidas con amigos.</div>`}
@@ -340,6 +385,7 @@ function recData(r){const c=gc(r.contrato);if(!isElecC(c))return null;
 const rKey=x=>x.estado==='pend'?x.r.fecha:(x.r.hasta||x.r.fecha);
 function elecRecs(casa,d1,d2){return S.recibos.map(recData).filter(x=>x&&(!casa||x.c.asociado===casa)&&rKey(x)>=d1&&rKey(x)<=d2).sort((a,b)=>rKey(a).localeCompare(rKey(b)))}
 function recTxt(r){const c=gc(r.contrato),n=esc(c?.nombre||'—')+' · ';
+ if(isCalC(c))return calTxt(r,c);
  if(isElecC(c)){if(r.conDatos===false)return n+'⏳ pendiente de datos de consumo (excluido de los cálculos)';
   if(num(r.kwh1)&&num(r.kwh2)&&num(r.kwh3))return n+`P1 ${NUM.format(r.kwh1)} · P2 ${NUM.format(r.kwh2)} · P3 ${NUM.format(r.kwh3)} kWh`+(r.desde&&r.hasta?` · ${fd(r.desde)}–${fd(r.hasta)}`:'');
   return n+(r.consumo?NUM.format(r.consumo)+' '+r.unidad+' · ':'')+'sin desglose de franjas'}
@@ -367,8 +413,8 @@ function tarDel(i,cid){if(!ask('¿Borrar esta tarifa?'))return;
  if(cid){const C=gc(cid);C.tarifas.splice(i,1);if(save()){go();verPrecios(cid)}}else{TMP.tar.splice(i,1);refTar()}}
 /* --- Informes: segmentado, selector de periodo --- */
 const perSel=()=>`<div class="tabs" style="flex-wrap:wrap">${[['mes','Este mes'],['mesant','Mes anterior'],['tri','Trimestre'],['ano','Año'],['12m','12 meses'],['anoant','Año anterior']].map(([k,l])=>`<button class="${ui.per===k?'on':''}" onclick="setP('${k}')">${l}</button>`).join('')}</div>${['mes','mesant','tri','ano','anoant'].includes(ui.per)?`<div class="row"><button onclick="shiftP(-1)">◀</button><button onclick="shiftP(1)">▶</button></div>`:''}<div class="row"><label>Desde<input type="date" value="${ui.d1}" onchange="ui.d1=this.value;ui.per='';go()"></label><label>Hasta<input type="date" value="${ui.d2}" onchange="ui.d2=this.value;ui.per='';go()"></label></div>`;
-function setIV(k){ui.iv=k;if((k==='ele'||k==='agua')&&!ui['init_'+k]){ui['init_'+k]=1;ui.per='12m';ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
-function informes(){return`<h1>Informes</h1><div class="tabs np" style="flex-wrap:wrap">${[['res','Resumen'],['exp','Explorar'],['pre','Subidas de precio'],['ele','Electricidad'],['agua','Agua y gas'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='exp'?infExp():ui.iv==='pre'?infPre():ui.iv==='ele'?infEle():ui.iv==='agua'?infAgua():ui.iv==='cmp'?infCmp():infRes()}`}
+function setIV(k){ui.iv=k;if((k==='ele'||k==='agua'||k==='cal')&&!ui['init_'+k]){ui['init_'+k]=1;ui.per='12m';ui.d1=addD(addM(today(),-12),1);ui.d2=today()}go()}
+function informes(){return`<h1>Informes</h1><div class="tabs np" style="flex-wrap:wrap">${[['res','Resumen'],['exp','Explorar'],['pre','Subidas de precio'],['ele','Electricidad'],['agua','Agua y gas'],['cal','Calefacción y ACS'],['cmp','Comparativa']].map(([k,l])=>`<button class="${ui.iv===k?'on':''}" onclick="setIV('${k}')">${l}</button>`).join('')}</div>${ui.iv==='exp'?infExp():ui.iv==='pre'?infPre():ui.iv==='ele'?infEle():ui.iv==='agua'?infAgua():ui.iv==='cal'?infCal():ui.iv==='cmp'?infCmp():infRes()}`}
 /* --- Gráficos SVG (colores por variables CSS) --- */
 const lg=(c,t)=>`<span class="lg"><i style="background:${c}"></i>${t}</span>`;
 const svgWrap=(n,h,inner,lab)=>`<div style="overflow-x:auto"><svg width="${Math.max(320,n*46+16)}" height="${h}" role="img" aria-label="${esc(lab)}">${inner}</svg></div>`;
@@ -528,6 +574,136 @@ function exCsv(){const L=exList(ui.d1,ui.d2).sort((a,b)=>a.fecha.localeCompare(b
  const rows=[['Fecha','Origen','Concepto/contrato','Descripción','Asociado','Categoría','Importe']].concat(L.map(e=>[e.fecha,e.origen,e.etq,e.desc||'',an(e.aso),e.cat||'',n(e.importe)]));
  dl('informe_'+ui.d1+'_'+ui.d2+'.csv','\ufeff'+rows.map(r=>r.map((v,i)=>i===6?v:q(v)).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 
+/* ===== 6d. CALEFACCIÓN Y ACS COMUNITARIAS (v2.6) ===== */
+/* Contrato «ficticio» por casa (tipoSuministro 'calefaccion'). Cada recibo del administrador = una factura (recibos) con importe = suma de los 4 importes.
+   Campos de la factura: desde/hasta (periodo del gas), aDesde/aHasta (periodo del agua), lcAnt/lcAct/consCal/gasFijo/gasVar, laAnt/laAct/consAcs/aguaCons/aguaFija,
+   cambioContadorCal/cambioContadorAcs, difCal/difAcs (consumo escrito − lecturas) y, opcionales, datos del edificio (edGas, edCal, edAcs, edAguaCons, edAguaFija).
+   Campos del contrato: coefCal, coefAgua, caudal (opcional), kwBomba (opcional), casaElec, kwhManual (opcional).
+   No toca tarifaFor, calcTeo ni recData. */
+const rnd2=v=>Math.round(v*100)/100,rnd3=v=>Math.round(v*1000)/1000,pn=v=>{const x=parseFloat(v);return isFinite(x)?x:null};
+const esCal=(t,a)=>t==='calefaccion'&&A(a)?.tipo==='casa';
+const isCalC=c=>!!c&&esCal(c.tipoSuministro,c.asociado);
+const calCasas=()=>[...new Set(S.contratos.filter(isCalC).map(c=>c.asociado))].map(A).filter(Boolean);
+const calCon=casa=>S.contratos.filter(c=>isCalC(c)&&c.asociado===casa).sort((a,b)=>(a.estado==='cancelado')-(b.estado==='cancelado'))[0]||null;
+const CALK=['lcAnt','lcAct','consCal','cambioContadorCal','gasFijo','gasVar','aDesde','aHasta','laAnt','laAct','consAcs','cambioContadorAcs','aguaCons','aguaFija','difCal','difAcs','edGas','edCal','edAcs','edAguaCons','edAguaFija'];
+const calCalc=(a,b)=>{a=pn(a);b=pn(b);return a!=null&&b!=null?rnd3(b-a):null};
+const calRecs=(casa,d1,d2)=>S.recibos.map(r=>({r,c:gc(r.contrato)})).filter(x=>isCalC(x.c)&&(!casa||x.c.asociado===casa)&&x.r.fecha>=d1&&x.r.fecha<=d2).sort((a,b)=>String(a.r.fecha).localeCompare(String(b.r.fecha)));
+/* --- Formulario del recibo: ayudas en vivo (pista de última lectura, diferencia en rojo, total) --- */
+function calPrev(c,key){const k=c.contrato;if(!k)return null;const f=c.fecha||today();let b=null;
+ S.recibos.forEach(r=>{if(r.contrato!==k||r.id===TMP.recId||!r.fecha||r.fecha>=f||!num(r[key]))return;if(!b||r.fecha>b.fecha)b=r});
+ return b?{fecha:b.fecha,v:b[key]}:null}
+function calBlkHtml(id,c){
+ if(id==='calHintC'||id==='calHintA'){const cal=id==='calHintC',p=calPrev(c,cal?'lcAct':'laAct');
+  return p?`Última lectura registrada (por fecha, ${fd(p.fecha).slice(0,5)}): <b>${N6.format(p.v)}</b> <button type="button" class="s" onclick="calUse('${cal?'lcAnt':'laAnt'}',${p.v})">usarla</button>`:'Aún no hay lecturas anteriores en este contrato.'}
+ if(id==='calDifC'||id==='calDifA'){const cal=id==='calDifC',esp=calCalc(c[cal?'lcAnt':'laAnt'],c[cal?'lcAct':'laAct']),v=pn(c[cal?'consCal':'consAcs']);let h='';
+  if(c[cal?'cambioContadorCal':'cambioContadorAcs'])return'';
+  if(esp!=null&&v!=null&&Math.abs(v-esp)>0.0005)h=`<span style="color:var(--r)">debería ser ${N6.format(esp)} (dif. ${v-esp>0?'+':'−'}${N6.format(Math.abs(rnd3(v-esp)))} m³)</span>`;
+  if(esp!=null&&esp<0)h+=(h?'<br>':'')+'<span style="color:var(--o)">⚠️ La lectura actual es menor que la anterior. Si has cambiado el contador, marca la casilla.</span>';
+  return h}
+ if(id==='calTot'){const t=['gasFijo','gasVar','aguaCons','aguaFija'].reduce((s,k)=>s+(pn(c[k])||0),0);return`<b>Total del recibo (suma de los cuatro importes): ${eur(rnd2(t))}</b>`}
+ return''}
+const calBlk=id=>`<div class="m" id="${id}">${calBlkHtml(id,TMP.rv||{})}</div>`;
+function calMark(c){[['consCal','lcAnt','lcAct','cambioContadorCal'],['consAcs','laAnt','laAct','cambioContadorAcs']].forEach(([k,a,b,f])=>{const e=$('#f_'+k);if(!e)return;
+ const esp=calCalc(c[a],c[b]),v=pn(c[k]),bad=!c[f]&&esp!=null&&v!=null&&Math.abs(v-esp)>0.0005;e.style.borderColor=bad?'var(--r)':'';e.style.color=bad?'var(--r)':''})}
+function calRefresh(c){['calHintC','calHintA','calDifC','calDifA','calTot'].forEach(id=>{const e=$('#'+id);if(e)e.innerHTML=calBlkHtml(id,c)});calMark(c)}
+function calChg(c,set){if(!isCalC(gc(c.contrato)))return;c={...c};
+ [['lcAnt','lcAct','consCal','pc1'],['laAnt','laAct','consAcs','pc2']].forEach(([a,b,k,pk])=>{const esp=calCalc(c[a],c[b]);
+  if(esp!=null&&(pn(c[k])==null||pn(c[k])===TMP[pk])){set(k,esp);c[k]=esp}TMP[pk]=esp});
+ TMP.rv=c;calRefresh(c)}
+function calUse(k,v){const e=$('#f_'+k);if(e){e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))}}
+function calTxt(r,c){const dc=num(r.difCal)&&Math.abs(r.difCal)>0.0005,da=num(r.difAcs)&&Math.abs(r.difAcs)>0.0005;
+ return esc(c.nombre)+' · '+esc(an(c.asociado))+' · 🔥 '+(num(r.consCal)?NUM.format(r.consCal)+' m³':'sin consumo')+' · 💧 '+(num(r.consAcs)?NUM.format(r.consAcs)+' m³':'sin consumo')+(r.desde&&r.hasta?' · gas '+fd(r.desde).slice(0,5)+'–'+fd(r.hasta).slice(0,5):'')+(dc||da?' · <span style="color:var(--r)">⚠️ difiere de las lecturas</span>':'')}
+/* --- Cálculos del informe --- */
+/* Agua fría de una casa: litros/día = suma, por contrato, de consumo/días cubiertos (prorrateo por días, como Agua y gas) */
+function aguaCasa(casa,d1,d2){const G={};
+ consRows('agua',casa,d1,d2).filter(x=>x.has&&x.cons!=null&&x.unit==='m³').forEach(x=>{const g=G[x.c.id]||(G[x.c.id]={cons:0,imp:0,dias:0});g.cons+=x.cons*x.frac;g.imp+=x.r.importe*x.frac;g.dias+=x.ov});
+ const gs=Object.values(G).filter(g=>g.dias>0);if(!gs.length)return null;
+ const cons=gs.reduce((s,g)=>s+g.cons,0),imp=gs.reduce((s,g)=>s+g.imp,0);
+ return{cons,imp,litDia:gs.reduce((s,g)=>s+g.cons/g.dias*1000,0),precio:cons>0?imp/cons:null}}
+/* Agua caliente (ACS): igual, con el periodo del agua del recibo (aDesde/aHasta) */
+function acsCasa(casa,d1,d2){const G={};
+ S.recibos.forEach(r=>{const c=gc(r.contrato);if(!isCalC(c)||c.asociado!==casa||!num(r.consAcs)||!r.aDesde||!r.aHasta||r.aHasta<r.aDesde)return;
+  const dias=diff(r.aHasta,r.aDesde)+1,a=r.aDesde>d1?r.aDesde:d1,b=r.aHasta<d2?r.aHasta:d2,ov=diff(b,a)+1;if(ov<=0)return;
+  const g=G[c.id]||(G[c.id]={cons:0,dias:0});g.cons+=r.consAcs*ov/dias;g.dias+=ov});
+ const gs=Object.values(G);if(!gs.length)return null;
+ return{cons:gs.reduce((s,g)=>s+g.cons,0),litDia:gs.reduce((s,g)=>s+g.cons/g.dias*1000,0)}}
+/* Precio del kWh para la bomba de calor: último contrato y última tarifa de la casa elegida (o precio manual), con descuento, impuesto eléctrico e IVA de Ajustes */
+function calPrecioElec(con){const aj=S.ajustes,f=(1+(+aj.impElec||0)/100)*(1+(+aj.iva||0)/100),cE=con.casaElec||con.asociado;
+ if(num(con.kwhManual)&&con.kwhManual>0)return{p:[1,1,1].map(()=>con.kwhManual*f),txt:'precio manual '+N6.format(con.kwhManual)+' €/kWh (sin impuestos)'};
+ let best=null;S.contratos.filter(c=>isElecC(c)&&c.asociado===cE).forEach(c=>{(c.tarifas||[]).forEach(t=>{if(!best||t.desde>best.t.desde)best={c,t}})});
+ if(!best)return null;const d=1-(+best.t.dto||0)/100;
+ return{p:[best.t.e1,best.t.e2,best.t.e3].map(e=>(+e||0)*d*f),txt:esc(an(cE))+' · '+esc(best.c.nombre)+' · tarifa desde '+fd(best.t.desde)}}
+/* --- Informes → Calefacción y ACS --- */
+function infCal(){const casas=calCasas();
+ if(!casas.length)return`<div class="card m">Aún no hay contratos de calefacción y ACS comunitarias. En Contratos crea uno con «Tipo de servicio = Calefacción y ACS comunitarias» en una casa, anota sus coeficientes y, por cada recibo del administrador, apunta una factura de ese contrato.</div>`;
+ if(!casas.some(a=>a.id===ui.cc))ui.cc=casas[0].id;
+ const casa=ui.cc,con=calCon(casa),d1=ui.d1,d2=ui.d2,view=ui.cv==='rec'?'rec':'res';
+ return`<div class="card np"><div class="row"><label style="margin:0">Casa<select onchange="ui.cc=this.value;go()">${casas.map(a=>`<option value="${a.id}"${casa===a.id?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select></label></div>${perSel()}
+<div class="tabs">${[['res','Resumen'],['rec','Posibles reclamaciones']].map(([k,l])=>`<button class="${view===k?'on':''}" onclick="ui.cv='${k}';go()">${l}</button>`).join('')}</div>
+<div class="row"><button onclick="go('mas','calc')">Cómo se calcula</button><button onclick="print()">Imprimir / PDF</button></div></div>
+<h2>${esc(an(casa))} · ${fd(d1)} – ${fd(d2)}</h2>${view==='rec'?calRec(casa,d1,d2):calRes(casa,con,d1,d2)}`}
+function calRes(casa,con,d1,d2){
+ const kp=(l,v,x)=>`<div class="card" style="margin:0"><div class="m">${l}</div><b>${v}</b>${x?`<div class="m">${x}</div>`:''}</div>`,
+  ref=num(S.ajustes.refLitros)&&S.ajustes.refLitros>0?S.ajustes.refLitros:130;let h='';
+ /* 1. Agua (fría y caliente por separado; el conjunto solo es su suma) */
+ const tab=S.asociados.filter(a=>a.tipo==='casa'&&!a.archivado).map(a=>({a,f:aguaCasa(a.id,d1,d2),w:acsCasa(a.id,d1,d2),pe:num(a.personas)&&a.personas>0?a.personas:null})).filter(x=>x.f||x.w),
+  me=tab.find(x=>x.a.id===casa),
+  pp=(v,pe)=>v==null?'—':pe?NUM.format(v/pe)+' <span class="m">L/pers·día</span>':NUM.format(v)+' <span class="m">L/día</span>';
+ h+='<h2>Consumo de agua (litros por persona y día)</h2>';
+ if(!me)h+='<div class="card m">Sin datos de agua en este periodo: hacen falta facturas de agua de la casa con periodo y consumo (m³) y/o recibos de calefacción con el periodo del agua y los m³ de ACS.</div>';
+ else{const f=me.f?me.f.litDia:null,w=me.w?me.w.litDia:null,t=f!=null&&w!=null?f+w:null,pe=me.pe;
+  h+=`<div class="kp">${kp('Agua fría',pp(f,pe),'facturas de agua')}${kp('Agua caliente (ACS)',pp(w,pe),'recibos de calefacción')}${t!=null?kp('Conjunto (fría + caliente)',pp(t,pe),pe?sgp((t/pe-ref)/ref*100)+' frente a la referencia de '+NUM.format(ref)+' L/pers·día':''):''}</div>`;
+  if(!pe)h+=`<div class="card m">Indica cuántas personas viven en la casa (Más → Asociados → Editar) para ver litros por persona y día y compararlos con la referencia (${NUM.format(ref)} L/persona/día).</div>`;
+  h+=`<div class="card" style="overflow-x:auto"><table><tr><th>Casa</th><th class="n">Fría</th><th class="n">Caliente</th><th class="n">Conjunto</th></tr>${tab.map(x=>{const f=x.f?x.f.litDia:null,w=x.w?x.w.litDia:null,t=f!=null&&w!=null?f+w:null;return`<tr${x.a.id===casa?' class="best"':''}><td>${esc(x.a.nombre)}${x.pe?` <span class="m">(${NUM.format(x.pe)} pers.)</span>`:''}</td><td class="n">${pp(f,x.pe)}</td><td class="n">${pp(w,x.pe)}</td><td class="n">${pp(t,x.pe)}</td></tr>`}).join('')}<tr class="ref"><td>Referencia</td><td class="n"></td><td class="n"></td><td class="n">${NUM.format(ref)} <span class="m">L/pers·día</span></td></tr></table></div>
+<div class="m">Agua fría y caliente se analizan por separado; el conjunto es solo su suma. Las lecturas de agua son enteras (m³): en periodos cortos el dato es poco fiable y resulta más útil en acumulados de temporada o de año. Cada media se calcula solo sobre los días que cubren sus facturas o recibos.</div>`}
+ /* 2. Precio real del m³ de ACS */
+ const R=calRecs(casa,d1,d2),sM=R.reduce((s,x)=>s+(+x.r.consAcs||0),0),sC=R.reduce((s,x)=>s+(+x.r.aguaCons||0),0),sF=R.reduce((s,x)=>s+(+x.r.aguaFija||0),0),fr=aguaCasa(casa,d1,d2);
+ h+='<h2>Precio real del m³ de agua caliente</h2>';
+ if(!(sM>0))h+='<div class="card m">Sin m³ de ACS en los recibos de este periodo.</div>';
+ else{h+=`<div class="kp">${kp('Sin cuota fija',N3.format(sC/sM)+' €/m³','Σ consumido ÷ Σ m³')}${kp('Con cuota fija',N3.format((sC+sF)/sM)+' €/m³','(Σ consumido + Σ cuota) ÷ Σ m³')}${fr&&fr.precio!=null?kp('Agua fría de la casa',N3.format(fr.precio)+' €/m³','media de sus facturas'):''}</div>
+<div class="m">Solo el líquido: la energía para calentarlo va en el gas. Se acumula (euros entre m³), sin promediar cocientes, y con pocos m³ y lecturas enteras es muy sensible al redondeo del contador. Si sale varias veces más caro que el agua fría, esa diferencia no es el coste de calentar: probablemente es agua que el edificio paga y no pasa por los contadores individuales (conviene preguntárselo al administrador).</div>`}
+ /* 3. Coste real de la calefacción (con selector de temporada) */
+ const ys=[...new Set(calRecs(casa,'0000-01-01','9999-12-31').map(x=>{const y=+x.r.fecha.slice(0,4),m=+x.r.fecha.slice(5,7);return m>=10?y:y-1}))].sort((a,b)=>b-a);
+ if(ui.cs&&!ys.includes(+ui.cs))ui.cs='';
+ const s1=ui.cs?ui.cs+'-10-01':d1,s2=ui.cs?(+ui.cs+1)+'-04-30':d2,R3=calRecs(casa,s1,s2),
+  sFi=R3.reduce((s,x)=>s+(+x.r.gasFijo||0),0),sVa=R3.reduce((s,x)=>s+(+x.r.gasVar||0),0),
+  okR=R3.filter(x=>num(x.r.consCal)&&x.r.consCal>0),mV=okR.reduce((s,x)=>s+(+x.r.gasVar||0),0),mM=okR.reduce((s,x)=>s+x.r.consCal,0),pm=mM>0?mV/mM:null,
+  cau=con&&num(con.caudal)&&con.caudal>0?con.caudal:null;
+ h+=`<h2>Coste real de la calefacción</h2><div class="card np"><label style="margin:0">Temporada<select onchange="ui.cs=this.value;go()"><option value="">Periodo seleccionado arriba</option>${ys.map(y=>`<option value="${y}"${+ui.cs===y?' selected':''}>Temporada ${y}-${String(y+1).slice(2)} (1 oct – 30 abr)</option>`).join('')}</select></label></div>`;
+ if(!R3.length)h+='<div class="card m">Sin recibos de calefacción en este periodo.</div>';
+ else{const tot=sFi+sVa;
+  h+=`<div class="m">${fd(s1)} – ${fd(s2)}</div><div class="kp">${kp('Total gas',eur(tot))}${kp('Parte fija',eur(sFi),tot?NUM.format(sFi/tot*100)+' %':'')}${kp('Parte variable',eur(sVa),tot?NUM.format(sVa/tot*100)+' %':'')}${kp('€/m³ recirculado',pm!=null?N3.format(pm)+' €':'—','Σ variable ÷ Σ m³')}</div>
+<div class="card" style="overflow-x:auto;font-size:13px"><table><tr><th>Recibo</th><th class="n">Fijo</th><th class="n">Variable</th><th class="n">% var.</th><th class="n">m³</th><th class="n">€/m³</th></tr>${R3.map(x=>{const r=x.r,f=+r.gasFijo||0,v=+r.gasVar||0;return`<tr><td>${fd(r.fecha)}</td><td class="n">${eur(f)}</td><td class="n">${eur(v)}</td><td class="n">${f+v?NUM.format(v/(f+v)*100)+' %':'—'}</td><td class="n">${num(r.consCal)?NUM.format(r.consCal):'—'}</td><td class="n">${num(r.consCal)&&r.consCal>0?N3.format(v/r.consCal):'—'}</td></tr>`}).join('')}</table></div>
+<div class="m">El bloque de gas incluye también el gas que calienta el agua caliente (para ti, su coste marginal es 0). Los recibos se agrupan por su fecha.</div>`}
+ /* 4. Coste marginal por hora */
+ h+='<h2>Coste marginal por hora de calefacción</h2>';
+ if(pm==null)h+='<div class="card m">Sin recibos con m³ de calefacción en el periodo de arriba.</div>';
+ else if(cau==null)h+='<div class="card m">Falta el caudal de calefacción (m³/h) en el contrato: sin él no se calcula el coste por hora. Podrás añadirlo cuando lo calibres.</div>';
+ else h+=`<div class="kp">${kp('Coste por hora encendida',eur(pm*cau),N3.format(pm)+' €/m³ × '+NUM.format(cau)+' m³/h')}</div><div class="m">Estimación por arriba: la parte variable repartida incluye algo del gas del agua caliente y, con pocos m³, el cociente es inestable.</div>`;
+ /* 5. Bomba de calor (solo si hay kW) */
+ const kw=con?pn(con.kwBomba):null;
+ if(kw!=null&&kw>0){const pe=calPrecioElec(con);h+='<h2>Bomba de calor (electricidad)</h2>';
+  if(!pe)h+='<div class="card m">No hay tarifa eléctrica en la casa elegida para el precio de la electricidad (campo «Selecciona la casa Alameda» del contrato) ni precio manual del kWh.</div>';
+  else h+=`<div class="card" style="overflow-x:auto"><div class="m">Consumo medio ${N6.format(kw)} kW · ${pe.txt}</div><table><tr><th>Franja</th><th class="n">€/kWh (con impuestos)</th><th class="n">€/hora</th></tr>${['P1 punta','P2 llano','P3 valle'].map((n,i)=>`<tr><td>${n}</td><td class="n">${N3.format(pe.p[i])}</td><td class="n">${eur(kw*pe.p[i])}</td></tr>`).join('')}${pm!=null&&cau!=null?`<tr class="ref"><td>Gas (marginal)</td><td class="n"></td><td class="n">${eur(pm*cau)}</td></tr>`:''}</table></div><div class="m">Se compara por <b>hora encendida</b>, no por calor entregado: no se sabe cuánto calor da cada opción en esa hora.</div>`}
+ /* 7. Verificación con los datos del edificio (solo si se han rellenado) */
+ const EB=R.filter(x=>['edGas','edCal','edAcs','edAguaCons','edAguaFija'].some(k=>num(x.r[k])));
+ if(EB.length)h+='<h2>Verificación con los datos del edificio</h2>'+EB.map(x=>{const r=x.r,c=x.c,cc=pn(c.coefCal),ca=pn(c.coefAgua),
+  ex=[['Gas fijo',num(r.edGas)&&cc!=null?.5*r.edGas*cc/100:null,r.gasFijo],['Gas variable',num(r.edGas)&&num(r.edCal)&&r.edCal>0&&num(r.consCal)?.5*r.edGas*r.consCal/r.edCal:null,r.gasVar],['Agua consumida',num(r.edAguaCons)&&num(r.edAcs)&&r.edAcs>0&&num(r.consAcs)?r.edAguaCons*r.consAcs/r.edAcs:null,r.aguaCons],['Cuota fija de agua',num(r.edAguaFija)&&ca!=null?r.edAguaFija*ca/100:null,r.aguaFija]].filter(e=>e[1]!=null),
+  sh=[['calefacción',num(r.edCal)&&r.edCal>0&&num(r.consCal)?r.consCal/r.edCal*100:null,cc],['ACS',num(r.edAcs)&&r.edAcs>0&&num(r.consAcs)?r.consAcs/r.edAcs*100:null,ca]].filter(e=>e[1]!=null);
+  return`<div class="card" style="overflow-x:auto;font-size:13px"><b>Recibo del ${fd(r.fecha)}</b><table><tr><th>Concepto</th><th class="n">Esperado</th><th class="n">Cobrado</th><th class="n">Dif.</th></tr>${ex.map(([n,e,v])=>{const d=(+v||0)-e,bad=Math.abs(d)>0.02;return`<tr${bad?' class="wr"':''}><td>${n}</td><td class="n">${eur(e)}</td><td class="n">${eur(+v||0)}</td><td class="n">${bad?'⚠️ ':'✓ '}${sg(rnd2(d))}</td></tr>`}).join('')||'<tr><td class="m" colspan="4">Faltan datos para comprobar los importes (o los coeficientes del contrato).</td></tr>'}</table>${sh.map(([n,p,k])=>`<div class="m">Tu parte de consumo en ${n}: <b>${NUM.format(p)} %</b>${k!=null?` frente a tu coeficiente del ${NUM.format(k)} %`:''}</div>`).join('')}</div>`}).join('')+'<div class="m">Fijo = 50 % × gas total × coeficiente · variable = 50 % × gas total × tus m³ ÷ m³ del edificio · consumido = agua consumida total × tus m³ de ACS ÷ m³ de ACS del edificio · cuota = cuota total × coeficiente. Tolerancia: 0,02 €.</div>';
+ return h}
+/* --- Informes → Calefacción y ACS → Posibles reclamaciones --- */
+function calRec(casa,d1,d2){const R=calRecs(casa,d1,d2),D=[],J=[],
+ CT=[['Calefacción','lcAnt','lcAct','consCal','cambioContadorCal','gasVar'],['Agua caliente (ACS)','laAnt','laAct','consAcs','cambioContadorAcs','aguaCons']],
+ sd=v=>(v>0?'+':'−')+N6.format(Math.abs(v));
+ R.forEach(x=>CT.forEach(([n,a,b,k,f,im])=>{const r=x.r;if(r[f]||!num(r[a])||!num(r[b])||!num(r[k]))return;
+  const esp=rnd3(r[b]-r[a]),dif=rnd3(r[k]-esp);if(Math.abs(dif)>0.0005){const pu=r[k]>0&&num(r[im])?r[im]/r[k]:null;D.push({r,n,esp,k:r[k],dif,est:pu!=null?dif*pu:null})}}));
+ const by={};R.forEach(x=>(by[x.c.id]=by[x.c.id]||[]).push(x.r));
+ Object.values(by).forEach(L=>{for(let i=1;i<L.length;i++)CT.forEach(([n,a,b,k,f])=>{const p=L[i-1],q=L[i];if(q[f]||!num(p[b])||!num(q[a]))return;const j=rnd3(q[a]-p[b]);if(Math.abs(j)>0.0005)J.push({n,p,q,j,a,b})})});
+ return`<div class="m">Revisión de los recibos del periodo para detectar posibles errores. Son indicios, no pruebas: compruébalos con tus lecturas reales.</div>
+<h2>Consumo apuntado distinto de las lecturas</h2>${D.length?`<div class="card" style="overflow-x:auto;font-size:13px"><table><tr><th>Recibo</th><th class="n">Lecturas</th><th class="n">Cobrado</th><th class="n">Dif.</th><th class="n">Estimación</th></tr>${D.map(d=>`<tr class="wr"><td>${fd(d.r.fecha)}<br><span class="m">${d.n}</span></td><td class="n">${N6.format(d.esp)} m³</td><td class="n">${N6.format(d.k)} m³</td><td class="n">${sd(d.dif)} m³</td><td class="n">${d.est!=null?(d.est>0?'+':'−')+eur(Math.abs(d.est))+'<br><span class="m">estimación</span>':'—'}</td></tr>`).join('')}</table></div><div class="m">«Lecturas» = lectura actual − anterior. «Estimación» = diferencia × precio efectivo del propio recibo (importe variable ÷ m³ cobrados); es orientativa. Los recibos marcados como cambio de contador no se comparan.</div>`:'<div class="card m">✓ Ningún recibo del periodo tiene un consumo distinto del que dan sus lecturas.</div>'}
+<h2>Discontinuidades entre recibos</h2>${J.length?`<div class="card" style="overflow-x:auto;font-size:13px"><table><tr><th>Contador</th><th>Recibo anterior</th><th>Recibo siguiente</th><th class="n">Salto</th></tr>${J.map(d=>`<tr class="wr"><td>${d.n}</td><td>${fd(d.p.fecha)}<br><span class="m">lectura actual ${N6.format(d.p[d.b])}</span></td><td>${fd(d.q.fecha)}<br><span class="m">lectura anterior ${N6.format(d.q[d.a])}</span></td><td class="n">${sd(d.j)} m³</td></tr>`).join('')}</table></div><div class="m">La lectura anterior de un recibo debería coincidir con la lectura actual del recibo previo (por fecha). Si hubo cambio de contador, márcalo en el recibo.</div>`:'<div class="card m">✓ Las lecturas enlazan entre recibos consecutivos.</div>'}`}
+
 /* ===== 7. COPIA DE SEGURIDAD ===== */
 /* ===== v2.5: SEGURIDAD DEL JSON, IMPORTACIÓN Y ARRANQUE ===== */
 const UNDO_KEY='mis_servicios_antes_import',UNDO_DIAS=14;
@@ -535,9 +711,9 @@ const isObj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const blank=v=>v===undefined||v===null||v==='';
 const isoOk=s=>{if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const[a,b,c]=s.split('-').map(Number),d=new Date(a,b-1,c);return d.getFullYear()===a&&d.getMonth()===b-1&&d.getDate()===c};
 const VCOLS=[['asociados','Asociado'],['contratos','Contrato'],['recibos','Factura'],['repostajes','Repostaje'],['gastos','Gasto suelto'],['planes','Plan'],['conceptos','Concepto'],['ideas','Idea']];
-const DATF={contratos:['inicio','vence','finPerm'],recibos:['fecha','desde','hasta'],repostajes:['fecha'],gastos:['fecha'],planes:['fecha']};
+const DATF={contratos:['inicio','vence','finPerm'],recibos:['fecha','desde','hasta','aDesde','aHasta'],repostajes:['fecha'],gastos:['fecha'],planes:['fecha']};
 const REQD={recibos:['fecha'],repostajes:['fecha'],gastos:['fecha'],planes:['fecha']};
-const NUMF={contratos:['importe','renMeses','preaviso'],recibos:['importe','consumo','kwh1','kwh2','kwh3'],repostajes:['litros','importe','ppl','km'],gastos:['importe'],planes:['e1','e2','e3','pp1','pp2','alq','dto','otros']};
+const NUMF={asociados:['personas'],contratos:['importe','renMeses','preaviso','coefCal','coefAgua','caudal','kwBomba','kwhManual'],recibos:['importe','consumo','kwh1','kwh2','kwh3','lcAnt','lcAct','consCal','gasFijo','gasVar','laAnt','laAct','consAcs','aguaCons','aguaFija','difCal','difAcs','edGas','edCal','edAcs','edAguaCons','edAguaFija'],repostajes:['litros','importe','ppl','km'],gastos:['importe'],planes:['e1','e2','e3','pp1','pp2','alq','dto','otros']};
 const REQN={recibos:['importe'],repostajes:['litros','importe'],gastos:['importe']};
 const TARN=['pot1','pot2','pp1','pp2','e1','e2','e3','alq','dto','otros'];
 /* Validación completa ANTES de aplicar nada. E = errores (impiden importar), W = avisos leves (se pueden aceptar). */
@@ -559,13 +735,14 @@ function validaJ(d){const E=[],W=[],e=m=>E.push(m),w=m=>W.push(m);
    (DATF[k]||[]).forEach(f=>chkDate(lb,x,f,(REQD[k]||[]).includes(f)));
    (NUMF[k]||[]).forEach(f=>{if(blank(x[f])){if((REQN[k]||[]).includes(f))e(lb+': falta «'+f+'».')}else chkNum(lb,x,f)});
    if(k==='recibos'&&isoOk(x.desde)&&isoOk(x.hasta)&&x.hasta<x.desde)w(lb+': el periodo «hasta» es anterior a «desde».');
+   if(k==='recibos'&&isoOk(x.aDesde)&&isoOk(x.aHasta)&&x.aHasta<x.aDesde)w(lb+': el periodo del agua «hasta» es anterior a «desde».');
    if(k==='contratos'){
     if(x.tarifas!==undefined){if(!Array.isArray(x.tarifas))e(lb+': «tarifas» no es una lista.');else{const ds=new Set();x.tarifas.forEach((t,j)=>{const lt=lb+' · tarifa nº'+(j+1);if(!isObj(t)){e(lt+': no es válida.');return}chkDate(lt,t,'desde',true);TARN.forEach(f=>chkNum(lt,t,f));if(ds.has(t.desde))w(lt+': fecha de inicio repetida.');ds.add(t.desde)})}}
     if(x.precios!==undefined){if(!Array.isArray(x.precios))e(lb+': «precios» no es una lista.');else x.precios.forEach((t,j)=>{const lt=lb+' · precio nº'+(j+1);if(!isObj(t)){e(lt+': no es válido.');return}chkDate(lt,t,'desde',false);chkNum(lt,t,'importe')})}}
   })});
  /* referencias coherentes */
  const aso=new Set(d.asociados.filter(isObj).map(a=>a.id)),con=new Set(d.contratos.filter(isObj).map(c=>c.id)),cats=new Set(d.categorias.map(c=>String(c).toLowerCase()));
- d.contratos.forEach((c,i)=>{if(!isObj(c))return;const lb='Contrato «'+(c.nombre||'nº'+(i+1))+'»';if(blank(c.asociado))w(lb+': no tiene asociado.');else if(!aso.has(c.asociado))e(lb+': su asociado no existe en el archivo.')});
+ d.contratos.forEach((c,i)=>{if(!isObj(c))return;const lb='Contrato «'+(c.nombre||'nº'+(i+1))+'»';if(blank(c.asociado))w(lb+': no tiene asociado.');else if(!aso.has(c.asociado))e(lb+': su asociado no existe en el archivo.');if(!blank(c.casaElec)&&!aso.has(c.casaElec))w(lb+': la casa elegida para el precio de la electricidad no existe en el archivo.')});
  d.repostajes.forEach((r,i)=>{if(!isObj(r))return;const lb='Repostaje nº'+(i+1)+(isoOk(r.fecha)?' ('+fd(r.fecha)+')':'');if(blank(r.coche)||!aso.has(r.coche))e(lb+': su coche no existe en el archivo.');else{const a=d.asociados.find(x=>isObj(x)&&x.id===r.coche);if(a&&a.tipo!=='vehiculo')w(lb+': el asociado indicado no es de tipo vehículo.')}});
  d.gastos.forEach((g,i)=>{if(!isObj(g))return;const lb='Gasto suelto nº'+(i+1)+(isoOk(g.fecha)?' ('+fd(g.fecha)+')':'');if(blank(g.asociado))w(lb+': no tiene asociado.');else if(!aso.has(g.asociado))e(lb+': su asociado no existe en el archivo.')});
  const huer=d.recibos.filter(r=>isObj(r)&&(blank(r.contrato)||!con.has(r.contrato))).length;
