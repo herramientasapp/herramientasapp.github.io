@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Mis servicios</title>
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Mis servicios</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--bg:#f4f5f7;--c:#fff;--t:#1d2430;--m:#6b7280;--p:#2563eb;--b:#e5e7eb;--r:#dc2626;--o:#ea580c;--g:#16a34a;--k1:#ef4444;--k2:#f59e0b;--k3:#10b981;--teo:#8b5cf6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root{--bg:#12151b;--c:#1c212b;--t:#e8ebf0;--m:#9aa3b2;--p:#6ea0ff;--b:#2c3340;--k1:#f87171;--k2:#fbbf24;--k3:#34d399;--teo:#a78bfa}}
@@ -20,12 +20,13 @@ table{width:100%;border-collapse:collapse}td,th{padding:4px 6px;border-bottom:1p
 tr.wr td{color:var(--o);font-weight:600}tr.best td{background:rgba(22,163,74,.18);font-weight:700}tr.ref td{font-style:italic;border-top:1px dashed var(--m);border-bottom:1px dashed var(--m)}.print-only{display:none}
 @media print{.print-only{display:block}nav,button,.np{display:none!important}body{background:#fff;color:#000;padding:0}.card{break-inside:avoid}}
 html,body{overflow-x:hidden;max-width:100%}main{overflow-wrap:anywhere}select,input{max-width:100%;min-width:0}.row>select,.row>label{flex:1 1 140px;min-width:0}
+.bn{position:fixed;left:8px;right:8px;z-index:11;border-radius:10px;padding:10px;background:var(--c);border:1px solid var(--p);box-shadow:0 2px 10px #0004}.bn.bad{border-color:var(--r);color:var(--r)}#upd .bn{bottom:calc(66px + env(safe-area-inset-bottom,0px))}#sv .bn{top:calc(8px + env(safe-area-inset-top,0px))}@media print{.bn{display:none}}
 .sec{font-weight:700;margin:14px 0 4px;padding:8px;border-radius:8px;background:var(--bg);cursor:pointer;user-select:none}
-</style></head><body><main id="app"></main><nav id="nav"></nav><div id="mod"></div><div id="mod2"></div>
+</style></head><body><main id="app"><div class="card">Cargando tus datos…</div></main><nav id="nav"></nav><div id="mod"></div><div id="mod2"></div><div id="upd"></div><div id="sv"></div>
 <script>
 /* ===== 1. UTILIDADES ===== */
-const APP_VERSION='2.6.1',SCHEMA=7,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
-let BOOT_ERR=null,IMP=null;
+const APP_VERSION='2.7.0',SCHEMA=7,KEY='mis_servicios_v1',$=s=>document.querySelector(s);
+let BOOT_ERR=null,IMP=null,BOOTING=false,PEND_MIG=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const EUR=new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}),NUM=new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
@@ -52,11 +53,12 @@ const IDEAS_21=['Previsión de pagos de los próximos 12 meses','Exportar inform
 const IDEAS_22=['Aviso de consumo de agua anómalo (posibles fugas) frente a la media','Consumo de agua por mes natural estimado (reparto diario de cada factura)','Comparar el consumo de agua con el mismo periodo del año anterior','Facturas de agua con cuota fija y tramos para detectar subidas de tarifa'];
 const IDEAS_23=['Pagos periódicos sin contrato (IBI, IRPF, ITV): repetir cada año y avisar en Inicio','Filtro por contrato y por concepto también en Informes → Resumen','Gráfico de evolución anual por concepto (IBI de cada inmueble, comunidad…)'];
 const IDEAS_24=['Avisar de contratos periódicos sin factura apuntada en su último periodo (pendientes de apuntar)','Mostrar el fin de permanencia en «Qué vigilar»'];
+const IDEAS_27=['Seguridad final: PIN de acceso con bloqueo automático y cifrado AES-GCM de los datos y del JSON exportado (fase final, con la app terminada)'];
 const IDEAS_26=['Avisar si una lectura de agua o calefacción se desvía mucho de lo habitual','Coste de calefacción por temporada comparado con la anterior'];
 const defAj=()=>({rojo:15,naranja:60,rec:[30,7],bak:14,bakN:15,catGas:'Vehículo',impElec:5.11269632,iva:21,umbral:5,pagGastos:20,refLitros:130});
 /* Migración automática. Antes de migrar se guarda (si no existe) una copia del JSON original en mis_servicios_prev_v<esquema anterior>. */
 function migrate(d){const v0=d.version=d.version||1;
- if(v0<SCHEMA){try{const k='mis_servicios_prev_v'+v0;if(!localStorage.getItem(k)){localStorage.setItem(k,JSON.stringify(d));Object.keys(localStorage).filter(x=>x.startsWith('mis_servicios_prev_v')&&x!==k).forEach(x=>localStorage.removeItem(x))}}catch(e){}}
+ if(v0<SCHEMA&&BOOTING)PEND_MIG=JSON.stringify(d);
  d.ajustes=Object.assign(defAj(),d.ajustes);
  if(v0<3){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').trim().toLowerCase()));
   IDEAS_21.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}})}
@@ -65,18 +67,83 @@ function migrate(d){const v0=d.version=d.version||1;
  if(!d.seed23){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i.texto||'').toLowerCase()));IDEAS_23.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed23=1}
  if(!d.seed24){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').toLowerCase()));IDEAS_24.forEach(t=>{if(!ya.has(t.toLowerCase()))d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'})});d.seed24=1}
  if(!d.seed26){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').toLowerCase()));IDEAS_26.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed26=1}
+ if(!d.seed27){d.ideas=Array.isArray(d.ideas)?d.ideas:[];const ya=new Set(d.ideas.map(i=>String(i&&i.texto||'').toLowerCase()));IDEAS_27.forEach(t=>{if(!ya.has(t.toLowerCase())){d.ideas.push({id:uid(),texto:t,creada:today(),estado:'pendiente'});ya.add(t.toLowerCase())}});d.seed27=1}
  if(v0<5){if(d.ajustes.bak===30)d.ajustes.bak=14;(d.contratos||[]).forEach(c=>{delete c.contarPor;if(c.tipoSuministro==='internet'||c.tipoSuministro==='otro')c.tipoSuministro='ninguno'});
   if(Array.isArray(d.categorias)&&!d.categorias.some(c=>String(c).toLowerCase()==='banca y comisiones'))d.categorias.push('Banca y comisiones')}
  if(v0<7)(d.recibos||[]).forEach(r=>{if(!r||typeof r!=='object')return;if(!r.desde&&!r.hasta&&r.aDesde&&r.aHasta){r.desde=r.aDesde;r.hasta=r.aHasta}['aDesde','aHasta','edGas','edCal','edAcs','edAguaCons','edAguaFija'].forEach(k=>delete r[k])});
  if(!Array.isArray(d.conceptos)||!d.conceptos.length)d.conceptos=buildConc(d);
  d.version=SCHEMA;return Object.assign(def(),d)}
-function load(){let r=null;try{r=localStorage.getItem(KEY)}catch(e){return def()}
- if(!r)return def();
- try{return migrate(JSON.parse(r))}catch(e){let k='mis_servicios_rescate_'+today();
-  try{if(!localStorage.getItem(k))localStorage.setItem(k,r)}catch(e2){k+=' (no se pudo guardar)'}
-  BOOT_ERR={raw:r,msg:String(e&&e.message||e).slice(0,160),key:k};return def()}}
-let S=load();
-function save(nc){if(BOOT_ERR)return false;if(!nc)S.cambios=(S.cambios||0)+1;try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){alert('⚠️ No se pudo guardar: el almacenamiento está lleno o bloqueado. Exporta una copia de seguridad y libera espacio.');return false}}
+/* ===== ALMACENAMIENTO v2.7: IndexedDB. Base «mis_servicios»: almacén kv (estado, migrado) y almacén snapshots (últimas 3 copias internas) ===== */
+const DBN='mis_servicios',MAXSNAP=3,SNAP_DIAS=14,KS=[['asociados','Asociados'],['contratos','Contratos'],['recibos','Facturas'],['repostajes','Repostajes'],['gastos','Gastos sueltos'],['planes','Planes']];
+let DBH=null,MODE='idb',LSWHY='',REV=0,SNAPS=[],DIRTY=false,SAVT=null,WQ=Promise.resolve(),SAVE_ERR='',LOCKED=false,WIPING=false,MIGINFO=null,MIGDONE=null,PERSIST=null,SWREG=null,SWUPD=false;
+const rq=r=>new Promise((ok,ko)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
+const txd=t=>new Promise((ok,ko)=>{t.oncomplete=()=>ok();t.onerror=t.onabort=()=>ko(t.error||new Error('transacción cancelada'))});
+function idbOpen(){return new Promise((ok,ko)=>{if(!window.indexedDB)return ko(new Error('IndexedDB no disponible'));const q=indexedDB.open(DBN,1);
+ q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('snapshots'))d.createObjectStore('snapshots',{keyPath:'id'})};
+ q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error);q.onblocked=()=>ko(new Error('base bloqueada por otra ventana'))})}
+const kvGet=k=>rq(DBH.transaction('kv').objectStore('kv').get(k));
+async function kvPut(k,v){const t=DBH.transaction('kv','readwrite');t.objectStore('kv').put(v,k);await txd(t)}
+let S=def();
+/* save() es síncrona para el resto del código: actualiza S en memoria y programa la escritura (debounce 0,5 s). */
+function save(nc){if(BOOT_ERR)return false;if(!nc)S.cambios=(S.cambios||0)+1;
+ if(MODE==='ls'){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){alert('⚠️ No se pudo guardar: el almacenamiento está lleno o bloqueado. Exporta una copia de seguridad y libera espacio.');return false}}
+ DIRTY=true;clearTimeout(SAVT);SAVT=setTimeout(flush,500);return true}
+/* Escritura con control de revisión: si otra ventana (navegador/PWA) guardó antes, NO se pisa. */
+function flush(){clearTimeout(SAVT);if(!DIRTY||MODE!=='idb'||LOCKED||WIPING||BOOT_ERR)return WQ;DIRTY=false;const json=JSON.stringify(S);
+ WQ=WQ.then(()=>new Promise(ok=>{try{const t=DBH.transaction('kv','readwrite'),st=t.objectStore('kv'),g=st.get('estado');let conf=false;
+  g.onsuccess=()=>{const c=g.result;if(c&&c.rev!==REV){conf=true;return}st.put({json,rev:REV+1,t:Date.now(),v:SCHEMA},'estado')};
+  t.oncomplete=()=>{if(conf)LOCKED=true;else{REV++;SAVE_ERR=''}banner();ok()};
+  t.onerror=t.onabort=()=>{SAVE_ERR=String(t.error&&t.error.message||'error desconocido');DIRTY=true;banner();ok()}}
+  catch(e){SAVE_ERR=String(e&&e.message||e);DIRTY=true;banner();ok()}}));return WQ}
+function banner(){const e=$('#sv');if(!e)return;
+ e.innerHTML=LOCKED?`<div class="bn bad">⚠️ Otra ventana de la app ha guardado datos más recientes. Esta ventana ya no guarda, para no pisarlos.<div class="row" style="margin-top:6px"><button class="s" onclick="location.reload()">Recargar</button><button class="s" onclick="exportJ()">Descargar los datos de esta ventana</button></div></div>`:SAVE_ERR?`<div class="bn bad">⚠️ No se pudo guardar (${esc(SAVE_ERR)}). Exporta una copia de seguridad.<div class="row" style="margin-top:6px"><button class="s" onclick="DIRTY=true;flush()">Reintentar</button><button class="s" onclick="exportJ()">Exportar copia</button></div></div>`:''}
+async function checkRev(){if(MODE!=='idb'||!DBH||LOCKED||WIPING)return;try{await WQ;if(DIRTY)return;const c=await kvGet('estado');if(c&&c.rev!==REV){LOCKED=true;banner()}}catch(e){}}
+/* Copias internas (snapshots): como máximo 3; la última «import» (14 días) se conserva para poder deshacer. */
+function trimSnaps(){SNAPS.sort((a,b)=>b.t-a.t);const keep=SNAPS.slice(0,MAXSNAP),im=SNAPS.find(s=>s.kind==='import'&&Date.now()-s.t<SNAP_DIAS*864e5);if(im&&!keep.includes(im))keep[MAXSNAP-1]=im;const gone=SNAPS.filter(s=>!keep.includes(s));SNAPS=keep;return gone}
+async function addSnap(kind,json,extra){const s={id:uid(),t:Date.now(),kind,json,...extra};SNAPS.push(s);const gone=trimSnaps();if(MODE!=='idb')return true;
+ try{const t=DBH.transaction('snapshots','readwrite'),st=t.objectStore('snapshots');st.put(s);gone.forEach(g=>st.delete(g.id));await txd(t);return true}catch(e){SNAPS=SNAPS.filter(x=>x!==s);return false}}
+async function dropSnaps(fn){const gone=SNAPS.filter(fn);if(!gone.length)return;SNAPS=SNAPS.filter(x=>!fn(x));if(MODE!=='idb')return;try{const t=DBH.transaction('snapshots','readwrite');gone.forEach(g=>t.objectStore('snapshots').delete(g.id));await txd(t)}catch(e){}}
+function snapBig(m){if(!BOOT_ERR&&hasData())addSnap('cambios',JSON.stringify(S),{desc:m})}
+function loadLS(){let r=null;try{r=localStorage.getItem(KEY)}catch(e){return}if(!r)return;try{S=migrate(JSON.parse(r))}catch(e){BOOT_ERR={raw:r,msg:String(e&&e.message||e).slice(0,160),key:KEY}}}
+/* Migración sin riesgo desde localStorage: copiar, verificar (recuento + huella) y marcar. El original NO se borra. */
+async function migrateLS(){let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}if(!raw)return;
+ const bad=(m,e)=>{BOOT_ERR={raw,msg:m,key:'rescate_'+today()+' (en la base «mis_servicios»)'};kvPut('rescate_'+today(),raw).catch(()=>{})};
+ let o;try{o=JSON.parse(raw)}catch(e){return bad(String(e&&e.message||e).slice(0,160))}
+ if(!isObj(o))return bad('estructura no válida');if(o.version>SCHEMA)return bad('los datos son de una versión más reciente de la app (esquema '+o.version+')');
+ const cnt=x=>{const a={};VCOLS.forEach(([k])=>{if(Array.isArray(x[k]))a[k]=x[k].length});return a},c0=cnt(o);let n;try{n=migrate(JSON.parse(raw))}catch(e){return bad(String(e&&e.message||e).slice(0,160))}
+ const json=JSON.stringify(n);await kvPut('estado',{json,rev:1,t:Date.now(),v:SCHEMA});REV=1;
+ const b=await kvGet('estado'),h1=await sha256(json),h2=await sha256(b&&b.json||''),c1=cnt(JSON.parse(b.json)),dif=KS.map(x=>x[0]).filter(k=>c0[k]!==undefined&&c1[k]!==c0[k]);
+ if(!(b&&b.json===json&&h1===h2&&!dif.length)){try{const t=DBH.transaction('kv','readwrite');t.objectStore('kv').delete('estado');await txd(t)}catch(e){}REV=0;throw new Error('la verificación no coincide'+(dif.length?' ('+dif.join(', ')+')':''))}
+ MIGINFO={t:Date.now(),c0,c1,hash:h1};MIGDONE=MIGINFO;await kvPut('migrado',MIGINFO);S=n}
+async function boot(){BOOTING=true;
+ try{DBH=await idbOpen();DBH.onversionchange=()=>{try{DBH.close()}catch(e){}alert('Otra ventana ha actualizado o borrado la base de datos de la app. Recarga la página.')}}catch(e){MODE='ls';LSWHY=String(e&&e.message||e)}
+ try{if(MODE==='idb'){const r=await kvGet('estado');
+   if(r){REV=r.rev||0;try{const d=JSON.parse(r.json);if(!isObj(d))throw new Error('estructura no válida');if(d.version>SCHEMA)throw new Error('los datos son de una versión más reciente de la app (esquema '+d.version+'); actualiza la app');S=migrate(d)}
+    catch(e){const k='rescate_'+today();try{await kvPut(k,r.json)}catch(e2){}BOOT_ERR={raw:r.json,msg:String(e&&e.message||e).slice(0,160),key:k+' (en la base «mis_servicios»)'}}}
+   else{try{await migrateLS()}catch(e){MODE='ls';LSWHY='migración no verificada: '+String(e&&e.message||e);alert('No se pudo completar la migración automática a IndexedDB ('+String(e&&e.message||e)+').\n\nTus datos antiguos NO se han tocado: la app los seguirá usando como hasta ahora (modo de emergencia).')}}
+   if(MODE==='idb'){SNAPS=await rq(DBH.transaction('snapshots').objectStore('snapshots').getAll());if(!MIGDONE)MIGDONE=(await kvGet('migrado'))||null;
+    if(PEND_MIG&&!BOOT_ERR){await addSnap('migrate',PEND_MIG,{desc:'Antes de migrar el esquema'});save(true)}}}
+  if(MODE==='ls')loadLS()}catch(e){MODE='ls';LSWHY=String(e&&e.message||e);loadLS()}
+ BOOTING=false;PEND_MIG=null;
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>p?true:navigator.storage.persist()).then(p=>{PERSIST=!!p}).catch(()=>{})}catch(e){}
+ await flush();banner();
+ if(BOOT_ERR)bootScreen();else{go();if(MIGINFO)migDlg();else setTimeout(bakPrompt,400)}
+ swInit()}
+function migDlg(){const m=MIGINFO;$('#mod').innerHTML=`<div class="ov"><div class="card"><h2>✅ Datos migrados a IndexedDB</h2><p>Se han copiado y verificado tus datos (recuento por colección y huella). Comprueba que las cifras son las que esperas:</p><table><tr><th></th><th class="n">Antes</th><th class="n">Ahora</th></tr>${KS.map(([k,n])=>`<tr><td>${n}</td><td class="n">${m.c0[k]??'—'}</td><td class="n">${m.c1[k]??'—'}</td></tr>`).join('')}</table><p class="m">Tus datos antiguos siguen intactos en el navegador. Cuando hayas comprobado que todo está bien, puedes borrarlos en Más → Almacenamiento y versión.</p><button class="p" onclick="closeM();bakPrompt()">Entendido</button></div></div>`}
+const oldLS=()=>{try{return Object.keys(localStorage).some(k=>k.startsWith('mis_servicios'))}catch(e){return false}};
+function dropOld(){if(!ask('¿Borrar la copia antigua de tus datos que sigue en el navegador (localStorage)?\n\nHazlo solo si ya has comprobado que la app tiene todos tus datos y tienes una copia JSON reciente. No se puede deshacer.'))return;
+ try{Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios')).forEach(k=>localStorage.removeItem(k))}catch(e){}alert('Copia antigua borrada.');go('mas','alm')}
+function almFill(){try{navigator.storage.estimate().then(e=>{const q=$('#qt');if(q)q.textContent=(e.usage/1048576).toFixed(1)+' MB de unos '+Math.round(e.quota/1048576)+' MB (todo el sitio, compartido con tus otras apps)'})}catch(e){}}
+/* PWA: service worker (alcance = su carpeta), aviso de versión nueva */
+function updBanner(){const e=$('#upd');if(e)e.innerHTML='<div class="bn">🔄 Hay una versión nueva de la app. <button class="s p" onclick="swUpdate()">Actualizar</button></div>'}
+function swUpdate(){SWUPD=true;flush().then(()=>{if(SWREG&&SWREG.waiting)SWREG.waiting.postMessage('SKIP');else location.reload()})}
+function swCheck(){if(!SWREG){alert('La app funciona sin service worker en este momento (abre la app desde su dirección https de GitHub Pages).');return}SWREG.update().then(()=>setTimeout(()=>{if(!$('#upd').innerHTML)alert('Ya tienes la última versión (v'+APP_VERSION+').')},1500)).catch(()=>alert('No se pudo comprobar (¿sin conexión?).'))}
+function swInit(){if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(SWUPD){SWUPD=false;flush().then(()=>location.reload())}});
+ navigator.serviceWorker.register('./sw.js').then(reg=>{SWREG=reg;const w=x=>x&&x.addEventListener('statechange',()=>{if(x.state==='installed'&&navigator.serviceWorker.controller)updBanner()});
+  if(reg.waiting&&navigator.serviceWorker.controller)updBanner();reg.addEventListener('updatefound',()=>w(reg.installing));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush();else checkRev()});addEventListener('pagehide',()=>{flush()});
 const A=id=>S.asociados.find(a=>a.id===id),an=id=>A(id)?.nombre||'—';
 const aOpts=(cur,tipo)=>S.asociados.filter(a=>(!a.archivado||a.id===cur)&&(!tipo||a.tipo===tipo)).map(a=>[a.id,a.nombre]);
 /* ===== 3. LÓGICA DE CONTRATOS ===== */
@@ -198,7 +265,7 @@ function edit(kind,id,dup){
   if(cur&&!dup)Object.assign(cur,o);else{const n={id:uid(),...o,aviso:false};if(kind==='contratos'&&o.tipoImporte!=='variable'&&num(o.importe))n.precios=[{id:uid(),desde:o.inicio||today(),importe:o.importe,unidad:'€/'+perU(o.periodicidad),nota:'Precio inicial'}];list.push(n)}
   if(save())go();else return false});
  if(kind==='recibos')calMark(TMP.rv||{})}
-function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
+function del(kind,id){if(ask('¿Borrar este registro? No se puede deshacer.')){if(kind==='contratos')snapBig('Antes de borrar un contrato');S[kind]=S[kind].filter(x=>x.id!==id);save();go()}}
 /* ===== 6. PANTALLAS ===== */
 const ui={tab:'inicio',sub:'',q:'',fa:'',fe:'activo',gv:'todos',idf:'todas',idq:'',per:'ano',gf:{a:'',c:'',s:'',d1:'',d2:'',q:'',k:''},d1:ISO(new Date(new Date().getFullYear(),0,1)),d2:today(),comb:false,pf:{var:1,gas:1,sue:1},iv:'res',ec:'',cf:'',cmpPot:{},sv:'agua',ac:'',cc:'',cv:'res',cs:'',pre:null,ex:{a:'',c:'',k:'',n:'',q:'',g:'mes',dim:'aso',est:1}};
 const TABS=[['inicio','Inicio'],['contratos','Contratos'],['gastos','Gastos'],['informes','Informes'],['mas','Más']];
@@ -279,13 +346,13 @@ ${ui.comb?`<tr><td><b>Total combinado</b></td><td class="n"><b>${eur(Object.valu
 <h2>Por asociado</h2><div class="card">${tbl(sum(it,'aso'),an)}</div><h2>Por categoría</h2><div class="card">${tbl(sum(it,'cat'))}</div><h2>Por mes</h2><div class="card">${svg}</div>`}
 /* --- Más --- */
 function mas(){const s=ui.sub;if(s)return SUB[s]();
- return`<h1>Más</h1>${[['ayuda','❓ Ayuda: tipos de gasto y cómo apuntarlos'],['aso','Asociados'],['cat','Categorías'],['conc','Conceptos'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['imp','Importar datos (JSON)'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}<br>${bakTxt()}</p>`}
+ return`<h1>Más</h1>${[['ayuda','❓ Ayuda: tipos de gasto y cómo apuntarlos'],['aso','Asociados'],['cat','Categorías'],['conc','Conceptos'],['ajustes','Ajustes'],['bak','Copia de seguridad'],['imp','Importar datos (JSON)'],['ics','Exportar al calendario'],['ideas','Ideas de mejora'],['calc','Cómo se calcula'],['alm','Almacenamiento y versión'],['acerca','Acerca de'],['borrar','Borrar datos de esta app']].map(([k,l])=>`<button style="display:block;width:100%;margin:6px 0;text-align:left${k==='borrar'?';color:var(--r)':''}" onclick="go('mas','${k}')">${l} ›</button>`).join('')}<p class="m">Mis servicios v${APP_VERSION}<br>${bakTxt()}</p>`}
 const back=`<button onclick="go('mas')">‹ Más</button>`;
 const SUB={
 conc:()=>concScreen(),ayuda:()=>ayudaScreen(),
 aso:()=>`${back}<h1>Asociados</h1><button class="p" onclick="addAso()">+ Añadir</button>${S.asociados.map(a=>`<div class="card row sp"><span>${esc(a.nombre)} <span class="m">(${a.tipo}${a.archivado?', archivado':''})</span></span><span><button class="s" onclick="renAso('${a.id}')">Editar</button><button class="s" onclick="arcAso('${a.id}')">${a.archivado?'Restaurar':'Archivar'}</button></span></div>`).join('')}`,
 cat:()=>`${back}<h1>Categorías</h1><button class="p" onclick="addCat()">+ Añadir</button>${S.categorias.map((c,i)=>`<div class="card row sp"><span>${esc(c)} <span class="m">(${catUse(c)} usos${c===S.ajustes.catGas?' · gasolina':''})</span></span><span><button class="s" onclick="renCat(${i})">Editar</button><button class="s d" onclick="delCat(${i})">Eliminar</button></span></div>`).join('')}`,
-borrar:()=>`${back}<h1>Borrar datos de esta app</h1><div class="card warn"><p>Se borrarán contratos, recibos, gastos y ajustes de <b>Mis servicios</b> en este navegador, y también sus copias internas (antes de importar, rescate). No se puede deshacer y no afecta a otras apps.</p><button class="p" onclick="exportJ();go('mas','borrar')">1. Descargar copia de seguridad ahora</button><label>2. Escribe BORRAR para confirmar<input id="bq" autocomplete="off" oninput="$('#bb').disabled=this.value.trim()!=='BORRAR'"></label><button class="d" id="bb" disabled onclick="wipe()">Borrar todo</button></div>`,
+borrar:()=>`${back}<h1>Borrar datos de esta app</h1><div class="card warn"><p>Se borrarán contratos, recibos, gastos y ajustes de <b>Mis servicios</b> guardados en este navegador (IndexedDB), sus copias internas (antes de importar, de migrar y de cambios grandes), la copia antigua de localStorage y la caché sin conexión de esta app. No se puede deshacer y no afecta a otras apps del mismo sitio.</p><button class="p" onclick="exportJ();go('mas','borrar')">1. Descargar copia de seguridad ahora</button><label>2. Escribe BORRAR para confirmar<input id="bq" autocomplete="off" oninput="$('#bb').disabled=this.value.trim()!=='BORRAR'"></label><button class="d" id="bb" disabled onclick="wipe()">Borrar todo</button></div>`,
 ajustes:()=>{setTimeout(()=>{const a=S.ajustes;modal('Ajustes',[{k:'rojo',l:'Rojo si faltan menos de (días)',t:'number',r:1},{k:'naranja',l:'Naranja si faltan menos de (días)',t:'number',r:1},{k:'r1',l:'Recordatorio calendario 1 (días)',t:'number'},{k:'r2',l:'Recordatorio calendario 2 (días)',t:'number'},{k:'bakN',l:'Proponer copia al superar (cambios sin guardar)',t:'number',r:1},{k:'bak',l:'Proponer copia tras (días sin copia)',t:'number',r:1},{k:'catGas',l:'Categoría para gasolina',t:'select',o:S.categorias},{k:'impElec',l:'Impuesto eléctrico (%)',t:'number',r:1},{k:'iva',l:'IVA (%)',t:'number',r:1},{k:'umbral',l:'Umbral de desviación real/teórico (%)',t:'number',r:1},{k:'pagGastos',l:'Gastos: registros por página',t:'select',o:[10,20,50,100]},{k:'refLitros',l:'Referencia de consumo de agua (litros/persona/día)',t:'number',r:1}],{rojo:a.rojo,naranja:a.naranja,r1:a.rec[0],r2:a.rec[1],bak:a.bak,bakN:a.bakN,catGas:a.catGas,impElec:a.impElec,iva:a.iva,umbral:a.umbral,pagGastos:a.pagGastos||20,refLitros:a.refLitros||130},o=>{S.ajustes=Object.assign({},S.ajustes,{rojo:o.rojo,naranja:o.naranja,rec:[o.r1||30,o.r2||7],bak:o.bak,bakN:o.bakN,catGas:o.catGas,impElec:o.impElec,iva:o.iva,umbral:o.umbral,pagGastos:+o.pagGastos||20,refLitros:o.refLitros||130});ui.gsig=null;save();go('mas')})});return back},
 bak:()=>`${back}<h1>Copia de seguridad</h1><div class="card"><p><b>Última copia:</b> ${S.lastBackup?fd(S.lastBackup)+' (hace '+pl(bakDias())+')':'ninguna todavía'}<br><b>Cambios desde entonces:</b> ${S.cambios||0}</p><p class="m">Al entrar te propondré hacer copia si hay más de ${S.ajustes.bakN} cambios sin guardar o han pasado ${S.ajustes.bak} días o más. Ambos valores se cambian en Ajustes.</p><button class="p" onclick="exportJ()">Exportar JSON</button><p><button onclick="go('mas','imp')">Importar JSON…</button> <button onclick="go('mas','ajustes')">Ajustes…</button></p></div>`,
 imp:()=>{const u=undoInfo();return`${back}<h1>Importar datos (JSON)</h1>${u?`<div class="card"><b>↩️ Deshacer la última importación</b><div class="m">${u.modo==='fusion'?'Fusionar':'Reemplazar'} · ${new Date(u.t).toLocaleString('es-ES')} · se puede deshacer hasta el ${fd(ISO(new Date(u.t+UNDO_DIAS*864e5)))}</div><button class="d" onclick="undoImp()">Deshacer importación</button></div>`:''}<div class="card"><p class="m">Elige un archivo exportado desde «Mis servicios» (Más → Copia de seguridad). Antes de importar verás un resumen y se revisará que el archivo esté sano; además se guarda una copia interna de tus datos actuales.</p><label style="color:var(--t)"><input type="radio" name="impm" value="fusion" checked> <b>Fusionar</b>: añade solo lo que no tengas. No borra ni modifica nada de lo actual.</label><label style="color:var(--t)"><input type="radio" name="impm" value="reemplazar"> <b>Reemplazar</b>: sustituye todos los datos actuales por los del archivo.</label><button class="p" onclick="$('#impf').click()">Elegir archivo JSON…</button><input type="file" id="impf" accept=".json,application/json" style="display:none" onchange="importJ(this.files[0]);this.value=''"></div><p class="m">«Fusionar» reconoce lo repetido por su identificador interno, así que funciona bien con copias de esta misma app (por ejemplo, la de otro dispositivo).</p>`},
@@ -302,7 +369,11 @@ calc:()=>{const a=S.ajustes;return`${back}<h1>Cómo se calcula</h1><div class="c
 <p class="warn card">⚠️ Es una estimación orientativa: no incluye bono social, exceso de potencia ni servicios extra. Los recibos sin desglose de franjas o marcados como pendientes de consumo quedan fuera del cálculo teórico y de la comparativa.</p></div>
 <h2>Agua y gas</h2><div class="card"><p>Cada factura cubre un periodo (desde–hasta). Por factura: <b>consumo/mes</b> = consumo ÷ días · 30,4375 y <b>€/mes</b> = importe ÷ días · 30,4375. Para el intervalo elegido, cada factura se <b>prorratea por días</b> (si solo una parte del periodo cae dentro del intervalo, cuenta esa parte) y las medias mensuales se calculan solo sobre los días cubiertos por facturas. Si hay varios contratos (por ejemplo dos casas), se suman sus medias mensuales.</p><p class="m">Las facturas sin periodo o sin consumo no entran en las medias (se avisa y se pueden editar desde la tabla).</p></div>
 <h2>Calefacción y ACS comunitarias</h2><div class="card"><p>Cada recibo del administrador se apunta como una factura del contrato «Calefacción y ACS»: <b>importe</b> = gas fijo + gas variable + agua consumida + cuota fija de agua. El <b>consumo</b> de cada contador es lectura actual − lectura anterior; si escribes otro valor se marca en rojo con la diferencia (sirve para reclamar).</p><ol><li><b>Litros/persona/día</b>: agua fría (facturas de agua) y agua caliente (m³ de ACS) por separado, prorrateadas por días de su periodo; el conjunto es solo su suma. Referencia en Ajustes (${NUM.format(a.refLitros||130)} L/persona/día).</li><li><b>Precio del m³ de ACS</b> = Σ agua consumida ÷ Σ m³ (con cuota fija: + Σ cuota).</li><li><b>€/m³ recirculado</b> = Σ gas variable ÷ Σ m³ de calefacción.</li><li><b>Coste por hora</b> = €/m³ recirculado × caudal (m³/h). Estimación por arriba.</li><li><b>Bomba de calor</b> = kW × precio del kWh (último contrato y tarifa de la casa elegida, con descuento, impuesto eléctrico e IVA).</li></ol><p class="m">Se compara por hora encendida, no por calor entregado. El bloque de gas incluye el gas del agua caliente, cuyo coste marginal para ti es 0.</p></div>`},
-acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v${APP_VERSION} · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (localStorage).</span></div>`};
+alm:()=>{setTimeout(almFill,0);const md=MIGDONE,SN={import:'antes de importar',migrate:'antes de migrar',cambios:'antes de un cambio grande'};
+ return`${back}<h1>Almacenamiento y versión</h1><div class="card"><p><b>App:</b> v${APP_VERSION} · esquema de datos ${S.version}<br><b>Datos en:</b> ${MODE==='idb'?'IndexedDB (base «mis_servicios»)':'⚠️ localStorage (modo de emergencia: '+esc(LSWHY)+')'}<br><b>Almacenamiento persistente:</b> ${PERSIST===null?'sin comprobar':PERSIST?'concedido':'no concedido (instalar la app ayuda)'}<br><b>Uso:</b> <span id="qt">…</span><br><b>Funcionando como:</b> ${matchMedia('(display-mode: standalone)').matches?'app instalada':'página del navegador'}<br><b>Copias internas (${SNAP_DIAS} días el deshacer de importar):</b> ${SNAPS.length?SNAPS.map(s=>(SN[s.kind]||s.kind)+' · '+new Date(s.t).toLocaleDateString('es-ES')).join('; '):'ninguna'}</p><button onclick="swCheck()">Buscar actualización</button></div>
+${md?`<div class="card"><b>Migración desde la versión anterior</b> <span class="m">(${new Date(md.t).toLocaleString('es-ES')})</span><table><tr><th></th><th class="n">Antes</th><th class="n">Ahora</th></tr>${KS.map(([k,n])=>`<tr><td>${n}</td><td class="n">${md.c0[k]??'—'}</td><td class="n">${(S[k]||[]).length}</td></tr>`).join('')}</table><p class="m">«Ahora» es mayor si has añadido datos después.</p></div>`:''}
+${MODE==='idb'&&md&&oldLS()?`<div class="card warn"><b>Copia antigua en el navegador</b><p class="m">Los datos de la versión anterior siguen en localStorage. Bórralos solo cuando hayas comprobado que todo está en la app y tengas una copia JSON reciente.</p><button class="d" onclick="dropOld()">Borrar copia antigua del navegador</button></div>`:''}`},
+acerca:()=>`${back}<h1>Acerca de</h1><div class="card">Mis servicios · v${APP_VERSION} · esquema de datos ${S.version}<br><span class="m">Datos solo en este dispositivo (IndexedDB).</span></div>`};
 const asoF=()=>[{k:'nombre',l:'Nombre',r:1},{k:'tipo',l:'Tipo',t:'select',o:['casa','trastero','garaje','vehiculo','persona','general']},{k:'perteneceA',l:'Pertenece a (casa; para trastero/garaje)',t:'select',o:[['','—'],...aOpts(null,'casa')]},{k:'personas',l:'Personas que viven (opcional; para litros por persona y día)',t:'number',vis:c=>c.tipo==='casa'}];
 function addAso(){modal('Nuevo asociado',asoF(),{},o=>{S.asociados.push({id:uid(),...o,archivado:false});save();go('mas','aso')})}
 function renAso(id){const a=A(id);modal('Editar asociado',asoF(),a,o=>{Object.assign(a,o);save();go('mas','aso')})}
@@ -329,9 +400,13 @@ function ayudaScreen(){const T=[['Electricidad, agua, gas','Sí (variable, con s
  return`${back}<h1>Ayuda: tipos de gasto</h1><div class="card"><p><b>Los informes suman solo lo que tú apuntas.</b> Ningún contrato genera cargos ni estimaciones por sí solo.</p><p><b>Regla rápida:</b> si se contrata con un proveedor y quiero vigilar vencimiento o precio, es un <b>contrato</b>. Si es una obligación o un pago puntual, es un <b>gasto suelto</b>. La gasolina va como <b>repostaje</b>.</p></div>
 <div class="card" style="overflow-x:auto;font-size:13px"><table><tr><th>Gasto</th><th>¿Contrato?</th><th>Cómo apuntarlo</th></tr>${T.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
 <div class="card m"><b>Asociado, categoría y concepto.</b> El asociado dice de qué casa, coche o persona es; la categoría, qué naturaleza tiene; y el concepto (solo en gastos sueltos) agrupa lo común, como IBI o comunidad. Editas categorías y conceptos en Más.<br><br><b>Precios.</b> En cada contrato, «Precios» guarda el histórico de subidas. Es solo informativo y no cambia ningún gasto apuntado.<br><br><b>Fuera de esta app:</b> ingresos (alquileres cobrados), supermercado y salidas con amigos.</div>`}
-async function wipe(){try{Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios')).forEach(k=>localStorage.removeItem(k))}catch(e){}
- try{const dbs=indexedDB.databases?await indexedDB.databases():[{name:'mis_servicios'}];await Promise.all(dbs.filter(d=>d.name&&d.name.startsWith('mis_servicios')).map(d=>new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=r})))}catch(e){}
- S=def();alert('Datos de la app borrados.');location.reload()}
+async function wipe(){WIPING=true;clearTimeout(SAVT);try{await WQ}catch(e){}
+ try{Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+ try{if(DBH)DBH.close()}catch(e){}
+ try{const dbs=indexedDB.databases?await indexedDB.databases():[{name:DBN}];await Promise.all(dbs.filter(d=>d.name===DBN).map(d=>new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=r})))}catch(e){}
+ try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('mis_servicios')).map(k=>caches.delete(k)))}}catch(e){}
+ try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations(),sc=new URL('./',location.href).href;await Promise.all(rs.filter(r=>r.scope===sc).map(r=>r.unregister()))}}catch(e){}
+ S=def();SNAPS=[];alert('Datos de la app borrados.');location.reload()}
 function gfl(g,r){const f=ui.gf,rc=g==='recibos',c=rc?gc(r.contrato):null,aso=rc?c?.asociado:g==='repostajes'?r.coche:r.asociado,cat=rc?c?.categoria:g==='repostajes'?S.ajustes.catGas:r.categoria,
  sOk=!f.s||(rc?(c?.tipoSuministro||'ninguno')===f.s:ui.gv!=='todos'),kOk=!f.k||(rc?r.contrato===f.k:ui.gv!=='todos');
  return(!f.a||aso===f.a)&&(!f.c||cat===f.c)&&sOk&&kOk&&(!f.d1||r.fecha>=f.d1)&&(!f.d2||r.fecha<=f.d2)&&(!f.q||[r.desc,r.concepto,r.notas,c?.nombre,an(aso)].join(' ').toLowerCase().includes(f.q.toLowerCase()))}
@@ -695,7 +770,7 @@ function calRec(casa,d1,d2){const R=calRecs(casa,d1,d2),D=[],J=[],
 
 /* ===== 7. COPIA DE SEGURIDAD ===== */
 /* ===== v2.5: SEGURIDAD DEL JSON, IMPORTACIÓN Y ARRANQUE ===== */
-const UNDO_KEY='mis_servicios_antes_import',UNDO_DIAS=14;
+const UNDO_DIAS=SNAP_DIAS;
 const isObj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const blank=v=>v===undefined||v===null||v==='';
 const isoOk=s=>{if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const[a,b,c]=s.split('-').map(Number),d=new Date(a,b-1,c);return d.getFullYear()===a&&d.getMonth()===b-1&&d.getDate()===c};
@@ -743,14 +818,11 @@ async function sha256(txt){try{if(!(window.crypto&&crypto.subtle))return null;co
 async function integ(d){if(!isObj(d.integridad)||typeof d.integridad.hash!=='string')return'no';
  const r={...d};delete r.integridad;const h=await sha256(JSON.stringify(r));return h===null?'nover':h===d.integridad.hash?'ok':'mal'}
 /* Copias internas: como máximo una copia de migración; se borra al exportar una copia nueva */
-function prevKeys(){try{return Object.keys(localStorage).filter(k=>k.startsWith('mis_servicios_prev_v'))}catch(e){return[]}}
-function cleanPrev(){const k=prevKeys().sort((a,b)=>(+b.split('_v').pop()||0)-(+a.split('_v').pop()||0));k.slice(1).forEach(x=>{try{localStorage.removeItem(x)}catch(e){}})}
-function dropPrev(){prevKeys().forEach(x=>{try{localStorage.removeItem(x)}catch(e){}})}
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
 async function exportJ(){S.lastBackup=today();S.cambios=0;save(true);
  const o={app:'mis_servicios',...S,exportado:new Date().toISOString()},h=await sha256(JSON.stringify(o));
  if(h)o.integridad={alg:'SHA-256',hash:h};
- dl(`mis_servicios_${today()}.json`,JSON.stringify(o,null,1),'application/json');dropPrev();go()}
+ dl(`mis_servicios_${today()}.json`,JSON.stringify(o,null,1),'application/json');dropSnaps(s=>s.kind==='migrate');go()}
 /* ---- Importar ---- */
 const MCOLS=[['asociados','asociados'],['conceptos','conceptos'],['contratos','contratos'],['recibos','facturas'],['repostajes','repostajes'],['gastos','gastos sueltos'],['planes','planes'],['ideas','ideas']];
 function mergePlan(d){const add={};MCOLS.forEach(([k])=>{const ya=new Set((S[k]||[]).map(x=>x.id));add[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>x&&x.id&&!ya.has(x.id))});
@@ -783,25 +855,24 @@ ${V.W.length?`<div class="card warn"><b>Avisos (${V.W.length})</b> · se pueden 
 <div class="row sp"><button onclick="impCancel()">Cancelar</button><button class="p" id="impOk" onclick="impGo()">Importar</button></div></div></div>`;impChk()}
 function impChk(){const b=$('#impOk');if(!b||!IMP)return;const k=$('#impRisk');b.disabled=IMP.V.E.length>0||(IMP.hs==='mal'&&!(k&&k.checked))||(IMP.mode==='fusion'&&!!IMP.plan&&!IMP.plan.res)}
 function impCancel(){IMP=null;if(BOOT_ERR)bootScreen();else closeM()}
-function snapPre(mode,txt){try{localStorage.removeItem(UNDO_KEY)}catch(e){}
- if(!hasData())return;
- try{localStorage.setItem(UNDO_KEY,'{"t":'+Date.now()+',"modo":"'+mode+'","data":'+txt+'}')}
- catch(e){alert('No hay espacio para la copia interna previa: se descargará una copia de tus datos actuales antes de importar.');dl('mis_servicios_antes_de_importar_'+today()+'.json',txt,'application/json')}}
-function impGo(){if(!IMP)return;const{d,mode,plan}=IMP,old=JSON.stringify(S),be=BOOT_ERR;
- snapPre(mode,old);
+async function snapPre(mode,txt){await dropSnaps(s=>s.kind==='import');if(!hasData())return;
+ if(!(await addSnap('import',txt,{modo:mode}))){alert('No hay espacio para la copia interna previa: se descargará una copia de tus datos actuales antes de importar.');dl('mis_servicios_antes_de_importar_'+today()+'.json',txt,'application/json')}}
+async function impGo(){if(!IMP)return;const{d,mode,plan}=IMP,old=JSON.stringify(S),be=BOOT_ERR;
+ await snapPre(mode,old);
  try{
   if(mode==='fusion'){MCOLS.forEach(([k])=>{S[k]=(S[k]||[]).concat(plan.add[k])});S.categorias=S.categorias.concat(plan.cats)}
   else{const n=JSON.parse(JSON.stringify(d));delete n.app;delete n.integridad;delete n.exportado;S=migrate(n)}
   BOOT_ERR=null;
   if(!save()){S=JSON.parse(old);BOOT_ERR=be;return}
  }catch(e){S=JSON.parse(old);BOOT_ERR=be;alert('No se pudo importar: '+e.message+'. No se ha cambiado nada.');return}
+ await flush();if(SAVE_ERR||LOCKED){S=JSON.parse(old);BOOT_ERR=be;SAVE_ERR='';DIRTY=false;alert('No se pudo guardar la importación (o hay otra ventana con datos más recientes). No se ha cambiado nada.');return}
  const res=mode==='fusion'?plan.res:'';IMP=null;closeM();alert(mode==='fusion'?'Importado: '+res+'.':'Importación completada. Si algo no es lo esperado, puedes deshacerla en Más → Importar datos.');go('mas','imp')}
-function undoInfo(){try{const r=localStorage.getItem(UNDO_KEY);if(!r)return null;const u=JSON.parse(r);if(!u||!u.data||!u.t)return null;if(Date.now()-u.t>UNDO_DIAS*864e5){localStorage.removeItem(UNDO_KEY);return null}return u}catch(e){return null}}
+function undoInfo(){const s=SNAPS.filter(x=>x.kind==='import'&&Date.now()-x.t<=SNAP_DIAS*864e5).sort((a,b)=>b.t-a.t)[0];if(!s)return null;try{return{t:s.t,modo:s.modo,data:JSON.parse(s.json),id:s.id}}catch(e){return null}}
 function undoImp(){const u=undoInfo();if(!u){alert('No hay ninguna importación que deshacer.');go('mas','imp');return}
  const n=u.data;if(!ask(`¿Deshacer la última importación (${u.modo==='fusion'?'fusionar':'reemplazar'}, ${new Date(u.t).toLocaleString('es-ES')})?\nSe restaurarán los datos que tenías justo antes: ${(n.contratos||[]).length} contratos, ${(n.recibos||[]).length} facturas, ${(n.gastos||[]).length} gastos sueltos.\nLo importado después se perderá.`))return;
  const cur=JSON.stringify(S);
  try{S=migrate(JSON.parse(JSON.stringify(n)));BOOT_ERR=null;if(!save(true)){S=JSON.parse(cur);return}}catch(e){S=JSON.parse(cur);alert('No se pudo deshacer: '+e.message);return}
- try{localStorage.removeItem(UNDO_KEY)}catch(e){}alert('Importación deshecha.');go('mas','imp')}
+ dropSnaps(x=>x.id===u.id);alert('Importación deshecha.');go('mas','imp')}
 /* ---- Arranque protegido ---- */
 function bootScreen(){$('#nav').innerHTML='';$('#app').innerHTML='';
  $('#mod').innerHTML=`<div class="ov"><div class="card bad"><h2>⚠️ No se pueden leer tus datos guardados</h2><p>Los datos de «Mis servicios» guardados en este navegador no se han podido interpretar (${esc(BOOT_ERR.msg)}). <b>No se ha borrado ni modificado nada</b> y la app no guardará nada hasta que decidas qué hacer. Además se ha dejado una copia del texto original en el navegador (<code>${esc(BOOT_ERR.key)}</code>).</p>
@@ -815,7 +886,7 @@ function bootEmpty(){if(!ask('Se empezará con la app vacía. El texto original 
 function gqBtn(){const e=$('#gq'),b=$('#gqb');if(e&&b)b.textContent=(e.value.trim()!==''&&e.value.trim()===ui.gf.q)?'Limpiar':'Buscar'}
 function gqGo(){const e=$('#gq'),v=e?e.value.trim():'';ui.gf.q=(v!==''&&v===ui.gf.q)?'':v;go()}
 function gClear(){ui.gf={a:'',c:'',s:'',d1:'',d2:'',q:'',k:''};go()}
-function planDelCia(){const n=S.planes.filter(p=>p.compania===ui.cf).length;if(!n)return;if(ask('¿Borrar los '+n+' planes de «'+ui.cf+'»? No se puede deshacer.')){S.planes=S.planes.filter(p=>p.compania!==ui.cf);ui.cf='';save();go()}}
+function planDelCia(){const n=S.planes.filter(p=>p.compania===ui.cf).length;if(!n)return;if(ask('¿Borrar los '+n+' planes de «'+ui.cf+'»? No se puede deshacer.')){snapBig('Antes de borrar planes');S.planes=S.planes.filter(p=>p.compania!==ui.cf);ui.cf='';save();go()}}
 /* ===== PRECIOS (v2.4) ===== */
 const prSort=c=>(c.precios||[]).slice().sort((a,b)=>String(a.desde||'').localeCompare(String(b.desde||''))),pct=(a,b)=>a?(b-a)/a*100:0;
 function priceLine(c){const p=prSort(c);if(p.length<2)return'';const l=p[p.length-1],q=p[p.length-2];return`<div class="m">📈 Último cambio de precio (${fd(l.desde)}): ${eur(q.importe)} → ${eur(l.importe)} (${sgp(pct(q.importe,l.importe))})</div>`}
@@ -838,5 +909,5 @@ function icsBuild(cs){const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mis se
  L.push('END:VCALENDAR');return L.join('\r\n')+'\r\n'}
 function icsAll(){const a=S.contratos.filter(c=>c.estado==='activo'&&c.vence);if(!a.length)return alert('No hay contratos activos con vencimiento.');dl('mis_servicios.ics',icsBuild(a),'text/calendar')}
 function icsOne(id){const c=gc(id);if(!c.vence)return alert('El contrato no tiene fecha de vencimiento.');dl('contrato.ics',icsBuild([c]),'text/calendar')}
-cleanPrev();if(BOOT_ERR)bootScreen();else{go();setTimeout(bakPrompt,400)}
+boot();
 </script></body></html>
