@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prueba: huella como clave (PRF)</title>
+<style>
+:root{--bg:#eef1f0;--c:#fff;--t:#14201f;--m:#5f6f6d;--p:#0f766e;--b:#d5dcda}
+@media(prefers-color-scheme:dark){:root{--bg:#101716;--c:#1a2423;--t:#e8efee;--m:#93a4a1;--p:#14a094;--b:#2c3a38}}
+*{box-sizing:border-box}body{margin:0;padding:12px;font:16px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+h1{font-size:20px;margin:4px 0 8px}h3{margin:0 0 6px;font-size:16px}.m{color:var(--m);font-size:14px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px;margin:10px 0}
+button{padding:11px 14px;border:0;border-radius:8px;background:var(--p);color:#fff;font:inherit;font-weight:600;margin:4px 6px 4px 0}button.g{background:none;color:var(--p);border:1px solid var(--p)}
+input{padding:10px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit;width:100%}
+#log div{font:13px ui-monospace,monospace;padding:3px 0;border-bottom:1px solid var(--b);overflow-wrap:anywhere}.ok{color:#15803d}.x{color:#b42318}.w{color:#b45309}
+#lock{font-weight:700;margin:6px 0}details summary{font-weight:600;cursor:pointer}ol{padding-left:20px}li{margin:6px 0}
+</style></head><body>
+<h1>Prueba: ¿la huella puede dar una clave?</h1>
+<p class="m">Es solo una prueba. No toca ninguna de tus apps ni tus datos: usa su propia base de datos («PruebaPRF») y una llave de prueba.</p>
+<details open class="card"><summary>Cómo hacerla</summary><ol>
+<li>Sube este archivo a tu GitHub Pages (por ejemplo en una carpeta <b>pruebas/</b>) y ábrelo desde <b>Chrome en el móvil</b>. Tiene que ser https y el mismo dominio donde irán tus apps.</li>
+<li>Pulsa los botones <b>en orden, del 1 al 5</b>. Donde diga «pide huella», pon el dedo.</li>
+<li>Después repite el 3 y el 5 en estas situaciones: <b>(a)</b> recargando la página; <b>(b)</b> cerrando Chrome del todo y volviendo a abrirla; <b>(c)</b> tras reiniciar el móvil; <b>(d)</b> tras añadir o quitar una huella en Ajustes.</li>
+<li>Si puedes, ábrela también en <b>otro dispositivo con tu misma cuenta de Google</b> (ordenador o móvil): compara la «huella de la clave». Si sale igual, la llave se sincroniza y un móvil nuevo podría recuperarla.</li>
+<li>Al terminar, pulsa <b>Copiar informe</b> y pégamelo en el chat.</li>
+</ol></details>
+<div class="card"><h3>1. Compatibilidad</h3><button id="b1">Comprobar</button></div>
+<div class="card"><h3>2. Crear llave de prueba <span class="m">(pide huella)</span></h3><button id="b2">Crear llave</button><p class="m">Si ya hay una, se sustituye por otra nueva (y se borran el secreto y la huella guardados).</p></div>
+<div class="card"><h3>3. Derivar clave <span class="m">(pide huella)</span></h3><button id="b3">Derivar clave</button><p class="m">Púlsalo dos veces: la «huella de la clave» debe salir <b>igual</b> las dos veces, y la B distinta de la A.</p></div>
+<div class="card"><h3>4. Guardar un secreto cifrado <span class="m">(pide huella)</span></h3><input id="txt" value="contraseña-de-prueba-123"><button id="b4">Cifrar y guardar</button></div>
+<div class="card"><h3>5. Leer el secreto</h3><button id="b5">Leer con huella</button><button id="b5b" class="g">Leer sin huella (clave en memoria)</button>
+<p class="m">Bloquear tras (minutos sin tocar la pantalla): <input id="min" type="number" step="0.01" min="0.02" value="5" style="width:90px"></p><div id="lock">🔒 Bloqueado</div><div id="sec" class="m"></div></div>
+<div class="card"><h3>6. Informe</h3><button id="b6">Copiar informe</button><button id="b7" class="g">Borrar datos de prueba</button><p class="m">La llave de prueba puedes quitarla luego en Ajustes de Google › Administrador de contraseñas › Llaves de acceso.</p></div>
+<div class="card"><h3>Registro</h3><div id="log"></div></div>
+<script>
+const $=s=>document.querySelector(s),te=new TextEncoder(),td=new TextDecoder();
+const hex=u=>[...new Uint8Array(u)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const b64u=u=>btoa(String.fromCharCode(...new Uint8Array(u))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+const SA=te.encode('gestion-documental/prf/A/v1'),SB=te.encode('gestion-documental/prf/B/v1');
+const R={},L=[];
+function log(m,k){const t=new Date().toLocaleTimeString('es-ES');L.push(t+' '+m);const d=document.createElement('div');d.className=k||'';d.textContent=t+' · '+m;$('#log').prepend(d)}
+const db=()=>new Promise((o,k)=>{const r=indexedDB.open('PruebaPRF',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>o(r.result);r.onerror=()=>k(r.error)});
+const kv={async get(k){const d=await db();return new Promise(o=>{const q=d.transaction('k').objectStore('k').get(k);q.onsuccess=()=>{d.close();o(q.result)}})},
+async set(k,v){const d=await db();return new Promise(o=>{const t=d.transaction('k','readwrite');t.objectStore('k').put(v,k);t.oncomplete=()=>{d.close();o()}})},
+async del(k){const d=await db();return new Promise(o=>{const t=d.transaction('k','readwrite');t.objectStore('k').delete(k);t.oncomplete=()=>{d.close();o()}})}};
+const fp=async u=>hex(await crypto.subtle.digest('SHA-256',u)).slice(0,12);
+const aes=async prf=>{const hk=await crypto.subtle.importKey('raw',prf,'HKDF',false,['deriveKey']);return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(32),info:te.encode('gd-secreto-v1')},hk,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])};
+/* bloqueo por inactividad */
+let KEY=null,LEND=0;const mins=()=>Math.max(0.02,parseFloat($('#min').value)||5);
+const setKey=k=>{KEY=k;LEND=Date.now()+mins()*60000};
+['click','touchstart','keydown'].forEach(e=>addEventListener(e,()=>{if(KEY)LEND=Date.now()+mins()*60000},{passive:true}));
+setInterval(()=>{if(KEY&&Date.now()>=LEND){KEY=null;log('🔒 Bloqueado por inactividad: la clave se ha borrado de la memoria','w');$('#sec').textContent=''}
+$('#lock').textContent=KEY?('🔓 Desbloqueado · se bloquea en '+Math.max(0,Math.ceil((LEND-Date.now())/1000))+' s'):'🔒 Bloqueado'},500);
+async function run(f){try{await f()}catch(e){log('❌ '+(e.name||'Error')+': '+(e.message||e)+(e.name=='NotAllowedError'?' (cancelado, sin huella o tiempo agotado)':''),'x')}}
+/* 1 */
+$('#b1').onclick=()=>run(async()=>{const o={contextoSeguro:isSecureContext,dominio:location.hostname,webauthn:!!window.PublicKeyCredential};
+if(window.PublicKeyCredential){o.autenticadorDeLaPlataforma=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(()=> 'error');
+if(PublicKeyCredential.getClientCapabilities){try{const c=await PublicKeyCredential.getClientCapabilities();o.prfSegunNavegador=c['extension:prf'];o.passkeysSincronizadas=c['passkeyPlatformAuthenticator']}catch(e){o.capacidades='error '+e.message}}else o.capacidades='el navegador no las informa'}
+R.compat=o;log('Compatibilidad: '+JSON.stringify(o),o.webauthn&&o.contextoSeguro?'ok':'x')});
+/* 2 */
+$('#b2').onclick=()=>run(async()=>{const t0=performance.now();
+const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Prueba huella',id:location.hostname},user:{id:rnd(16),name:'prueba',displayName:'Prueba'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'preferred',userVerification:'required'},timeout:60000,extensions:{prf:{}}}});
+const e=c.getClientExtensionResults();R.prfEnabled=!!(e.prf&&e.prf.enabled);R.llaveCreada=true;
+await kv.set('cred',{id:b64u(c.rawId),t:Date.now()});await kv.del('hashA');await kv.del('secret');KEY=null;
+log('Llave creada ('+Math.round(performance.now()-t0)+' ms). PRF anunciado al crearla: '+(R.prfEnabled?'SÍ':'NO / no informado (se comprueba en el paso 3)'),R.prfEnabled?'ok':'w')});
+/* PRF */
+async function getPrf(){const cred=await kv.get('cred');if(!cred)throw new Error('Primero crea la llave (paso 2)');const t0=performance.now();
+const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:unb64u(cred.id)}],userVerification:'required',timeout:60000,extensions:{prf:{eval:{first:SA,second:SB}}}}});
+const ms=Math.round(performance.now()-t0),r=a.getClientExtensionResults().prf&&a.getClientExtensionResults().prf.results;R.msHuella=ms;
+return r&&r.first?{first:new Uint8Array(r.first),second:r.second&&new Uint8Array(r.second),ms}:{none:true,ms}}
+/* 3 */
+$('#b3').onclick=()=>run(async()=>{const r=await getPrf();if(r.none){R.prfDa=false;return log('❌ Este móvil/navegador NO entrega clave con la huella (PRF no disponible).','x')}
+R.prfDa=true;const hA=await fp(r.first),hB=r.second?await fp(r.second):'';R.huellaClave=hA;R.AdistintaB=!!hB&&hB!==hA;
+const prev=await kv.get('hashA');if(prev){R.determinista=prev===hA;log('Huella de la clave A: '+hA+(prev===hA?' · IGUAL que la guardada ✅':' · DISTINTA de la guardada ('+prev+') ❌'),prev===hA?'ok':'x')}else{await kv.set('hashA',hA);log('Huella de la clave A: '+hA+' · guardada; púlsalo otra vez para comprobar que sale igual','ok')}
+log('Huella de la clave B: '+hB+(R.AdistintaB?' · distinta de la A ✅':' · ¿igual que A? ❌'),R.AdistintaB?'ok':'x');log('Tiempo de la huella: '+r.ms+' ms')});
+/* 4 */
+$('#b4').onclick=()=>run(async()=>{const r=await getPrf();if(r.none)return log('❌ Sin PRF: no se puede cifrar con la huella.','x');
+const k=await aes(r.first),iv=rnd(12),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,te.encode($('#txt').value)));
+await kv.set('secret',{iv,ct});if(!(await kv.get('hashA')))await kv.set('hashA',await fp(r.first));setKey(k);R.secretoGuardado=true;log('Secreto cifrado y guardado en IndexedDB ✅ (desbloqueado)','ok')});
+/* 5 */
+async function dec(k){const s=await kv.get('secret');if(!s)throw new Error('No hay secreto guardado (paso 4)');
+try{const p=await crypto.subtle.decrypt({name:'AES-GCM',iv:s.iv},k,s.ct);const t=td.decode(p);$('#sec').textContent='Secreto: '+t;return t}catch{$('#sec').textContent='';throw new Error('La clave no sirve para descifrar (llave nueva o clave distinta)')}}
+$('#b5').onclick=()=>run(async()=>{const r=await getPrf();if(r.none){R.descifra=false;return log('❌ Sin PRF.','x')}const k=await aes(r.first);const t=await dec(k);setKey(k);R.descifra=true;R.ultimaLectura=new Date().toLocaleString('es-ES');log('Descifrado con huella ✅ → «'+t+'» ('+r.ms+' ms de huella)','ok')});
+$('#b5b').onclick=()=>run(async()=>{if(!KEY)return log('🔒 Bloqueado: hace falta la huella (pulsa «Leer con huella»). Así debe comportarse tras el tiempo de inactividad.','w');const t=await dec(KEY);log('Descifrado con la clave en memoria ✅ → «'+t+'» (sin pedir huella)','ok')});
+/* 6 */
+$('#b6').onclick=()=>run(async()=>{const cred=await kv.get('cred');
+const t=['INFORME PRUEBA HUELLA (PRF) · '+new Date().toLocaleString('es-ES'),'Navegador: '+navigator.userAgent,'Dominio: '+location.hostname,
+'Compatibilidad: '+JSON.stringify(R.compat||'no comprobada'),'Llave creada en esta sesión: '+(R.llaveCreada?'sí':'no / de una sesión anterior')+(cred?' (id guardado)':' (no hay llave)'),
+'PRF anunciado al crear: '+R.prfEnabled,'PRF entrega clave: '+R.prfDa,'Huella de la clave A: '+R.huellaClave,'A distinta de B: '+R.AdistintaB,'Misma clave en repeticiones: '+R.determinista,
+'Descifrado con huella: '+R.descifra+(R.ultimaLectura?' ('+R.ultimaLectura+')':''),'Tiempo de la huella (ms): '+R.msHuella,'','Registro:',...L.slice(-40)].join('\n');
+try{await navigator.clipboard.writeText(t);log('Informe copiado ✅ (pégalo en el chat)','ok')}catch{prompt('Copia este informe:',t)}});
+$('#b7').onclick=()=>run(async()=>{for(const k of ['cred','hashA','secret'])await kv.del(k);KEY=null;$('#sec').textContent='';log('Datos de prueba borrados','ok')});
+</script></body></html>
