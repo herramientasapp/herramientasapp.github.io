@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prueba: puente de copias a Drive</title>
+<style>
+:root{--bg:#eef1f0;--c:#fff;--t:#14201f;--m:#5f6f6d;--p:#0f766e;--b:#d5dcda}
+@media(prefers-color-scheme:dark){:root{--bg:#101716;--c:#1a2423;--t:#e8efee;--m:#93a4a1;--p:#14a094;--b:#2c3a38}}
+*{box-sizing:border-box}body{margin:0;padding:12px;font:16px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+h1{font-size:20px;margin:4px 0 8px}h3{margin:0 0 6px;font-size:16px}.m{color:var(--m);font-size:14px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px;margin:10px 0}
+button{padding:11px 14px;border:0;border-radius:8px;background:var(--p);color:#fff;font:inherit;font-weight:600;margin:4px 6px 4px 0}button.g{background:none;color:var(--p);border:1px solid var(--p)}button:disabled{opacity:.5}
+input,select{padding:10px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit;width:100%;margin:4px 0 8px}
+label{display:block;font-size:13px;color:var(--m);margin-top:6px}
+#log div{font:13px ui-monospace,monospace;padding:3px 0;border-bottom:1px solid var(--b);overflow-wrap:anywhere}.ok{color:#15803d}.x{color:#b42318}.w{color:#b45309}
+progress{width:100%;height:14px}details summary{font-weight:600;cursor:pointer}ol,ul{padding-left:20px}li{margin:6px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+</style></head><body>
+<h1>Prueba: copias cifradas a Drive con el puente</h1>
+<p class="m">Mide si el puente de Google Apps Script aguanta copias grandes: tamaño máximo por petición, velocidad, errores, y si luego se pueden descargar, verificar y descifrar. <b>Usa Wi‑Fi</b>: las pruebas grandes mueven decenas o cientos de MB. Los datos son aleatorios, no tocan tus apps.</p>
+<details open class="card"><summary>Preparar el puente (una sola vez, desde el ordenador)</summary><ol>
+<li>Entra en <b>script.google.com</b> con tu cuenta › <b>Nuevo proyecto</b>. Borra el código que trae.</li>
+<li>Pulsa «Copiar código del puente» aquí abajo y pégalo en el editor. Guarda.</li>
+<li>Ajustes del proyecto (⚙️) › <b>Propiedades de la secuencia de comandos</b> › Añadir: nombre <b>SECRET</b>, valor una clave larga inventada (será «la contraseña del puente»).</li>
+<li><b>Implementar › Nueva implementación › Aplicación web</b>. Ejecutar como: <b>Yo</b>. Quién tiene acceso: <b>Cualquier persona</b> (hace falta para que el navegador pueda llamarla; la protección es la clave SECRET). Implementar y <b>autorizar</b> los permisos de Drive.</li>
+<li>Copia la <b>URL de la aplicación web</b> (termina en /exec). Si la abres en el navegador debe decir «Puente activo».</li>
+<li>Si cambias el código más adelante: Implementar › <b>Administrar implementaciones</b> › editar › <b>Nueva versión</b> (así la URL no cambia).</li>
+</ol><button id="cp" class="g">Copiar código del puente</button></details>
+<div class="card"><h3>Conexión</h3><label>URL del puente (/exec)</label><input id="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"><label>Clave del puente (SECRET)</label><input id="key" type="password" autocomplete="off">
+<button id="b1">1. Probar conexión</button><button id="b2" class="g">2. Medir límite de petición</button><p class="m">El 2 envía 1, 2, 4… hasta 64 MB y se detiene en el primero que falle (no guarda nada en Drive).</p></div>
+<div class="card"><h3>Copia de prueba cifrada</h3><label>Tamaño de la copia</label><select id="size"><option value="5">5 MB</option><option value="20" selected>20 MB</option><option value="50">50 MB</option><option value="100">100 MB</option><option value="250">250 MB</option></select>
+<label>Tamaño de cada trozo</label><select id="chunk"><option value="1">1 MB</option><option value="2">2 MB</option><option value="4" selected>4 MB</option><option value="8">8 MB</option></select>
+<label>Contraseña de cifrado (de prueba)</label><input id="pw" value="prueba-123" autocomplete="off"><button id="b3">3. Cifrar y subir</button><progress id="pr" value="0" max="1" hidden></progress><div id="pt" class="m"></div></div>
+<div class="card"><h3>Restaurar</h3><button id="b4" class="g">4. Ver copias en Drive</button><select id="sel"></select><button id="b5">5. Descargar, verificar y descifrar</button><button id="b6" class="g">6. Probar contraseña equivocada</button></div>
+<div class="card"><h3>Informe</h3><button id="b7">Copiar informe</button><button id="b8" class="g">Borrar copias de prueba</button><p class="m">Las carpetas PRUEBA_ van a la papelera de Drive; vacía la papelera si quieres liberar el espacio ya.</p></div>
+<div class="card"><h3>Registro</h3><div id="log"></div></div>
+<script type="text/plain" id="gs">/**
+ * Gestión documental · puente de copias de seguridad (PRUEBA v1)
+ *
+ * - Guarda cada copia como una carpeta con trozos cifrados dentro de
+ *   "GestionDocumental_copias" en tu Drive.
+ * - Nunca sobrescribe ni borra copias reales. Solo se pueden borrar carpetas
+ *   cuyo nombre empiece por PRUEBA_ (para limpiar las pruebas).
+ * - Todas las peticiones llevan la clave del puente (propiedad SECRET).
+ */
+const CARPETA = 'GestionDocumental_copias';
+const PRUEBA = 'PRUEBA_';
+const MAX_B64 = 48 * 1024 * 1024; // tope de seguridad por petición
+
+function secret_() { return PropertiesService.getScriptProperties().getProperty('SECRET') || ''; }
+function raiz_() { const it = DriveApp.getFoldersByName(CARPETA); return it.hasNext() ? it.next() : DriveApp.createFolder(CARPETA); }
+function hex_(bytes) { let s = ''; for (let i = 0; i < bytes.length; i++) s += ('0' + (bytes[i] & 255).toString(16)).slice(-2); return s; }
+function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function idOk_(id) { return /^[A-Za-z0-9_\-]{3,80}$/.test(String(id || '')); }
+function iguales_(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
+
+// Abrir la URL del puente en el navegador debe mostrar "Puente activo".
+function doGet() { return out_({ ok: true, msg: 'Puente activo', ver: 1 }); }
+
+function doPost(e) {
+  const t0 = Date.now();
+  try {
+    const r = JSON.parse(e.postData.contents);
+    const s = secret_();
+    if (!s || typeof r.key !== 'string' || !iguales_(r.key, s)) return out_({ ok: false, err: 'auth' });
+    let res;
+    switch (r.act) {
+      case 'ping': res = { ok: true, time: new Date().toISOString() }; break;
+      case 'echo': res = { ok: true, len: String(r.data || '').length }; break;
+      case 'put': res = put_(r); break;
+      case 'fin': res = fin_(r); break;
+      case 'list': res = list_(); break;
+      case 'getm': res = getm_(r); break;
+      case 'get': res = get_(r); break;
+      case 'del': res = del_(r); break;
+      default: res = { ok: false, err: 'acción desconocida' };
+    }
+    res.ms = Date.now() - t0;
+    return out_(res);
+  } catch (err) {
+    return out_({ ok: false, err: String((err && err.message) || err) });
+  }
+}
+
+function carpeta_(id, crear) {
+  const raiz = raiz_(), it = raiz.getFoldersByName(id);
+  if (it.hasNext()) return it.next();
+  return crear ? raiz.createFolder(id) : null;
+}
+
+function put_(r) {
+  if (!idOk_(r.id)) return { ok: false, err: 'id no válido' };
+  const n = Number(r.n);
+  if (!(n >= 1 && n <= 100000 && Math.floor(n) === n)) return { ok: false, err: 'n no válido' };
+  if (typeof r.data !== 'string' || r.data.length > MAX_B64) return { ok: false, err: 'trozo demasiado grande' };
+  const bytes = Utilities.base64Decode(r.data);
+  const h = hex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes));
+  if (h !== r.sha) return { ok: false, err: 'hash: el trozo llegó alterado' };
+  const f = carpeta_(r.id, true);
+  if (f.getFilesByName('manifest.json').hasNext()) return { ok: false, err: 'cerrada: la copia ya está terminada' };
+  const name = 'parte-' + ('00000' + n).slice(-5);
+  const ex = f.getFilesByName(name);
+  if (ex.hasNext()) {
+    const a = ex.next();
+    return a.getDescription() === h ? { ok: true, dup: true } : { ok: false, err: 'exists: ese trozo ya existe con otro contenido' };
+  }
+  const a = f.createFile(Utilities.newBlob(bytes, 'application/octet-stream', name));
+  a.setDescription(h);
+  return { ok: true, size: bytes.length };
+}
+
+function fin_(r) {
+  if (!idOk_(r.id)) return { ok: false, err: 'id no válido' };
+  const f = carpeta_(r.id, false);
+  if (!f) return { ok: false, err: 'no existe esa copia' };
+  if (f.getFilesByName('manifest.json').hasNext()) return { ok: false, err: 'exists: ya estaba terminada' };
+  if (typeof r.manifest !== 'string' || r.manifest.length > 1000000) return { ok: false, err: 'manifiesto no válido' };
+  let n = 0; const it = f.getFiles();
+  while (it.hasNext()) { if (it.next().getName().indexOf('parte-') === 0) n++; }
+  if (n !== Number(r.n)) return { ok: false, err: 'faltan trozos: hay ' + n + ' de ' + r.n };
+  f.createFile('manifest.json', r.manifest, 'application/json');
+  return { ok: true, partes: n };
+}
+
+function list_() {
+  const raiz = raiz_(), it = raiz.getFolders(), a = [];
+  while (it.hasNext()) {
+    const f = it.next(); let n = 0, sz = 0, m = false; const fi = f.getFiles();
+    while (fi.hasNext()) { const x = fi.next(); if (x.getName() === 'manifest.json') m = true; else { n++; sz += x.getSize(); } }
+    a.push({ id: f.getName(), fecha: f.getDateCreated().toISOString(), partes: n, bytes: sz, terminada: m });
+  }
+  a.sort(function (x, y) { return y.fecha.localeCompare(x.fecha); });
+  return { ok: true, copias: a.slice(0, 200) };
+}
+
+function getm_(r) {
+  if (!idOk_(r.id)) return { ok: false, err: 'id no válido' };
+  const f = carpeta_(r.id, false);
+  if (!f) return { ok: false, err: 'no existe esa copia' };
+  const it = f.getFilesByName('manifest.json');
+  if (!it.hasNext()) return { ok: false, err: 'copia sin terminar' };
+  return { ok: true, manifest: it.next().getBlob().getDataAsString() };
+}
+
+function get_(r) {
+  if (!idOk_(r.id)) return { ok: false, err: 'id no válido' };
+  const n = Number(r.n);
+  const f = carpeta_(r.id, false);
+  if (!f) return { ok: false, err: 'no existe esa copia' };
+  const it = f.getFilesByName('parte-' + ('00000' + n).slice(-5));
+  if (!it.hasNext()) return { ok: false, err: 'no existe ese trozo' };
+  const a = it.next();
+  return { ok: true, data: Utilities.base64Encode(a.getBlob().getBytes()), sha: a.getDescription() };
+}
+
+function del_(r) {
+  if (!idOk_(r.id) || String(r.id).indexOf(PRUEBA) !== 0) return { ok: false, err: 'solo se pueden borrar copias PRUEBA_' };
+  const f = carpeta_(r.id, false);
+  if (!f) return { ok: true, nada: true };
+  f.setTrashed(true);
+  return { ok: true };
+}
+</script>
+<script>
+const $=s=>document.querySelector(s),te=new TextEncoder();
+const hex=u=>[...new Uint8Array(u)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),MB=1048576,fm=n=>(n/MB).toFixed(1)+' MB',sec=ms=>(ms/1000).toFixed(1)+' s';
+const R={ping:[],limite:{},subida:{},bajada:{}},L=[];
+function log(m,k){const t=new Date().toLocaleTimeString('es-ES');L.push(t+' '+m);const d=document.createElement('div');d.className=k||'';d.textContent=t+' · '+m;$('#log').prepend(d)}
+$('#url').value=localStorage.getItem('pp_url')||'';$('#key').value=sessionStorage.getItem('pp_key')||'';
+$('#cp').onclick=async()=>{try{await navigator.clipboard.writeText($('#gs').textContent);log('Código del puente copiado ✅','ok')}catch{prompt('Copia el código:',$('#gs').textContent)}};
+/* utilidades */
+const toB64=u8=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.slice(f.result.indexOf(',')+1));f.readAsDataURL(new Blob([u8]))});
+const fromB64=async s=>new Uint8Array(await (await fetch('data:application/octet-stream;base64,'+s)).arrayBuffer());
+const sha=async u=>hex(await crypto.subtle.digest('SHA-256',u));
+function gen(seed,i,len){const u=new Uint32Array(Math.ceil(len/4));let x=((seed^Math.imul(i+1,0x9E3779B1))>>>0)||1;for(let k=0;k<u.length;k++){x^=x<<13;x^=x>>>17;x^=x<<5;x>>>=0;u[k]=x}return new Uint8Array(u.buffer,0,len)}
+async function kdf(pw,salt,iter){const b=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},b,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+const aad=(id,i,n)=>te.encode(id+':'+i+':'+n);
+async function call(act,p={},tries=3){const url=$('#url').value.trim(),key=$('#key').value;if(!/^https:\/\//.test(url)&&!/^http:\/\/localhost/.test(url))throw new Error('Pon la URL del puente (https://…/exec)');if(!key)throw new Error('Pon la clave del puente');
+localStorage.setItem('pp_url',url);sessionStorage.setItem('pp_key',key);let last;
+for(let i=1;i<=tries;i++){const ac=new AbortController(),to=setTimeout(()=>ac.abort(),180000),t0=performance.now();
+try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key,act,...p}),signal:ac.signal});const txt=await r.text();clearTimeout(to);let j;try{j=JSON.parse(txt)}catch{throw new Error('Respuesta no válida de Google: '+txt.replace(/\s+/g,' ').slice(0,140))}j._ms=Math.round(performance.now()-t0);j._try=i;return j}
+catch(e){clearTimeout(to);last=e.name=='AbortError'?new Error('tiempo agotado (180 s)'):e;if(/Pon la/.test(e.message))throw e;if(i<tries){R.subida.reintentos=(R.subida.reintentos||0)+1;log('⚠️ intento '+i+' falló ('+last.message+'); reintento…','w');await sleep(1500*i)}}}
+throw last}
+const need=j=>{if(!j.ok)throw new Error(j.err||'error');return j};
+async function run(f,btn){const b=btn&&$(btn);if(b)b.disabled=true;try{await f()}catch(e){log('❌ '+(e.message||e),'x')}finally{if(b)b.disabled=false}}
+/* 1 conexión */
+$('#b1').onclick=()=>run(async()=>{R.ping=[];for(let i=0;i<3;i++){let j;try{j=await call('ping',{},1)}catch(e){
+ let nc='';try{await fetch($('#url').value.trim(),{mode:'no-cors'});nc=' Pero la dirección sí responde: el navegador bloquea LEER la respuesta (CORS). Hay que revisar la implementación («Cualquier persona»).'}catch{nc=' La dirección tampoco responde sin leerla: revisa la URL y tu conexión.'}
+ R.ping.push('fallo');throw new Error('No se pudo leer la respuesta: '+e.message+'.'+nc)}
+ if(j.err=='auth'||j.ok===false)throw new Error(j.err=='auth'?'Clave del puente incorrecta (el puente sí responde).':j.err);R.ping.push(j._ms);log('Ping '+(i+1)+': '+j._ms+' ms (en Google: '+j.ms+' ms)','ok')}
+ R.conexion='OK, respuesta legible';log('Conexión correcta ✅','ok')},'#b1');
+/* 2 límite */
+$('#b2').onclick=()=>run(async()=>{R.limite={};for(const mb of [1,2,4,8,16,32,64]){const u=gen(7,mb,mb*MB),b=await toB64(u),t0=performance.now();let j;
+ try{j=await call('echo',{data:b},1)}catch(e){R.limite.falla=mb+' MB: '+e.message;log('❌ '+mb+' MB: '+e.message,'x');break}
+ if(!j.ok||j.len!==b.length){R.limite.falla=mb+' MB: '+(j.err||'llegó incompleto');log('❌ '+mb+' MB: '+(j.err||'llegó incompleto'),'x');break}
+ R.limite.ok=mb;log('✅ '+mb+' MB (base64 '+fm(b.length)+') en '+sec(performance.now()-t0)+' → '+(mb/((performance.now()-t0)/1000)).toFixed(2)+' MB/s','ok')}
+ log('Límite medido: '+(R.limite.ok||0)+' MB OK'+(R.limite.falla?' · primer fallo a '+R.limite.falla:' · sin fallos hasta 64 MB'),R.limite.falla?'w':'ok')},'#b2');
+/* 3 subida */
+$('#b3').onclick=()=>run(async()=>{const size=+$('#size').value*MB,ch=+$('#chunk').value*MB,n=Math.ceil(size/ch),seed=(Math.random()*4e9)>>>0,id='PRUEBA_'+new Date().toISOString().replace(/[-:T]/g,'').slice(0,14),iter=600000;
+const S=R.subida={tam:size/MB,trozo:ch/MB,n,reintentos:0};$('#pr').hidden=false;$('#pr').max=n;$('#pr').value=0;
+let t=performance.now();const salt=crypto.getRandomValues(new Uint8Array(16)),key=await kdf($('#pw').value,salt,iter);S.pbkdf2ms=Math.round(performance.now()-t);log('Clave derivada (PBKDF2, '+iter+' vueltas): '+S.pbkdf2ms+' ms');
+const parts=[];let tc=0,tb=0,tu=0,srv=0,bytes=0;const T0=performance.now();
+for(let i=0;i<n;i++){const len=Math.min(ch,size-i*ch);const plain=gen(seed,i,len);
+ t=performance.now();const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad(id,i+1,n)},key,plain)),blob=new Uint8Array(12+ct.length);blob.set(iv);blob.set(ct,12);tc+=performance.now()-t;
+ t=performance.now();const h=await sha(blob),d=await toB64(blob);tb+=performance.now()-t;
+ t=performance.now();const j=need(await call('put',{id,n:i+1,data:d,sha:h}));const dt=performance.now()-t;tu+=dt;srv+=j.ms||0;bytes+=blob.length;parts.push({n:i+1,len:blob.length,sha:h});
+ $('#pr').value=i+1;$('#pt').textContent='Trozo '+(i+1)+'/'+n+' · '+(len/MB/(dt/1000)).toFixed(2)+' MB/s';log('Trozo '+(i+1)+'/'+n+' subido: '+sec(dt)+' (Google: '+sec(j.ms||0)+(j.dup?', ya existía':'')+')')}
+const man=JSON.stringify({fmt:'gd-backup-1',kdf:'PBKDF2-SHA256',iter,salt:btoa(String.fromCharCode(...salt)),cipher:'AES-256-GCM, iv(12)+ct, AAD=id:n:total',chunk:ch,total:size,n,parts,testSeed:seed});
+need(await call('fin',{id,n,manifest:man}));const tot=performance.now()-T0;
+Object.assign(S,{id,segundos:+(tot/1000).toFixed(1),MBps:+(size/MB/(tot/1000)).toFixed(2),cifradoMsPorMB:Math.round(tc/(size/MB)),hashB64MsPorMB:Math.round(tb/(size/MB)),subidaS:+(tu/1000).toFixed(1),googleS:+(srv/1000).toFixed(1)});
+$('#pt').textContent='';log('✅ Copia '+id+' subida: '+fm(size)+' en '+sec(tot)+' ('+S.MBps+' MB/s). Cifrar: '+S.cifradoMsPorMB+' ms/MB · hash+base64: '+S.hashB64MsPorMB+' ms/MB · reintentos: '+S.reintentos,'ok')},'#b3');
+/* 4 lista */
+async function listar(){const j=need(await call('list'));const s=$('#sel');s.innerHTML='';j.copias.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.id+' · '+c.partes+' trozos · '+fm(c.bytes)+(c.terminada?'':' · SIN TERMINAR');s.appendChild(o)});log(j.copias.length+' copia(s) en Drive','ok');return j.copias}
+$('#b4').onclick=()=>run(listar,'#b4');
+/* 5 y 6 restaurar */
+async function restaurar(pw,solo1){const id=$('#sel').value;if(!id)throw new Error('Elige una copia (botón 4)');const m=JSON.parse(need(await call('getm',{id})).manifest);
+let t=performance.now();const key=await kdf(pw,Uint8Array.from(atob(m.salt),c=>c.charCodeAt(0)),m.iter);const B=R.bajada={id,n:m.n,pbkdf2ms:Math.round(performance.now()-t)};
+$('#pr').hidden=false;$('#pr').max=m.n;$('#pr').value=0;const T0=performance.now();let ok=0,bytes=0,tdl=0;
+for(let i=0;i<(solo1?1:m.n);i++){const p=m.parts[i];t=performance.now();const j=need(await call('get',{id,n:p.n}));tdl+=performance.now()-t;
+ const blob=await fromB64(j.data);if(j.sha!==p.sha||await sha(blob)!==p.sha)throw new Error('Trozo '+p.n+': el hash no coincide (descarga dañada)');
+ let plain;try{plain=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:blob.slice(0,12),additionalData:aad(id,p.n,m.n)},key,blob.slice(12)))}catch{throw new Error('Trozo '+p.n+': no se pudo descifrar (contraseña incorrecta o trozo alterado)')}
+ if(m.testSeed!=null&&await sha(plain)!==await sha(gen(m.testSeed,i,plain.length)))throw new Error('Trozo '+p.n+': descifrado pero el contenido no es el original');
+ ok++;bytes+=plain.length;$('#pr').value=i+1;log('Trozo '+p.n+'/'+m.n+' descargado, verificado y descifrado ✅ ('+sec(performance.now()-t)+')')}
+const tot=performance.now()-T0;Object.assign(B,{trozosOk:ok,segundos:+(tot/1000).toFixed(1),MBps:+(bytes/MB/(tot/1000)).toFixed(2)});return B}
+$('#b5').onclick=()=>run(async()=>{const B=await restaurar($('#pw').value,false);log('✅ Restauración completa: '+B.trozosOk+' trozos, '+B.segundos+' s ('+B.MBps+' MB/s). Todo coincide con el original.','ok')},'#b5');
+$('#b6').onclick=()=>run(async()=>{try{await restaurar($('#pw').value+'x',true)}catch(e){if(/no se pudo descifrar/.test(e.message)){R.contrasenaMala='detectada';return log('✅ Con contraseña equivocada se rechaza (no devuelve datos basura).','ok')}throw e}R.contrasenaMala='NO detectada';log('❌ Con contraseña equivocada NO falló: revisar.','x')},'#b6');
+/* informe y limpieza */
+$('#b7').onclick=()=>run(async()=>{const t=['INFORME PRUEBA PUENTE · '+new Date().toLocaleString('es-ES'),'Navegador: '+navigator.userAgent,'Conexión: '+(R.conexion||'no probada')+' · ping ms: '+R.ping.join(', '),
+'Límite de petición: OK hasta '+(R.limite.ok||'?')+' MB'+(R.limite.falla?' · primer fallo: '+R.limite.falla:''),'Subida: '+JSON.stringify(R.subida),'Bajada: '+JSON.stringify(R.bajada),'Contraseña equivocada: '+(R.contrasenaMala||'no probada'),'','Registro:',...L.slice(-40)].join('\n');
+try{await navigator.clipboard.writeText(t);log('Informe copiado ✅ (pégalo en el chat)','ok')}catch{prompt('Copia este informe:',t)}});
+$('#b8').onclick=()=>run(async()=>{const c=(await listar()).filter(x=>x.id.startsWith('PRUEBA_'));if(!c.length)return log('No hay copias PRUEBA_');if(!confirm('¿Mandar a la papelera '+c.length+' copia(s) de prueba?'))return;for(const x of c)need(await call('del',{id:x.id}));log('Copias de prueba enviadas a la papelera de Drive ✅','ok');await listar()},'#b8');
+</script></body></html>
