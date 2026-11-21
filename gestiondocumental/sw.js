@@ -1,6 +1,6 @@
 // Gestión documental · service worker. Subir CACHE en cada versión (junto con VER del index.html).
 // Solo guarda la propia aplicación (HTML, manifiesto, iconos). Nunca toca IndexedDB ni los datos.
-const CACHE='gestion-documental-v6';
+const CACHE='gestion-documental-v7';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('gestion-documental-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
