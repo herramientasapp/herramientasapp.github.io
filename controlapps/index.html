@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f6f2"><title>Mi mapa de aplicaciones · V4</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f6f2"><title>Mi mapa de aplicaciones · V5</title>
 <style>
 :root{--bg:#f7f6f2;--paper:#fff;--ink:#202522;--muted:#747a74;--line:#e6e7e1;--green:#2f644f;--green-soft:#eaf2ed;--amber:#976a23;--amber-soft:#fbf3e5;--red:#9d4c40;--red-soft:#faece9;--blue:#536b8b;--blue-soft:#edf1f7;--radius:14px;--shadow:0 8px 28px #29372d0b;--scale:1;--tone-amber:#fff0c2;--tone-rose:#fde2dc;--tone-green:#dff1e5;--tone-blue:#dfebfa;--tone-violet:#eee5fa;--tone-slate:#e9ecef}
 *{box-sizing:border-box}
@@ -17,24 +17,29 @@ button{cursor:pointer}
 .toolbar{padding:5px 7px;display:flex;justify-content:space-between;align-items:center;gap:6px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .toolbar-left,.toolbar-right{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .toolbar-right{margin-left:auto}
-.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 7px;color:var(--ink);font-weight:600;display:inline-flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap}
+.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 7px;color:var(--ink);font-weight:600;display:inline-flex;gap:5px;align-items:center;justify-content:center;white-space:nowrap}
 .btn:hover{border-color:#aeb9b0;background:#fafbf9}
 .btn:disabled{opacity:.4;cursor:default}
 .btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
 .btn.primary:hover{background:#244f3d}
 .btn.danger{color:var(--red)}
+.btn.has-filters{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.btn.needs-backup{border-color:#e2bd73;background:#fffaf0;color:#75530a}
+.backup-dot{display:none;width:6px;height:6px;border-radius:50%;background:#d18b17;flex:0 0 auto}
+.btn.needs-backup .backup-dot{display:inline-block}
 .control{height:28px;border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:#fff;color:var(--ink);font-size:10px}
 .toolbar .btn,.toolbar .control{height:28px;padding:3px 7px;font-size:10px}
-.select-sort{min-width:130px}
+.select-sort{min-width:126px}
 .zoom-group{display:inline-flex;gap:2px;align-items:center}
 .zoom-btn{min-width:26px;padding:3px 6px;font-weight:750;font-size:12px !important;line-height:1}
 .app-version-badge{font-size:9px;font-weight:700;color:var(--green);background:var(--green-soft);padding:3px 7px;border-radius:999px;white-space:nowrap;border:1px solid #d2e4d8}
 .row-count,.save-status{font-size:9px;color:var(--muted);white-space:nowrap}
 .save-status{max-width:135px;overflow:hidden;text-overflow:ellipsis}
-.filters-panel:not([hidden]){display:flex;align-items:end;gap:8px;padding:6px 8px;border-top:1px solid var(--line);background:#fbfbf9;flex-wrap:wrap}
+.filters-panel:not([hidden]){display:flex;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid var(--line);background:#fbfbf9;flex-wrap:wrap}
 .filters-panel label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
 .filters-panel .control{height:26px;font-size:10px;padding:2px 6px}
-.filters-panel label:first-child .control{width:min(40vw,280px)}
+.filters-panel label:first-child .control{width:min(36vw,240px)}
+.filters-clear{height:26px;font-size:10px;padding:2px 8px}
 .mobile-hint{display:none}
 .table-wrap{overflow:auto;max-height:calc(100vh - 105px);max-height:calc(100dvh - 105px);min-height:160px;-webkit-overflow-scrolling:touch}
 table{border-collapse:separate;border-spacing:0;table-layout:fixed}
@@ -51,9 +56,10 @@ thead .app-col{z-index:3;background:#fbfbf9}
 .req-col{width:calc(78px * var(--scale))}
 .progress-col{width:calc(68px * var(--scale))}
 .url-col{width:calc(140px * var(--scale))}
-.location-col{width:calc(225px * var(--scale))}
-.notes-col{width:calc(235px * var(--scale))}
+.location-col{width:calc(175px * var(--scale))}
+.notes-col{width:calc(285px * var(--scale))}
 .actions-col{width:calc(32px * var(--scale))}
+.actions-col.with-move{width:calc(50px * var(--scale))}
 .appname-btn{background:none;border:0;padding:0;margin:0;color:var(--ink);font-weight:700;font-size:calc(10px * var(--scale));line-height:1.2;letter-spacing:-.015em;text-align:left;display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appname-btn:hover,.appname-btn:focus-visible{color:var(--green);text-decoration:underline;outline:none}
 .appdesc{font-size:calc(8px * var(--scale));line-height:1.15;color:var(--muted);margin-top:1px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -78,7 +84,11 @@ thead .app-col{z-index:3;background:#fbfbf9}
 .loc-line{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:calc(8.5px * var(--scale));line-height:1.2;color:#4f5750}
 .loc-target{color:var(--muted)}
 .notes-text{font-size:calc(8px * var(--scale));line-height:1.15;color:#5b625b;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;word-break:break-word;max-height:calc(3 * 1.15 * 8px * var(--scale))}
-.row-actions{display:flex;gap:0;justify-content:center}
+.row-actions{display:flex;gap:2px;justify-content:center;align-items:center}
+.move-stack{display:flex;flex-direction:column;gap:1px}
+.mini-move{border:0;background:transparent;color:#7a817a;padding:0;width:calc(14px * var(--scale));height:calc(11px * var(--scale));line-height:1;font-size:calc(7px * var(--scale));border-radius:3px;display:grid;place-items:center}
+.mini-move:hover:not(:disabled){background:#eef1ec;color:var(--ink)}
+.mini-move:disabled{opacity:.25;cursor:default}
 .icon-btn{border:1px solid transparent;background:transparent;color:#7a817a;border-radius:6px;padding:2px 4px;font-size:11px}
 td .icon-btn{font-size:calc(10px * var(--scale))}
 .icon-btn:hover{border-color:var(--line);background:#fff;color:var(--ink)}
@@ -127,7 +137,7 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
   .toolbar-right{margin-left:0}
   .mobile-hint{display:block;padding:3px 7px;background:#f8f8f5;color:var(--muted);font-size:8px;border-bottom:1px solid var(--line)}
   .table-wrap{max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px)}
-  .filters-panel label{flex:1 1 130px}
+  .filters-panel label{flex:1 1 135px}
 }
 @media(max-width:520px){
   .shell{padding:3px}
@@ -185,9 +195,9 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
     </div>
     <div class="toolbar-right">
       <span id="rowCount" class="row-count">0 aplicaciones</span>
-      <span class="app-version-badge" title="Versión de esta herramienta">Versión V4</span>
+      <span class="app-version-badge" title="Versión de esta herramienta">Versión V5</span>
       <button class="btn" id="importBtn" type="button" title="Importar una copia JSON">Importar</button>
-      <button class="btn" id="exportBtn" type="button" title="Descargar copia JSON">Exportar JSON</button>
+      <button class="btn" id="exportBtn" type="button" title="Descargar copia JSON">Exportar JSON<span class="backup-dot" aria-hidden="true"></span></button>
       <span id="saveStatus" class="save-status" role="status" title="Guardado automático local">Abriendo…</span>
       <input class="import-input" type="file" id="importFile" accept=".json,application/json">
     </div>
@@ -196,6 +206,9 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
     <label><span>Buscar</span><input class="control" id="searchExpanded" type="search" placeholder="Nombre, descripción, URL o notas" aria-label="Buscar aplicaciones"></label>
     <label><span>Uso</span><select class="control" id="filterStatusExpanded" aria-label="Filtrar por uso"><option value="">Todos los usos</option><option>Activa</option><option>Ocasional</option><option>Aparcada</option></select></label>
     <label><span>Prioridad</span><select class="control" id="filterPriorityExpanded" aria-label="Filtrar por prioridad"><option value="">Todas las prioridades</option><option>Imprescindible</option><option>Importante</option><option>Normal</option><option>Baja</option></select></label>
+    <label><span>Estado req.</span><select class="control" id="filterReqStateExpanded" aria-label="Filtrar por estado de requisitos"><option value="">Cualquier estado</option></select></label>
+    <label><span>Requisito</span><select class="control" id="filterReqIdExpanded" aria-label="Filtrar por requisito específico"><option value="">Cualquier requisito</option></select></label>
+    <button class="btn filters-clear" id="clearFiltersBtn" type="button" hidden>Limpiar</button>
   </div>
   <div class="mobile-hint">Desliza horizontalmente para ver todos los requisitos.</div>
   <div class="table-wrap" id="tableWrap"></div>
@@ -259,8 +272,11 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION='V4';
+const APP_VERSION='V5';
 const SCALE_KEY='app-tracker-scale';
+const LAST_EXPORT_KEY='app-tracker-last-export';
+const LAST_MODIFIED_KEY='app-tracker-last-modified';
+const BACKUP_REMINDER_MS=7*24*60*60*1000;
 const SCALE_MIN=0.85,SCALE_MAX=1.75,SCALE_STEP=0.15;
 const DEFAULTS={version:1,requirements:[{id:'css',name:'CSS común'},{id:'security',name:'Seguridad (PIN/huella)'},{id:'local-encryption',name:'Cifrado local'},{id:'json-encryption',name:'Cifrado JSON'},{id:'local-storage',name:'Almacenamiento local'},{id:'cloud',name:'Copia en Drive'},{id:'pwa',name:'PWA'},{id:'features',name:'Funciones al día'},{id:'domain',name:'Subdominio y rutas'}],states:['Pendiente','En curso','Hecho','Bloqueado'],stateColors:{Pendiente:'amber','En curso':'blue',Hecho:'green',Bloqueado:'rose'},apps:[]};
 let data=structuredClone(DEFAULTS);
@@ -273,6 +289,44 @@ const STATE_PALETTE=[{id:'amber',name:'Amarillo'},{id:'rose',name:'Coral'},{id:'
 function defaultTone(state){return ({Pendiente:'amber','En curso':'blue',Hecho:'green',Bloqueado:'rose'})[state]||'slate'}
 function colorFor(state){return state==='No aplica'?'none':(data.stateColors?.[state]||defaultTone(state))}
 function toast(text){const el=get('toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
+
+function formatAge(ts){
+  if(!ts)return 'nunca';
+  const mins=Math.floor((Date.now()-ts)/60000);
+  if(mins<2)return 'hace un momento';
+  if(mins<60)return `hace ${mins} min`;
+  const hours=Math.floor(mins/60);
+  if(hours<24)return `hace ${hours} h`;
+  const days=Math.floor(hours/24);
+  return `hace ${days} día${days===1?'':'s'}`;
+}
+
+function updateBackupIndicator(){
+  const btn=get('exportBtn');
+  if(!data.apps.length){
+    btn.classList.remove('needs-backup');
+    btn.title='Descargar copia JSON';
+    return;
+  }
+  let lastExport=0,lastModified=0;
+  try{
+    lastExport=Number(localStorage.getItem(LAST_EXPORT_KEY)||0);
+    lastModified=Number(localStorage.getItem(LAST_MODIFIED_KEY)||0);
+  }catch(_){}
+  if(!lastExport){
+    btn.classList.add('needs-backup');
+    btn.title='Recomendado: aún no has exportado una copia JSON';
+  }else if(lastModified>lastExport){
+    btn.classList.add('needs-backup');
+    btn.title=`Hay cambios desde tu última copia JSON (${formatAge(lastExport)})`;
+  }else if(Date.now()-lastExport>BACKUP_REMINDER_MS){
+    btn.classList.add('needs-backup');
+    btn.title=`Recomendado exportar copia JSON (última ${formatAge(lastExport)})`;
+  }else{
+    btn.classList.remove('needs-backup');
+    btn.title=`Copia JSON al día (exportada ${formatAge(lastExport)})`;
+  }
+}
 
 function applyScale(next,announce=false){
   uiScale=Math.min(SCALE_MAX,Math.max(SCALE_MIN,Math.round(next*100)/100));
@@ -291,17 +345,99 @@ get('fontMinusBtn').onclick=()=>applyScale(uiScale-SCALE_STEP,true);
 
 function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open('app-tracker',1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('workspace'))request.result.createObjectStore('workspace')};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('No se pudo abrir IndexedDB'));request.onblocked=()=>reject(new Error('La base de datos está bloqueada por otra pestaña'))})}
 function readSavedData(){return new Promise((resolve,reject)=>{const request=database.transaction('workspace','readonly').objectStore('workspace').get('data');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('No se pudieron leer los datos'))})}
-function saveData(){const snapshot=structuredClone(data);const version=++changeVersion;get('saveStatus').textContent='Guardando…';saveQueue=saveQueue.then(()=>new Promise((resolve,reject)=>{const transaction=database.transaction('workspace','readwrite');transaction.objectStore('workspace').put(snapshot,'data');transaction.oncomplete=resolve;transaction.onerror=()=>reject(transaction.error||new Error('No se pudieron guardar los datos'));transaction.onabort=()=>reject(transaction.error||new Error('El guardado se canceló'))})).then(()=>{if(version===changeVersion)get('saveStatus').textContent='Guardado automáticamente en este navegador'}).catch(error=>{console.error('Error guardando en IndexedDB:',error);get('saveStatus').textContent='Error al guardar; exporta una copia JSON';toast('No se pudo guardar el cambio. Exporta una copia JSON.')});return saveQueue}
-async function initializeStorage(){try{if(!('indexedDB' in window))throw new Error('IndexedDB no está disponible en este navegador');database=await openDatabase();const saved=await readSavedData();if(saved&&Array.isArray(saved.apps)&&Array.isArray(saved.requirements)&&Array.isArray(saved.states)){data={...DEFAULTS,...saved,stateColors:{...DEFAULTS.stateColors,...(saved.stateColors||{})},apps:saved.apps.map(a=>({...a,statuses:a.statuses||{}}))}}render();get('saveStatus').textContent=saved?'Datos recuperados de este navegador':'Guardado automático activado'}catch(error){console.error('Error abriendo IndexedDB:',error);render();get('saveStatus').textContent='Almacenamiento local no disponible; exporta JSON manualmente';toast('No se pudo abrir el almacenamiento local. Exporta copias JSON.')}}
+function saveData(markModified=true){
+  const snapshot=structuredClone(data);
+  const version=++changeVersion;
+  if(markModified){try{localStorage.setItem(LAST_MODIFIED_KEY,String(Date.now()))}catch(_){}}
+  updateBackupIndicator();
+  get('saveStatus').textContent='Guardando…';
+  saveQueue=saveQueue.then(()=>new Promise((resolve,reject)=>{
+    const transaction=database.transaction('workspace','readwrite');
+    transaction.objectStore('workspace').put(snapshot,'data');
+    transaction.oncomplete=resolve;
+    transaction.onerror=()=>reject(transaction.error||new Error('No se pudieron guardar los datos'));
+    transaction.onabort=()=>reject(transaction.error||new Error('El guardado se canceló'));
+  })).then(()=>{
+    if(version===changeVersion)get('saveStatus').textContent='Guardado automáticamente en este navegador';
+  }).catch(error=>{
+    console.error('Error guardando en IndexedDB:',error);
+    get('saveStatus').textContent='Error al guardar; exporta una copia JSON';
+    toast('No se pudo guardar el cambio. Exporta una copia JSON.');
+  });
+  return saveQueue;
+}
+
+async function initializeStorage(){
+  try{
+    if(!('indexedDB' in window))throw new Error('IndexedDB no está disponible en este navegador');
+    database=await openDatabase();
+    const saved=await readSavedData();
+    if(saved&&Array.isArray(saved.apps)&&Array.isArray(saved.requirements)&&Array.isArray(saved.states)){
+      data={...DEFAULTS,...saved,stateColors:{...DEFAULTS.stateColors,...(saved.stateColors||{})},apps:saved.apps.map(a=>({...a,statuses:a.statuses||{}}))};
+    }
+    syncFilterSelectors();
+    render();
+    updateBackupIndicator();
+    get('saveStatus').textContent=saved?'Datos recuperados de este navegador':'Guardado automático activado';
+  }catch(error){
+    console.error('Error abriendo IndexedDB:',error);
+    syncFilterSelectors();
+    render();
+    updateBackupIndicator();
+    get('saveStatus').textContent='Almacenamiento local no disponible; exporta JSON manualmente';
+    toast('No se pudo abrir el almacenamiento local. Exporta copias JSON.');
+  }
+}
 
 function statusOptions(){return [...data.states,'No aplica']}
 function progress(app){const vals=data.requirements.map(r=>app.statuses?.[r.id]||'Pendiente').filter(s=>s!=='No aplica');return vals.length?Math.round(vals.filter(s=>s==='Hecho').length/vals.length*100):100}
 function normalizeUrl(raw){const val=String(raw||'').trim();if(!val)return '';if(/^(javascript|data|vbscript):/i.test(val))return '';if(/^https?:\/\//i.test(val))return val;if(/^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(val)||/^localhost(:\d+)?([/:?#].*)?$/i.test(val))return 'https://'+val;return ''}
 function displayUrl(raw){return String(raw||'').trim().replace(/^https?:\/\//i,'').replace(/\/$/,'')}
 
+function syncFilterSelectors(){
+  const stateSel=get('filterReqStateExpanded');
+  const prevState=stateSel.value;
+  stateSel.innerHTML='<option value="">Cualquier estado</option><option value="__INCOMPLETE__">Con pendientes (&lt;100%)</option>'+data.states.map(s=>`<option value="${esc(s)}">Con «${esc(s)}»</option>`).join('');
+  stateSel.value=[...stateSel.options].some(o=>o.value===prevState)?prevState:'';
+
+  const reqSel=get('filterReqIdExpanded');
+  const prevReq=reqSel.value;
+  reqSel.innerHTML='<option value="">Cualquier requisito</option>'+data.requirements.map(r=>`<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+  reqSel.value=[...reqSel.options].some(o=>o.value===prevReq)?prevReq:'';
+}
+
+function matchesRequirementFilters(app,reqState,reqId){
+  if(!reqState&&!reqId)return true;
+  if(reqId){
+    const val=app.statuses?.[reqId]||'Pendiente';
+    if(reqState==='__INCOMPLETE__')return val!=='Hecho'&&val!=='No aplica';
+    if(reqState)return val===reqState;
+    return val!=='No aplica';
+  }
+  if(reqState==='__INCOMPLETE__')return progress(app)<100;
+  return data.requirements.some(r=>(app.statuses?.[r.id]||'Pendiente')===reqState);
+}
+
 function render(){
-  const q=get('searchExpanded').value.trim().toLowerCase(),fs=get('filterStatusExpanded').value,fp=get('filterPriorityExpanded').value,sort=get('sort').value;
-  let list=data.apps.filter(a=>(!q||`${a.name} ${a.purpose||''} ${a.url||''} ${a.repo||''} ${a.notes||''}`.toLowerCase().includes(q))&&(!fp||a.priority===fp)&&(!fs||a.usage===fs));
+  const q=get('searchExpanded').value.trim().toLowerCase();
+  const fs=get('filterStatusExpanded').value;
+  const fp=get('filterPriorityExpanded').value;
+  const frs=get('filterReqStateExpanded').value;
+  const fri=get('filterReqIdExpanded').value;
+  const sort=get('sort').value;
+
+  const activeFilters=[q,fs,fp,frs,fri].filter(Boolean).length;
+  const toggleBtn=get('toggleFilters');
+  toggleBtn.textContent=activeFilters?`Buscar y filtrar (${activeFilters})`:'Buscar y filtrar';
+  toggleBtn.classList.toggle('has-filters',activeFilters>0);
+  get('clearFiltersBtn').hidden=activeFilters===0;
+
+  let list=data.apps.filter(a=>
+    (!q||`${a.name} ${a.purpose||''} ${a.url||''} ${a.repo||''} ${a.notes||''}`.toLowerCase().includes(q))&&
+    (!fp||a.priority===fp)&&
+    (!fs||a.usage===fs)&&
+    matchesRequirementFilters(a,frs,fri)
+  );
   if(sort==='name')list.sort((a,b)=>a.name.localeCompare(b.name,'es'));
   if(sort==='priority'){const rank={'Imprescindible':0,'Importante':1,'Normal':2,'Baja':3};list.sort((a,b)=>(rank[a.priority]??4)-(rank[b.priority]??4)||a.name.localeCompare(b.name,'es'))}
   if(sort==='progress')list.sort((a,b)=>progress(b)-progress(a));
@@ -314,16 +450,18 @@ function render(){
   get('rowCount').textContent=`${list.length} de ${data.apps.length} aplicaciones`;
 
   if(!list.length){
-    get('tableWrap').innerHTML=`<div class="empty"><h3>${data.apps.length?'No hay resultados':'Empieza con tu primera aplicación'}</h3><p>${data.apps.length?'Prueba a cambiar los filtros.':'Añade una app para empezar a ver el mapa de progreso.'}</p></div>`;
+    get('tableWrap').innerHTML=`<div class="empty"><h3>${data.apps.length?'No hay resultados':'Empieza con tu primera aplicación'}</h3><p>${data.apps.length?'Prueba a cambiar o limpiar los filtros.':'Añade una app para empezar a ver el mapa de progreso.'}</p></div>`;
     return;
   }
 
-  const totalBaseWidth=135+56+74+62+(data.requirements.length*78)+68+140+225+235+32;
+  const canReorder=sort==='manual'&&activeFilters===0&&list.length>1;
+  const actionsWidth=canReorder?50:32;
+  const totalBaseWidth=135+56+74+62+(data.requirements.length*78)+68+140+175+285+actionsWidth;
   const heads=data.requirements.map(r=>`<th class="req-col">${esc(r.name)}</th>`).join('');
   const priorities={'Imprescindible':'p-essential','Importante':'p-important','Normal':'p-normal','Baja':'p-low'};
   const uses={'Activa':'p-active','Ocasional':'p-occasional','Aparcada':'p-parked'};
 
-  const rows=list.map(a=>{
+  const rows=list.map((a,idx)=>{
     const pr=progress(a);
     const rawLink=(a.url||'').trim()||(a.repo||'').trim();
     const href=normalizeUrl(rawLink);
@@ -335,6 +473,9 @@ function render(){
     const curLoc=(a.current||'').trim();
     const tgtLoc=(a.target||'').trim();
     const cleanNotes=String(a.notes||'').replace(/[\r\n]+/g,' ').replace(/\s{2,}/g,' ').trim();
+    const moveControls=canReorder
+      ? `<div class="move-stack"><button type="button" class="mini-move" data-move-app="${esc(a.id)}" data-dir="-1" aria-label="Subir ${esc(a.name)}" title="Subir" ${idx===0?'disabled':''}>▲</button><button type="button" class="mini-move" data-move-app="${esc(a.id)}" data-dir="1" aria-label="Bajar ${esc(a.name)}" title="Bajar" ${idx===list.length-1?'disabled':''}>▼</button></div>`
+      : '';
 
     return `<tr>
       <td class="app-col">
@@ -355,7 +496,7 @@ function render(){
         <div class="loc-line loc-target" title="Destino deseado: ${esc(tgtLoc||'Sin definir')}">→ ${esc(tgtLoc||'—')}</div>
       </td>
       <td class="notes-col" title="${esc(a.notes||'')}"><div class="notes-text">${esc(cleanNotes||'—')}</div></td>
-      <td class="actions-col"><div class="row-actions"><button type="button" class="icon-btn" data-edit-app="${esc(a.id)}" aria-label="Editar ${esc(a.name)}" title="Editar">✎</button></div></td>
+      <td class="actions-col ${canReorder?'with-move':''}"><div class="row-actions">${moveControls}<button type="button" class="icon-btn" data-edit-app="${esc(a.id)}" aria-label="Editar ${esc(a.name)}" title="Editar">✎</button></div></td>
     </tr>`;
   }).join('');
 
@@ -370,7 +511,7 @@ function render(){
       <th class="url-col">URL</th>
       <th class="location-col">Ubicación → destino</th>
       <th class="notes-col">Pendiente particular</th>
-      <th class="actions-col"></th>
+      <th class="actions-col ${canReorder?'with-move':''}"></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
@@ -384,6 +525,14 @@ function render(){
     saveData();
   }));
   document.querySelectorAll('[data-edit-app]').forEach(el=>el.addEventListener('click',()=>openApp(el.dataset.editApp)));
+  document.querySelectorAll('[data-move-app]').forEach(el=>el.addEventListener('click',()=>{
+    const idx=data.apps.findIndex(x=>x.id===el.dataset.moveApp);
+    const to=idx+Number(el.dataset.dir);
+    if(idx<0||to<0||to>=data.apps.length)return;
+    [data.apps[idx],data.apps[to]]=[data.apps[to],data.apps[idx]];
+    render();
+    saveData();
+  }));
 }
 
 function openApp(id){
@@ -470,6 +619,16 @@ get('toggleFilters').onclick=()=>{
 get('searchExpanded').addEventListener('input',render);
 get('filterPriorityExpanded').onchange=render;
 get('filterStatusExpanded').onchange=render;
+get('filterReqStateExpanded').onchange=render;
+get('filterReqIdExpanded').onchange=render;
+get('clearFiltersBtn').onclick=()=>{
+  get('searchExpanded').value='';
+  get('filterStatusExpanded').value='';
+  get('filterPriorityExpanded').value='';
+  get('filterReqStateExpanded').value='';
+  get('filterReqIdExpanded').value='';
+  render();
+};
 get('sort').onchange=render;
 
 get('exportBtn').onclick=()=>{
@@ -479,6 +638,8 @@ get('exportBtn').onclick=()=>{
   a.download=`mapa-aplicaciones-${APP_VERSION}-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  try{localStorage.setItem(LAST_EXPORT_KEY,String(Date.now()))}catch(_){}
+  updateBackupIndicator();
   toast('Copia JSON descargada');
 };
 get('importBtn').onclick=()=>get('importFile').click();
@@ -495,8 +656,9 @@ get('importFile').onchange=async e=>{
       states:[...new Set(parsed.states.map(String).filter(s=>s&&s!=='No aplica'))],
       apps:parsed.apps.map(a=>({...a,id:String(a.id||uid()),name:String(a.name||'Aplicación'),statuses:a.statuses||{}}))
     };
+    syncFilterSelectors();
     render();
-    await saveData();
+    await saveData(true);
     toast('JSON importado y guardado correctamente');
   }catch(err){
     alert('No se pudo importar. Comprueba que sea un JSON exportado desde esta herramienta.');
@@ -537,6 +699,7 @@ function renderSettings(){
     const from=Number(b.dataset.moveReq),to=from+Number(b.dataset.direction);
     if(to<0||to>=data.requirements.length)return;
     [data.requirements[from],data.requirements[to]]=[data.requirements[to],data.requirements[from]];
+    syncFilterSelectors();
     renderSettings();
     render();
     saveData();
@@ -548,6 +711,7 @@ function renderSettings(){
     const idx=+b.dataset.delReq,req=data.requirements[idx];
     if(!req||!confirm(`¿Eliminar el requisito “${req.name}”? Esta acción quitará su columna de la tabla.`))return;
     data.requirements.splice(idx,1);
+    syncFilterSelectors();
     renderSettings();
     render();
     saveData();
@@ -573,6 +737,7 @@ function renderSettings(){
     delete data.stateColors[removed];
     const fallback=data.states[0]||'Pendiente';
     data.apps.forEach(a=>Object.keys(a.statuses||{}).forEach(k=>{if(a.statuses[k]===removed)a.statuses[k]=fallback}));
+    syncFilterSelectors();
     renderSettings();
     render();
     saveData();
@@ -581,10 +746,11 @@ function renderSettings(){
 }
 
 get('manageBtn').onclick=()=>{renderSettings();get('manageModal').classList.add('open')};
-get('addReqBtn').onclick=()=>{syncSettingsDraft();data.requirements.push({id:uid(),name:'Nuevo requisito'});renderSettings();render();saveData()};
-get('addStateBtn').onclick=()=>{syncSettingsDraft();data.states.push('Nuevo estado');renderSettings();render();saveData()};
+get('addReqBtn').onclick=()=>{syncSettingsDraft();data.requirements.push({id:uid(),name:'Nuevo requisito'});syncFilterSelectors();renderSettings();render();saveData()};
+get('addStateBtn').onclick=()=>{syncSettingsDraft();data.states.push('Nuevo estado');syncFilterSelectors();renderSettings();render();saveData()};
 get('saveConfigBtn').onclick=()=>{
   syncSettingsDraft();
+  syncFilterSelectors();
   render();
   closeModal('manageModal');
   saveData();
