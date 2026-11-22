@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f6f2"><title>Mi mapa de aplicaciones · V5</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f6f2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Apps status"><meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/apps-status-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apps-status-icon.svg"><title>Apps status · V6</title>
 <style>
 :root{--bg:#f7f6f2;--paper:#fff;--ink:#202522;--muted:#747a74;--line:#e6e7e1;--green:#2f644f;--green-soft:#eaf2ed;--amber:#976a23;--amber-soft:#fbf3e5;--red:#9d4c40;--red-soft:#faece9;--blue:#536b8b;--blue-soft:#edf1f7;--radius:14px;--shadow:0 8px 28px #29372d0b;--scale:1;--tone-amber:#fff0c2;--tone-rose:#fde2dc;--tone-green:#dff1e5;--tone-blue:#dfebfa;--tone-violet:#eee5fa;--tone-slate:#e9ecef}
 *{box-sizing:border-box}
@@ -60,7 +60,7 @@ thead .app-col{z-index:3;background:#fbfbf9}
 .notes-col{width:calc(285px * var(--scale))}
 .actions-col{width:calc(32px * var(--scale))}
 .actions-col.with-move{width:calc(50px * var(--scale))}
-.appname-btn{background:none;border:0;padding:0;margin:0;color:var(--ink);font-weight:700;font-size:calc(10px * var(--scale));line-height:1.2;letter-spacing:-.015em;text-align:left;display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appname-line{display:flex;align-items:center;gap:0;min-width:0}.completion-marker{width:5px;height:1.05em;flex:0 0 5px;margin-right:5px;border-radius:2px;background:transparent}.completion-marker.done{background:#43825c}.appname-btn{background:none;border:0;padding:0;margin:0;color:var(--ink);font-weight:700;font-size:calc(10px * var(--scale));line-height:1.2;letter-spacing:-.015em;text-align:left;display:block;min-width:0;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appname-btn:hover,.appname-btn:focus-visible{color:var(--green);text-decoration:underline;outline:none}
 .appdesc{font-size:calc(8px * var(--scale));line-height:1.15;color:var(--muted);margin-top:1px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill{display:inline-flex;border-radius:999px;padding:calc(2px * var(--scale)) calc(5px * var(--scale));font-size:calc(8px * var(--scale));font-weight:700;white-space:nowrap}
@@ -195,7 +195,7 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
     </div>
     <div class="toolbar-right">
       <span id="rowCount" class="row-count">0 aplicaciones</span>
-      <span class="app-version-badge" title="Versión de esta herramienta">Versión V5</span>
+      <span class="app-version-badge" title="Versión de esta herramienta">Versión V6</span>
       <button class="btn" id="importBtn" type="button" title="Importar una copia JSON">Importar</button>
       <button class="btn" id="exportBtn" type="button" title="Descargar copia JSON">Exportar JSON<span class="backup-dot" aria-hidden="true"></span></button>
       <span id="saveStatus" class="save-status" role="status" title="Guardado automático local">Abriendo…</span>
@@ -228,6 +228,9 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
         <div class="field full"><label for="appUrl">URL de la aplicación</label><input id="appUrl" maxlength="240" placeholder="https://miapp.ejemplo.com"></div>
         <div class="field"><label for="appRepo">Repositorio / URL alternativa</label><input id="appRepo" maxlength="240" placeholder="https://github.com/…"></div>
         <div class="field"><label for="appVersion">Versión actual</label><input id="appVersion" maxlength="40" placeholder="v0.3 o 0.3.1"></div>
+        <div class="field"><label for="appStableVersion">Última versión estable</label><input id="appStableVersion" maxlength="40" placeholder="v1.0.0"></div>
+        <div class="field full"><label for="appStableFilename">Nombre del archivo de la versión estable</label><input id="appStableFilename" maxlength="180" placeholder="apps-status-v6.html"></div>
+        <div class="field full"><label><input id="appFinished" type="checkbox"> Finalizado</label><span class="helper">Se marcará discretamente junto al nombre.</span></div>
         <div class="field"><label for="appUsage">Estado de uso</label><select id="appUsage"><option>Activa</option><option>Ocasional</option><option>Aparcada</option></select></div>
         <div class="field"><label for="appPlatform">Plataforma</label><select id="appPlatform"><option>Móvil</option><option>PC</option><option>Móvil y PC</option></select></div>
         <div class="field"><label for="appCurrent">Ubicación actual</label><input id="appCurrent" maxlength="160" placeholder="Subdominio / directorio"></div>
@@ -272,7 +275,7 @@ td .icon-btn{font-size:calc(10px * var(--scale))}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION='V5';
+const APP_VERSION='V6';
 const SCALE_KEY='app-tracker-scale';
 const LAST_EXPORT_KEY='app-tracker-last-export';
 const LAST_MODIFIED_KEY='app-tracker-last-modified';
@@ -479,7 +482,7 @@ function render(){
 
     return `<tr>
       <td class="app-col">
-        <button type="button" class="appname-btn" data-edit-app="${esc(a.id)}" title="Editar ${esc(a.name)}">${esc(a.name)}</button>
+        <div class="appname-line"><span class="completion-marker ${a.finished?'done':''}" aria-hidden="true"></span><button type="button" class="appname-btn" data-edit-app="${esc(a.id)}" title="Editar ${esc(a.name)}">${esc(a.name)}</button></div>
         <div class="appdesc">${esc(a.purpose||a.platform||'Sin descripción')}</div>
       </td>
       <td class="version-col" title="Versión">${esc(a.version||'—')}</td>
@@ -545,6 +548,9 @@ function openApp(id){
   get('appUrl').value=a?.url||'';
   get('appRepo').value=a?.repo||'';
   get('appVersion').value=a?.version||'';
+  get('appStableVersion').value=a?.stableVersion||'';
+  get('appStableFilename').value=a?.stableFilename||'';
+  get('appFinished').checked=!!a?.finished;
   get('appUsage').value=a?.usage||'Activa';
   get('appPlatform').value=a?.platform||'Móvil';
   get('appCurrent').value=a?.current||'';
@@ -568,6 +574,9 @@ function saveApplication(keepAddingAnother=false){
     url:get('appUrl').value.trim(),
     repo:get('appRepo').value.trim(),
     version:get('appVersion').value.trim(),
+    stableVersion:get('appStableVersion').value.trim(),
+    stableFilename:get('appStableFilename').value.trim(),
+    finished:get('appFinished').checked,
     usage:get('appUsage').value,
     platform:get('appPlatform').value,
     current:get('appCurrent').value.trim(),
@@ -759,5 +768,6 @@ get('saveConfigBtn').onclick=()=>{
 
 initializeStorage();
 </script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));</script>
 </body>
 </html>

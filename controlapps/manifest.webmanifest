@@ -1,0 +1,15 @@
+{
+  "id": "/index.html",
+  "name": "Apps status",
+  "short_name": "Apps status",
+  "description": "Control personal del desarrollo y las versiones de tus aplicaciones.",
+  "lang": "es",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#f7f6f2",
+  "icons": [
+    { "src": "/apps-status-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
