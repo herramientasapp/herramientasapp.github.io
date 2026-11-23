@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#15171d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob: https://script.google.com https://*.googleusercontent.com; object-src 'none'; base-uri 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Tareas del hogar</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -60,11 +62,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .r.dz{border-style:dashed}
 .r.dz .rn b,.r.dz .rn span{white-space:normal;overflow:visible;text-overflow:clip}
 .ck.p{font-size:1rem}
+/* Copia en Drive (bloque SP) */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;margin:6px 0;display:flex;flex-direction:column;gap:6px}
+.card label{font-size:.82rem;color:var(--dim)}.card input:not([type=file]){width:100%}.card input[type=file]{height:auto;padding:8px}
+.mu{font-size:.82rem;color:var(--dim);line-height:1.4}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.btns button{min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:.95rem}
+.btns button:first-child{background:var(--amber);color:#111;border-color:var(--amber);font-weight:700}
+.sc>label{display:block;font-size:.82rem;color:var(--dim);margin-top:4px}
+.shb{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:14px;width:min(460px,94vw);display:flex;flex-direction:column;gap:8px}
+.shb input{width:100%}
 </style>
 </head>
 <body>
 <div id="app">
-<header><span>Tareas del hogar <small>v7</small></span><button class="btn" id="hp" aria-label="Nueva tarea" style="min-height:36px;padding:0 12px">＋</button></header>
+<header><span>Tareas del hogar <small>v8</small></span><button class="btn" id="hp" aria-label="Nueva tarea" style="min-height:36px;padding:0 12px">＋</button></header>
 <div id="hc" class="row" style="flex:none"></div>
 <main id="mn"></main>
 <footer><nav><button data-v="0" class="sel">Hoy</button><button data-v="1">Próximas</button><button data-v="2">Historial</button><button data-v="3">Más</button></nav></footer>
@@ -73,6 +85,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <div id="tt" hidden></div>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+/* Parámetros de «Seguridad solo para el puente» (sección 3 del MD) */
+const APP='Tareas del hogar',VER='8.0.0',FN='tareas_hogar',APPS=['Tareas del hogar'];
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fresh=()=>({homes:[{id:'h1',n:'Casa principal'},{id:'h2',n:'Segunda casa'}],people:[{id:'p1',n:'Yo'}],tasks:[],log:[],h:'h1',me:'p1',ideas:[],
@@ -183,10 +197,11 @@ function restPrev(){let raw=null;try{raw=localStorage.getItem('hogar1_prev')}cat
   try{localStorage.setItem('hogar1_prev',JSON.stringify(S))}catch(e){}
   S=r.d;mig();BLK=0;save(0);render();toast('Estado anterior restaurado')}
 function avisoDatos(){sheet(`<h3>⚠ Datos guardados con problemas</h3><p class="d">No se ha tocado nada: la app está en <b>modo seguro</b> y no guardará cambios hasta que lo resuelvas. Problemas detectados:</p><p class="d">• ${LE.slice(0,4).map(esc).join('<br>• ')}</p>
-<label class="btn">Importar una copia<input type="file" id="im2" accept=".json" hidden></label><button class="btn" id="dr">Descargar los datos dañados</button><button class="btn" id="e0">Empezar de cero</button><button class="btn" id="cc">Cerrar sin resolver</button>`);
+<label class="btn">Importar una copia<input type="file" id="im2" accept=".json" hidden></label><button class="btn" id="drv">Restaurar desde Drive</button><button class="btn" id="dr">Descargar los datos dañados</button><button class="btn" id="e0">Empezar de cero</button><button class="btn" id="cc">Cerrar sin resolver</button>`);
   $('#im2').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(x=>{e.target.value='';importar(x)})};
   $('#dr').onclick=()=>{let r='';try{r=localStorage.getItem('hogar1_rescate')||localStorage.getItem('hogar1')||''}catch(_){}descargar(r||'{}','tareas-hogar-danado.json')};
   $('#e0').onclick=()=>{if(confirm('Se empezará con una base vacía. Los datos dañados quedan guardados aparte (descárgalos antes si quieres). ¿Empezar de cero?')){BLK=0;S=fresh();mig();save(0);close();render()}};
+  $('#drv').onclick=()=>{close();drvList()};
   $('#cc').onclick=close}
 
 /* ---------- pausas: acciones ---------- */
@@ -219,7 +234,8 @@ function need(){if(!S.tasks.length)return'';const T=tk(),n=S.bp.n,d=S.bp.d,dd=T-
   if(d>0&&dd>=d)return S.bk?'Hace '+dd+' días de la última copia':'Todavía no has hecho ninguna copia';return''}
 function descargar(txt,nombre){const u=URL.createObjectURL(new Blob([txt],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function exportar(){const r=validar(S);if(r.err.length&&!confirm('Atención: los datos actuales tienen problemas ('+r.err[0]+'). ¿Exportar igualmente?'))return;S.bk=ds(tk());S.ch=0;save(0);descargar(JSON.stringify(S),'tareas-hogar-'+S.bk+'.json');render()}
-function avisoCopia(r){sheet(`<h3>Copia de seguridad</h3><p class="d">${esc(r)}. Los datos solo están en este navegador, conviene guardar una copia.</p><button class="btn" id="bx">Hacer copia ahora</button><button class="btn" id="bl">Más tarde</button>`);$('#bx').onclick=()=>{close();exportar()};$('#bl').onclick=close}
+function avisoCopia(r){const on=spOn();sheet(`<h3>Copia de seguridad</h3><p class="d">${esc(r)}. Los datos solo están en este navegador, conviene guardar una copia.</p>${on?'<button class="btn" id="bd" style="background:var(--amber);color:#111;font-weight:700">☁️ Subir a Drive</button>':'<button class="btn" id="bc">☁️ Conectar con Drive</button>'}<button class="btn" id="bx">${on?'Exportar (sin cifrar)':'Hacer copia ahora'}</button><button class="btn" id="bl">Más tarde</button>`);
+  if(on)$('#bd').onclick=()=>{close();drvUp()};else $('#bc').onclick=()=>{close();V=3;MP=5;render();drvConn()};$('#bx').onclick=()=>{close();exportar()};$('#bl').onclick=close}
 
 /* ---------- componentes ---------- */
 function row(i,T,pre,done){const{t,h}=i,L=lg(t,h)[0],k=t.id+'|'+h,s=(t.c?`<i class="tag">${esc(cn(t.c))}</i> `:'')+pre+(done?'':when(L,T));
@@ -233,7 +249,7 @@ function hoy(){const T=tk(),td=ds(T),I0=items(),I=I0.filter(i=>!i.z),Z=I0.filter
   I.forEach(i=>{if(i.d!=null&&i.d<=T)G[i.d<T?0:1].push(i)});
   const hh=S.log.filter(l=>l.d===td&&l.h===S.h&&S.tasks.some(t=>t.id===l.t)).reverse(),pend=G[0].length+G[1].length;
   if(BLK)o+=`<div class="r"><div class="rn"><b class="bad">Modo seguro: no se guarda nada</b><span>Los datos guardados tienen problemas</span></div><button class="btn" id="sf">Resolver</button></div>`;
-  const nb=need();if(nb)o+=`<div class="r"><div class="rn"><b>Haz una copia de seguridad</b><span>${esc(nb)}</span></div><button class="btn" id="ex">Exportar</button></div>`;
+  const nb=need();if(nb)o+=`<div class="r"><div class="rn"><b>Haz una copia de seguridad</b><span>${esc(nb)}</span></div>${spOn()?'<button class="btn" id="dup">☁️ Drive</button>':'<button class="btn" id="ex">Exportar</button>'}</div>`;
   if(cd)o+=`<div class="r"><div class="rn"><b>🏠 Hoy cambias de casa</b><span>${esc(hn(cd.f))} → ${esc(hn(cd.t))}</span></div><button class="btn" id="cdx">Cancelar</button></div>`;
   else if(S.homes.length>1)o+=`<div class="row"><button class="btn" id="cdb">🏠 Hoy cambio de casa</button></div>`;
   o+=[['s','salida'],['a','llegada']].map(([k,n])=>{const r=R(S.h,k),vis=r.st.filter(s=>s.n&&(!s.l||(r.d===td&&r.g))),d_=r.d===td?vis.filter(s=>r.x.includes(s.id)).length:0,p=r.w.includes(wd(T)),cm=!!cd&&(k==='s'?cd.f===S.h:cd.t===S.h),sh=S.rv==='s'||cm||(S.rv==='p'&&p);
@@ -278,16 +294,16 @@ function ajustes(){return `<h3>Yo soy</h3><div class="row"><select id="me">${S.p
 <h3>Domicilios</h3>${S.homes.map(h=>`<div class="row"><input data-hn="${h.id}" value="${esc(h.n)}"></div>`).join('')}<button class="btn" id="ah">＋ Domicilio</button>
 <h3>Categorías</h3>${S.cats.map(c=>`<div class="row"><input data-cn="${c.id}" value="${esc(c.n)}"><button class="btn" data-cd="${c.id}" aria-label="Eliminar categoría">✕</button></div>`).join('')}<button class="btn" id="ac">＋ Categoría</button>
 <h3>Rutinas en Hoy</h3><p class="d">Cuándo se muestran las rutinas de salida y llegada en la pantalla Hoy.</p><div class="row"><select id="rv">${[['p','Al cambiar de casa y en los días previstos'],['c','Solo al cambiar de casa'],['s','Siempre']].map(([v,n])=>`<option value="${v}"${v===S.rv?' selected':''}>${n}</option>`).join('')}</select></div>
-<h3>Aplicación</h3><p class="d">Versión 7 · ${sa()?'abierta como app instalada':'abierta en el navegador'}</p>${DP?'<button class="btn" id="ins">Instalar en este dispositivo</button>':'<p class="d">Para instalarla usa el menú del navegador: «Instalar aplicación» o «Añadir a pantalla de inicio».</p>'}
+<h3>Aplicación</h3><p class="d">Versión 8 · ${sa()?'abierta como app instalada':'abierta en el navegador'}</p>${DP?'<button class="btn" id="ins">Instalar en este dispositivo</button>':'<p class="d">Para instalarla usa el menú del navegador: «Instalar aplicación» o «Añadir a pantalla de inicio».</p>'}
 `}
-function copia(){const T=tk(),n=S.bp.n,d=S.bp.d;return `<h3>Copia de seguridad</h3><p class="d">Los datos se guardan solo en este navegador.</p>
+function copia(){const T=tk(),n=S.bp.n,d=S.bp.d;return `<h3>Copia de seguridad</h3><p class="d">Los datos se guardan solo en este navegador.</p>${drvUI()}<h3>Copia sin cifrar (JSON)</h3><p class="d">Se puede leer con cualquier editor: úsala solo si la vas a guardar tú en un sitio seguro. No uses «Borrar datos de sitios» para github.io en el navegador (borra todas tus apps a la vez) y, al desinstalar la app en un ordenador, no marques «Borrar también los datos de Chrome».</p>
 <p class="d">Última copia: <b>${S.bk?fd(dn(S.bk))+' ('+ago(T-dn(S.bk))+')':'nunca'}</b><br>Cambios desde la última copia: <b>${S.ch||0}</b></p>
 <div class="row"><button class="btn" id="ex">Exportar</button><label class="btn">Importar<input type="file" id="im" accept=".json" hidden></label></div>${hasPrev()?'<div class="row"><button class="btn" id="rv2">Deshacer la última importación</button></div>':''}<p class="d">Al importar se comprueba que el archivo sea válido antes de tocar nada; si tiene errores, tus datos siguen intactos.</p>
 <h3>Avisos al entrar</h3><p class="d">La app propone hacer una copia al abrirla si se cumple alguna condición. Pon 0 para desactivarla.</p>
 <div class="row"><span>Más de</span><input type="number" min="0" data-bp="n" value="${n}"><span>cambios sin guardar</span></div>
 <div class="row"><span>O</span><input type="number" min="0" data-bp="d" value="${d}"><span>días o más sin copia</span></div>`}
 function rutinas(){let o='';[['s','salida'],['a','llegada']].forEach(([k,n])=>{const r=R(S.h,k);o+=`<h3>Rutina de ${n}</h3>`+r.st.map(s=>`<div class="row"><input data-sn="${k}|${s.id}" value="${esc(s.n)}" placeholder="Paso (ej. cerrar el agua)" style="flex:1">${k==='s'?`<label class="row"><input type="checkbox" data-sl="${k}|${s.id}"${s.l?' checked':''}>larga</label>`:''}<button class="btn" data-sd="${k}|${s.id}" aria-label="Quitar paso">✕</button></div>`).join('')+`<button class="btn" data-sa="${k}">＋ Paso</button><p class="d">Días previstos de ${n}: la rutina aparece en Hoy esos días (según Ajustes › Rutinas en Hoy). Cualquier otro día la tienes con «Hoy cambio de casa».${k==='s'?' «larga» = solo si te vas varios días.':''}</p><div class="row">${DN.map((d,i)=>`<button class="chip${r.w.includes(i)?' sel':''}" data-sw="${k}|${i}">${d}</button>`).join('')}</div>`});return o}
-const mas=()=>MP?`<button class="btn" data-mp="0">‹ Volver</button>`+[0,lista,rutinas,ideas,ajustes,copia][MP]():`<h3>Más</h3>`+[['Tareas','Crear y editar tareas'],['Rutinas','Pasos al salir y al llegar'],['Ideas de mejora',''],['Ajustes',''],['Copia de seguridad',need()?'<b class="am">'+esc(need())+'</b>':'Exportar, importar y avisos']].map(([n,d],i)=>`<div class="r"><div class="rn" data-mp="${i+1}"><b>${n}</b>${d?`<span>${d}</span>`:''}</div></div>`).join('')
+const mas=()=>MP?`<button class="btn" data-mp="0">‹ Volver</button>`+[0,lista,rutinas,ideas,ajustes,copia][MP]():`<h3>Más</h3>`+[['Tareas','Crear y editar tareas'],['Rutinas','Pasos al salir y al llegar'],['Ideas de mejora',''],['Ajustes',''],['Copia de seguridad',need()?'<b class="am">'+esc(need())+'</b>':'Drive, exportar, importar y avisos']].map(([n,d],i)=>`<div class="r"><div class="rn" data-mp="${i+1}"><b>${n}</b>${d?`<span>${d}</span>`:''}</div></div>`).join('')
 const hc=()=>$('#hc').innerHTML=S.homes.map(h=>[h.id,h.n]).map(([i,n])=>`<button class="chip${i===S.h?' sel':''}" data-home="${i}">${esc(n)}</button>`).join('');
 const as=e=>{e.style.height='auto';e.style.height=e.scrollHeight+'px'};
 function render(){const m=$('#mn'),st=m.scrollTop,rk=V+'|'+MP;hc();$('#hc').hidden=V===3&&MP!==1&&MP!==2;$('#hp').hidden=V!==0;m.innerHTML=[hoy,prox,hist,mas][V]();if(rk===RK)m.scrollTop=st;RK=rk;
@@ -295,13 +311,13 @@ function render(){const m=$('#mn'),st=m.scrollTop,rk=V+'|'+MP;hc();$('#hc').hidd
 
 /* ---------- registro ---------- */
 let tmr;
-function toast(msg,undo){const e=$('#tt');e.hidden=false;e.innerHTML=`<span>${msg}</span>${undo?'<button class="btn" id="un">Deshacer</button>':''}`;
-  if(undo)$('#un').onclick=()=>{if(typeof undo==='function')undo();else{rmLog(undo);save()}e.hidden=true;render()};clearTimeout(tmr);tmr=setTimeout(()=>e.hidden=true,5000)}
+function toast(msg,undo){const e=$('#tt');clearTimeout(tmr);if(!msg){e.hidden=true;return}const ms=typeof undo==='number'?undo:5000;if(typeof undo==='number')undo=null;e.hidden=false;e.innerHTML=`<span>${msg}</span>${undo?'<button class="btn" id="un">Deshacer</button>':''}`;
+  if(undo)$('#un').onclick=()=>{if(typeof undo==='function')undo();else{rmLog(undo);save()}e.hidden=true;render()};tmr=setTimeout(()=>e.hidden=true,ms)}
 function addLog(t,h,d,w){const T0=S.tasks.find(x=>x.id===t),z=T0&&T0.nx&&T0.nx[h];if(z)delete T0.nx[h];if(T0&&T0.pz)fzEnd(T0,tk());
   const l={i:uid(),t,h,d,w,c:ds(tk())};if(z)l.z=z;S.log.push(l);save();render();return l}
 function rmLog(i){const l=S.log.find(x=>x.i===i);if(!l)return;const last=(lg({id:l.t},l.h)[0]||{}).i===i;S.log=S.log.filter(x=>x.i!==i);const t=S.tasks.find(x=>x.id===l.t);if(l.z&&t&&last&&(!l.c||l.c===ds(tk()))){t.nx=t.nx||{};t.nx[l.h]=l.z}save()}
-function sheet(h){const s=$('#sh');s.hidden=false;s.querySelector('.sc').innerHTML='<button class="x" id="sx" aria-label="Cerrar">✕</button>'+h;$('#sx').onclick=close;s.onclick=e=>{if(e.target===s)s.hidden=true}}
-const close=()=>$('#sh').hidden=true;
+function sheet(h){const s=$('#sh');s.hidden=false;s.querySelector('.sc').innerHTML='<button class="x" id="sx" aria-label="Cerrar">✕</button>'+h;$('#sx').onclick=close;s.onclick=e=>{if(e.target===s)close()}}
+const close=()=>{const s=$('#sh');s.hidden=true;s.querySelectorAll('input[type=password],#sp_u,#a_u').forEach(i=>i.value='')};
 function cop(x){const f=()=>{const a=document.createElement('textarea');a.value=x;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(_){}a.remove();toast('Copiado')};
   navigator.clipboard?navigator.clipboard.writeText(x).then(()=>toast('Copiado'),f):f()}
 function rutina(k){const td=ds(tk()),r=R(S.h,k);if(r.d!==td){r.d=td;r.x=[];r.g=0;save(0)}
@@ -390,7 +406,8 @@ $('#mn').onclick=e=>{const b=e.target.closest('button,[data-t],[data-e],[data-rt
   else if(id==='sf')avisoDatos();
   else if(id==='rv2')restPrev();
   else if(id==='ins'){if(DP){DP.prompt();DP=null;render()}}
-  else if(id==='ex')exportar()};
+  else if(id==='ex')exportar();
+  else if(id==='dup')drvUp()};
 $('#mn').onchange=e=>{const t=e.target,P=S.px;
   if(t.id==='me'){S.me=t.value;save(0)}
   else if(t.dataset.pn){S.people.find(p=>p.id===t.dataset.pn).n=t.value.trim()||'?';save()}
@@ -416,6 +433,114 @@ function mig(){S.px=Object.assign({cuts:[1,2,7,30],lg:1,ln:1,lu:30},S.px);S.idea
   S.tasks=S.tasks.filter(t=>{if(t.m==='l'||t.m==='x'){const r=R(t.h,t.m==='x'?'s':'a');if(!r.st.some(z=>z.n===t.n))r.st.push({id:uid(),n:t.n,l:0});return false}return true});
   S.log=S.log.filter(l=>S.tasks.some(t=>t.id===l.t));
   if(!S.homes.some(h=>h.id===S.h))S.h=S.homes[0].id}
+
+/* ---------- copia en Drive: enganches del bloque SP (sección 5 del MD) ---------- */
+/* hoja: se usa la de la app (#sh); al cerrarla se vacían los campos */
+const show=h=>sheet(h);
+function closeSh(){const c=$('#sh .sc');c.querySelectorAll('input').forEach(i=>i.value='');close();c.innerHTML='';DX=null}
+async function spData(){return JSON.parse(JSON.stringify(S))}
+function spValid(d){try{return validar(d).err.length===0}catch(e){return false}}
+async function spHas(){return!BLK&&(S.tasks.length>0||S.log.length>0||S.ideas.length>0)}
+async function spApply(d){ /* solo se llama tras leer, descifrar y validar la copia entera y descargar la copia previa */
+  const r=validar(d);if(r.err.length)throw new Error('copia no válida');
+  if(!BLK)try{localStorage.setItem('hogar1_prev',JSON.stringify(S))}catch(_){} /* además, «Deshacer la última importación» */
+  const prev=S,pb=BLK;S=r.d;mig();BLK=0;save(0);
+  let ok=false;try{ok=localStorage.getItem('hogar1')===JSON.stringify(S)}catch(_){}
+  if(!ok){S=prev;BLK=pb;render();throw new Error('No se pudo guardar')}
+  render()}
+async function spDone(now){S.bk=ds(tk());S.ch=0;save(0);render()}
+/* SP:inicio · (en esta app la función de descarga del bloque se llama spDl, porque dl ya es la etiqueta de fechas) · Seguridad solo para el puente de Drive (ver «Seguridad solo para el puente.MD»)
+   - Sin contraseña maestra, sin bloqueo, sin huella al entrar.
+   - Dirección + clave del puente + contraseña de copias se guardan CIFRADAS con una clave del
+     dispositivo AES-GCM NO EXTRAÍBLE (CryptoKey guardada en una base IndexedDB propia).
+   - Las copias que van a Drive salen cifradas (.gdc, mismo formato que la Fase 1).
+   - La huella (opcional) solo se pide para VER/CAMBIAR la conexión o BORRAR copias de Drive. */
+const SPX='th',DAPP='limpieza',MG='THENC1\n';        // ← Tareas del hogar: prefijo th, carpeta Apps/Backups/limpieza, cabecera THENC1
+const SPL=SPX+'_pte',SPDB=SPX+'_pte_db';
+const te=new TextEncoder(),td=new TextDecoder(),CH=4194304,IT=250000,PART=3145728,SPAD=te.encode(SPX+'/pte/v1'),PUV=/^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/;
+const b64=u=>{let s='';u=new Uint8Array(u);for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s)},ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),rnd=n=>crypto.getRandomValues(new Uint8Array(n)),u32=n=>{const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,n);return a},rd32=u=>new DataView(u.buffer,u.byteOffset).getUint32(0);
+const hex=u=>[...new Uint8Array(u)].map(b=>b.toString(16).padStart(2,'0')).join(''),sleep=ms=>new Promise(r=>setTimeout(r,ms)),sha=async s=>hex(await crypto.subtle.digest('SHA-256',te.encode(s)));
+const kdf=async(p,s,it)=>crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:s,iterations:it},await crypto.subtle.importKey('raw',te.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+const enc=async(k,d,n)=>{const iv=rnd(12);return{iv,ct:new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,d))}},dcr=(k,iv,ct,n)=>crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,ct);
+const askPw=(t,two)=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px';d.innerHTML=`<div class="shb"><b style="white-space:pre-wrap">${esc(t)}</b><input type="password" autocomplete="off" id="p1" placeholder="Contraseña">${two?'<input type="password" autocomplete="off" id="p2" placeholder="Repite la contraseña">':''}<div class="btns"><button id="ok">Aceptar</button><button id="no">Cancelar</button></div></div>`;document.body.appendChild(d);const f=d.querySelector('#p1'),x=v=>{d.querySelectorAll('input').forEach(i=>i.value='');d.remove();r(v)};f.focus();
+const go1=()=>{const v=f.value;if(!v)return;if(two&&v.length<8)return alert('Mínimo 8 caracteres.');if(two&&d.querySelector('#p2').value!==v)return alert('Las contraseñas no coinciden.');x(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=go1;d.addEventListener('keydown',e=>{if(e.key==='Enter')go1()})});
+/* 1) clave del dispositivo: no extraíble; ni la propia app puede leer sus bytes, solo usarla */
+function spDb(){return new Promise((res,rej)=>{const r=indexedDB.open(SPDB,1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function spKey(create){const db=await spDb();try{let k=await new Promise((res,rej)=>{const q=db.transaction('k').objectStore('k').get('dev');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)});
+if(!k&&create){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await new Promise((res,rej)=>{const t=db.transaction('k','readwrite');t.objectStore('k').put(k,'dev');t.oncomplete=res;t.onerror=()=>rej(t.error)})}return k}finally{db.close()}}
+/* 2) conexión cifrada en localStorage[SPL] = {v,iv,ct,keep,last,cid}; ct = {u,k,bp} */
+let SP=(()=>{try{return JSON.parse(localStorage.getItem(SPL))||null}catch(e){return null}})(),SPC=null,DL=[],DX=null,DUP=0,DM='';
+const spOn=()=>!!(SP&&SP.ct),spSave=o=>{SP={...SP,...o};localStorage.setItem(SPL,JSON.stringify(SP))};
+async function spSet(c){const k=await spKey(true),iv=rnd(12),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:SPAD},k,te.encode(JSON.stringify(c))));spSave({v:1,iv:b64(iv),ct:b64(ct)});SPC=c}
+async function spGet(){if(SPC)return SPC;if(!spOn())return null;const k=await spKey(false);if(!k)throw'lost';try{SPC=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(SP.iv),additionalData:SPAD},k,ub64(SP.ct))))}catch(e){throw'lost'}return SPC}
+const spLost=()=>alert('No se pudo leer la conexión con Drive de este móvil (¿se borraron los datos del navegador?). Vuelve a conectar con la dirección, la clave y la contraseña de copias. Tus datos no han cambiado.');
+/* 3) autorización para cambios: huella si se activó; si no, o si falla, la contraseña de copias */
+async function spAuth(why){let c;try{c=await spGet()}catch(e){spLost();return null}if(!c)return null;
+if(SP.cid){try{await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:ub64(SP.cid)}],userVerification:'required',timeout:60000}});return c}catch(e){toast('Huella no disponible: usa la contraseña de copias',3000)}}
+const p=await askPw(why+'\n\nEscribe la contraseña de copias');if(p==null)return null;if(p!==c.bp){alert('Contraseña incorrecta.');return null}return c}
+async function spHuReg(){try{const cr=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:APP,id:location.hostname},user:{id:rnd(16),name:SPX+'-puente',displayName:APP+' · puente'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'preferred',userVerification:'required'},timeout:60000}});spSave({cid:b64(cr.rawId)});render();toast('Huella activada para los cambios del puente')}catch(e){toast('No se pudo activar la huella: se usará la contraseña de copias',3000)}}
+async function spHuella(){if(await spAuth('Activar la huella para el puente'))await spHuReg()}
+function spHuOff(){if(confirm('¿Dejar de pedir la huella? Los cambios se autorizarán con la contraseña de copias.')){spSave({cid:null});render()}}
+/* 4) copias cifradas (.gdc, idéntico a la Fase 1) */
+async function encBlob(bl,p,meta){const s=rnd(16),k=await kdf(p,s,IT),h=te.encode(JSON.stringify({app:APP,ver:VER,salt:b64(s),it:IT,ch:CH,date:new Date().toISOString(),...meta})),parts=[te.encode(MG),u32(h.length),h];let n=0;const w=async d=>{const{iv,ct}=await enc(k,d,n++);parts.push(u32(ct.length),iv,ct)};for(let i=0;i<bl.size;i+=CH)await w(new Uint8Array(await bl.slice(i,i+CH).arrayBuffer()));await w(te.encode('GD-FIN'));return new Blob(parts)}
+async function decFile(f,ask){let o=MG.length;const rd=async n=>{const u=new Uint8Array(await f.slice(o,o+n).arrayBuffer());if(u.length<n)throw'trunc';o+=n;return u},h=JSON.parse(td.decode(await rd(rd32(await rd(4)))));const p=await ask();if(p==null)return null;const k=await kdf(p,ub64(h.salt),h.it),out=[];let n=0;for(;;){const l=rd32(await rd(4)),iv=await rd(12),ct=await rd(l);let d;try{d=new Uint8Array(await dcr(k,iv,ct,n++))}catch(e){throw'pw'}if(o>=f.size){if(td.decode(d)!=='GD-FIN')throw'trunc';break}out.push(d)}return new Blob(out)}
+const isGdc=async f=>td.decode(new Uint8Array(await f.slice(0,MG.length).arrayBuffer()))===MG;
+const spDl=(bl,name)=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),6e4)};
+async function spPack(p,pre){const now=new Date().toISOString(),bl=await encBlob(new Blob([JSON.stringify({app:APP,ver:VER,v:1,date:now,data:await spData()})],{type:'application/json'}),p,{full:true});return{bl,now,name:`${FN}_v${VER}_${pre?'PREVIA_':''}completa_cifrada_${now.slice(0,10)}.gdc`}}
+/* abrir y restaurar una copia (.gdc o .json); nunca borra nada antes de leer y validar la copia entera */
+async function spRestoreFile(f,hint){let o,used=null;try{if(await isGdc(f)){const ask=async t=>{used=await askPw(t);return used};let bl;
+try{bl=await decFile(f,hint?async()=>{used=hint;return hint}:()=>ask('Contraseña de copias con la que se hizo esta copia'))}catch(er){if(er==='pw'&&hint)bl=await decFile(f,()=>ask('La contraseña de copias guardada no abre esta copia. Escribe la contraseña con la que se hizo'));else throw er}if(!bl)return null;o=JSON.parse(await bl.text())}else o=JSON.parse(await f.text())}
+catch(er){alert(er==='pw'?'Contraseña incorrecta o copia dañada. No se ha tocado nada.':er==='trunc'?'La copia está incompleta. No se ha tocado nada.':'El archivo no es una copia válida. No se ha tocado nada.');return null}
+if(o&&o.app&&!APPS.includes(o.app)){alert('Esta copia es de otra app («'+o.app+'»). No se ha tocado nada.');return null}
+const data=o&&o.app&&'data' in o?o.data:o;if(!spValid(data)){alert('La copia no tiene datos reconocibles de esta app. No se ha tocado nada.');return null}
+if(!confirm(`Copia${o.date?' del '+new Date(o.date).toLocaleString('es-ES'):''}.\n\nEsto sustituirá los datos actuales de esta app. ¿Continuar?`))return null;
+if(await spHas()){const p=used||(SPC&&SPC.bp);let ok=false;try{if(p){const r=await spPack(p,1);spDl(r.bl,r.name);ok=true}else ok=await spPrevOpen()}catch(e){ok=false}
+if(!ok){alert('No se pudo guardar la copia previa. No se ha tocado nada.');return null}if(!confirm('Se ha descargado una copia previa de tus datos actuales. ¿Continuar con la restauración?'))return null}
+await spApply(data);toast('Copia restaurada',3000);return{ok:1,pw:used}}
+async function spPrevOpen(){if(!confirm('No hay contraseña de copias para cifrar la copia previa: se descargará EN ABIERTO. Guárdala en un sitio seguro. ¿Seguir?'))return false;const now=new Date().toISOString();spDl(new Blob([JSON.stringify({app:APP,ver:VER,v:1,date:now,data:await spData()})],{type:'application/json'}),`${FN}_v${VER}_PREVIA_completa_abierta_${now.slice(0,10)}.json`);return true}
+async function impSp(e){const f=e.target.files[0];e.target.value='';if(!f)return;let h=null;try{const c=await spGet();h=c&&c.bp}catch(x){}await spRestoreFile(f,h)}
+async function expSp(){let c;try{c=await spGet()}catch(e){return spLost()}let p=c&&c.bp;if(!p){p=await askPw('Contraseña para cifrar esta copia (apúntala)',1);if(!p)return}const r=await spPack(p);spDl(r.bl,r.name);await spDone(r.now);toast('Copia cifrada descargada')}
+/* 5) protocolo con el puente (idéntico a la Fase 2: POST firmado con HMAC; la clave nunca viaja) */
+const hmac=async(k,m)=>hex(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',te.encode(k),{name:'HMAC',hash:'SHA-256'},false,['sign']),te.encode(m)));
+async function drvCall(c,a,pr,d){if(!PUV.test(c.u))throw'url';const ts=Date.now(),n=hex(rnd(16)),ps=JSON.stringify(pr||{}),dh=d?await sha(d):'',s=await hmac(c.k,['1',a,DAPP,ts,n,ps,dh].join('|'));let r,j;
+try{r=await fetch(c.u,{method:'POST',body:JSON.stringify({v:1,a,app:DAPP,ts,n,ps,d:d||'',s}),redirect:'follow',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'})}catch(e){throw'net'}
+try{j=await r.json()}catch(e){throw'resp'}if(!j||!j.ok){DM=(j&&j.m)||'';throw(j&&j.e)||'int'}return j}
+async function drvTry(c,a,pr,d){for(let t=0;;t++){try{return await drvCall(c,a,pr,d)}catch(e){if((e==='net'||e==='resp'||e==='busy')&&t<2){await sleep(1500*(t+1));continue}throw e}}}
+const drvErr=e=>typeof e!=='string'?'Error: '+((e&&e.message)||e):({url:'La dirección del puente no es válida (debe ser https://script.google.com/…/exec).',net:'Sin conexión, o la dirección del puente no responde.',resp:'El puente no devolvió una respuesta válida. Revisa que la dirección termina en /exec y que la implementación es para «Cualquier usuario».',auth:'La clave del puente no coincide con la propiedad SECRET de Apps Script.',ts:'La hora del móvil no coincide con la de Google: activa la fecha y hora automáticas.',rep:'Petición repetida: inténtalo otra vez.',nosecret:'Al puente le falta la propiedad SECRET (o tiene menos de 16 caracteres).',busy:'El puente está ocupado: inténtalo en un minuto.',big:'Trozo demasiado grande para el puente.',app:'Nombre de carpeta no válido.',nf:'No se encontró esa copia en Drive.',sz:'Un trozo llegó incompleto: inténtalo otra vez.',miss:'La copia en Drive está incompleta: inténtalo otra vez.'}[e]||'Error del puente ('+e+(DM?': '+DM:'')+')');
+async function drvPutBlob(c,bl,name,now){const t=new Date(now),z=n=>String(n).padStart(2,'0'),id=`${t.getFullYear()}-${z(t.getMonth()+1)}-${z(t.getDate())}_${z(t.getHours())}-${z(t.getMinutes())}-${z(t.getSeconds())}_v${String(VER).replace(/[^0-9A-Za-z]/g,'-')}_completa`,tot=Math.max(1,Math.ceil(bl.size/PART));
+for(let i=0;i<tot;i++){toast(`Subiendo a Drive… ${i+1} de ${tot}`,6e4);const pt=bl.slice(i*PART,(i+1)*PART);await drvTry(c,'put',{id,i:i+1,sz:pt.size},b64(new Uint8Array(await pt.arrayBuffer())))}
+await drvTry(c,'fin',{id,total:tot,size:bl.size,name,keep:(SP&&SP.keep)||10});return id}
+async function drvGetBlob(c,it){const ps=[];for(let i=1;i<=it.t;i++){toast(`Descargando de Drive… ${i} de ${it.t}`,6e4);ps.push(ub64((await drvTry(c,'get',{id:it.id,i})).d))}const bl=new Blob(ps);if(bl.size!==it.s)throw'miss';return bl}
+/* 6) acciones de Drive. Subir NO pide nada */
+async function drvUp(){if(DUP)return toast('Ya hay una copia en curso');let c;try{c=await spGet()}catch(e){spLost();return drvConn()}if(!c)return drvConn();DUP=1;let wl=null;try{wl=navigator.wakeLock?await navigator.wakeLock.request('screen'):null}catch(e){}
+try{toast('Preparando copia…',6e4);const{bl,now,name}=await spPack(c.bp);await drvPutBlob(c,bl,name,now);spSave({last:now});await spDone(now);render();toast('Copia subida a Drive ✓',3000)}
+catch(e){toast('');alert('No se pudo subir la copia. Tus datos no han cambiado.\n'+drvErr(e))}finally{DUP=0;try{wl&&wl.release()}catch(e){}}}
+async function drvConn(){let c=null;if(spOn()){try{c=await spGet()}catch(e){c=null}if(c){c=await spAuth('Cambiar los datos del puente');if(!c)return}}
+show(`<h3>Conectar con Drive</h3><p class="mu">Copias en Apps/Backups/${DAPP}. Si ya tienes el puente de otra app, usa la misma dirección y clave.</p><label>Dirección del puente (termina en /exec)</label><input id="sp_u" inputmode="url" autocomplete="off" value="${esc(c?c.u:'')}" placeholder="https://script.google.com/macros/s/…/exec"><label>Clave del puente</label><input id="sp_k" type="password" autocomplete="off" placeholder="${c?'Guardada · vacía = no cambiarla':''}"><label>Contraseña de copias (cifra las copias · mínimo 8)</label><input id="sp_p" type="password" autocomplete="new-password" placeholder="${c?'Guardada · vacía = no cambiarla':''}"><input id="sp_p2" type="password" autocomplete="new-password" placeholder="Repite la contraseña de copias"><p class="mu">Apúntala: en un móvil nuevo, sin ella no se abren las copias. Puedes usar la misma en todas las apps. Nada de esto se muestra después ni viaja por la red.</p><div class="btns"><button onclick="drvSave()">Probar y guardar</button><button onclick="closeSh()">Cancelar</button></div>`)}
+async function drvSave(){const o=SPC||{},u=$('#sp_u').value.trim(),k=$('#sp_k').value.trim()||o.k||'',p=$('#sp_p').value,p2=$('#sp_p2').value,bp=p||o.bp||'';
+if(!PUV.test(u))return alert('La dirección debe ser la de la aplicación web: https://script.google.com/macros/s/…/exec');if(k.length<16)return alert('La clave del puente debe tener al menos 16 caracteres.');
+if(p&&p.length<8)return alert('La contraseña de copias debe tener al menos 8 caracteres.');if(p&&p!==p2)return alert('Las contraseñas de copias no coinciden.');if(!bp)return alert('Falta la contraseña de copias.');
+if(o.bp&&p&&p!==o.bp&&!confirm('Las copias que ya están en Drive (y las descargadas) seguirán necesitando la contraseña de copias ANTERIOR. ¿Cambiarla?'))return;
+toast('Probando conexión…',6e4);try{const j=await drvTry({u,k},'ping');await spSet({u,k,bp});if(!SP.keep)spSave({keep:10});closeSh();render();toast('Conectado · '+j.folder,3000);
+if(!SP.cid&&window.PublicKeyCredential&&confirm('¿Proteger con la huella los cambios de esta conexión?\n\nSolo se pedirá para cambiar los datos del puente o borrar copias de Drive. Nunca al entrar ni al subir copias.'))await spHuReg()}catch(e){toast('');alert(drvErr(e))}}
+async function drvTest(){let c;try{c=await spGet()}catch(e){return spLost()}if(!c)return;toast('Probando conexión…',6e4);try{const j=await drvTry(c,'ping');toast('');alert('Conexión correcta ✓\nCarpeta en Drive: '+j.folder)}catch(e){toast('');alert(drvErr(e))}}
+const drvKeep=v=>{spSave({keep:Math.max(2,Math.min(50,Math.floor(+v)||10))});toast('Guardado')};
+async function drvOff(){if(!confirm('¿Desconectar Drive de este móvil? Las copias que ya están en Drive no se borran y tus datos no cambian.'))return;if(spOn()&&!await spAuth('Desconectar Drive'))return;localStorage.removeItem(SPL);SP=null;SPC=null;render()}
+const drvAsk=()=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px';d.innerHTML=`<div class="shb"><b>Datos del puente de Drive</b><input id="a_u" inputmode="url" autocomplete="off" placeholder="Dirección del puente (termina en /exec)"><input id="a_k" type="password" autocomplete="off" placeholder="Clave del puente"><div class="btns"><button id="ok">Continuar</button><button id="no">Cancelar</button></div></div>`;document.body.appendChild(d);const x=v=>{d.querySelectorAll('input').forEach(i=>i.value='');d.remove();r(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=()=>{const u=d.querySelector('#a_u').value.trim(),k=d.querySelector('#a_k').value.trim();if(!PUV.test(u))return alert('La dirección debe empezar por https://script.google.com/ y terminar en /exec.');if(k.length<16)return alert('La clave del puente tiene al menos 16 caracteres.');x({u,k})}});
+async function drvList(){let c=null;if(spOn()){try{c=await spGet()}catch(e){spLost()}}if(!c){c=await drvAsk();if(!c)return}
+toast('Buscando copias…',6e4);try{const j=await drvTry(c,'list');DL=j.l||[];DX=c;toast('');drvShow()}catch(e){toast('');alert(drvErr(e))}}
+function drvShow(){const z=DL.map((it,i)=>`<div class="card"><b>${new Date(it.d).toLocaleString('es-ES')}</b> <span class="mu">${(it.s/1048576).toLocaleString('es-ES',{maximumFractionDigits:2})} MB</span><div class="btns"><button onclick="drvPick(${i})">Restaurar</button><button onclick="drvDel(${i})">🗑 Borrar</button></div></div>`).join('');
+show(`<h3>Copias en Drive</h3><p class="mu">Apps/Backups/${DAPP} · las más recientes primero</p>${z||'<p class="mu">No hay copias en Drive.</p>'}<div class="btns"><button onclick="DX=null;closeSh()">Cerrar</button></div>`)}
+async function drvPick(i){const it=DL[i],c=DX;if(!it||!c||DUP)return;DUP=1;closeSh();
+try{const bl=await drvGetBlob(c,it);toast('');const r=await spRestoreFile(bl,c.bp||null);
+if(r&&r.ok&&!spOn()&&r.pw&&confirm('¿Guardar en este móvil la conexión con Drive (con la contraseña de copias que acabas de usar)?')){await spSet({u:c.u,k:c.k,bp:r.pw});spSave({keep:10});render()}}
+catch(e){toast('');alert('No se pudo descargar la copia. No se ha tocado nada.\n'+drvErr(e))}finally{DUP=0;DX=null}}
+async function drvDel(i){const it=DL[i],c=DX;if(!it||!c)return;if(spOn()&&!await spAuth('Borrar una copia de Drive'))return;if(!confirm('¿Borrar esta copia de Drive? Va a la papelera de Drive (se puede recuperar unos 30 días).'))return;try{await drvTry(c,'del',{id:it.id});DL.splice(i,1);drvShow()}catch(e){alert(drvErr(e))}}
+const drvLast=()=>SP&&SP.last?new Date(SP.last).toLocaleString('es-ES'):'nunca';
+function drvUI(){return `<div class="card"><b>☁️ Copia en Drive (cifrada)</b>${spOn()?`<p class="mu">Conectado. Carpeta: Apps/Backups/${DAPP} · última subida: ${drvLast()} · cambios protegidos con ${SP.cid?'huella':'la contraseña de copias'}</p><div class="btns"><button onclick="drvUp()">☁️ Subir copia ahora</button><button onclick="drvList()">Ver copias y restaurar</button></div><label>Conservar en Drive las últimas (copias)</label><input type="number" min="2" max="50" inputmode="numeric" value="${SP.keep||10}" onchange="drvKeep(this.value)"><div class="btns"><button onclick="drvTest()">Probar conexión</button><button onclick="drvConn()">Cambiar datos</button>${SP.cid?'<button onclick="spHuOff()">Quitar huella</button>':'<button onclick="spHuella()">Usar huella para cambios</button>'}<button onclick="drvOff()">Desconectar</button></div>`:`<p class="mu">Sube copias cifradas a tu Drive (Apps/Backups/${DAPP}) sin contraseñas al entrar. La conexión se guarda cifrada en este móvil.</p><div class="btns"><button onclick="drvConn()">Conectar con Drive</button><button onclick="drvList()">Restaurar desde Drive (móvil nuevo)</button></div>`}<div class="btns"><button onclick="expSp()">🔐 Descargar copia cifrada</button></div><label>Restaurar desde un archivo (.gdc o .json)</label><input type="file" onchange="impSp(event)"></div>`}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+/* SP:fin */
+
 cargar();mig();render();if(BLK)avisoDatos();else{const r=need();if(r)avisoCopia(r)}
 if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
