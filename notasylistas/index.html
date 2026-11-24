@@ -523,8 +523,15 @@ async function exportar(){const now=new Date().toISOString();
 async function exportarPremig(){const p=await getOne('meta','premig');if(!p)return;dl(new Blob([JSON.stringify({app:'notario',schemaVersion:1,exportedAt:Date.now(),escenarios:p.escenarios,items:p.items},null,1)],{type:'application/json'}),'gestor_notas_v4_original_antes_de_la_5.json')}
 
 /* ---------- Enganches del bloque SP (sección 5 del MD) ---------- */
-function show(html){$('#shBody').innerHTML=html;$('#sh').classList.add('show')}
-function closeSh(){const b=$('#shBody');b.querySelectorAll('input').forEach(i=>i.value='');b.innerHTML='';$('#sh').classList.remove('show');DX=null}
+/* Las ventanas <dialog> (Ajustes…) quedan siempre por encima de todo: se cierran mientras se ve la hoja de Drive
+   o el cuadro de contraseña, y Ajustes se vuelve a abrir al terminar */
+let REABRIR=false;
+function apartarDialogos(){$$('dialog[open]').forEach(d=>{if(d.id==='settings-dialog')REABRIR=true;d.close()})}
+function volverAjustes(){if(REABRIR&&!$('#sh').classList.contains('show')&&!document.querySelector('body>div[style*="z-index: 80"],body>div[style*="z-index:80"]')){REABRIR=false;openSettings()}}
+function show(html){apartarDialogos();$('#shBody').innerHTML=html;$('#sh').classList.add('show')}
+function closeSh(){const b=$('#shBody');b.querySelectorAll('input').forEach(i=>i.value='');b.innerHTML='';$('#sh').classList.remove('show');DX=null;setTimeout(volverAjustes,0)}
+new MutationObserver(ms=>ms.forEach(m=>{m.addedNodes.forEach(n=>{if(n.nodeType===1&&n.style&&n.style.zIndex==='80')apartarDialogos()});
+  if([...m.removedNodes].some(n=>n.nodeType===1&&n.style&&n.style.zIndex==='80'))setTimeout(volverAjustes,0)})).observe(document.body,{childList:true});
 const isO=x=>!!x&&typeof x==='object'&&!Array.isArray(x);
 function datosOk(d){if(!isO(d)||!Array.isArray(d.items))return false;if(d.app!=null&&d.app!=='notario')return false;if(+d.schemaVersion>2)return false;
   const idOk=x=>isO(x)&&(typeof x.id==='string'||typeof x.id==='number')&&String(x.id).length<=100;
