@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src https://rss-proxy.lector-rss.workers.dev; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://rss-proxy.lector-rss.workers.dev https://script.google.com https://*.googleusercontent.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Mi Lector RSS</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -11,7 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mi Lector">
-<script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js" crossorigin="anonymous"></script>
+<script>/* Extractor de texto (Readability 0.6.0). El navegador solo lo ejecuta si su huella coincide con la oficial */
+window.RDB_SRC='';(function(){const H='sha256-NNyrPQgy0AGfApkO7WthJOAp6MMrnwxvJVBUT/jf8XQ=',add=(src,cdn)=>{const e=document.createElement('script');e.src=src;e.integrity=H;e.crossOrigin='anonymous';e.onload=()=>{window.RDB_SRC=cdn?'cdn':'local'};e.onerror=()=>{if(!cdn)add('https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js',1);else window.RDB_SRC='none'};document.head.appendChild(e)};add('Readability.js',0)})();</script>
 <style>
 :root{color-scheme:light dark;--bg:light-dark(#f5f5f7,#1c1c1e);--panel:light-dark(#fff,#2c2c2e);--border:light-dark(#e0e0e5,#3a3a3c);--text:light-dark(#1c1c1e,#f2f2f7);--muted:#8e8e93;--accent:#0a84ff;--danger:#ff3b30;--rs:16px}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
@@ -87,6 +89,14 @@ main{flex:1;display:flex;overflow:hidden}
 .rnav button{flex:1;min-width:0;text-align:left;white-space:normal;padding:10px 12px;color:var(--text)}
 .rnav button:last-child{text-align:right}
 .rnav .nt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;margin-top:2px}
+/* Copia en Drive (bloque SP) y novedades 6.0 */
+#sh{z-index:260}
+.shb{background:var(--panel);color:var(--text);border-radius:12px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:6px}.shb input{margin:0}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.btns button+button{background:transparent;color:var(--accent);border:1px solid var(--border)}
+.mu{color:var(--muted);font-size:12px;margin:2px 0}
+#drvBox .card{display:flex;flex-direction:column;gap:4px}#drvBox label{margin-top:4px}#drvBox input{margin:2px 0 6px}
+.cat{display:flex;align-items:center;gap:4px}.cat .catok{margin-left:auto;padding:0 8px;background:none;color:var(--accent);font-size:15px}
+.muted-note{padding:12px 14px;text-align:center}.dupb{background:var(--accent);color:#fff;border-radius:9px;padding:0 7px;font-weight:600;cursor:pointer}.sw.dup{margin-left:18px;border-left:3px solid var(--accent)}label.chk{display:flex;align-items:center;gap:8px;margin:12px 0 6px}label.chk input{width:auto;margin:0}.muted-note button{margin-left:8px;padding:3px 10px;font-size:12px}
 #ptr{position:fixed;top:60px;left:50%;transform:translate(-50%,-30px);width:36px;height:36px;border-radius:50%;background:var(--panel);border:1px solid var(--border);box-shadow:0 2px 8px #0003;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--accent);opacity:0;pointer-events:none;z-index:50}
 </style>
 </head>
@@ -111,6 +121,7 @@ main{flex:1;display:flex;overflow:hidden}
       <button class="ic" id="bShare" onclick="shareArt()" title="Compartir"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></button>
       <button class="ic" id="bArch" onclick="toggleArch(S.art.id)" title="Leer más tarde" aria-label="Leer más tarde"><svg id="bArchIc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></button>
       <button class="ic" onclick="openTag()" title="Etiquetar">🏷️</button>
+      <button class="ic" id="bSpeak" onclick="speakArt()" title="Leer en voz alta">🔊</button>
       <button class="ic" onclick="openPrompts()" title="Profundizar con IA">✨</button>
       <button class="ic" id="bRead" onclick="toggleRead(S.art.id)" title="Marcar leído / no leído">↺</button>
       <a id="bOrig" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button class="ic" title="Abrir original">↗</button></a>
@@ -123,13 +134,13 @@ main{flex:1;display:flex;overflow:hidden}
 <aside id="drawer">
   <div class="dh"><h2>📰 Mi Lector</h2>
     <button class="ic" onclick="show('srcModal',newSrc());toggleDrawer()" title="Añadir fuente">＋</button>
-    <button class="ic" onclick="show('settings');toggleDrawer()" title="Ajustes">⚙️</button>
+    <button class="ic" onclick="show('settings');render();toggleDrawer()" title="Ajustes">⚙️</button>
     <button class="ic" onclick="toggleDrawer()">✕</button></div>
   <div class="f"><input id="srcFilter" placeholder="Filtrar fuentes o etiquetas…" oninput="renderSources()"></div>
   <div id="srcList"></div>
 </aside>
 
-<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v5.0</span></div>
+<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v6.1</span></div>
 
 <!-- Ajustes -->
 <div class="page" id="settings">
@@ -141,6 +152,10 @@ main{flex:1;display:flex;overflow:hidden}
     <h4>Lectura</h4>
     <label>Artículos a descargar por fuente</label><input type="number" id="cMax" min="10" max="200" onchange="saveCfg()">
     <p class="muted" style="margin-top:-8px">A mayor número, más tardará en actualizar.</p>
+    <label>Palabras silenciadas (una por línea)</label><textarea id="cMute" placeholder="Ej.: fútbol" onchange="saveMute()"></textarea>
+    <p class="muted" style="margin-top:-8px">Oculta los artículos cuyo título o resumen contenga alguna palabra que empiece así (sin distinguir tildes ni mayúsculas). No afecta a Archivados.</p>
+    <label class="chk"><input type="checkbox" id="cDup" onchange="saveCfg()"> Agrupar noticias repetidas</label>
+    <p class="muted" style="margin-top:-4px">En «Todas» la misma noticia aparece una sola vez con «+N»: mismo enlace (aunque venga de otra sección o con códigos de seguimiento) o titular casi igual en las últimas 48 h. Al leerla se marcan como leídas todas sus copias. Dentro de cada fuente se ven todas. No borra nada.</p>
     <h4>Prompts de IA</h4>
     <details class="fold" id="promptsDet"><summary>✨ Editar prompts (<span id="pCount">0</span>)</summary><div class="in">
       <p class="muted">El prompt marcado con ⚡ es el principal: aparece siempre el primero al pulsar ✨ en un artículo.</p>
@@ -154,12 +169,18 @@ main{flex:1;display:flex;overflow:hidden}
       <button class="sec" onclick="$('opml').click()">Importar OPML</button>
       <button class="sec" onclick="exportOpml()">Exportar OPML</button></div>
     <p class="muted">Para descubrir el feed de una web prueba: /feed, /rss, /rss.xml, /feed.xml, /atom.xml</p>
-    <h4>Datos</h4>
+    <h4>Copia de seguridad</h4>
+    <div id="drvBox"></div>
+    <p class="muted" id="bkInfo"></p>
+    <label>Proponer copia al entrar si pasan (meses)</label><input type="number" id="cBkM" min="1" max="24" inputmode="numeric" onchange="saveBkCfg()">
+    <label>…o si hay (cambios sin copia)</label><input type="number" id="cBkC" min="1" max="999" inputmode="numeric" onchange="saveBkCfg()">
     <div class="row" style="justify-content:flex-start">
-      <button class="sec" onclick="exportBackup()">📤 Exportar copia (JSON)</button>
-      <button class="sec" onclick="$('imp').click()">📥 Importar copia</button></div>
+      <button class="sec" onclick="exportBackup()">📤 Exportar copia sin cifrar (JSON)</button>
+      <button class="sec" onclick="$('imp').click()">📥 Importar copia (suma, no borra)</button></div>
+    <p class="muted">La copia sin cifrar se puede leer con cualquier editor. «Importar» añade lo que falte; para dejarlo todo exactamente como en una copia usa «Restaurar desde un archivo» en la tarjeta de Drive. No uses «Borrar datos de sitios» para github.io en el navegador (borra todas tus apps a la vez) y, al desinstalar la app en un ordenador, no marques «Borrar también los datos de Chrome».</p>
     <h4>Más</h4>
     <button class="sec" onclick="show('ideas')">💡 Ideas de mejora</button>
+    <p class="muted center" id="verInfo"></p>
   </div>
 </div>
 
@@ -173,6 +194,7 @@ main{flex:1;display:flex;overflow:hidden}
   </div>
 </div>
 
+<div class="ov" id="sh"><div class="modal" id="shBody"></div></div>
 <input type="file" id="imp" accept=".json" hidden><input type="file" id="opml" accept=".opml,.xml" hidden>
 
 <!-- Modales -->
@@ -221,9 +243,39 @@ main{flex:1;display:flex;overflow:hidden}
 </div></div>
 
 <script>
-const $=id=>document.getElementById(id);
-const K={read:'rss_read_v1',prompts2:'rss_prompts_v2',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1'};
-const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('No se pudo guardar: almacenamiento lleno')}}};
+const $=id=>document.getElementById(id[0]==='#'?id.slice(1):id); // admite 'id' y '#id' (el bloque SP usa '#id')
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Mi Lector RSS · versión 6.1 · parámetros de «Seguridad solo para el puente» */
+const APP='Mi Lector RSS',VER='6.1.0',FN='mi_lector',APPS=['Mi Lector RSS'];
+const K={read:'rss_read_v1',prompts2:'rss_prompts_v2',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1',mute:'rss_mute_v1',meta:'rss_meta_v1'};
+/* ---------- Almacenamiento: base IndexedDB «mi_lector_cfg» (fuentes, leídos, prompts, ideas, ajustes) ----------
+   La primera vez copia lo que había en localStorage, lo vuelve a leer y lo compara. El original se conserva
+   hasta la primera copia de seguridad hecha con la 6.0. Si IndexedDB no está disponible, sigue con localStorage. */
+const LSK=['rss_read_v1','rss_prompts_v2','rss_local_sources_v1','rss_ideas_v1','rss_prompts_v1','rss_font_v1','rss_settings_v1','rss_hidden_sources','rss_source_overrides'];
+let MIG='';
+const KV={d:{},db:null,ls:false,legacy:[],dirty:new Set(),t:null,q:Promise.resolve(true),
+  get(k,df){return Object.prototype.hasOwnProperty.call(this.d,k)?this.d[k]:df},
+  _w(k){if(this.ls){try{k in this.d?localStorage.setItem(k,JSON.stringify(this.d[k])):localStorage.removeItem(k)}catch{toast('No se pudo guardar: almacenamiento lleno')}return}this.dirty.add(k);if(!this.t){this.t=1;queueMicrotask(()=>this.flush())}},
+  set(k,v){this.d[k]=v;this._w(k)},del(k){delete this.d[k];this._w(k)},
+  flush(){this.t=null;if(this.ls||!this.dirty.size)return this.q;const snap=[...this.dirty].map(k=>[k,k in this.d?JSON.stringify(this.d[k]):null]);this.dirty.clear();
+    this.q=this.q.then(()=>new Promise(res=>{try{const t=this.db.transaction('kv','readwrite'),st=t.objectStore('kv');snap.forEach(([k,v])=>v==null?st.delete(k):st.put(JSON.parse(v),k));t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>{toast('⚠️ No se pudo guardar el último cambio');res(false)}}catch(e){res(false)}}));return this.q}};
+addEventListener('pagehide',()=>KV.flush());document.addEventListener('visibilitychange',()=>{if(document.hidden)KV.flush()});
+async function kvLoad(){
+  const lsGet=k=>{try{const v=localStorage.getItem(k);return v==null?undefined:JSON.parse(v)}catch{return undefined}};
+  const readAll=()=>new Promise((ok,ko)=>{const o={},q=KV.db.transaction('kv').objectStore('kv').openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else ok(o)};q.onerror=()=>ko(q.error)});
+  const canon=x=>JSON.stringify(Object.keys(x).sort().map(k=>[k,x[k]]));
+  const fromLS=()=>{const o={};LSK.forEach(k=>{const v=lsGet(k);if(v!==undefined)o[k]=v});return o};
+  try{KV.db=await new Promise((ok,ko)=>{if(!window.indexedDB)return ko(0);const r=indexedDB.open('mi_lector_cfg',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);r.onblocked=()=>ko(0)});KV.d=await readAll()}
+  catch{KV.ls=true;KV.d=fromLS();MIG='IndexedDB no disponible: los datos siguen en localStorage.';return}
+  const present=LSK.filter(k=>lsGet(k)!==undefined);
+  if(!KV.d.__mig){const o=fromLS();o.__mig=new Date().toISOString();
+    const ok=await new Promise(res=>{try{const t=KV.db.transaction('kv','readwrite'),st=t.objectStore('kv');Object.entries(o).forEach(([k,v])=>st.put(v,k));t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>res(false)}catch{res(false)}});
+    let back=null;if(ok)try{back=await readAll()}catch{}
+    if(back&&canon(back)===canon(o)){KV.d=back;KV.legacy=present}else{KV.ls=true;KV.d=fromLS();MIG='No se pudo comprobar la copia en IndexedDB: se sigue usando localStorage.'}}
+  else KV.legacy=present}
+/* tras cada copia hecha con la 6.0 se liberan los originales antiguos de localStorage (solo las claves rss_* de esta app) */
+function legacyFree(){if(KV.ls||!KV.legacy.length)return;KV.legacy.forEach(k=>{try{localStorage.removeItem(k)}catch{}});KV.legacy=[]}
+const LS={get:(k,d)=>KV.get(k,d),set:(k,v)=>KV.set(k,v)};
 const h=(t,p={},...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p)){if(a==='class')e.className=v;else if(a==='text')e.textContent=v;else if(a.startsWith('on'))e[a]=v;else e.setAttribute(a,v)}e.append(...k);return e};
 /* Capas (lector móvil, menú, ajustes, modales): el botón/gesto "atrás" las cierra en vez de salir de la app */
 const L=[];let ign=0;
@@ -233,10 +285,14 @@ function closeLayer(n){if(n==='reader')closeReader();else if(n==='drawer')setDra
 addEventListener('popstate',()=>{if(ign>0){ign--;return}const n=L.pop();if(n)closeLayer(n)});
 const show=id=>{$(id).classList.add('show');lpush(id)},hide=id=>{$(id).classList.remove('show');lpop(id)};
 
-const _c=LS.get(K.cfg,{});
-const S={sources:[],articles:[],read:new Set(LS.get(K.read,[])),saved:new Map(),tags:new Set(),
+let _c={};
+const S={sources:[],articles:[],read:new Set(),saved:new Map(),tags:new Set(),
   view:'all',onlyUnread:false,tag:null,search:'',art:null,undo:null,failed:new Map(),collapsed:new Set(),
-  cfg:{max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16)}};
+  cfg:{max:50,theme:'auto',font:16,dedup:true},mute:[],showMuted:false};
+function initState(){_c=LS.get(K.cfg,{});S.read=new Set(LS.get(K.read,[]));S.cfg={max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16),dedup:_c.dedup!==false};S.prompts=loadPrompts();S.mute=LS.get(K.mute,[]);buildMute()}
+/* cambios que cuentan para el aviso de copia (no cuenta leer artículos) */
+const meta=()=>Object.assign({changes:0,lastBackup:null,bkM:1,bkC:1},LS.get(K.meta,{}));
+function bump(){const m=meta();m.changes=(m.changes||0)+1;LS.set(K.meta,m)}
 const DEFAULT_PROMPTS=['Resume este artículo en 3 puntos clave.','Explícame este artículo como si tuviera 10 años.','Dame contraargumentos o críticas a esta noticia.','¿Cuáles son las implicaciones a largo plazo de lo que cuenta este artículo?','Extrae los datos más importantes y crea una tabla.'];
 /* Prompts de IA: lista única editable. 'main' = el principal (⚡), siempre el primero */
 const DEFAULT_QUICK='Resume este artículo en 3 puntos clave con un tono directo:';
@@ -252,14 +308,13 @@ function loadPrompts(){
   if(!p.list.some(x=>x.id===p.main))p.main=p.list[0]?.id||null;
   return p;
 }
-S.prompts=loadPrompts();
-const savePrompts=()=>LS.set(K.prompts2,S.prompts);
+const savePrompts=()=>{LS.set(K.prompts2,S.prompts);bump()};
 const orderedPrompts=()=>{const l=S.prompts.list,m=l.find(p=>p.id===S.prompts.main);return m?[m,...l.filter(p=>p!==m)]:[...l]};
 const PROXY_URL='https://rss-proxy.lector-rss.workers.dev';
 const CONCURRENCY=4; // pon 1 si algún día el worker se queja de peticiones en paralelo
 
 /* ---------- Utilidades ---------- */
-let _tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3000)}
+let _tt;function toast(m,ms=3000){const t=$('toast');clearTimeout(_tt);if(!m){t.classList.remove('show');return}t.textContent=m;t.classList.add('show');_tt=setTimeout(()=>t.classList.remove('show'),ms)}
 const setStatus=(m,u=null)=>{S.undo=u;$('stText').textContent=m;$('undoBtn').style.display=u?'inline-block':'none'};
 const errMsg=e=>e.name==='TimeoutError'?'Tiempo de espera agotado':/^HTTP \d+/.test(e.message)?'El servidor respondió '+e.message:e.message==='Failed to fetch'?'Sin conexión':e.message;
 function setProgress(p){const b=$('bar');if(p>0&&p<100){b.style.width=p+'%';b.style.opacity=1}else{b.style.opacity=0;setTimeout(()=>b.style.width=0,300)}}
@@ -302,9 +357,9 @@ function loadSources(){
   let s=LS.get(K.src,[]);
   const hidden=LS.get('rss_hidden_sources',[]),ov=LS.get('rss_source_overrides',{}); // migración de versiones anteriores
   S.sources=s.filter(x=>!hidden.includes(x.url)).map(x=>ov[x.url]?{...x,title:ov[x.url].title||x.title,category:ov[x.url].category||x.category}:x);
-  LS.set(K.src,S.sources);localStorage.removeItem('rss_hidden_sources');localStorage.removeItem('rss_source_overrides');
+  LS.set(K.src,S.sources);KV.del('rss_hidden_sources');KV.del('rss_source_overrides');
 }
-const saveSources=()=>LS.set(K.src,S.sources);
+const saveSources=()=>{LS.set(K.src,S.sources);bump()};
 
 /* ---------- LÓGICA DE DESCARGA (worker de Cloudflare) — sin cambios de fondo ---------- */
 async function fetchFeedXml(feedUrl){
@@ -416,7 +471,7 @@ function renderSources(){
   const f=$('srcFilter').value.toLowerCase(),out=[];
   const item=(label,n,cls,fn,extra)=>h('div',{class:'src '+cls,onclick:fn},h('span',{class:'lbl',text:label}),n?h('span',{class:'count',text:n}):'',extra||'');
   const fixed=(lbl,mode,n)=>{if(f&&!lbl.toLowerCase().includes(f))return;out.push(item(lbl,n,S.view===mode&&!S.tag?'active':'',()=>go(mode)))};
-  fixed('🗂️ Todas','all',S.articles.filter(a=>!S.read.has(a.id)).length);
+  fixed('🗂️ Todas','all',new Set(S.articles.filter(a=>!S.read.has(a.id)&&!isMuted(a)).map(dupKey)).size);
   fixed('🔖 Archivados','saved',S.saved.size);
   const tags=[...S.tags].filter(t=>!f||t.toLowerCase().includes(f));
   if(tags.length){out.push(h('div',{class:'cat',text:'🏷️ Mis etiquetas'}));tags.forEach(t=>{const n=[...S.saved.values()].filter(a=>(a.tags||[]).includes(t)).length;out.push(item(t,n,S.tag===t?'active':'',()=>go('saved',t),h('button',{text:'⚙️',title:'Editar etiqueta',onclick:e=>{e.stopPropagation();editTag(t)}})))})}
@@ -424,11 +479,11 @@ function renderSources(){
   Object.keys(cats).sort().forEach(cat=>{
     const ss=cats[cat].filter(s=>!f||(s.title||'').toLowerCase().includes(f)||cat.toLowerCase().includes(f));
     if(!ss.length)return;
-    const col=S.collapsed.has(cat);
-    out.push(h('div',{class:'cat',text:(col?'▶ ':'▼ ')+cat,onclick:()=>{col?S.collapsed.delete(cat):S.collapsed.add(cat);renderSources()}}));
+    const col=S.collapsed.has(cat),cu=new Set(cats[cat].map(s=>s.url)),unC=S.articles.filter(a=>cu.has(a.sourceUrl)&&!S.read.has(a.id)&&!isMuted(a)).length;
+    out.push(h('div',{class:'cat',onclick:()=>{col?S.collapsed.delete(cat):S.collapsed.add(cat);renderSources()}},h('span',{text:(col?'▶ ':'▼ ')+cat}),unC?h('span',{class:'count',text:unC}):'',unC?h('button',{class:'catok',text:'✓',title:'Marcar la categoría como leída',onclick:e=>{e.stopPropagation();markCatRead(cat)}}):''));
     if(col)return;
     ss.forEach(s=>{
-      const un=S.articles.filter(a=>a.sourceUrl===s.url&&!S.read.has(a.id)).length,bad=S.failed.has(s.url);
+      const un=S.articles.filter(a=>a.sourceUrl===s.url&&!S.read.has(a.id)&&!isMuted(a)).length,bad=S.failed.has(s.url);
       const el=item('📡 '+(s.title||s.url),0,(S.view===s.url&&!S.tag?'active ':'')+(bad?'failed':''),()=>go(s.url),null);
       if(bad)el.append(h('span',{class:'count',style:'background:var(--danger)',text:'⚠️',onclick:e=>{e.stopPropagation();toast(`${s.title}: ${S.failed.get(s.url)}`)}}));
       else if(un)el.append(h('span',{class:'count',text:un}));
@@ -439,19 +494,58 @@ function renderSources(){
   $('srcList').replaceChildren(...out);
 }
 
+/* Palabras silenciadas: ocultan artículos cuyo título o resumen tenga una palabra que empiece así (sin tildes ni mayúsculas) */
+const fold=x=>(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+let muteRe=null;
+function buildMute(){const w=(S.mute||[]).map(x=>fold(x).trim()).filter(Boolean);muteRe=w.length?new RegExp('(^|[^a-z0-9])('+w.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','i'):null}
+const isMuted=a=>!!muteRe&&muteRe.test(fold(a.title+' '+(a.snippet||'')));
+function saveMute(){S.mute=$('cMute').value.split('\n').map(x=>x.trim()).filter(Boolean);LS.set(K.mute,S.mute);bump();buildMute();S.showMuted=false;renderSources();renderList();toast(S.mute.length?S.mute.length+' palabra'+(S.mute.length>1?'s':'')+' silenciada'+(S.mute.length>1?'s':''):'Sin palabras silenciadas')}
+
+/* Noticias repetidas (6.1): se agrupan, nunca se borran.
+   1) mismo enlace normalizado (sin www/m., sin barra final, sin códigos de seguimiento)
+   2) titular casi igual: ≥60 % de palabras significativas en común (mín. 4 compartidas) y publicadas con menos de 48 h de diferencia */
+const TRK=/^(utm_|fbclid$|gclid$|ref$|ref_|rss$|source$|origin$|cmpid$|int$|ns_|mc_|ito$|_ga$|xtor$)/i;
+function normLink(u){try{const x=new URL(u);[...x.searchParams.keys()].forEach(k=>{if(TRK.test(k))x.searchParams.delete(k)});const q=x.searchParams.toString();return (x.hostname.replace(/^(www|m|amp)\./,'')+x.pathname.replace(/\/amp\/?$/,'').replace(/\/+$/,'')+(q?'?'+q:'')).toLowerCase()}catch{return ''}}
+const STOPW=new Set('para como este esta esto estos estas sobre entre desde hasta tras pero porque cuando donde tiene tienen sera sido estan hace hacen anos nuevo nueva ante bajo contra durante segun todo todos toda todas otro otra otros otras puede pueden mismo misma tambien solo ahora aqui asi muy mucho mucha cada hoy ayer este uno una unos unas ellos ellas'.split(' '));
+const dupToks=t=>[...new Set(fold(t).replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(w=>w.length>=4&&!STOPW.has(w)))];
+let DG={src:null,len:-1,on:null,g:new Map()};
+function dupGroups(){
+  const A=S.articles,on=S.cfg.dedup!==false;
+  if(DG.src===A&&DG.len===A.length&&DG.on===on)return DG.g;
+  const g=new Map();DG={src:A,len:A.length,on,g};if(!on||A.length<2)return g;
+  const P=A.map((_,i)=>i),f=i=>{while(P[i]!==i){P[i]=P[P[i]];i=P[i]}return i},u=(a,b)=>{a=f(a);b=f(b);if(a!==b)P[Math.max(a,b)]=Math.min(a,b)};
+  const byL=new Map(),idx=new Map(),T=A.map(a=>dupToks(a.title)),D=A.map(a=>+new Date(a.date)||0);
+  A.forEach((a,i)=>{const k=normLink(a.link||'');if(k){if(byL.has(k))u(byL.get(k),i);else byL.set(k,i)}
+    if(T[i].length>=4)T[i].forEach(w=>{let l=idx.get(w);if(!l)idx.set(w,l=[]);l.push(i)})});
+  for(let i=0;i<A.length;i++){if(T[i].length<4)continue;const c=new Map();
+    T[i].forEach(w=>{const l=idx.get(w);if(l.length>80)return;l.forEach(j=>{if(j>i)c.set(j,(c.get(j)||0)+1)})});
+    c.forEach((n,j)=>{if(n>=4&&n/(T[i].length+T[j].length-n)>=0.6&&Math.abs(D[i]-D[j])<1728e5)u(i,j)})}
+  const m=new Map();A.forEach((a,i)=>{const r=f(i);if(!m.has(r))m.set(r,[]);m.get(r).push(a.id)});
+  m.forEach(ids=>{if(ids.length>1)ids.forEach(id=>g.set(id,ids))});
+  return g;
+}
+const dupIds=id=>dupGroups().get(id)||[id];
+const dupKey=a=>{const l=dupGroups().get(a.id);return l?l[0]:a.id};
+function readAdd(id){dupIds(id).forEach(x=>S.read.add(x))}
+let dupShown=new Map();S.dupOpen=new Set();
+let mutedHidden=0;
 function visible(){
   let it;
   if(S.view==='saved')it=[...S.saved.values()];
   else it=S.articles.filter(a=>S.view==='all'||a.sourceUrl===S.view);
   if(S.tag)it=it.filter(a=>tagsOf(a).includes(S.tag));
+  mutedHidden=0;if(S.view!=='saved'&&!S.showMuted&&muteRe){const n=it.length;it=it.filter(a=>!isMuted(a));mutedHidden=n-it.length}
   if(S.onlyUnread)it=it.filter(a=>!S.read.has(a.id));
   if(S.search)it=it.filter(a=>(a.title+' '+(a.snippet||'')).toLowerCase().includes(S.search));
-  return it.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  it.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  dupShown=new Map();if(S.view==='all'&&S.cfg.dedup!==false&&dupGroups().size){const first=new Map(),out=[];it.forEach(a=>{const k=dupKey(a);if(!first.has(k)){first.set(k,a);out.push(a);dupShown.set(a.id,[])}else dupShown.get(first.get(k).id).push(a)});it=out}
+  return it;
 }
 function renderList(top){
   const l=$('list'),y=l.scrollTop,items=visible();
   if(!items.length)l.replaceChildren(h('div',{class:'center muted',text:loading?'Cargando…':(!S.sources.length&&S.view!=='saved')?'Aún no tienes fuentes. Abre el menú ☰ y pulsa ＋ para añadir la primera.':'No hay artículos.'}));
-  else l.replaceChildren(...items.map(row));
+  else l.replaceChildren(...items.flatMap(a=>{const r=[row(a)],m=dupShown.get(a.id);if(m&&m.length&&S.dupOpen.has(dupKey(a)))m.forEach(x=>{const w=row(x);w.classList.add('dup');r.push(w)});return r}));
+  if(mutedHidden||S.showMuted&&muteRe&&S.view!=='saved')l.append(h('div',{class:'muted muted-note'},S.showMuted?'Mostrando también los silenciados':`${mutedHidden} artículo${mutedHidden>1?'s':''} oculto${mutedHidden>1?'s':''} por palabras silenciadas`,h('button',{class:'sec',text:S.showMuted?'Ocultar':'Ver',onclick:()=>{S.showMuted=!S.showMuted;renderList()}})));
   l.scrollTop=top?0:y;
 }
 const swipeAct=(fn,msg)=>{fn();setStatus(msg,()=>{fn();setStatus('Acción deshecha.')})};
@@ -461,7 +555,7 @@ function row(a){
     th?h('img',{class:'thumb',src:th,loading:'lazy',referrerpolicy:'no-referrer',onerror:function(){this.remove()}}):'',
     h('div',{class:'body'},
       h('div',{class:'title',text:(fv?'🔖 ':'')+a.title}),
-      h('div',{class:'meta'},h('span',{text:srcTitle(a.sourceUrl)}),h('span',{text:fmt(a.date)}),...tagsOf(a).map(t=>h('span',{class:'tag',text:t}))),
+      h('div',{class:'meta'},h('span',{text:srcTitle(a.sourceUrl)}),h('span',{text:fmt(a.date)}),...(()=>{const m=dupShown.get(a.id);if(!m||!m.length)return[];const k=dupKey(a),o=S.dupOpen.has(k);return[h('span',{class:'dupb',title:'Misma noticia en: '+[...new Set(m.map(x=>srcTitle(x.sourceUrl)))].join(', '),text:(o?'▾ ':'')+'+'+m.length+(m.length>1?' fuentes':' fuente'),onclick:e=>{e.stopPropagation();o?S.dupOpen.delete(k):S.dupOpen.add(k);renderList()}})]})(),...tagsOf(a).map(t=>h('span',{class:'tag',text:t}))),
       h('div',{class:'snippet',text:a.snippet||''})));
   // Gestos: → leer más tarde (Archivados, disponible sin conexión), ← leído/no leído. Se ve el color e icono al arrastrar.
   const sL=h('span',{text:fv?'Quitar de Archivados':'🔖 Leer más tarde',style:'font-size:14px;font-weight:600'}),sR=h('span',{text:rd?'↺':'✓'}),sb=h('div',{class:'sb'},sL,sR),wrap=h('div',{class:'sw'},sb,el);
@@ -497,7 +591,7 @@ async function toggleArch(id,force){ // Archivados = guardados sin conexión ("l
       const c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};await dbPut(c);S.saved.set(id,c);added=true;fillOffline(c);
     }
   }catch{toast('No se pudo guardar sin conexión');return false}
-  calcTags();refresh();
+  bump();calcTags();refresh();
   if(!force)setStatus(added?'Guardado en Archivados para leer más tarde.':'Quitado de Archivados.');
   return true;
 }
@@ -510,12 +604,15 @@ async function swipeArch(id){
     setStatus('Acción deshecha.');
   });
 }
-function toggleRead(id){S.read.has(id)?S.read.delete(id):S.read.add(id);persist();refresh()}
+function toggleRead(id){const r=S.read.has(id);dupIds(id).forEach(x=>r?S.read.delete(x):S.read.add(x));persist();refresh()}
 function markAllRead(){
   const it=visible();if(!it.length||!confirm(`¿Marcar los ${it.length} artículos como leídos?`))return;
-  const ids=it.filter(a=>!S.read.has(a.id)).map(a=>a.id);ids.forEach(id=>S.read.add(id));persist();
+  const ids=[...new Set(it.flatMap(a=>dupIds(a.id)))].filter(id=>!S.read.has(id));ids.forEach(id=>S.read.add(id));persist();
   setStatus('Todos marcados como leídos.',()=>{ids.forEach(id=>S.read.delete(id));persist();setStatus('Acción deshecha.');refresh()});refresh();
 }
+function markCatRead(cat){const cu=new Set(S.sources.filter(s=>(s.category||'General')===cat).map(s=>s.url)),ids0=S.articles.filter(a=>cu.has(a.sourceUrl)&&!S.read.has(a.id)&&!isMuted(a)).map(a=>a.id),ids=[...new Set(ids0.flatMap(dupIds))].filter(id=>!S.read.has(id));
+  if(!ids0.length||!confirm(`¿Marcar como leídos los ${ids0.length} artículos de «${cat}»?`))return;ids.forEach(id=>S.read.add(id));persist();refresh();
+  setStatus(`«${cat}»: ${ids0.length} marcados como leídos.`,()=>{ids.forEach(id=>S.read.delete(id));persist();refresh();setStatus('Acción deshecha.')})}
 function undo(){if(S.undo)S.undo()}
 
 /* ---------- Lector ---------- */
@@ -527,7 +624,17 @@ function paintBar(){
   $('bRead').style.opacity=S.read.has(a.id)?1:.4;
   const l=safeUrl(a.link);l?$('bOrig').href=l:$('bOrig').removeAttribute('href');
 }
-function closeReader(){if(!document.body.classList.contains('reading'))return;document.body.classList.remove('reading');$('list').scrollTop=listY}
+/* Leer en voz alta con la voz del móvil (por frases, para que no se corte en textos largos) */
+let tts=null;
+function ttsStop(){try{speechSynthesis.cancel()}catch{}tts=null;const b=$('bSpeak');if(b){b.classList.remove('on');b.title='Leer en voz alta'}}
+function speakArt(){if(!('speechSynthesis' in window))return toast('Este navegador no puede leer en voz alta');if(tts){ttsStop();return}
+  const a=S.art;if(!a)return;const body=$('rc').querySelector('.rbody'),txt=(a.title+'. '+((body&&body.innerText)||a.snippet||'')).replace(/\s+/g,' ').trim();
+  const parts=txt.match(/[^.!?;:]+[.!?;:]*\s*/g)||[txt],ch=[];let cur='';parts.forEach(p=>{if((cur+p).length>220&&cur){ch.push(cur);cur=p}else cur+=p});if(cur)ch.push(cur);
+  const vs=speechSynthesis.getVoices(),v=vs.find(x=>/^es[-_]ES/i.test(x.lang))||vs.find(x=>/^es/i.test(x.lang));
+  const my=tts={i:0},b=$('bSpeak');b.classList.add('on');b.title='Parar la lectura';
+  const next=()=>{if(tts!==my)return;if(my.i>=ch.length){ttsStop();return}const u=new SpeechSynthesisUtterance(ch[my.i++]);u.lang='es-ES';if(v)u.voice=v;u.onend=next;u.onerror=()=>{if(tts===my)ttsStop()};speechSynthesis.speak(u)};
+  speechSynthesis.cancel();next()}
+function closeReader(){ttsStop();if(!document.body.classList.contains('reading'))return;document.body.classList.remove('reading');$('list').scrollTop=listY}
 const closeArt=()=>{lpop('reader');closeReader()};
 function navBox(){
   const nav=S.nav||[],i=nav.indexOf(S.art.id);if(i<0||nav.length<2)return'';
@@ -536,7 +643,7 @@ function navBox(){
 }
 function step(d){const nav=S.nav||[],i=nav.indexOf(S.art?.id);if(i<0)return;const t=findArt(nav[i+d]);if(t)openArticle(t,true)}
 async function openArticle(a,keepNav){
-  const my=++tok;S.art=a;S.read.add(a.id);persist();
+  ttsStop();const my=++tok;S.art=a;readAdd(a.id);persist();
   if(!keepNav)S.nav=visible().map(x=>x.id);
   if(!document.body.classList.contains('reading')){listY=$('list').scrollTop;document.body.classList.add('reading');if(mob())lpush('reader')}
   refresh();
@@ -579,7 +686,7 @@ function renderTagModal(){
 }
 async function removeArtTag(t){
   const c=S.saved.get(S.art?.id);if(!c)return;
-  try{c.tags=(c.tags||[]).filter(x=>x!==t);await dbPut(c)}catch{toast('No se pudo quitar la etiqueta');return}
+  try{c.tags=(c.tags||[]).filter(x=>x!==t);await dbPut(c);bump()}catch{toast('No se pudo quitar la etiqueta');return}
   calcTags();renderTagModal();refresh();
 }
 /* Gestión de etiquetas (menú lateral ⚙️): renombrar, fusionar y eliminar */
@@ -593,7 +700,7 @@ async function saveTagEdit(){
   if(S.tags.has(nn)&&!confirm(`Ya existe la etiqueta «${nn}». ¿Fusionar ambas?`))return;
   try{for(const c of S.saved.values())if((c.tags||[]).includes(old)){c.tags=[...new Set(c.tags.map(x=>x===old?nn:x))];await dbPut(c)}}
   catch{toast('No se pudo renombrar la etiqueta');return}
-  if(S.tag===old)S.tag=nn;
+  bump();if(S.tag===old)S.tag=nn;
   calcTags();hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta renombrada a «${nn}».`);
 }
 async function delTag(){
@@ -601,7 +708,7 @@ async function delTag(){
   if(!confirm(`¿Eliminar la etiqueta «${t}»? Se quitará de ${n} artículo${n===1?'':'s'}; los artículos seguirán en Archivados.`))return;
   try{for(const c of S.saved.values())if((c.tags||[]).includes(t)){c.tags=c.tags.filter(x=>x!==t);await dbPut(c)}}
   catch{toast('No se pudo eliminar la etiqueta');return}
-  if(S.tag===t)S.tag=null;
+  bump();if(S.tag===t)S.tag=null;
   calcTags();hide('tagEdModal');updateTitle();refresh();setStatus(`Etiqueta «${t}» eliminada.`);
 }
 async function saveTag(){
@@ -609,7 +716,7 @@ async function saveTag(){
   try{
     let c=S.saved.get(a.id);
     if(!c){c={...a,sourceTitle:srcTitle(a.sourceUrl),savedAt:new Date().toISOString()};S.saved.set(a.id,c)}
-    c.tags=[...new Set([...(c.tags||[]),t])];await dbPut(c);
+    c.tags=[...new Set([...(c.tags||[]),t])];await dbPut(c);bump();
   }catch{toast('No se pudo guardar la etiqueta');return}
   calcTags();hide('tagModal');setStatus('Etiqueta añadida (el artículo queda en Archivados).');refresh();
 }
@@ -688,14 +795,18 @@ function exportOpml(){
 }
 function delSrc(){
   if(!editing||!confirm('¿Eliminar esta fuente?'))return;
-  const u=editing.url;S.sources=S.sources.filter(s=>s!==editing);S.articles=S.articles.filter(a=>a.sourceUrl!==u);
-  if(S.view===u)S.view='all';saveSources();hide('srcModal');updateTitle();renderSources();renderList();setStatus('Fuente eliminada.');
+  const u=editing.url,src=editing,pos=S.sources.indexOf(editing),arts=S.articles.filter(a=>a.sourceUrl===u);S.sources=S.sources.filter(s=>s!==editing);S.articles=S.articles.filter(a=>a.sourceUrl!==u);
+  if(S.view===u)S.view='all';saveSources();hide('srcModal');updateTitle();renderSources();renderList();
+  setStatus(`Fuente «${src.title}» eliminada.`,()=>{if(!S.sources.some(s=>s.url===u))S.sources.splice(Math.min(pos,S.sources.length),0,src);S.articles=[...S.articles,...arts].sort((a,b)=>new Date(b.date)-new Date(a.date));saveSources();renderSources();renderList();setStatus('Fuente recuperada.')});
 }
 function openEditor(){$('edText').value=S.sources.map(s=>`${s.url} | ${s.title} | ${s.category||'General'}`).join('\n');show('edModal')}
-function saveEditor(){
-  const ns=[];
+async function saveEditor(){
+  const ns=[],prev=S.sources.map(s=>({...s}));
   $('edText').value.split('\n').forEach(l=>{if(!l.trim())return;const p=l.split('|').map(x=>x.trim()),u=safeUrl(p[0]);if(u&&!ns.some(s=>s.url===u))ns.push({url:u,title:p[1]||u,category:p[2]||'General'})});
-  S.sources=ns;saveSources();hide('edModal');S.view='all';updateTitle();renderSources();loadData();
+  const gone=prev.filter(s=>!ns.some(n=>n.url===s.url)),nuevas=ns.filter(n=>!prev.some(s=>s.url===n.url)).length;
+  if(gone.length&&!confirm(`Se quitarán ${gone.length} fuente${gone.length>1?'s':''}: ${gone.slice(0,5).map(s=>s.title).join(', ')}${gone.length>5?'…':''}. Podrás deshacerlo. ¿Continuar?`))return;
+  S.sources=ns;saveSources();hide('edModal');S.view='all';updateTitle();renderSources();await loadData();
+  setStatus(`Fuentes actualizadas (${nuevas} nuevas, ${gone.length} quitadas).`,()=>{S.sources=prev;saveSources();S.view='all';updateTitle();renderSources();renderList();setStatus('Cambios del editor deshechos.');loadData()});
 }
 $('opml').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
@@ -716,16 +827,16 @@ $('opml').onchange=async e=>{
 /* ---------- Copia de seguridad completa ---------- */
 async function exportBackup(){
   let arts=[];try{arts=await dbAll()}catch{}
-  const data={version:2,date:new Date().toISOString(),articles:arts,sources:S.sources,read:[...S.read],prompts:S.prompts.list.map(p=>p.text),ideas:LS.get(K.ideas,[]),cfg:{...S.cfg}};
+  const now=new Date().toISOString(),data={app:APP,ver:VER,version:2,date:now,articles:arts,sources:S.sources,read:[...S.read],prompts:orderedPrompts().map(p=>p.text),ideas:LS.get(K.ideas,[]),cfg:{...S.cfg},mute:S.mute};
   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  const a=h('a',{href:url,download:`mi_lector_backup_${new Date().toISOString().slice(0,10)}.json`});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast('Copia exportada');
+  const a=h('a',{href:url,download:`${FN}_v${VER}_completa_abierta_${now.slice(0,10)}.json`});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  await spDone(now);toast('Copia sin cifrar exportada');
 }
 $('imp').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{
     const d=JSON.parse(await f.text()),arts=Array.isArray(d)?d:(d.articles||[]);
-    for(const a of arts)if(a&&typeof a.id==='string')await dbPut(a);
+    for(const a of arts)if(a&&typeof a.id==='string'&&!S.saved.has(a.id))await dbPut(a);bump();
     if(!Array.isArray(d)&&d.version===2){
       if(Array.isArray(d.sources)){const have=new Set(S.sources.map(s=>s.url));d.sources.forEach(s=>{const u=safeUrl(s?.url);if(u&&!have.has(u)){S.sources.push({url:u,title:String(s.title||u),category:String(s.category||'General')});have.add(u)}});saveSources()}
       if(Array.isArray(d.read))d.read.forEach(x=>S.read.add(x));
@@ -743,17 +854,17 @@ function applyCfg(){
   const r=document.documentElement;
   S.cfg.theme==='auto'?r.removeAttribute('data-theme'):r.dataset.theme=S.cfg.theme;
   r.style.setProperty('--rs',S.cfg.font+'px');
-  $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;
+  $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;$('cMute').value=(S.mute||[]).join('\n');$('cDup').checked=S.cfg.dedup!==false;
 }
 function saveCfg(){
   S.cfg.theme=$('cTheme').value;S.cfg.font=+$('cFont').value||16;
   S.cfg.max=Math.min(200,Math.max(10,parseInt($('cMax').value)||50));
-  LS.set(K.cfg,{maxArticles:S.cfg.max,theme:S.cfg.theme});LS.set(K.font,S.cfg.font);applyCfg();
+  S.cfg.dedup=$('cDup').checked;LS.set(K.cfg,{maxArticles:S.cfg.max,theme:S.cfg.theme,dedup:S.cfg.dedup});LS.set(K.font,S.cfg.font);bump();applyCfg();refresh();
 }
 
 /* ---------- Ideas de mejora ---------- */
 let editId=null;
-const ideasUpd=fn=>{const l=LS.get(K.ideas,[]);fn(l);LS.set(K.ideas,l);renderIdeas()};
+const ideasUpd=fn=>{const l=LS.get(K.ideas,[]);fn(l);LS.set(K.ideas,l);bump();renderIdeas()};
 function saveIdea(){const t=$('ideaText').value.trim();if(!t)return;ideasUpd(l=>l.push({id:'i'+Date.now(),text:t,done:false,createdAt:new Date().toISOString()}));$('ideaText').value=''}
 function renderIdeas(){
   const l=LS.get(K.ideas,[]);
@@ -772,8 +883,141 @@ function renderIdeas(){
   }));
 }
 
+
+/* ---------- Copia en Drive: utilidades y enganches del bloque SP (sección 5 del MD) ---------- */
+function spShow(html){$('shBody').innerHTML=html;$('sh').classList.add('show')}
+function closeSh(){const b=$('shBody');b.querySelectorAll('input').forEach(i=>i.value='');b.innerHTML='';$('sh').classList.remove('show');DX=null}
+/* los cuadros de contraseña del bloque SP (z-index 80) se suben por encima de Ajustes y de los diálogos de la app */
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1&&n.style&&n.style.zIndex==='80')n.style.zIndex='400'}))).observe(document.body,{childList:true});
+/* render(): lo llama el bloque SP tras cada cambio de la conexión; refresca la tarjeta de Ajustes */
+function render(){const b=$('drvBox');if(b)b.innerHTML=drvUI();const m=meta(),i=$('bkInfo');if(i)i.textContent=`Última copia: ${m.lastBackup?new Date(m.lastBackup).toLocaleDateString('es-ES'):'nunca'} · cambios desde entonces: ${m.changes||0}`;
+  [['cBkM',m.bkM||1],['cBkC',m.bkC||1]].forEach(([id,v])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v});
+  const r={local:'incluido en la app ✓',cdn:'desde el servidor externo (verificado con su huella)',none:'no disponible: sube Readability.js (ver el MD)'}[window.RDB_SRC]||'cargando…';
+  const vi=$('verInfo');if(vi)vi.textContent=`Mi Lector RSS · versión 6.1 · datos en ${KV.ls?'localStorage (IndexedDB no disponible)':'IndexedDB'} · extractor de texto: ${r}`+(S.cfg.dedup!==false?` · ${new Set([...dupGroups().values()].map(l=>l[0])).size} noticias con copias agrupadas ahora`:'')}
+function saveBkCfg(){const m=meta();m.bkM=Math.max(1,Math.min(24,parseInt($('cBkM').value)||1));m.bkC=Math.max(1,Math.min(999,parseInt($('cBkC').value)||1));LS.set(K.meta,m);render();toast('Guardado')}
+/* aviso de copia al entrar: más de N meses o N cambios sin copia */
+function bkNeed(){if(!S.sources.length&&!S.saved.size)return'';const m=meta();if(!m.lastBackup)return'Aún no has hecho ninguna copia de seguridad.';
+  const L=new Date(m.lastBackup);L.setMonth(L.getMonth()+(m.bkM||1));if(L<=new Date())return`Tu última copia es del ${new Date(m.lastBackup).toLocaleDateString('es-ES')}.`;
+  if((m.changes||0)>=(m.bkC||1))return`Hay ${m.changes} cambio${m.changes>1?'s':''} sin copia desde el ${new Date(m.lastBackup).toLocaleDateString('es-ES')}.`;return''}
+function bkAviso(){const w=bkNeed();if(!w||$('sh').classList.contains('show'))return;
+  spShow(`<h3>💾 Copia de seguridad</h3><p class="muted">${esc(w)} La copia incluye tus fuentes, archivados con su texto, etiquetas, leídos, prompts, ideas y ajustes.</p><div class="btns">${spOn()?'<button onclick="closeSh();drvUp()">☁️ Subir a Drive</button>':`<button onclick="closeSh();show('settings');render();drvConn()">☁️ Conectar con Drive</button>`}<button onclick="closeSh();expSp()">🔐 Descargar cifrada</button><button onclick="closeSh()">Ahora no</button></div>`)}
+/* copia completa (6.0) y JSON de versiones anteriores → mismo formato */
+function norm(d){const isO=x=>!!x&&typeof x==='object'&&!Array.isArray(x);if(!isO(d)||!Array.isArray(d.sources)||!d.sources.every(x=>isO(x)&&typeof x.url==='string'))return null;
+  const saved=Array.isArray(d.saved)?d.saved:Array.isArray(d.articles)?d.articles:[];if(!saved.every(a=>isO(a)&&typeof a.id==='string'))return null;
+  let prompts=null;if(isO(d.prompts)&&Array.isArray(d.prompts.list))prompts={list:d.prompts.list.filter(p=>isO(p)&&typeof p.text==='string').map(p=>({id:String(p.id||uid()),text:p.text})),main:d.prompts.main};
+  else if(Array.isArray(d.prompts)){const l=d.prompts.filter(t=>typeof t==='string'&&t.trim()).map(t=>({id:uid(),text:t.trim()}));prompts={list:l,main:l[0]?.id||null}}
+  if(prompts&&!prompts.list.some(p=>p.id===prompts.main))prompts.main=prompts.list[0]?.id||null;
+  const c=isO(d.cfg)?d.cfg:{};
+  return{sources:d.sources.filter(x=>safeUrl(x.url)).map(x=>({url:safeUrl(x.url),title:String(x.title||x.url),category:String(x.category||'General')})),read:Array.isArray(d.read)?d.read.filter(x=>typeof x==='string'):[],prompts,
+    ideas:Array.isArray(d.ideas)?d.ideas.filter(i=>isO(i)&&typeof i.text==='string'):[],cfg:{max:Math.min(200,Math.max(10,+c.max||+c.maxArticles||50)),theme:['auto','light','dark'].includes(c.theme)?c.theme:'auto',font:Math.min(26,Math.max(12,+c.font||16)),dedup:c.dedup!==false},
+    mute:Array.isArray(d.mute)?d.mute.filter(x=>typeof x==='string'):[],saved}}
+async function spData(){let saved=[];try{saved=await dbAll()}catch{}return{app:APP,v:6,sources:S.sources,read:[...S.read],prompts:S.prompts,ideas:LS.get(K.ideas,[]),cfg:{...S.cfg},mute:S.mute,saved}}
+function spValid(d){return!!norm(d)}
+async function spHas(){return S.sources.length>0||S.saved.size>0||LS.get(K.ideas,[]).length>0}
+async function spApply(d){ /* solo tras leer, descifrar y validar la copia entera y descargar la copia previa */
+  const n=norm(d);if(!n)throw new Error('copia no válida');
+  if(db)await new Promise((ok,ko)=>{const t=db.transaction('guardados','readwrite'),st=t.objectStore('guardados');st.clear();n.saved.forEach(a=>st.put(a));t.oncomplete=ok;t.onerror=t.onabort=()=>ko(t.error)});
+  LS.set(K.src,n.sources);LS.set(K.read,n.read);if(n.prompts)LS.set(K.prompts2,n.prompts);LS.set(K.ideas,n.ideas);LS.set(K.cfg,{...LS.get(K.cfg,{}),maxArticles:n.cfg.max,theme:n.cfg.theme,dedup:n.cfg.dedup});LS.set(K.font,n.cfg.font);LS.set(K.mute,n.mute);bump();
+  if(await KV.flush()===false)throw new Error('No se pudo guardar');
+  initState();S.sources=n.sources;S.saved=new Map(n.saved.map(x=>[x.id,x]));calcTags();const urls=new Set(S.sources.map(x=>x.url));S.articles=S.articles.filter(a=>urls.has(a.sourceUrl));
+  applyCfg();renderIdeas();renderPromptEd();S.view='all';S.tag=null;updateTitle();renderSources();renderList(true);render();loadData()}
+async function spDone(now){const m=meta();m.lastBackup=now;m.changes=0;LS.set(K.meta,m);await KV.flush();legacyFree();render()}
+/* SP:inicio · (en esta app la hoja del bloque se llama spShow, porque show() ya abre las páginas de la app) · Seguridad solo para el puente de Drive (ver «Seguridad solo para el puente.MD»)
+   - Sin contraseña maestra, sin bloqueo, sin huella al entrar.
+   - Dirección + clave del puente + contraseña de copias se guardan CIFRADAS con una clave del
+     dispositivo AES-GCM NO EXTRAÍBLE (CryptoKey guardada en una base IndexedDB propia).
+   - Las copias que van a Drive salen cifradas (.gdc, mismo formato que la Fase 1).
+   - La huella (opcional) solo se pide para VER/CAMBIAR la conexión o BORRAR copias de Drive. */
+const SPX='lr',DAPP='lectorrss',MG='LRENC1\n';        // ← Mi Lector RSS: prefijo lr, carpeta Apps/Backups/lectorrss, cabecera LRENC1
+const SPL=SPX+'_pte',SPDB=SPX+'_pte_db';
+const te=new TextEncoder(),td=new TextDecoder(),CH=4194304,IT=250000,PART=3145728,SPAD=te.encode(SPX+'/pte/v1'),PUV=/^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/;
+const b64=u=>{let s='';u=new Uint8Array(u);for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s)},ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),rnd=n=>crypto.getRandomValues(new Uint8Array(n)),u32=n=>{const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,n);return a},rd32=u=>new DataView(u.buffer,u.byteOffset).getUint32(0);
+const hex=u=>[...new Uint8Array(u)].map(b=>b.toString(16).padStart(2,'0')).join(''),sleep=ms=>new Promise(r=>setTimeout(r,ms)),sha=async s=>hex(await crypto.subtle.digest('SHA-256',te.encode(s)));
+const kdf=async(p,s,it)=>crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:s,iterations:it},await crypto.subtle.importKey('raw',te.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+const enc=async(k,d,n)=>{const iv=rnd(12);return{iv,ct:new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,d))}},dcr=(k,iv,ct,n)=>crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,ct);
+const askPw=(t,two)=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px';d.innerHTML=`<div class="shb"><b style="white-space:pre-wrap">${esc(t)}</b><input type="password" autocomplete="off" id="p1" placeholder="Contraseña">${two?'<input type="password" autocomplete="off" id="p2" placeholder="Repite la contraseña">':''}<div class="btns"><button id="ok">Aceptar</button><button id="no">Cancelar</button></div></div>`;document.body.appendChild(d);const f=d.querySelector('#p1'),x=v=>{d.querySelectorAll('input').forEach(i=>i.value='');d.remove();r(v)};f.focus();
+const go1=()=>{const v=f.value;if(!v)return;if(two&&v.length<8)return alert('Mínimo 8 caracteres.');if(two&&d.querySelector('#p2').value!==v)return alert('Las contraseñas no coinciden.');x(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=go1;d.addEventListener('keydown',e=>{if(e.key==='Enter')go1()})});
+/* 1) clave del dispositivo: no extraíble; ni la propia app puede leer sus bytes, solo usarla */
+function spDb(){return new Promise((res,rej)=>{const r=indexedDB.open(SPDB,1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function spKey(create){const db=await spDb();try{let k=await new Promise((res,rej)=>{const q=db.transaction('k').objectStore('k').get('dev');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)});
+if(!k&&create){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await new Promise((res,rej)=>{const t=db.transaction('k','readwrite');t.objectStore('k').put(k,'dev');t.oncomplete=res;t.onerror=()=>rej(t.error)})}return k}finally{db.close()}}
+/* 2) conexión cifrada en localStorage[SPL] = {v,iv,ct,keep,last,cid}; ct = {u,k,bp} */
+let SP=(()=>{try{return JSON.parse(localStorage.getItem(SPL))||null}catch(e){return null}})(),SPC=null,DL=[],DX=null,DUP=0,DM='';
+const spOn=()=>!!(SP&&SP.ct),spSave=o=>{SP={...SP,...o};localStorage.setItem(SPL,JSON.stringify(SP))};
+async function spSet(c){const k=await spKey(true),iv=rnd(12),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:SPAD},k,te.encode(JSON.stringify(c))));spSave({v:1,iv:b64(iv),ct:b64(ct)});SPC=c}
+async function spGet(){if(SPC)return SPC;if(!spOn())return null;const k=await spKey(false);if(!k)throw'lost';try{SPC=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(SP.iv),additionalData:SPAD},k,ub64(SP.ct))))}catch(e){throw'lost'}return SPC}
+const spLost=()=>alert('No se pudo leer la conexión con Drive de este móvil (¿se borraron los datos del navegador?). Vuelve a conectar con la dirección, la clave y la contraseña de copias. Tus datos no han cambiado.');
+/* 3) autorización para cambios: huella si se activó; si no, o si falla, la contraseña de copias */
+async function spAuth(why){let c;try{c=await spGet()}catch(e){spLost();return null}if(!c)return null;
+if(SP.cid){try{await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:ub64(SP.cid)}],userVerification:'required',timeout:60000}});return c}catch(e){toast('Huella no disponible: usa la contraseña de copias',3000)}}
+const p=await askPw(why+'\n\nEscribe la contraseña de copias');if(p==null)return null;if(p!==c.bp){alert('Contraseña incorrecta.');return null}return c}
+async function spHuReg(){try{const cr=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:APP,id:location.hostname},user:{id:rnd(16),name:SPX+'-puente',displayName:APP+' · puente'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'preferred',userVerification:'required'},timeout:60000}});spSave({cid:b64(cr.rawId)});render();toast('Huella activada para los cambios del puente')}catch(e){toast('No se pudo activar la huella: se usará la contraseña de copias',3000)}}
+async function spHuella(){if(await spAuth('Activar la huella para el puente'))await spHuReg()}
+function spHuOff(){if(confirm('¿Dejar de pedir la huella? Los cambios se autorizarán con la contraseña de copias.')){spSave({cid:null});render()}}
+/* 4) copias cifradas (.gdc, idéntico a la Fase 1) */
+async function encBlob(bl,p,meta){const s=rnd(16),k=await kdf(p,s,IT),h=te.encode(JSON.stringify({app:APP,ver:VER,salt:b64(s),it:IT,ch:CH,date:new Date().toISOString(),...meta})),parts=[te.encode(MG),u32(h.length),h];let n=0;const w=async d=>{const{iv,ct}=await enc(k,d,n++);parts.push(u32(ct.length),iv,ct)};for(let i=0;i<bl.size;i+=CH)await w(new Uint8Array(await bl.slice(i,i+CH).arrayBuffer()));await w(te.encode('GD-FIN'));return new Blob(parts)}
+async function decFile(f,ask){let o=MG.length;const rd=async n=>{const u=new Uint8Array(await f.slice(o,o+n).arrayBuffer());if(u.length<n)throw'trunc';o+=n;return u},h=JSON.parse(td.decode(await rd(rd32(await rd(4)))));const p=await ask();if(p==null)return null;const k=await kdf(p,ub64(h.salt),h.it),out=[];let n=0;for(;;){const l=rd32(await rd(4)),iv=await rd(12),ct=await rd(l);let d;try{d=new Uint8Array(await dcr(k,iv,ct,n++))}catch(e){throw'pw'}if(o>=f.size){if(td.decode(d)!=='GD-FIN')throw'trunc';break}out.push(d)}return new Blob(out)}
+const isGdc=async f=>td.decode(new Uint8Array(await f.slice(0,MG.length).arrayBuffer()))===MG;
+const dl=(bl,name)=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),6e4)};
+async function spPack(p,pre){const now=new Date().toISOString(),bl=await encBlob(new Blob([JSON.stringify({app:APP,ver:VER,v:1,date:now,data:await spData()})],{type:'application/json'}),p,{full:true});return{bl,now,name:`${FN}_v${VER}_${pre?'PREVIA_':''}completa_cifrada_${now.slice(0,10)}.gdc`}}
+/* abrir y restaurar una copia (.gdc o .json); nunca borra nada antes de leer y validar la copia entera */
+async function spRestoreFile(f,hint){let o,used=null;try{if(await isGdc(f)){const ask=async t=>{used=await askPw(t);return used};let bl;
+try{bl=await decFile(f,hint?async()=>{used=hint;return hint}:()=>ask('Contraseña de copias con la que se hizo esta copia'))}catch(er){if(er==='pw'&&hint)bl=await decFile(f,()=>ask('La contraseña de copias guardada no abre esta copia. Escribe la contraseña con la que se hizo'));else throw er}if(!bl)return null;o=JSON.parse(await bl.text())}else o=JSON.parse(await f.text())}
+catch(er){alert(er==='pw'?'Contraseña incorrecta o copia dañada. No se ha tocado nada.':er==='trunc'?'La copia está incompleta. No se ha tocado nada.':'El archivo no es una copia válida. No se ha tocado nada.');return null}
+if(o&&o.app&&!APPS.includes(o.app)){alert('Esta copia es de otra app («'+o.app+'»). No se ha tocado nada.');return null}
+const data=o&&o.app&&'data' in o?o.data:o;if(!spValid(data)){alert('La copia no tiene datos reconocibles de esta app. No se ha tocado nada.');return null}
+if(!confirm(`Copia${o.date?' del '+new Date(o.date).toLocaleString('es-ES'):''}.\n\nEsto sustituirá los datos actuales de esta app. ¿Continuar?`))return null;
+if(await spHas()){const p=used||(SPC&&SPC.bp);let ok=false;try{if(p){const r=await spPack(p,1);dl(r.bl,r.name);ok=true}else ok=await spPrevOpen()}catch(e){ok=false}
+if(!ok){alert('No se pudo guardar la copia previa. No se ha tocado nada.');return null}if(!confirm('Se ha descargado una copia previa de tus datos actuales. ¿Continuar con la restauración?'))return null}
+await spApply(data);toast('Copia restaurada',3000);return{ok:1,pw:used}}
+async function spPrevOpen(){if(!confirm('No hay contraseña de copias para cifrar la copia previa: se descargará EN ABIERTO. Guárdala en un sitio seguro. ¿Seguir?'))return false;const now=new Date().toISOString();dl(new Blob([JSON.stringify({app:APP,ver:VER,v:1,date:now,data:await spData()})],{type:'application/json'}),`${FN}_v${VER}_PREVIA_completa_abierta_${now.slice(0,10)}.json`);return true}
+async function impSp(e){const f=e.target.files[0];e.target.value='';if(!f)return;let h=null;try{const c=await spGet();h=c&&c.bp}catch(x){}await spRestoreFile(f,h)}
+async function expSp(){let c;try{c=await spGet()}catch(e){return spLost()}let p=c&&c.bp;if(!p){p=await askPw('Contraseña para cifrar esta copia (apúntala)',1);if(!p)return}const r=await spPack(p);dl(r.bl,r.name);await spDone(r.now);toast('Copia cifrada descargada')}
+/* 5) protocolo con el puente (idéntico a la Fase 2: POST firmado con HMAC; la clave nunca viaja) */
+const hmac=async(k,m)=>hex(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',te.encode(k),{name:'HMAC',hash:'SHA-256'},false,['sign']),te.encode(m)));
+async function drvCall(c,a,pr,d){if(!PUV.test(c.u))throw'url';const ts=Date.now(),n=hex(rnd(16)),ps=JSON.stringify(pr||{}),dh=d?await sha(d):'',s=await hmac(c.k,['1',a,DAPP,ts,n,ps,dh].join('|'));let r,j;
+try{r=await fetch(c.u,{method:'POST',body:JSON.stringify({v:1,a,app:DAPP,ts,n,ps,d:d||'',s}),redirect:'follow',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'})}catch(e){throw'net'}
+try{j=await r.json()}catch(e){throw'resp'}if(!j||!j.ok){DM=(j&&j.m)||'';throw(j&&j.e)||'int'}return j}
+async function drvTry(c,a,pr,d){for(let t=0;;t++){try{return await drvCall(c,a,pr,d)}catch(e){if((e==='net'||e==='resp'||e==='busy')&&t<2){await sleep(1500*(t+1));continue}throw e}}}
+const drvErr=e=>typeof e!=='string'?'Error: '+((e&&e.message)||e):({url:'La dirección del puente no es válida (debe ser https://script.google.com/…/exec).',net:'Sin conexión, o la dirección del puente no responde.',resp:'El puente no devolvió una respuesta válida. Revisa que la dirección termina en /exec y que la implementación es para «Cualquier usuario».',auth:'La clave del puente no coincide con la propiedad SECRET de Apps Script.',ts:'La hora del móvil no coincide con la de Google: activa la fecha y hora automáticas.',rep:'Petición repetida: inténtalo otra vez.',nosecret:'Al puente le falta la propiedad SECRET (o tiene menos de 16 caracteres).',busy:'El puente está ocupado: inténtalo en un minuto.',big:'Trozo demasiado grande para el puente.',app:'Nombre de carpeta no válido.',nf:'No se encontró esa copia en Drive.',sz:'Un trozo llegó incompleto: inténtalo otra vez.',miss:'La copia en Drive está incompleta: inténtalo otra vez.'}[e]||'Error del puente ('+e+(DM?': '+DM:'')+')');
+async function drvPutBlob(c,bl,name,now){const t=new Date(now),z=n=>String(n).padStart(2,'0'),id=`${t.getFullYear()}-${z(t.getMonth()+1)}-${z(t.getDate())}_${z(t.getHours())}-${z(t.getMinutes())}-${z(t.getSeconds())}_v${String(VER).replace(/[^0-9A-Za-z]/g,'-')}_completa`,tot=Math.max(1,Math.ceil(bl.size/PART));
+for(let i=0;i<tot;i++){toast(`Subiendo a Drive… ${i+1} de ${tot}`,6e4);const pt=bl.slice(i*PART,(i+1)*PART);await drvTry(c,'put',{id,i:i+1,sz:pt.size},b64(new Uint8Array(await pt.arrayBuffer())))}
+await drvTry(c,'fin',{id,total:tot,size:bl.size,name,keep:(SP&&SP.keep)||10});return id}
+async function drvGetBlob(c,it){const ps=[];for(let i=1;i<=it.t;i++){toast(`Descargando de Drive… ${i} de ${it.t}`,6e4);ps.push(ub64((await drvTry(c,'get',{id:it.id,i})).d))}const bl=new Blob(ps);if(bl.size!==it.s)throw'miss';return bl}
+/* 6) acciones de Drive. Subir NO pide nada */
+async function drvUp(){if(DUP)return toast('Ya hay una copia en curso');let c;try{c=await spGet()}catch(e){spLost();return drvConn()}if(!c)return drvConn();DUP=1;let wl=null;try{wl=navigator.wakeLock?await navigator.wakeLock.request('screen'):null}catch(e){}
+try{toast('Preparando copia…',6e4);const{bl,now,name}=await spPack(c.bp);await drvPutBlob(c,bl,name,now);spSave({last:now});await spDone(now);render();toast('Copia subida a Drive ✓',3000)}
+catch(e){toast('');alert('No se pudo subir la copia. Tus datos no han cambiado.\n'+drvErr(e))}finally{DUP=0;try{wl&&wl.release()}catch(e){}}}
+async function drvConn(){let c=null;if(spOn()){try{c=await spGet()}catch(e){c=null}if(c){c=await spAuth('Cambiar los datos del puente');if(!c)return}}
+spShow(`<h3>Conectar con Drive</h3><p class="mu">Copias en Apps/Backups/${DAPP}. Si ya tienes el puente de otra app, usa la misma dirección y clave.</p><label>Dirección del puente (termina en /exec)</label><input id="sp_u" inputmode="url" autocomplete="off" value="${esc(c?c.u:'')}" placeholder="https://script.google.com/macros/s/…/exec"><label>Clave del puente</label><input id="sp_k" type="password" autocomplete="off" placeholder="${c?'Guardada · vacía = no cambiarla':''}"><label>Contraseña de copias (cifra las copias · mínimo 8)</label><input id="sp_p" type="password" autocomplete="new-password" placeholder="${c?'Guardada · vacía = no cambiarla':''}"><input id="sp_p2" type="password" autocomplete="new-password" placeholder="Repite la contraseña de copias"><p class="mu">Apúntala: en un móvil nuevo, sin ella no se abren las copias. Puedes usar la misma en todas las apps. Nada de esto se muestra después ni viaja por la red.</p><div class="btns"><button onclick="drvSave()">Probar y guardar</button><button onclick="closeSh()">Cancelar</button></div>`)}
+async function drvSave(){const o=SPC||{},u=$('#sp_u').value.trim(),k=$('#sp_k').value.trim()||o.k||'',p=$('#sp_p').value,p2=$('#sp_p2').value,bp=p||o.bp||'';
+if(!PUV.test(u))return alert('La dirección debe ser la de la aplicación web: https://script.google.com/macros/s/…/exec');if(k.length<16)return alert('La clave del puente debe tener al menos 16 caracteres.');
+if(p&&p.length<8)return alert('La contraseña de copias debe tener al menos 8 caracteres.');if(p&&p!==p2)return alert('Las contraseñas de copias no coinciden.');if(!bp)return alert('Falta la contraseña de copias.');
+if(o.bp&&p&&p!==o.bp&&!confirm('Las copias que ya están en Drive (y las descargadas) seguirán necesitando la contraseña de copias ANTERIOR. ¿Cambiarla?'))return;
+toast('Probando conexión…',6e4);try{const j=await drvTry({u,k},'ping');await spSet({u,k,bp});if(!SP.keep)spSave({keep:10});closeSh();render();toast('Conectado · '+j.folder,3000);
+if(!SP.cid&&window.PublicKeyCredential&&confirm('¿Proteger con la huella los cambios de esta conexión?\n\nSolo se pedirá para cambiar los datos del puente o borrar copias de Drive. Nunca al entrar ni al subir copias.'))await spHuReg()}catch(e){toast('');alert(drvErr(e))}}
+async function drvTest(){let c;try{c=await spGet()}catch(e){return spLost()}if(!c)return;toast('Probando conexión…',6e4);try{const j=await drvTry(c,'ping');toast('');alert('Conexión correcta ✓\nCarpeta en Drive: '+j.folder)}catch(e){toast('');alert(drvErr(e))}}
+const drvKeep=v=>{spSave({keep:Math.max(2,Math.min(50,Math.floor(+v)||10))});toast('Guardado')};
+async function drvOff(){if(!confirm('¿Desconectar Drive de este móvil? Las copias que ya están en Drive no se borran y tus datos no cambian.'))return;if(spOn()&&!await spAuth('Desconectar Drive'))return;localStorage.removeItem(SPL);SP=null;SPC=null;render()}
+const drvAsk=()=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px';d.innerHTML=`<div class="shb"><b>Datos del puente de Drive</b><input id="a_u" inputmode="url" autocomplete="off" placeholder="Dirección del puente (termina en /exec)"><input id="a_k" type="password" autocomplete="off" placeholder="Clave del puente"><div class="btns"><button id="ok">Continuar</button><button id="no">Cancelar</button></div></div>`;document.body.appendChild(d);const x=v=>{d.querySelectorAll('input').forEach(i=>i.value='');d.remove();r(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=()=>{const u=d.querySelector('#a_u').value.trim(),k=d.querySelector('#a_k').value.trim();if(!PUV.test(u))return alert('La dirección debe empezar por https://script.google.com/ y terminar en /exec.');if(k.length<16)return alert('La clave del puente tiene al menos 16 caracteres.');x({u,k})}});
+async function drvList(){let c=null;if(spOn()){try{c=await spGet()}catch(e){spLost()}}if(!c){c=await drvAsk();if(!c)return}
+toast('Buscando copias…',6e4);try{const j=await drvTry(c,'list');DL=j.l||[];DX=c;toast('');drvShow()}catch(e){toast('');alert(drvErr(e))}}
+function drvShow(){const z=DL.map((it,i)=>`<div class="card"><b>${new Date(it.d).toLocaleString('es-ES')}</b> <span class="mu">${(it.s/1048576).toLocaleString('es-ES',{maximumFractionDigits:2})} MB</span><div class="btns"><button onclick="drvPick(${i})">Restaurar</button><button onclick="drvDel(${i})">🗑 Borrar</button></div></div>`).join('');
+spShow(`<h3>Copias en Drive</h3><p class="mu">Apps/Backups/${DAPP} · las más recientes primero</p>${z||'<p class="mu">No hay copias en Drive.</p>'}<div class="btns"><button onclick="DX=null;closeSh()">Cerrar</button></div>`)}
+async function drvPick(i){const it=DL[i],c=DX;if(!it||!c||DUP)return;DUP=1;closeSh();
+try{const bl=await drvGetBlob(c,it);toast('');const r=await spRestoreFile(bl,c.bp||null);
+if(r&&r.ok&&!spOn()&&r.pw&&confirm('¿Guardar en este móvil la conexión con Drive (con la contraseña de copias que acabas de usar)?')){await spSet({u:c.u,k:c.k,bp:r.pw});spSave({keep:10});render()}}
+catch(e){toast('');alert('No se pudo descargar la copia. No se ha tocado nada.\n'+drvErr(e))}finally{DUP=0;DX=null}}
+async function drvDel(i){const it=DL[i],c=DX;if(!it||!c)return;if(spOn()&&!await spAuth('Borrar una copia de Drive'))return;if(!confirm('¿Borrar esta copia de Drive? Va a la papelera de Drive (se puede recuperar unos 30 días).'))return;try{await drvTry(c,'del',{id:it.id});DL.splice(i,1);drvShow()}catch(e){alert(drvErr(e))}}
+const drvLast=()=>SP&&SP.last?new Date(SP.last).toLocaleString('es-ES'):'nunca';
+function drvUI(){return `<div class="card"><b>☁️ Copia en Drive (cifrada)</b>${spOn()?`<p class="mu">Conectado. Carpeta: Apps/Backups/${DAPP} · última subida: ${drvLast()} · cambios protegidos con ${SP.cid?'huella':'la contraseña de copias'}</p><div class="btns"><button onclick="drvUp()">☁️ Subir copia ahora</button><button onclick="drvList()">Ver copias y restaurar</button></div><label>Conservar en Drive las últimas (copias)</label><input type="number" min="2" max="50" inputmode="numeric" value="${SP.keep||10}" onchange="drvKeep(this.value)"><div class="btns"><button onclick="drvTest()">Probar conexión</button><button onclick="drvConn()">Cambiar datos</button>${SP.cid?'<button onclick="spHuOff()">Quitar huella</button>':'<button onclick="spHuella()">Usar huella para cambios</button>'}<button onclick="drvOff()">Desconectar</button></div>`:`<p class="mu">Sube copias cifradas a tu Drive (Apps/Backups/${DAPP}) sin contraseñas al entrar. La conexión se guarda cifrada en este móvil.</p><div class="btns"><button onclick="drvConn()">Conectar con Drive</button><button onclick="drvList()">Restaurar desde Drive (móvil nuevo)</button></div>`}<div class="btns"><button onclick="expSp()">🔐 Descargar copia cifrada</button></div><label>Restaurar desde un archivo (.gdc o .json)</label><input type="file" onchange="impSp(event)"></div>`}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+/* SP:fin */
+
+
 /* ---------- Global ---------- */
-document.addEventListener('click',e=>{if(e.target.classList.contains('ov'))hide(e.target.id)});
+document.addEventListener('click',e=>{if(e.target.classList.contains('ov')){if(e.target.id==='sh')closeSh();else hide(e.target.id)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sh').classList.contains('show')&&!document.querySelector('#p1,#a_u')){closeSh();e.stopImmediatePropagation()}},true);
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){if(L.length)history.back();else closeArt();return}
   if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey||!S.art)return;
@@ -799,6 +1043,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 (async()=>{
+  await kvLoad();initState();
   applyCfg();loadSources();renderIdeas();renderPromptEd();
   document.querySelectorAll('button[title]').forEach(b=>b.setAttribute('aria-label',b.title));
   try{
@@ -806,8 +1051,10 @@ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.s
     const c=await cacheGet();
     if(c&&Array.isArray(c.list)){const urls=new Set(S.sources.map(s=>s.url));S.articles=c.list.filter(a=>urls.has(a.sourceUrl));lastLoad=c.at||0}
   }catch(e){console.warn('IndexedDB no disponible',e)}
-  updateTitle();renderSources();renderList();
+  updateTitle();renderSources();renderList();render();
   if(S.articles.length)setStatus('Mostrando la copia guardada…');
+  if(MIG)toast(MIG,6000);
+  setTimeout(bkAviso,900);
   await loadData();
 })();
 </script>
