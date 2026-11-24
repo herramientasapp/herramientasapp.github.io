@@ -98,6 +98,11 @@ main{flex:1;display:flex;overflow:hidden}
 .cat{display:flex;align-items:center;gap:4px}.cat .catok{margin-left:auto;padding:0 8px;background:none;color:var(--accent);font-size:15px}
 .muted-note{padding:12px 14px;text-align:center}.dupb{background:var(--accent);color:#fff;border-radius:9px;padding:0 7px;font-weight:600;cursor:pointer}.sw.dup{margin-left:18px;border-left:3px solid var(--accent)}label.chk{display:flex;align-items:center;gap:8px;margin:12px 0 6px}label.chk input{width:auto;margin:0}.muted-note button{margin-left:8px;padding:3px 10px;font-size:12px}
 #ptr{position:fixed;top:60px;left:50%;transform:translate(-50%,-30px);width:36px;height:36px;border-radius:50%;background:var(--panel);border:1px solid var(--border);box-shadow:0 2px 8px #0003;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--accent);opacity:0;pointer-events:none;z-index:50}
+/* Barra de lectura en voz alta (6.2) */
+#ttsBar{position:sticky;bottom:0;margin-top:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-top:1px solid var(--border);box-shadow:0 -2px 8px #0002;z-index:6}
+#ttsBar input[type=range]{flex:1;margin:0;padding:0}
+#ttsBar .tv{min-width:42px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+#ttsBar button{padding:6px 10px;font-size:16px}
 </style>
 </head>
 <body>
@@ -140,7 +145,7 @@ main{flex:1;display:flex;overflow:hidden}
   <div id="srcList"></div>
 </aside>
 
-<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v6.1</span></div>
+<div id="status"><div><span id="stText">Cargando…</span><button id="undoBtn" style="display:none" onclick="undo()">Deshacer</button></div><span>v6.2</span></div>
 
 <!-- Ajustes -->
 <div class="page" id="settings">
@@ -156,6 +161,13 @@ main{flex:1;display:flex;overflow:hidden}
     <p class="muted" style="margin-top:-8px">Oculta los artículos cuyo título o resumen contenga alguna palabra que empiece así (sin distinguir tildes ni mayúsculas). No afecta a Archivados.</p>
     <label class="chk"><input type="checkbox" id="cDup" onchange="saveCfg()"> Agrupar noticias repetidas</label>
     <p class="muted" style="margin-top:-4px">En «Todas» la misma noticia aparece una sola vez con «+N»: mismo enlace (aunque venga de otra sección o con códigos de seguimiento) o titular casi igual en las últimas 48 h. Al leerla se marcan como leídas todas sus copias. Dentro de cada fuente se ven todas. No borra nada.</p>
+    <h4>Lectura en voz alta</h4>
+    <label>Idioma de la voz</label><select id="cVozIdi" onchange="saveCfg()"><option value="auto">Automático (detecta castellano o inglés)</option><option value="es">Siempre castellano</option><option value="en">Siempre inglés (EE. UU.)</option></select>
+    <label>Velocidad en castellano: <span id="velESv"></span></label><input type="range" id="cVelES" min="0.5" max="2" step="0.05" oninput="$('velESv').textContent=velTxt(this.value)" onchange="saveCfg()">
+    <label>Velocidad en inglés: <span id="velENv"></span></label><input type="range" id="cVelEN" min="0.5" max="2" step="0.05" oninput="$('velENv').textContent=velTxt(this.value)" onchange="saveCfg()">
+    <div class="row" style="justify-content:flex-start"><button class="sec" onclick="ttsProbar('es-ES')">▶ Probar castellano</button><button class="sec" onclick="ttsProbar('en-US')">▶ Probar inglés</button></div>
+    <p class="muted" id="vozInfo"></p>
+    <p class="muted">Si la voz inglesa suena robótica o no existe: en Android, Ajustes → Texto a voz → motor de Google → instalar «Inglés (Estados Unidos)»; en iPhone, Ajustes → Accesibilidad → Contenido leído → Voces → English (US) → descargar una voz «Mejorada».</p>
     <h4>Prompts de IA</h4>
     <details class="fold" id="promptsDet"><summary>✨ Editar prompts (<span id="pCount">0</span>)</summary><div class="in">
       <p class="muted">El prompt marcado con ⚡ es el principal: aparece siempre el primero al pulsar ✨ en un artículo.</p>
@@ -245,8 +257,8 @@ main{flex:1;display:flex;overflow:hidden}
 <script>
 const $=id=>document.getElementById(id[0]==='#'?id.slice(1):id); // admite 'id' y '#id' (el bloque SP usa '#id')
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-/* Mi Lector RSS · versión 6.1 · parámetros de «Seguridad solo para el puente» */
-const APP='Mi Lector RSS',VER='6.1.0',FN='mi_lector',APPS=['Mi Lector RSS'];
+/* Mi Lector RSS · versión 6.2 · parámetros de «Seguridad solo para el puente» */
+const APP='Mi Lector RSS',VER='6.2.0',FN='mi_lector',APPS=['Mi Lector RSS'];
 const K={read:'rss_read_v1',prompts2:'rss_prompts_v2',src:'rss_local_sources_v1',ideas:'rss_ideas_v1',prompts:'rss_prompts_v1',font:'rss_font_v1',cfg:'rss_settings_v1',mute:'rss_mute_v1',meta:'rss_meta_v1'};
 /* ---------- Almacenamiento: base IndexedDB «mi_lector_cfg» (fuentes, leídos, prompts, ideas, ajustes) ----------
    La primera vez copia lo que había en localStorage, lo vuelve a leer y lo compara. El original se conserva
@@ -288,8 +300,12 @@ const show=id=>{$(id).classList.add('show');lpush(id)},hide=id=>{$(id).classList
 let _c={};
 const S={sources:[],articles:[],read:new Set(),saved:new Map(),tags:new Set(),
   view:'all',onlyUnread:false,tag:null,search:'',art:null,undo:null,failed:new Map(),collapsed:new Set(),
-  cfg:{max:50,theme:'auto',font:16,dedup:true},mute:[],showMuted:false};
-function initState(){_c=LS.get(K.cfg,{});S.read=new Set(LS.get(K.read,[]));S.cfg={max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16),dedup:_c.dedup!==false};S.prompts=loadPrompts();S.mute=LS.get(K.mute,[]);buildMute()}
+  cfg:{max:50,theme:'auto',font:16,dedup:true,velES:1.25,velEN:1,vozIdi:'auto'},mute:[],showMuted:false};
+/* 6.2: velocidad de voz entre 0,5× y 2×; si el valor no es válido, el de por defecto */
+const clampVel=(v,df)=>{v=+v;return v>=0.5&&v<=2?Math.round(v*100)/100:df};
+/* guarda la velocidad elegida en la barra de lectura sin contar como cambio para la copia */
+function cfgVozGuardar(){LS.set(K.cfg,{...LS.get(K.cfg,{}),velES:S.cfg.velES,velEN:S.cfg.velEN})}
+function initState(){_c=LS.get(K.cfg,{});S.read=new Set(LS.get(K.read,[]));S.cfg={max:_c.maxArticles||50,theme:_c.theme||'auto',font:LS.get(K.font,16),dedup:_c.dedup!==false,velES:clampVel(_c.velES,1.25),velEN:clampVel(_c.velEN,1),vozIdi:['auto','es','en'].includes(_c.vozIdi)?_c.vozIdi:'auto'};S.prompts=loadPrompts();S.mute=LS.get(K.mute,[]);buildMute()}
 /* cambios que cuentan para el aviso de copia (no cuenta leer artículos) */
 const meta=()=>Object.assign({changes:0,lastBackup:null,bkM:1,bkC:1},LS.get(K.meta,{}));
 function bump(){const m=meta();m.changes=(m.changes||0)+1;LS.set(K.meta,m)}
@@ -624,16 +640,65 @@ function paintBar(){
   $('bRead').style.opacity=S.read.has(a.id)?1:.4;
   const l=safeUrl(a.link);l?$('bOrig').href=l:$('bOrig').removeAttribute('href');
 }
-/* Leer en voz alta con la voz del móvil (por frases, para que no se corte en textos largos) */
-let tts=null;
-function ttsStop(){try{speechSynthesis.cancel()}catch{}tts=null;const b=$('bSpeak');if(b){b.classList.remove('on');b.title='Leer en voz alta'}}
-function speakArt(){if(!('speechSynthesis' in window))return toast('Este navegador no puede leer en voz alta');if(tts){ttsStop();return}
+/* ---------- Leer en voz alta (6.2): castellano / inglés EE. UU. y velocidad ----------
+   Solo usa la voz del propio navegador (speechSynthesis): sin librerías ni servicios externos.
+   Lee por frases (Chrome corta los textos largos) y relee la frase actual al cambiar velocidad o idioma. */
+const VOZ_PREF={'en-US':[/natural/i,/online/i,/aria|jenny|guy|ava|andrew|emma/i,/google us english/i,/samantha|alex/i],
+  'es-ES':[/natural/i,/online/i,/elvira|alvaro|álvaro/i,/google español$/i,/m[oó]nica|jorge/i]};
+let VOCES=[];
+const cargaVoces=()=>{try{VOCES=speechSynthesis.getVoices()||[]}catch{VOCES=[]}};
+if('speechSynthesis' in window){cargaVoces();try{speechSynthesis.addEventListener('voiceschanged',cargaVoces)}catch{}}
+function vozPara(lang){
+  const n=l=>String(l||'').replace('_','-').toLowerCase(),ex=VOCES.filter(v=>n(v.lang)===lang.toLowerCase()),
+    cand=ex.length?ex:VOCES.filter(v=>n(v.lang).startsWith(lang.slice(0,2)));
+  for(const re of VOZ_PREF[lang]||[]){const v=cand.find(x=>re.test(x.name));if(v)return v}
+  return cand[0]||null}
+const W_EN=new Set('the and of to in is that for it with as was on are be by this have from or at not but they which you an were their has been will would more its can about there what when who also into than only other said after over new could people'.split(' '));
+const W_ES=new Set('el la de que y en los las del se por un una con no para es al lo como más pero sus le ya o este porque esta entre cuando muy sin sobre también fue hay donde desde todo nos durante ni contra eso según han ha'.split(' '));
+function idiomaDe(t){
+  if(S.cfg.vozIdi==='en')return'en-US';if(S.cfg.vozIdi==='es')return'es-ES';
+  let en=0,es=0;(t.toLowerCase().match(/[a-záéíóúñü']+/g)||[]).slice(0,400).forEach(p=>{if(W_EN.has(p))en++;if(W_ES.has(p))es++});
+  if(/[ñ¿¡]/.test(t))es+=3;return en>es?'en-US':'es-ES'}
+const velTxt=v=>(+v).toFixed(2).replace('.',',')+'×';
+const velDe=lang=>lang==='en-US'?S.cfg.velEN:S.cfg.velES;
+let tts=null; // {ch:[frases],i,lang,v:voz,turn,paused}
+function ttsStop(){if(tts){tts.turn++;clearTimeout(tts.tm)}tts=null;try{speechSynthesis.cancel()}catch{}$('ttsBar')?.remove();const b=$('bSpeak');if(b){b.classList.remove('on');b.title='Leer en voz alta'}}
+function ttsNext(){
+  const t=tts;if(!t)return;clearTimeout(t.tm);if(t.paused)return;if(t.i>=t.ch.length){ttsStop();return}
+  const my=++t.turn,u=new SpeechSynthesisUtterance(t.ch[t.i]);
+  u.lang=t.lang;if(t.v)u.voice=t.v;u.rate=velDe(t.lang);
+  u.onend=()=>{if(tts!==t||my!==t.turn)return;t.i++;ttsNext()};
+  u.onerror=e=>{if(tts!==t||my!==t.turn||/interrupted|canceled/.test(e.error||''))return;t.i++;ttsNext()};
+  speechSynthesis.speak(u)}
+function ttsRelee(){if(!tts)return;tts.turn++;clearTimeout(tts.tm);try{speechSynthesis.cancel()}catch{}if(!tts.paused)tts.tm=setTimeout(ttsNext,60)} // un solo temporizador: cambios rápidos no duplican la frase
+function ttsPausa(){if(!tts)return;tts.paused=!tts.paused;clearTimeout(tts.tm);if(tts.paused){tts.turn++;try{speechSynthesis.cancel()}catch{}}else ttsNext();ttsBarPinta()}
+function ttsIdioma(){if(!tts)return;tts.lang=tts.lang==='en-US'?'es-ES':'en-US';cargaVoces();tts.v=vozPara(tts.lang);avisoSinVoz(tts.lang,tts.v);ttsBarPinta();ttsRelee()}
+function avisoSinVoz(lang,v){if(lang==='en-US'&&(!v||!/^en/i.test(v.lang)))toast('No hay voz inglesa instalada en este dispositivo: mira Ajustes → Lectura en voz alta',5000)}
+function ttsBarPinta(){
+  const t=tts,bar=$('ttsBar');if(!t||!bar)return;const en=t.lang==='en-US',vel=velDe(t.lang);
+  bar.replaceChildren(
+    h('button',{class:'sec',title:'Cambiar idioma de la voz (solo este artículo)',text:en?'🇺🇸 EN':'🇪🇸 ES',onclick:ttsIdioma}),
+    h('input',{type:'range',min:'0.5',max:'2',step:'0.05',value:String(vel),'aria-label':'Velocidad',
+      oninput:e=>{const v=clampVel(e.target.value,vel);bar.querySelector('.tv').textContent=velTxt(v)},
+      onchange:e=>{const v=clampVel(e.target.value,vel);if(en)S.cfg.velEN=v;else S.cfg.velES=v;cfgVozGuardar();applyCfg();ttsRelee()}}),
+    h('span',{class:'tv',text:velTxt(vel)}),
+    h('button',{class:'sec',title:t.paused?'Continuar':'Pausa',text:t.paused?'▶':'⏸',onclick:ttsPausa}),
+    h('button',{class:'sec',title:'Parar',text:'⏹',onclick:ttsStop}))}
+function speakArt(){
+  if(!('speechSynthesis' in window))return toast('Este navegador no puede leer en voz alta');if(tts){ttsStop();return}
   const a=S.art;if(!a)return;const body=$('rc').querySelector('.rbody'),txt=(a.title+'. '+((body&&body.innerText)||a.snippet||'')).replace(/\s+/g,' ').trim();
   const parts=txt.match(/[^.!?;:]+[.!?;:]*\s*/g)||[txt],ch=[];let cur='';parts.forEach(p=>{if((cur+p).length>220&&cur){ch.push(cur);cur=p}else cur+=p});if(cur)ch.push(cur);
-  const vs=speechSynthesis.getVoices(),v=vs.find(x=>/^es[-_]ES/i.test(x.lang))||vs.find(x=>/^es/i.test(x.lang));
-  const my=tts={i:0},b=$('bSpeak');b.classList.add('on');b.title='Parar la lectura';
-  const next=()=>{if(tts!==my)return;if(my.i>=ch.length){ttsStop();return}const u=new SpeechSynthesisUtterance(ch[my.i++]);u.lang='es-ES';if(v)u.voice=v;u.onend=next;u.onerror=()=>{if(tts===my)ttsStop()};speechSynthesis.speak(u)};
-  speechSynthesis.cancel();next()}
+  cargaVoces();const lang=idiomaDe(txt),v=vozPara(lang);
+  tts={ch,i:0,lang,v,turn:0,paused:false};avisoSinVoz(lang,v);
+  const b=$('bSpeak');b.classList.add('on');b.title='Parar la lectura';
+  $('reader').append(h('div',{id:'ttsBar'}));ttsBarPinta();
+  try{speechSynthesis.cancel()}catch{}ttsNext()}
+/* Botones «Probar» de Ajustes */
+function ttsProbar(lang){
+  if(!('speechSynthesis' in window))return toast('Este navegador no puede leer en voz alta');
+  ttsStop();cargaVoces();const v=vozPara(lang),u=new SpeechSynthesisUtterance(lang==='en-US'?'Hello! This is how English articles will sound when I read them to you.':'Hola. Así sonarán los artículos en castellano.');
+  u.lang=lang;if(v)u.voice=v;u.rate=velDe(lang);speechSynthesis.speak(u);avisoSinVoz(lang,v);
+  const i=$('vozInfo');if(i)i.textContent='Voz usada: '+(v?`${v.name} (${v.lang})`:'la predeterminada del sistema')}
 function closeReader(){ttsStop();if(!document.body.classList.contains('reading'))return;document.body.classList.remove('reading');$('list').scrollTop=listY}
 const closeArt=()=>{lpop('reader');closeReader()};
 function navBox(){
@@ -855,11 +920,15 @@ function applyCfg(){
   S.cfg.theme==='auto'?r.removeAttribute('data-theme'):r.dataset.theme=S.cfg.theme;
   r.style.setProperty('--rs',S.cfg.font+'px');
   $('cTheme').value=S.cfg.theme;$('cFont').value=S.cfg.font;$('fontVal').textContent=S.cfg.font+'px';$('cMax').value=S.cfg.max;$('cMute').value=(S.mute||[]).join('\n');$('cDup').checked=S.cfg.dedup!==false;
+  $('cVozIdi').value=S.cfg.vozIdi;$('cVelES').value=S.cfg.velES;$('cVelEN').value=S.cfg.velEN;
+  $('velESv').textContent=velTxt(S.cfg.velES);$('velENv').textContent=velTxt(S.cfg.velEN);
 }
 function saveCfg(){
   S.cfg.theme=$('cTheme').value;S.cfg.font=+$('cFont').value||16;
   S.cfg.max=Math.min(200,Math.max(10,parseInt($('cMax').value)||50));
-  S.cfg.dedup=$('cDup').checked;LS.set(K.cfg,{maxArticles:S.cfg.max,theme:S.cfg.theme,dedup:S.cfg.dedup});LS.set(K.font,S.cfg.font);bump();applyCfg();refresh();
+  S.cfg.dedup=$('cDup').checked;
+  S.cfg.vozIdi=$('cVozIdi').value;S.cfg.velES=clampVel($('cVelES').value,1.25);S.cfg.velEN=clampVel($('cVelEN').value,1);
+  LS.set(K.cfg,{maxArticles:S.cfg.max,theme:S.cfg.theme,dedup:S.cfg.dedup,velES:S.cfg.velES,velEN:S.cfg.velEN,vozIdi:S.cfg.vozIdi});LS.set(K.font,S.cfg.font);bump();applyCfg();refresh();
 }
 
 /* ---------- Ideas de mejora ---------- */
@@ -893,7 +962,7 @@ new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===
 function render(){const b=$('drvBox');if(b)b.innerHTML=drvUI();const m=meta(),i=$('bkInfo');if(i)i.textContent=`Última copia: ${m.lastBackup?new Date(m.lastBackup).toLocaleDateString('es-ES'):'nunca'} · cambios desde entonces: ${m.changes||0}`;
   [['cBkM',m.bkM||1],['cBkC',m.bkC||1]].forEach(([id,v])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v});
   const r={local:'incluido en la app ✓',cdn:'desde el servidor externo (verificado con su huella)',none:'no disponible: sube Readability.js (ver el MD)'}[window.RDB_SRC]||'cargando…';
-  const vi=$('verInfo');if(vi)vi.textContent=`Mi Lector RSS · versión 6.1 · datos en ${KV.ls?'localStorage (IndexedDB no disponible)':'IndexedDB'} · extractor de texto: ${r}`+(S.cfg.dedup!==false?` · ${new Set([...dupGroups().values()].map(l=>l[0])).size} noticias con copias agrupadas ahora`:'')}
+  const vi=$('verInfo');if(vi)vi.textContent=`Mi Lector RSS · versión ${VER} · datos en ${KV.ls?'localStorage (IndexedDB no disponible)':'IndexedDB'} · extractor de texto: ${r}`+(S.cfg.dedup!==false?` · ${new Set([...dupGroups().values()].map(l=>l[0])).size} noticias con copias agrupadas ahora`:'')}
 function saveBkCfg(){const m=meta();m.bkM=Math.max(1,Math.min(24,parseInt($('cBkM').value)||1));m.bkC=Math.max(1,Math.min(999,parseInt($('cBkC').value)||1));LS.set(K.meta,m);render();toast('Guardado')}
 /* aviso de copia al entrar: más de N meses o N cambios sin copia */
 function bkNeed(){if(!S.sources.length&&!S.saved.size)return'';const m=meta();if(!m.lastBackup)return'Aún no has hecho ninguna copia de seguridad.';
@@ -909,7 +978,7 @@ function norm(d){const isO=x=>!!x&&typeof x==='object'&&!Array.isArray(x);if(!is
   if(prompts&&!prompts.list.some(p=>p.id===prompts.main))prompts.main=prompts.list[0]?.id||null;
   const c=isO(d.cfg)?d.cfg:{};
   return{sources:d.sources.filter(x=>safeUrl(x.url)).map(x=>({url:safeUrl(x.url),title:String(x.title||x.url),category:String(x.category||'General')})),read:Array.isArray(d.read)?d.read.filter(x=>typeof x==='string'):[],prompts,
-    ideas:Array.isArray(d.ideas)?d.ideas.filter(i=>isO(i)&&typeof i.text==='string'):[],cfg:{max:Math.min(200,Math.max(10,+c.max||+c.maxArticles||50)),theme:['auto','light','dark'].includes(c.theme)?c.theme:'auto',font:Math.min(26,Math.max(12,+c.font||16)),dedup:c.dedup!==false},
+    ideas:Array.isArray(d.ideas)?d.ideas.filter(i=>isO(i)&&typeof i.text==='string'):[],cfg:{max:Math.min(200,Math.max(10,+c.max||+c.maxArticles||50)),theme:['auto','light','dark'].includes(c.theme)?c.theme:'auto',font:Math.min(26,Math.max(12,+c.font||16)),dedup:c.dedup!==false,velES:clampVel(c.velES,1.25),velEN:clampVel(c.velEN,1),vozIdi:['auto','es','en'].includes(c.vozIdi)?c.vozIdi:'auto'},
     mute:Array.isArray(d.mute)?d.mute.filter(x=>typeof x==='string'):[],saved}}
 async function spData(){let saved=[];try{saved=await dbAll()}catch{}return{app:APP,v:6,sources:S.sources,read:[...S.read],prompts:S.prompts,ideas:LS.get(K.ideas,[]),cfg:{...S.cfg},mute:S.mute,saved}}
 function spValid(d){return!!norm(d)}
@@ -917,7 +986,7 @@ async function spHas(){return S.sources.length>0||S.saved.size>0||LS.get(K.ideas
 async function spApply(d){ /* solo tras leer, descifrar y validar la copia entera y descargar la copia previa */
   const n=norm(d);if(!n)throw new Error('copia no válida');
   if(db)await new Promise((ok,ko)=>{const t=db.transaction('guardados','readwrite'),st=t.objectStore('guardados');st.clear();n.saved.forEach(a=>st.put(a));t.oncomplete=ok;t.onerror=t.onabort=()=>ko(t.error)});
-  LS.set(K.src,n.sources);LS.set(K.read,n.read);if(n.prompts)LS.set(K.prompts2,n.prompts);LS.set(K.ideas,n.ideas);LS.set(K.cfg,{...LS.get(K.cfg,{}),maxArticles:n.cfg.max,theme:n.cfg.theme,dedup:n.cfg.dedup});LS.set(K.font,n.cfg.font);LS.set(K.mute,n.mute);bump();
+  LS.set(K.src,n.sources);LS.set(K.read,n.read);if(n.prompts)LS.set(K.prompts2,n.prompts);LS.set(K.ideas,n.ideas);LS.set(K.cfg,{...LS.get(K.cfg,{}),maxArticles:n.cfg.max,theme:n.cfg.theme,dedup:n.cfg.dedup,velES:n.cfg.velES,velEN:n.cfg.velEN,vozIdi:n.cfg.vozIdi});LS.set(K.font,n.cfg.font);LS.set(K.mute,n.mute);bump();
   if(await KV.flush()===false)throw new Error('No se pudo guardar');
   initState();S.sources=n.sources;S.saved=new Map(n.saved.map(x=>[x.id,x]));calcTags();const urls=new Set(S.sources.map(x=>x.url));S.articles=S.articles.filter(a=>urls.has(a.sourceUrl));
   applyCfg();renderIdeas();renderPromptEd();S.view='all';S.tag=null;updateTitle();renderSources();renderList(true);render();loadData()}
