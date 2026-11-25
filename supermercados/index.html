@@ -46,9 +46,15 @@ svg.chs{display:block;width:100%;height:auto}svg.chs text{fill:var(--fg);font:12
 .shb{background:var(--card);color:var(--fg);border-radius:12px;padding:16px;width:min(460px,100%);display:flex;flex-direction:column;gap:8px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.btns button~button{background:transparent;color:var(--fg);border:1px solid var(--bd)}
 .mu{color:var(--mut);font-size:.9rem;margin:4px 0}
+/* v16: en el móvil la tabla de productos era más ancha que la pantalla (se salía y su línea cruzaba toda la pantalla): cada producto pasa a ficha */
+@media(max-width:640px){#dic table,#dic tbody,#dic tr,#dic td{display:block;width:100%}#dic th{display:none}#dic tr:has(th){display:none}
+ #dic tr{border-bottom:1px solid var(--bd);padding:6px 0}#dic td{border:0;padding:2px 0;text-align:left}#dic td:first-child{font-weight:600;word-break:break-word}
+ #dic td:nth-child(2),#dic td:nth-child(3){display:inline-block;width:calc(50% - 4px);vertical-align:top}#dic td:nth-child(3){margin-left:8px}#dic td:nth-child(3) select{width:100%}
+ #dic td:last-child{font-size:.8rem}}
+html,body{overflow-x:hidden}
 details.msec{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:2px 12px;margin:8px 0}details.msec>summary{padding:10px 0;font-size:1.05rem}details.msec[open]>summary{border-bottom:1px solid var(--bd);margin-bottom:8px}
 </style></head><body>
-<h1>🛒 Supermercados <small class="mut">v16</small></h1>
+<h1>🛒 Supermercados <small class="mut">v16.1</small></h1>
 <div id="msg"></div>
 
 <section class="tab" id="t-panel">
@@ -537,7 +543,8 @@ return{lines}})();
 async function pdfLines(file){const L=await PDFT.lines(new Uint8Array(await file.arrayBuffer()));if(!L.length)throw Error('No he podido leer el texto de este PDF. Si es una foto escaneada, usa el prompt JSON de Más → IA.');return L}
 
 // ---------- UI ----------
-const $=id=>document.getElementById(id),eur=x=>x.toFixed(2).replace('.',',')+' €';
+const $=id=>document.getElementById(id[0]==='#'?id.slice(1):id),   // admite 'id' y '#id' (el bloque SP usa '#id')
+ eur=x=>x.toFixed(2).replace('.',',')+' €';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let pending=[],pdic=[],pex={lista:[],ideas:[],cats:[],mer:[],com:[],nota:''};
 const rex=()=>pex={lista:[],ideas:[],cats:[],mer:[],com:[],nota:''};

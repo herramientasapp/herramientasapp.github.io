@@ -4,7 +4,7 @@
 // Solo borra SUS cachés antiguas («compras-v…» de la v14 y «supermercados-v…»): nunca las de tus otras apps.
 // Solo atiende archivos de SU carpeta. Ya no descarga nada de servidores externos (pdf.js y Chart.js eliminados).
 // No guarda datos: tus datos están en IndexedDB y el service worker no los toca.
-const V='supermercados-v16';
+const V='supermercados-v16-1';
 const BASE=new URL('./',self.location).href;
 const SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.allSettled(SHELL.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting()))});
