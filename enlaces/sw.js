@@ -3,7 +3,7 @@
      (La versión anterior borraba las cachés de TODAS las demás apps del mismo github.io.)
    - Solo atiende peticiones de su propia carpeta; el resto (otras apps, el puente de Google) no lo toca.
    - No toca localStorage ni IndexedDB. */
-const P = "misenlaces-", V = P + "v2-5.0.0";
+const P = "misenlaces-", V = P + "v2-5.0.2";
 const BASE = new URL("./", self.location).href;
 const ARCHIVOS = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => {

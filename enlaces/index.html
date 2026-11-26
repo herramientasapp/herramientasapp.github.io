@@ -147,6 +147,7 @@ const CFG0 = {
   fs: 18,
   umbral: 10, // a partir de cuántos cambios sin respaldo sale el aviso grande (editable en Ajustes)
   avisoMeses: 1, avisoCambios: 1, // aviso de copia AL ENTRAR: más de N meses o N cambios sin copia (editable en Ajustes)
+  abrir: "brave", // cómo abrir los enlaces con la app instalada en Android: brave | chrome | sistema | normal (editable en Ajustes)
   // IAs para los prompts. {p} = prompt codificado. c:1 = no admite prompt por URL (se copia y se abre la IA)
   ias: [
     { n: "Claude", u: "https://claude.ai/new?q={p}" },
@@ -163,7 +164,7 @@ const ICONOS = "🎵 🎸 🎹 🥁 🎤 🎧 🎼 🎬 📺 🎮 📚 🎓 💡
 const $ = id => document.getElementById(id[0] === "#" ? id.slice(1) : id); // admite "id" y "#id" (el bloque SP usa "#id")
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* Versión y parámetros de «Seguridad solo para el puente» (sección 3 del MD) */
-const APP = "Mis enlaces", VER = "5.0.0", FN = "mis_enlaces", APPS = ["Mis enlaces", "misenlaces"];
+const APP = "Mis enlaces", VER = "5.0.2", FN = "mis_enlaces", APPS = ["Mis enlaces", "misenlaces"];
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
 const bt = (txt, tit, fn, cls) => { const b = el("button", cls || "", txt); b.type = "button"; if (tit) { b.title = tit; b.setAttribute("aria-label", tit); } b.onclick = fn; return b; };
 const sj = JSON.stringify, uid = () => Math.random().toString(36).slice(2, 8);
@@ -258,8 +259,35 @@ async function copiar(txt, msg) {
 }
 function abrirIA(ia, txt) {
   const u = ia.u.replace("{p}", encodeURIComponent(txt));
-  if (ia.c || u.length > 1800) { copiar(txt, "Prompt copiado: pégalo en " + ia.n); window.open(ia.u.split("?")[0], "_blank", "noopener"); }
-  else window.open(u, "_blank", "noopener");
+  if (ia.c || u.length > 1800) { copiar(txt, "Prompt copiado: pégalo en " + ia.n); abrirFuera(ia.u.split("?")[0]); }
+  else abrirFuera(u);
+}
+
+/* ============ ABRIR ENLACES FUERA DE LA APP (v5.0.1) ============
+   Instalada en Android, un enlace normal se abre "dentro" de la app y la tapa.
+   Aquí se le pide a Android que lo abra fuera, con un enlace intent://:
+   - "brave":   siempre en Brave, en una pestaña aparte (la app sigue abierta detrás).
+   - "chrome":  lo mismo, pero en Chrome.
+   - "sistema": Android decide: el navegador predeterminado, o la app/PWA instalada que
+                abra esa dirección (YouTube, otra de tus apps…).
+   - "normal":  como antes (lo que haga el navegador).
+   En el ordenador o en el navegador normal no cambia nada: pestaña nueva. */
+const instalada = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+const android = /Android/i.test(navigator.userAgent);
+function intentDe(url, modo) {
+  const u = new URL(url), esq = u.protocol.replace(":", "");
+  if (esq !== "http" && esq !== "https") return null;
+  return "intent://" + u.host + u.pathname + u.search + u.hash + "#Intent;scheme=" + esq +
+    ";action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE" +
+    ({ brave: ";package=com.brave.browser", chrome: ";package=com.android.chrome" }[modo] || "") +
+    ";S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
+}
+function abrirFuera(url) {
+  const modo = S.cfg.abrir || "brave";
+  let it = null;
+  if (instalada() && android && modo !== "normal") { try { it = intentDe(url, modo); } catch (e) {} }
+  if (it) location.href = it; // Android abre el destino fuera; esta app no se mueve
+  else window.open(url, "_blank", "noopener");
 }
 
 /* ============ PINTAR ============ */
@@ -267,7 +295,7 @@ function fila(it, arr, icono, etiqueta, nd) {
   const f = el("div", "fila"), act = activo(it), esP = it.tipo === "prompt";
   const cu = el(esP ? "button" : act ? "a" : "div", "cuerpo");
   if (esP) { cu.type = "button"; cu.onclick = () => f.classList.toggle("abierta"); }
-  else if (act) { cu.href = urlDe(it); cu.target = "_blank"; cu.rel = "noopener"; }
+  else if (act) { cu.href = urlDe(it); cu.target = "_blank"; cu.rel = "noopener"; cu.onclick = e => { e.preventDefault(); abrirFuera(cu.href); }; }
   const meta = el("span", "meta");
   if (etiqueta) meta.append(el("span", "chip cat", etiqueta));
   if (it.tipo === "loop") {
@@ -420,9 +448,12 @@ function ajustes() {
   const um = inp("10"); um.type = "number"; um.min = 1; um.max = 99; um.value = S.cfg.umbral;
   const am = inp("1"); am.type = "number"; am.min = 1; am.max = 24; am.value = S.cfg.avisoMeses;
   const ac = inp("1"); ac.type = "number"; ac.min = 1; ac.max = 99; ac.value = S.cfg.avisoCambios;
+  const ab = sel([["brave", "En Brave, en pestaña aparte (recomendado)"], ["chrome", "En Chrome, en pestaña aparte"], ["sistema", "Lo decide Android (navegador predeterminado o app instalada)"], ["normal", "Como antes (dentro de la app)"]]); ab.value = S.cfg.abrir || "brave";
+  const probar = bt("🔗 Probar con un enlace", "", () => { const m = S.cfg.abrir; S.cfg.abrir = ab.value; abrirFuera("https://es.wikipedia.org/wiki/Guitarra"); S.cfg.abrir = m; }, "bt");
   const ias = el("textarea"); ias.value = S.cfg.ias.map(x => [x.n, x.u, x.c ? "copiar" : ""].filter(Boolean).join(" | ")).join("\n");
   const ok = () => {
     S.cfg.baseLoop = u.value.trim() || CFG0.baseLoop;
+    S.cfg.abrir = ab.value;
     S.cfg.umbral = Math.max(1, Math.min(99, parseInt(um.value, 10) || CFG0.umbral));
     S.cfg.avisoMeses = Math.max(1, Math.min(24, parseInt(am.value, 10) || 1));
     S.cfg.avisoCambios = Math.max(1, Math.min(99, parseInt(ac.value, 10) || 1));
@@ -435,7 +466,10 @@ function ajustes() {
   const acc2 = el("div", "acc"); acc2.append(bt("☁️ Copia en Drive", "", () => { d.close(); drvAbrir(); }, "bt prim"), bt("🔐 Descargar copia cifrada", "", () => { d.close(); expSp(); }, "bt"),
     bt("⬇ Descargar JSON sin cifrar", "", () => { d.close(); respaldo(); }, "bt"), bt("⬆ Cargar archivo (.json o .gdc)…", "", () => { d.close(); $("archivo").click(); }, "bt"));
   const ult = S.ultimo ? new Date(S.ultimo).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "todavía ninguno";
-  d.append(el("h2", "", "Ajustes"), accI, campo("URL de la app de bucles", u), campo("IAs para los prompts (una por línea: Nombre | URL con {p} | copiar)", ias),
+  const accP = el("div", "acc"); accP.append(probar);
+  d.append(el("h2", "", "Ajustes"), accI, campo("Abrir enlaces (app instalada en Android)", ab), accP,
+    el("p", "nota", instalada() ? "Estás usando la app instalada: el botón Probar usa la opción elegida arriba (aún sin guardar)." : "Ahora estás en el navegador: aquí los enlaces siempre se abren en pestaña nueva."),
+    campo("URL de la app de bucles", u), campo("IAs para los prompts (una por línea: Nombre | URL con {p} | copiar)", ias),
     campo("Aviso grande de respaldo a partir de (cambios pendientes)", um),
     campo("Proponer copia al entrar si han pasado más de (meses)", am), campo("…o si hay al menos (cambios sin copia)", ac), acc,
     el("h2", "sec", "💾 Copia de seguridad"),
