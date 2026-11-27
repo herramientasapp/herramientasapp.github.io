@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob: https://script.google.com https://*.googleusercontent.com; object-src 'none'; base-uri 'none'; frame-src 'none'">
 <meta name="theme-color" content="#2c5f7c">
+<link rel="icon" href="./icon-192.png">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -137,16 +139,25 @@ details.card[open]>summary::before{content:'▾ '}
 .banner-dup b{color:var(--accent)}
 .group-h{font:600 14px Georgia,serif;color:var(--muted);margin:10px 0 2px;text-transform:uppercase;letter-spacing:.5px;font-size:12px}
 
-/* v1.3: pantalla de bloqueo */
-#lockScreen{position:fixed;inset:0;background:var(--primary);color:#fff;z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
-#lockScreen.on{display:flex}
-#lockScreen .lock-ico{font-size:64px;margin-bottom:16px}
-#lockScreen h2{font:600 26px Georgia,serif;margin:0 0 8px;color:#fff}
-#lockScreen p{opacity:.85;margin:0 0 24px;max-width:320px}
-#lockScreen .btn{background:#fff;color:var(--primary);padding:16px 32px;font-size:17px}
-#lockScreen .lock-msg{margin-top:16px;font-size:13px;opacity:.9;min-height:20px;max-width:320px}
-#lockScreen .forgot{display:none;margin-top:20px;font-size:12px;color:rgba(255,255,255,.7);text-decoration:underline;background:none;border:0;cursor:pointer;font-family:inherit}
-#lockScreen .forgot.on{display:inline-block}
+[hidden]{display:none!important}
+small{display:block;color:var(--muted);font-size:13px;margin:6px 0}
+.bt{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.bt>button{flex:1 1 140px;padding:12px 14px;border:0;border-radius:12px;background:var(--primary);color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.bt>button.alt{background:var(--primary-soft);color:var(--primary)}
+.bt>button.danger{background:var(--danger);color:#fff}
+.pwbox input{display:block;width:100%;margin:8px 0;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.ev{border-bottom:1px solid var(--line);padding:8px 0}.ev:last-child{border:0}
+.sp{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.note{background:var(--accent-soft);border:1px dashed var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px;cursor:pointer}
+.note.ok{background:var(--primary-soft);border-color:var(--primary)}
+.toast.act{pointer-events:auto}
+.toast .ub{margin-left:10px;padding:4px 12px;border:0;border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.v-tipo{font-size:12px;color:var(--muted);padding:2px 8px;background:var(--primary-soft);border-radius:10px;white-space:nowrap}
+.vis-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.vis-row:last-child{border:0}.vis-row.ind{margin-left:28px;padding:5px 0}
+.dup-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.dup-row:last-of-type{border:0}
+.grid3{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:8px}.grid3 label{margin:0}
 
 /* v1.3: sección de etiquetas */
 .tag-edit-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -169,14 +180,6 @@ details.card[open]>summary::before{content:'▾ '}
   @page{margin:12mm}
 }
 </style></head><body>
-<div id="lockScreen">
-  <div class="lock-ico">🔒</div>
-  <h2>Mi gente</h2>
-  <p>Desbloquea con la huella, el rostro o el PIN de tu móvil.</p>
-  <button class="btn" onclick="unlockApp()">Desbloquear</button>
-  <div class="lock-msg" id="lockMsg"></div>
-  <button class="forgot" id="forgotBtn" onclick="forgotLock()">He olvidado el desbloqueo del móvil</button>
-</div>
 <header>
   <h1>Mi gente</h1>
   <button class="bell" onclick="toggleBell()">🔔<span class="badge" id="bellBadge"></span></button>
@@ -188,7 +191,7 @@ details.card[open]>summary::before{content:'▾ '}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION='1.3.1';
+const APP='Mi gente',VER='2.0.0',APP_VERSION=VER,FN='MiGente',APPS=['Mi gente','migente'];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const p2=n=>String(n).padStart(2,'0');
@@ -244,8 +247,8 @@ const INVERSO_MAP={
   'empleado':{m:'jefe',f:'jefa',n:'jefe/a'},'empleada':{m:'jefe',f:'jefa',n:'jefe/a'},
   'padrino':{m:'ahijado',f:'ahijada',n:'ahijado/a'},'madrina':{m:'ahijado',f:'ahijada',n:'ahijado/a'},
   'ahijado':{m:'padrino',f:'madrina',n:'padrino/madrina'},'ahijada':{m:'padrino',f:'madrina',n:'padrino/madrina'},
-  'hijo de amigo':{m:'padre de amigo',f:'padre de amigo',n:'padre/madre de amigo'},
-  'hija de amigo':{m:'padre de amigo',f:'padre de amigo',n:'padre/madre de amigo'},
+  'hijo de amigo':{m:'padre de amigo',f:'madre de amigo',n:'padre/madre de amigo'},
+  'hija de amigo':{m:'padre de amigo',f:'madre de amigo',n:'padre/madre de amigo'},
   'padre de amigo':{m:'hijo de amigo',f:'hija de amigo',n:'hijo/a de amigo'},
   'madre de amigo':{m:'hijo de amigo',f:'hija de amigo',n:'hijo/a de amigo'},
   'hermano de amigo':{m:'hermano de amigo',f:'hermana de amigo',n:'hermano/a de amigo'},
@@ -267,6 +270,9 @@ const TIPOS_OPCIONES=[
   'hijo de amigo','hija de amigo','padre de amigo','madre de amigo','hermano de amigo','hermana de amigo'
 ];
 
+/* trío masculino/femenino/neutro de cada tipo, para ajustar padre/madre, hijo/hija… al sexo de la persona */
+const TRI=(()=>{const a=[],k=new Set();for(const v of Object.values(INVERSO_MAP)){const id=v.m+'|'+v.f;if(!k.has(id)){k.add(id);a.push(v)}}return a})();
+function genderize(t,sx){if(sx!=='m'&&sx!=='f')return t;const x=TRI.find(z=>z.m===t||z.f===t||z.n===t);return x?(sx==='f'?x.f:x.m):t}
 function inverseTipo(originalTipo,sexo){
   const m=INVERSO_MAP[originalTipo];
   if(!m)return originalTipo;
@@ -276,15 +282,15 @@ function inverseTipo(originalTipo,sexo){
 }
 
 const DEF=()=>({
-  version:1.31,
+  version:2,
   personas:[],
   grupos:JSON.parse(JSON.stringify(GRUPOS_DEF)),
   ideas:[],
-  set:{miNombre:'',miMujer:'',umbralDias:180,diasCumple:15,mostrarRecientes:true,avisarCopia:true,usarBloqueo:false},
-  lastBackup:null
+  set:{miNombre:'',miMujer:'',umbralDias:180,diasCumple:15,mostrarRecientes:true},
+  bk:0,ch:0,bkD:30,bkN:1,autoUp:true
 });
 
-let S=DEF();
+let S=null,UNDO=null,MIGD=null,EMERG=false,POST=0,BADMAIN=null,AUTOFAIL=0,SNL=null,POPPING=false,DUPOK=null,PENDUP=null,VPID=null,NEWTAG='';
 let tab='inicio';
 let sub='';
 let currentId=null;
@@ -298,25 +304,6 @@ window.__grupoFilter='todos';
 window.__printFilter='todos';
 window.__tagFilter=null;
 
-const db=new Promise(res=>{
-  try{const r=indexedDB.open('migente',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}
-});
-async function idbGet(k){const d=await db;if(!d)return null;try{return await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}
-async function idbSet(k,v){const d=await db;if(!d)return;try{d.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}
-async function idbDel(k){const d=await db;if(!d)return;try{d.transaction('kv','readwrite').objectStore('kv').delete(k)}catch(e){}}
-
-async function load(){
-  let v=null;
-  v=await idbGet('s');
-  if(v)S=migrate(v);
-  else{try{const ls=localStorage.getItem('migente');if(ls)S=migrate(JSON.parse(ls))}catch(e){}}
-  S.set=Object.assign(DEF().set,S.set);
-}
-async function save(){
-  const c=JSON.parse(JSON.stringify(S));
-  await idbSet('s',c);
-  try{localStorage.setItem('migente',JSON.stringify(c))}catch(e){}
-}
 function migrate(d){
   d.version=d.version||1.0;
   if(d.version<1.1){
@@ -334,8 +321,35 @@ function migrate(d){
   if(d.version<1.31){d.version=1.31;}
   return d;
 }
-function upd(){save();render();}
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+/* normaliza y repara sin descartar datos */
+function normS(d){d=d&&typeof d==='object'?d:{};d=migrate(d);const A=x=>Array.isArray(x)?x:[],ob=x=>x&&typeof x==='object';
+d.personas=A(d.personas).filter(ob).map(p=>({...p,id:typeof p.id==='string'&&p.id?p.id:uid(),nombre:String(p.nombre==null?'':p.nombre),sexo:p.sexo==='m'||p.sexo==='f'?p.sexo:'',grupo:p.grupo||'otros',vinculos:A(p.vinculos).filter(v=>ob(v)&&typeof v.personaId==='string').map(v=>({...v,tipo:String(v.tipo||'')})),etiquetas:A(p.etiquetas).map(x=>String(x)).filter(Boolean)}));
+d.grupos=A(d.grupos).filter(g=>ob(g)&&g.id);if(!d.grupos.length)d.grupos=JSON.parse(JSON.stringify(GRUPOS_DEF));
+d.ideas=A(d.ideas).filter(ob).map(i=>({...i,id:typeof i.id==='string'&&i.id?i.id:uid(),texto:String(i.texto==null?'':i.texto),estado:i.estado==='implementada'?'implementada':'pendiente'}));
+d.set=Object.assign(DEF().set,ob(d.set)?d.set:{});delete d.set.usarBloqueo;delete d.set.avisarCopia;
+if(!d.bk&&d.lastBackup){const t=Date.parse(d.lastBackup+'T12:00');d.bk=isFinite(t)?t:0}delete d.lastBackup;
+d.bk=+d.bk||0;d.ch=+d.ch||0;d.bkD=Math.max(1,Math.floor(+d.bkD)||30);d.bkN=Math.max(1,Math.floor(+d.bkN)||1);if(d.autoUp===undefined)d.autoUp=true;d.version=2;return d}
+const valid=s=>!!s&&typeof s==='object'&&Array.isArray(s.personas)&&Array.isArray(s.grupos)&&Array.isArray(s.ideas)&&!!s.set&&typeof s.set==='object'&&s.personas.every(p=>p&&typeof p.id==='string'&&typeof p.nombre==='string'&&Array.isArray(p.vinculos));
+const hasData=()=>!!S&&!!(S.personas.length||S.ideas.length);
+const mb=n=>n<1048576?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixed(2).replace('.',',')+' MB';
+function b64urlToBuf(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
+function edad(p){const m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec((p&&p.cumple)||'');if(!m)return null;const t=new Date();let a=t.getFullYear()-+m[1];if(t.getMonth()+1<+m[2]||(t.getMonth()+1===+m[2]&&t.getDate()<+m[3]))a--;return a>=0&&a<130?a:null}
+const edTxt=p=>{const a=edad(p);return a!=null&&!p.fallecido?` <span class="mut s">· ${a} años</span>`:''};
+const metaP=x=>[x.relacionConmigo||x.relacionMujer,x.ciudad,edad(x)!=null&&!x.fallecido?edad(x)+' años':''].filter(Boolean).join(' · ');
+function upd(){save(1);render();}
+let TT=0;
+function toast(m,ms=2200){const t=$('#toast');clearTimeout(TT);t.classList.remove('act');if(!m){t.classList.remove('show');return}t.textContent=m;t.classList.add('show');TT=setTimeout(()=>t.classList.remove('show'),ms)}
+function toastU(m,prev){UNDO=prev;const t=$('#toast');clearTimeout(TT);t.innerHTML=esc(m)+'<button class="ub" onclick="undo()">Deshacer</button>';t.classList.add('show','act');TT=setTimeout(()=>{t.classList.remove('show','act');UNDO=null},8000)}
+function undo(){if(!UNDO||!S)return;S=normS(JSON.parse(UNDO));UNDO=null;save(1);const t=$('#toast');t.classList.remove('act');if(tab==='ficha'&&!getP(currentId))tab='personas';render();toast('Deshecho')}
+function show(h){$('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeSh()"><div class="modal shc">${h}</div></div>`}
+function closeSh(){closeModal()}
+const OPN=new Set();
+const dt=(id,t,h)=>`<details class="card" ${OPN.has(id)?'open':''} ontoggle="this.open?OPN.add('${id}'):OPN.delete('${id}')"><summary>${t}</summary>${h}</details>`;
+const copy=t=>copyText(t,'Copiado');
+function wipeUI(){S=null;UNDO=null;SNL=null;DL=[];editingId=null;currentId=null;flashId=null;PENDUP=null;closeModal();$('#main').innerHTML='';$('#nav').innerHTML='';const b=$('#bellPanel');b.innerHTML='';b.classList.remove('open');const g=$('#bellBadge');if(g)g.classList.remove('on');toast('')}
+function toHome(){editingId=null;currentId=null;tab='inicio';sub='';render()}
+function bkNow(){if(pteOn())drvUp();else exp(1,0,'enc')}
+function lockNow(){LA=0;lockUI()}
 function getP(id){return S.personas.find(p=>p.id===id);}
 function getG(id){return S.grupos.find(g=>g.id===id);}
 function initials(nombre){if(!nombre)return '?';const parts=nombre.trim().split(/\s+/);if(parts.length===1)return parts[0][0].toUpperCase();return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
@@ -358,8 +372,10 @@ function nextBirthday(cumple){
   const age=y?next.getFullYear()-y:null;
   return{dias,age,fecha:next};
 }
-function go(t,s){tab=t;sub=s||'';if(t!=='ficha')currentId=null;render();window.scrollTo(0,0);}
-function openFicha(id){currentId=id;tab='ficha';sub='';render();window.scrollTo(0,0);}
+function hist(pv){if(POPPING)return;const h={t:tab,s:sub,c:currentId};try{pv==='anadir'?history.replaceState(h,''):history.pushState(h,'')}catch(e){}}
+function go(t,s){if(!S)return;if(UPD&&t!=='anadir'){flush().finally(()=>location.reload());return}const pv=tab;tab=t;sub=s||'';if(t!=='ficha'&&t!=='visita')currentId=null;render();window.scrollTo(0,0);hist(pv)}
+function openFicha(id){if(!S)return;const pv=tab;currentId=id;tab='ficha';sub='';render();window.scrollTo(0,0);hist(pv)}
+function openVisita(id){if(!S)return;const pv=tab;currentId=id;tab='visita';sub='';render();window.scrollTo(0,0);hist(pv)}
 
 function renderNav(){
   const items=[{k:'inicio',l:'Inicio',i:'🏠'},{k:'personas',l:'Personas',i:'👥'},{k:'mas',l:'Más',i:'☰'}];
@@ -375,95 +391,10 @@ function search(q){
   );
 }
 function render(){
+  if(!S){$('#main').innerHTML='';return}
   renderNav();renderBell();
-  $('#main').innerHTML=({inicio:vInicio,personas:vPersonas,anadir:vAnadir,ficha:vFicha,flash:vFlash,mas:vMas})[tab]();
+  $('#main').innerHTML=(({inicio:vInicio,personas:vPersonas,anadir:vAnadir,ficha:vFicha,visita:vVisita,flash:vFlash,mas:vMas})[tab]||vInicio)();
   if(tab==='personas')renderList();
-}
-
-/* ============ v1.3.1: BLOQUEO WEBAUTHN SIN ESCAPE ============ */
-let webauthnAvailable=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
-let lockAttempts=0;
-function b64urlToBuf(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
-function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-
-async function registerLock(){
-  if(!webauthnAvailable){toast('Este navegador no permite el desbloqueo del móvil');return false;}
-  try{
-    const challenge=crypto.getRandomValues(new Uint8Array(32));
-    const userId=crypto.getRandomValues(new Uint8Array(16));
-    const cred=await navigator.credentials.create({
-      publicKey:{
-        challenge,
-        rp:{name:'Mi gente'},
-        user:{id:userId,name:'migente-user',displayName:'Mi gente'},
-        pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
-        timeout:60000,
-        attestation:'none'
-      }
-    });
-    if(!cred)return false;
-    await idbSet('lockCredId',bufToB64url(cred.rawId));
-    return true;
-  }catch(e){console.warn(e);toast('No se pudo activar el desbloqueo');return false;}
-}
-async function hasLockCredential(){const v=await idbGet('lockCredId');return !!v;}
-function updateForgotLink(){
-  const btn=document.getElementById('forgotBtn');
-  if(!btn)return;
-  btn.classList.toggle('on',lockAttempts>=3);
-}
-async function unlockApp(){
-  const msg=$('#lockMsg');if(msg)msg.textContent='';
-  if(!webauthnAvailable){hideLock();return;}
-  const credIdB64=await idbGet('lockCredId');
-  if(!credIdB64){hideLock();return;}
-  try{
-    const challenge=crypto.getRandomValues(new Uint8Array(32));
-    const cred=await navigator.credentials.get({
-      publicKey:{
-        challenge,
-        allowCredentials:[{type:'public-key',id:b64urlToBuf(credIdB64)}],
-        userVerification:'required',
-        timeout:60000
-      }
-    });
-    if(cred){
-      lockAttempts=0;updateForgotLink();
-      hideLock();
-    }else{
-      lockAttempts++;updateForgotLink();
-      if(msg)msg.textContent='No se pudo verificar. Inténtalo de nuevo.';
-    }
-  }catch(e){
-    console.warn(e);
-    lockAttempts++;updateForgotLink();
-    if(e.name==='NotAllowedError'){
-      if(msg)msg.textContent='Desbloqueo cancelado. Toca "Desbloquear" para reintentar.';
-    }else if(e.name==='InvalidStateError'||e.name==='NotFoundError'){
-      if(msg)msg.textContent='El desbloqueo del móvil ha cambiado. Revisa las opciones de abajo.';
-    }else{
-      if(msg)msg.textContent='Error de desbloqueo. Reintenta.';
-    }
-  }
-}
-async function forgotLock(){
-  if(!confirm('¿Has olvidado el desbloqueo del móvil?\n\nSe borrarán TODOS los datos de Mi gente en este dispositivo y la app volverá a empezar en blanco.\n\nEsto NO se puede deshacer.'))return;
-  if(!confirm('CONFIRMACIÓN FINAL:\n\n¿Seguro que quieres borrar todos los datos y entrar con la app vacía?'))return;
-  try{
-    const d=await db;
-    if(d){try{d.transaction('kv','readwrite').objectStore('kv').clear()}catch(e){}}
-    try{indexedDB.deleteDatabase('migente')}catch(e){}
-    try{localStorage.removeItem('migente')}catch(e){}
-  }catch(e){}
-  location.reload();
-}
-function showLock(){$('#lockScreen').classList.add('on');updateForgotLink();}
-function hideLock(){$('#lockScreen').classList.remove('on');}
-async function lockNow(){
-  if(!S.set.usarBloqueo){toast('El bloqueo está desactivado');return;}
-  lockAttempts=0;updateForgotLink();
-  showLock();
 }
 
 /* ============ CAMPANITA ============ */
@@ -474,20 +405,18 @@ function getAlerts(){
     const b=nextBirthday(p.cumple);
     if(b&&b.dias<=N){alerts.push({tipo:'cumple',ico:'🎂',texto:`${p.nombre} cumple ${b.dias===0?'¡hoy!':b.dias===1?'mañana':'en '+b.dias+' días'}`,personaId:p.id});}
   }
-  if(S.set.avisarCopia&&S.personas.length){
-    if(!S.lastBackup||days(today(),S.lastBackup)>30){alerts.push({tipo:'backup',ico:'💾',texto:'Hace más de 30 días que no guardas copia',personaId:null});}
-  }
+  const w=bkDue();if(w&&!(autoOn()&&!AUTOFAIL))alerts.push({tipo:'backup',ico:'💾',texto:w+' Toca para hacerla.',personaId:null});
   return alerts;
 }
 function renderBell(){
-  const alerts=getAlerts();const badge=$('#bellBadge');
+  if(!S)return;const alerts=getAlerts();const badge=$('#bellBadge');
   if(badge){badge.textContent=alerts.length;badge.classList.toggle('on',alerts.length>0);}
   const panel=$('#bellPanel');
   if(panel&&panel.classList.contains('open')){
     if(!alerts.length){panel.innerHTML='<p class="empty">Todo al día. No hay avisos.</p>';return;}
     panel.innerHTML=`<h3>Avisos</h3>`+alerts.map(a=>{
       if(a.tipo==='cumple')return`<div class="alert" onclick="openFicha('${a.personaId}');toggleBell(true)"><span class="ico">${a.ico}</span><span>${esc(a.texto)}</span></div>`;
-      return`<div class="alert backup"><span class="ico">${a.ico}</span><span>${esc(a.texto)}</span></div>`;
+      return`<div class="alert" onclick="toggleBell(true);bkNow()"><span class="ico">${a.ico}</span><span>${esc(a.texto)}</span></div>`;
     }).join('');
   }
 }
@@ -501,6 +430,10 @@ function vInicio(){
   const nombres=S.set.miNombre?`Hola, ${esc(S.set.miNombre)}`:'Hola';
   let html=`<h2>${nombres}</h2>`;
   html+=`<p class="mut s" style="margin-top:0">${total} ${total===1?'persona':'personas'} en tu lista</p>`;
+  if(EMERG)html+='<div class="note">⚠️ No se puede usar la base IndexedDB en este navegador: la app guarda en el almacenamiento antiguo. Haz copias a menudo.</div>';
+  if(BADMAIN)html+='<div class="note" onclick="OPN.add(\'sn\');go(\'mas\',\'ajustes\')">⚠️ La base principal no se pudo leer y no se modificará. Restaura una copia o un punto de restauración en Ajustes.</div>';
+  html+=segNudge();
+  if(total)html+=`<button class="btn block" onclick="visitaPick()">🏠 Voy a ver a…</button>`;
   html+=`<input class="search" type="search" placeholder="🔍 Buscar por nombre, apodo, relación…" readonly onclick="window.__searchQ='';window.__grupoFilter='todos';window.__tagFilter=null;go('personas');setTimeout(()=>{const e=document.getElementById('searchPersonas');if(e)e.focus();},80)" style="cursor:pointer" />`;
   if(S.grupos.length){html+=`<div class="chips" style="margin-top:8px">`+S.grupos.map(g=>`<button onclick="window.__grupoFilter='${g.id}';window.__searchQ='';window.__tagFilter=null;go('personas')">${g.icono} ${esc(g.nombre)}</button>`).join('')+`</div>`;}
   const tagMap={};
@@ -508,7 +441,7 @@ function vInicio(){
   const tags=Object.entries(tagMap).sort((a,b)=>b[1].personas.length-a[1].personas.length||a[1].label.localeCompare(b[1].label,'es'));
   if(tags.length){
     html+=`<details class="card tag-section"><summary>🏷️ Etiquetas <span class="count">${tags.length}</span></summary><div class="tag-chips">`;
-    html+=tags.map(([key,v])=>`<button class="tag-chip" onclick="window.__tagFilter='${esc(v.label)}';window.__searchQ='';window.__grupoFilter='todos';go('personas')">${esc(v.label)} <span class="n">${v.personas.length}</span></button>`).join('');
+    html+=tags.map(([key,v])=>`<button class="tag-chip" data-t="${esc(v.label)}" onclick="tagGo(this.dataset.t)">${esc(v.label)} <span class="n">${v.personas.length}</span></button>`).join('');
     html+=`</div></details>`;
   }
   if(S.set.mostrarRecientes){
@@ -526,6 +459,32 @@ function vInicio(){
   if(!total){html+=`<div class="empty"><div class="big">👥</div><p>Aún no tienes personas en tu lista.</p><p class="s">Toca <b>Personas</b> abajo y luego <b>+ Añadir persona</b> para empezar.</p></div>`;}
   return html;
 }
+
+function tagGo(t){window.__tagFilter=t;window.__searchQ='';window.__grupoFilter='todos';go('personas')}
+/* ============ VOY A VER A… ============ */
+function visitaPick(){if(!S.personas.length){toast('Aún no hay personas');return}
+$('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>🏠 Voy a ver a…</h3><input class="search" type="search" id="vis_q" placeholder="Nombre, apodo, ciudad, etiqueta…" oninput="visList(this.value)" autocomplete="off"><div class="pick-list" id="vis_list" style="max-height:55vh"></div><div style="margin-top:12px"><button class="btn alt" onclick="closeModal()">Cancelar</button></div></div></div>`;visList('');setTimeout(()=>{const e=$('#vis_q');if(e)e.focus()},60)}
+function visList(q){const l=$('#vis_list');if(!l)return;const L=search(q).filter(p=>!p.fallecido).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es')).slice(0,200);
+l.innerHTML=L.map(x=>`<div class="pick-item" onclick="closeModal();openVisita('${x.id}')"><span>${esc(x.nombre)}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(metaP(x))}</span></div>`).join('')||'<div class="pick-empty">Sin coincidencias.</div>'}
+const PAREJA=['esposo','esposa','pareja','novio','novia','esposo/a','novio/a'],HIJO=['hijo','hija','hijo/a'],PADRE=['padre','madre','padre/madre'],HERM=['hermano','hermana','hermano/a'],NIETO=['nieto','nieta','nieto/a'];
+const relOf=(x,L)=>(x.vinculos||[]).filter(v=>!L||L.includes(v.tipo)).map(v=>({o:getP(v.personaId),t:v.tipo})).filter(z=>z.o);
+const byAge=(a,b)=>{const x=edad(a.o),y=edad(b.o);return x==null&&y==null?(a.o.nombre||'').localeCompare(b.o.nombre||'','es'):x==null?1:y==null?-1:y-x};
+function vVisita(){const p=getP(currentId);if(!p){tab='inicio';return vInicio()}
+const seen=new Set([p.id]),take=a=>a.filter(z=>!seen.has(z.o.id)&&(seen.add(z.o.id),true)),pn=x=>esc((x.nombre||'').split(' ')[0]);
+const row=(z,ind,de)=>`<div class="vis-row${ind?' ind':''}" onclick="openFicha('${z.o.id}')">${avatar(z.o,'tiny')}<div style="flex:1;min-width:0"><b>${esc(z.o.nombre)}</b>${z.o.apodo?` <span class="mut s">«${esc(z.o.apodo)}»</span>`:''}${z.o.fallecido?' <span class="dead-cross">†</span>':''}${edTxt(z.o)} <span class="v-tipo">${esc(z.t)}${de?' de '+de:''}</span>${z.o.comoLlamar?`<div class="pmeta">Le llamo: ${esc(z.o.comoLlamar)}</div>`:''}${z.o.contexto?`<div class="pmeta" style="white-space:normal">«${esc(z.o.contexto)}»</div>`:''}</div></div>`;
+const fam=z=>row(z)+take(relOf(z.o,PAREJA)).map(y=>row(y,1,pn(z.o))).join('')+take(relOf(z.o,HIJO)).sort(byAge).map(y=>row(y,1,pn(z.o))).join('');
+const sec=(t,h)=>h?`<div class="card"><div class="sec" style="margin-top:0">${t}</div>${h}</div>`:'';
+const par=take(relOf(p,PAREJA)),hijos=take([...relOf(p,HIJO),...par.flatMap(z=>relOf(z.o,HIJO))]).sort(byAge);
+let html=`<button class="lnk" onclick="history.length>1?history.back():go('inicio')">‹ Volver</button><div class="card"><div class="ficha-head">${avatar(p,'big')}<div class="info"><h2>${esc(p.nombre)}</h2>${p.apodo?`<div class="apodo">«${esc(p.apodo)}»</div>`:''}${edad(p)!=null&&!p.fallecido?`<div class="mut s">${edad(p)} años</div>`:''}${p.comoLlamar?`<div style="margin-top:6px"><span class="mut s">Le llamo:</span> <span class="rel-chip">${esc(p.comoLlamar)}</span></div>`:''}</div></div>${p.contexto?`<div class="ctx">"${esc(p.contexto)}"</div>`:''}</div>`;
+html+=sec('💑 Pareja',par.map(z=>row(z)).join(''));
+html+=sec('👶 Hijos',hijos.map(fam).join(''));
+html+=sec('🧒 Nietos',take(relOf(p,NIETO)).sort(byAge).map(z=>row(z)).join(''));
+html+=sec('👴 Padres',take(relOf(p,PADRE)).map(z=>row(z)).join(''));
+html+=sec('👫 Hermanos',take(relOf(p,HERM)).sort(byAge).map(fam).join(''));
+html+=sec('🔗 Otros vínculos',take(relOf(p)).map(z=>row(z)).join(''));
+if(seen.size===1)html+=`<div class="card"><p class="mut s" style="margin:0">Aún no tiene vínculos. Añádelos desde su ficha para ver aquí a su familia.</p></div>`;
+html+=`<div class="card noprint"><button class="btn alt" onclick="openFicha('${p.id}')">Ver ficha completa</button>${p.telefono?`<button class="btn alt" data-tel="${esc(p.telefono)}" onclick="location.href='tel:'+this.dataset.tel">📞 Llamar</button>`:''}</div>`;
+return html}
 
 /* ============ PERSONAS ============ */
 function vPersonas(){
@@ -552,9 +511,9 @@ function renderList(){
   list.innerHTML=filtradas.map(p=>{
     const grupoObj=getG(p.grupo);
     const rel=p.relacionConmigo||p.relacionMujer||(grupoObj?grupoObj.nombre:'');
-    const tel=p.telefono?' · 📞 '+esc(p.telefono):'';
+    const tel=(p.ciudad?' · '+esc(p.ciudad):'')+(p.telefono?' · 📞 '+esc(p.telefono):'');
     const dead=p.fallecido?' <span class="dead-cross">†</span>':'';
-    return `<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)}${dead}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}</div><div class="pmeta">${esc(rel)}${tel}</div></div></button>`;
+    return `<button class="pcard" onclick="openFicha('${p.id}')">${avatar(p)}<div style="flex:1;min-width:0"><div class="pname">${esc(p.nombre)}${dead}${p.apodo?` <span class="mut s">«${esc(p.apodo)}»</span>`:''}${edTxt(p)}</div><div class="pmeta">${esc(rel)}${tel}</div></div></button>`;
   }).join('');
 }
 
@@ -568,14 +527,14 @@ function vFicha(){
   const groupLabel=grupoObj?`${grupoObj.icono} ${grupoObj.nombre}`:'';
   let bdayLine='—';
   if(b){const ageTxt=b.age!=null?` · cumple ${b.age}`:'';const cuando=b.dias===0?'¡Hoy!':b.dias===1?'Mañana':`En ${b.dias} días`;bdayLine=`${fd(p.cumple)} · ${cuando}${ageTxt}`;}
-  const callBtn=p.telefono?`<button class="btn call" id="callBtn" onclick="callStart('${esc(p.telefono)}')">📞 Llamar a ${esc(p.nombre.split(' ')[0])}</button>`:'';
-  let html=`<button class="lnk noprint" onclick="go('personas')">‹ Volver</button>`;
-  html+=`<div class="card"><div class="ficha-head">${avatar(p,'big')}<div class="info"><h2>${esc(p.nombre)}</h2>${p.apodo?`<div class="apodo">«${esc(p.apodo)}»</div>`:''}<div style="margin-top:6px">${deadTag}</div></div></div>`;
+  const callBtn=p.telefono?`<button class="btn call" id="callBtn" data-tel="${esc(p.telefono)}" onclick="callStart(this.dataset.tel)">📞 Llamar a ${esc(p.nombre.split(' ')[0])}</button>`:'';
+  let html=`<button class="lnk noprint" onclick="history.length>1?history.back():go('personas')">‹ Volver</button>`;
+  html+=`<div class="card"><div class="ficha-head">${avatar(p,'big')}<div class="info"><h2>${esc(p.nombre)}</h2>${p.apodo?`<div class="apodo">«${esc(p.apodo)}»</div>`:''}${edad(p)!=null&&!p.fallecido?`<div class="mut s">${edad(p)} años</div>`:''}<div style="margin-top:6px">${deadTag}</div></div></div>`;
   if(p.comoLlamar)html+=`<div style="margin:6px 0"><span class="mut s">Le llamo:</span> <span class="rel-chip">${esc(p.comoLlamar)}</span></div>`;
   if(p.relacionConmigo)html+=`<div><span class="rel-chip">Conmigo: ${esc(p.relacionConmigo)}</span></div>`;
   if(p.relacionMujer&&S.set.miMujer)html+=`<div><span class="rel-chip rel-mujer">Con ${esc(S.set.miMujer)}: ${esc(p.relacionMujer)}</span></div>`;
   if(p.contexto)html+=`<div class="ctx">"${esc(p.contexto)}"</div>`;
-  html+=callBtn;html+=`</div>`;
+  html+=callBtn;html+=`<button class="btn alt block noprint" onclick="openVisita('${p.id}')">🏠 Ver su familia de un vistazo</button>`;html+=`</div>`;
   html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>Vínculos</b><button class="btn small alt" onclick="addVinculoUI('${p.id}')" style="margin:0">+ Añadir vínculo</button></div>`;
   html+=renderVinculos(p);html+=`</div>`;
   html+=`<div class="card">`;
@@ -612,7 +571,7 @@ function renderVinculos(p){
     html+=`<div class="group-h">${cat}</div>`;
     html+=byCat[cat].map(it=>`<div class="vinculo-row">
       ${avatar(it.persona,'tiny')}
-      <span class="v-name"><a href="#" onclick="openFicha('${it.persona.id}');return false">${esc(it.persona.nombre)}</a>${it.persona.fallecido?'<span class="dead-cross">†</span>':''}</span>
+      <span class="v-name"><a href="#" onclick="openFicha('${it.persona.id}');return false">${esc(it.persona.nombre)}</a>${it.persona.fallecido?'<span class="dead-cross">†</span>':''}${edTxt(it.persona)}</span>
       <span class="v-tipo">${esc(it.tipo)}</span>
       <button class="v-del" onclick="delVinculo('${p.id}','${it.persona.id}')" title="Borrar vínculo">×</button>
     </div>`).join('');
@@ -635,44 +594,46 @@ function filterPicker(q){
 }
 function addVinculoUI(personId){
   const p=getP(personId);if(!p)return;
-  const otras=S.personas.filter(x=>x.id!==personId);
-  if(!otras.length){toast('Necesitas al menos otra persona');return;}
+  if(S.personas.length<2){toast('Necesitas al menos otra persona');return;}
+  VPID=personId;
   const tipos=TIPOS_OPCIONES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
   $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Añadir vínculo a ${esc(p.nombre)}</h3>
-    <label>¿Qué persona?<div class="picker"><input type="search" id="v_persona_q" placeholder="Escribe para buscar…" oninput="filterVinculoPicker(this.value)" autocomplete="off"><button type="button" class="clear-pick" onclick="clearVinculoPick()">×</button></div></label>
+    <h3>Nuevo vínculo de ${esc(p.nombre)}</h3>
+    <label>1. ¿Con quién?<div class="picker"><input type="search" id="v_persona_q" placeholder="Escribe para buscar…" oninput="filterVinculoPicker(this.value)" autocomplete="off"><button type="button" class="clear-pick" id="pickClear" onclick="clearVinculoPick()">×</button></div></label>
     <div class="pick-list" id="v_persona_list"></div>
     <input type="hidden" id="v_persona" value="">
-    <label>Tipo de vínculo<select id="v_tipo">${tipos}</select></label>
+    <label>2. ¿Qué es esa persona para ${esc(p.nombre)}?<select id="v_tipo" onchange="vPrev()">${tipos}</select></label>
+    <div class="info-box" id="v_prev">Elige primero la persona.</div>
     <div style="margin-top:12px"><button class="btn" onclick="saveVinculo('${personId}')">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
   </div></div>`;
   renderVinculoPicker(personId,'');
 }
 function renderVinculoPicker(personId,q){
   const list=document.getElementById('v_persona_list');if(!list)return;
-  q=norm(q);
+  q=norm(q);const cb=document.getElementById('pickClear');if(cb)cb.classList.toggle('on',!!q);
   const otras=S.personas.filter(x=>x.id!==personId).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'','es'));
-  const filtradas=otras.filter(x=>!q||norm(x.nombre).includes(q)||norm(x.apodo).includes(q));
+  const filtradas=otras.filter(x=>!q||norm(x.nombre).includes(q)||norm(x.apodo).includes(q)||norm(x.ciudad).includes(q));
   const sel=document.getElementById('v_persona').value;
   if(!filtradas.length){list.innerHTML='<div class="pick-empty">Sin coincidencias.</div>';return;}
-  list.innerHTML=filtradas.slice(0,200).map(x=>{
-    const rel=x.relacionConmigo||x.relacionMujer||'';
-    return`<div class="pick-item ${sel===x.id?'sel':''}" onclick="selectVinculo('${x.id}')"><span>${esc(x.nombre)}${x.fallecido?' <span class="dead-cross">†</span>':''}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(rel)}</span></div>`;
-  }).join('');
+  list.innerHTML=filtradas.slice(0,200).map(x=>`<div class="pick-item ${sel===x.id?'sel':''}" onclick="selectVinculo('${x.id}')"><span>${esc(x.nombre)}${x.fallecido?' <span class="dead-cross">†</span>':''}${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}</span><span class="meta">${esc(metaP(x))}</span></div>`).join('');
 }
-function filterVinculoPicker(q){renderVinculoPicker(currentId,q);}
-function clearVinculoPick(){const e=document.getElementById('v_persona_q');if(e){e.value='';renderVinculoPicker(currentId,'');}}
+function filterVinculoPicker(q){document.getElementById('v_persona').value='';vPrev();renderVinculoPicker(VPID,q);}
+function clearVinculoPick(){const e=document.getElementById('v_persona_q');if(e){e.value='';filterVinculoPicker('');e.focus();}}
 function selectVinculo(id){
   const h=document.getElementById('v_persona');if(!h)return;
   h.value=id;const p=getP(id);
   const q=document.getElementById('v_persona_q');if(q&&p)q.value=p.nombre;
   const list=document.getElementById('v_persona_list');
-  if(list)list.innerHTML=`<div class="pick-item sel"><span>Seleccionado: <b>${esc(p?p.nombre:'')}</b></span></div>`;
+  if(list)list.innerHTML=`<div class="pick-item sel"><span>Seleccionado: <b>${esc(p?p.nombre:'')}</b></span><span class="meta">${esc(p?metaP(p):'')}</span></div>`;
+  vPrev();
 }
+function vPrev(){const box=document.getElementById('v_prev');if(!box)return;const p=getP(VPID),o=getP((document.getElementById('v_persona')||{}).value);if(!p||!o){box.innerHTML='Elige primero la persona.';return}
+  const t=genderize($('#v_tipo').value,o.sexo),inv=inverseTipo(t,p.sexo),old=(p.vinculos||[]).find(v=>v.personaId===o.id);
+  box.innerHTML=`<b>${esc(o.nombre)}</b> es <b>${esc(t)}</b> de ${esc(p.nombre)}.<br>Y ${esc(p.nombre)} queda como <b>${esc(inv)}</b> de ${esc(o.nombre)}.${old?`<br>⚠️ Sustituye al vínculo que ya tenían («${esc(old.tipo)}»).`:''}${!o.sexo||!p.sexo?`<br><span class="s">Si indicas el sexo de ${esc(!o.sexo?o.nombre:p.nombre)} en su ficha, se ajusta solo (padre/madre, hijo/hija…).</span>`:''}`}
 function saveVinculo(personId){
-  const otherId=$('#v_persona').value;const tipo=$('#v_tipo').value;
-  if(!otherId||!tipo){toast('Elige persona y tipo');return;}
-  addVinculo(personId,otherId,tipo);closeModal();toast('Vínculo añadido');
+  const otherId=$('#v_persona').value,o=getP(otherId);
+  if(!o){toast('Elige la persona en la lista');return;}
+  addVinculo(personId,otherId,genderize($('#v_tipo').value,o.sexo));closeModal();toast('Vínculo añadido');
 }
 function addVinculo(personId,otherId,tipo){
   if(personId===otherId)return;
@@ -686,14 +647,13 @@ function addVinculo(personId,otherId,tipo){
   upd();
 }
 function delVinculo(personId,otherId){
-  if(!confirm('¿Borrar este vínculo? Se borrará también el inverso.'))return;
-  const p=getP(personId),o=getP(otherId);if(!p)return;
+  const p=getP(personId),o=getP(otherId);if(!p)return;const prev=JSON.stringify(S);
   p.vinculos=(p.vinculos||[]).filter(v=>v.personaId!==otherId);
   if(o)o.vinculos=(o.vinculos||[]).filter(v=>v.personaId!==personId);
-  upd();toast('Vínculo borrado');
+  upd();toastU('Vínculo borrado (y su inverso)',prev);
 }
 function recomputeAllInverses(){
-  for(const p of S.personas){for(const v of(p.vinculos||[])){const o=getP(v.personaId);if(!o)continue;const inv=inverseTipo(v.tipo,p.sexo);const existing=(o.vinculos||[]).find(x=>x.personaId===p.id);if(existing)existing.tipo=inv;}}
+  for(const p of S.personas){for(const v of(p.vinculos||[])){const o=getP(v.personaId);if(!o)continue;v.tipo=genderize(v.tipo,o.sexo);const inv=inverseTipo(v.tipo,p.sexo);const existing=(o.vinculos||[]).find(x=>x.personaId===p.id);if(existing)existing.tipo=inv;}}
 }
 function closeModal(){$('#modal').innerHTML='';}
 function callStart(tel){
@@ -710,26 +670,30 @@ function callStart(tel){
 }
 function marcarVisto(id){const p=getP(id);if(!p)return;p.ultimaVez=today();upd();toast('Marcado como visto hoy');}
 function borrarPersona(id){
-  if(!confirm('¿Borrar esta persona? No se puede deshacer.'))return;
+  const x=getP(id);if(!x)return;const prev=JSON.stringify(S);
   S.personas=S.personas.filter(p=>p.id!==id);
   for(const p of S.personas){p.vinculos=(p.vinculos||[]).filter(v=>v.personaId!==id);}
-  upd();go('personas');toast('Persona borrada');
+  save(1);go('personas');toastU('«'+x.nombre+'» borrada',prev);
 }
 
 /* ============ FORMULARIO ============ */
-function editPersona(id){editingId=id||null;tab='anadir';sub='';render();window.scrollTo(0,0);}
+function editPersona(id){if(!S)return;const pv=tab;editingId=id||null;DUPOK=null;PENDUP=null;tab='anadir';sub='';render();window.scrollTo(0,0);hist(pv);}
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function parseCumple(c){let m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(c||'');if(m)return{y:+m[1],m:+m[2],d:+m[3]};m=/^(\d{1,2})-(\d{1,2})$/.exec(c||'');if(m)return{y:null,m:+m[1],d:+m[2]};return null}
 function vAnadir(){
+  if(editingId&&!getP(editingId))editingId=null;
   const p=editingId?getP(editingId):{};
   const title=editingId?'Editar persona':'Nueva persona';
+  const cp=parseCumple(p.cumple),oldBad=!!p.cumple&&!cp,yNow=new Date().getFullYear();
   const grupo=p.grupo||(S.grupos[0]?S.grupos[0].id:'otros');
-  return `<button class="lnk" onclick="editingId=null;go('personas')">‹ Volver</button><h2>${title}</h2>
-  <form id="pform" onsubmit="saveForm(event, 'stay')">
+  return `<button class="lnk" onclick="editingId=null;history.length>1?history.back():go('personas')">‹ Volver</button><h2>${title}</h2>
+  <form id="pform" onsubmit="event.preventDefault();saveForm(this,'stay')">
     <label>Foto (opcional)
       <div class="photo-zone" onclick="$('#photoInput').click()" data-foto="${p.foto||''}">
         ${p.foto?`<img id="photoPreview" src="${p.foto}">`:`<div style="font-size:48px;color:var(--muted)">📷</div>`}
         <div class="hint">${p.foto?'Toca para cambiar la foto':'Toca para hacer una foto o elegir de la galería'}</div>
       </div>
-      <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+      <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
     </label>
     ${p.foto?`<button type="button" class="btn alt small" onclick="clearPhoto()" style="margin-bottom:6px">✕ Quitar foto</button>`:''}
     <label>Nombre completo *<input name="nombre" value="${esc(p.nombre||'')}" required placeholder="Ej.: Manuel García López"></label>
@@ -748,7 +712,9 @@ function vAnadir(){
       <label>Teléfono<input name="telefono" type="tel" value="${esc(p.telefono||'')}" placeholder="Ej.: 612 345 678"></label>
       <label>Ciudad<input name="ciudad" value="${esc(p.ciudad||'')}" placeholder="Ej.: Zaragoza"></label>
     </div>
-    <label>Cumpleaños (opcional; año si lo sabes)<input name="cumple" value="${esc(p.cumple||'')}" placeholder="MM-DD o AAAA-MM-DD"></label>
+    <div class="mut s" style="margin:12px 0 0;font-weight:500">Cumpleaños (opcional)</div>
+    <div class="grid3"><label>Día<select name="cumD"><option value="">—</option>${Array.from({length:31},(_,i)=>`<option value="${i+1}" ${cp&&cp.d===i+1?'selected':''}>${i+1}</option>`).join('')}</select></label><label>Mes<select name="cumM"><option value="">—</option>${MESES.map((m,i)=>`<option value="${i+1}" ${cp&&cp.m===i+1?'selected':''}>${m}</option>`).join('')}</select></label><label>Año<input name="cumY" type="number" inputmode="numeric" min="1900" max="${yNow}" placeholder="si lo sabes" value="${cp&&cp.y?cp.y:''}"></label></div>
+    ${oldBad?`<p class="s mut">Dato antiguo sin formato: «${esc(p.cumple)}». Se conserva salvo que elijas día y mes.</p>`:''}
     <label>Etiquetas (separadas por comas)<input name="etiquetas" value="${esc((p.etiquetas||[]).join(', '))}" placeholder="Ej.: boda de Marta 2024, verano en el pueblo"></label>
     <label>Notas<textarea name="notas" rows="3">${esc(p.notas||'')}</textarea></label>
     <div class="form-grid">
@@ -758,19 +724,11 @@ function vAnadir(){
     <div id="dupBanner"></div>
     <div class="form-actions">
       <button type="submit" class="btn">${editingId?'Guardar cambios':'Guardar persona'}</button>
-      ${!editingId?`<button type="button" class="btn alt" onclick="saveFormFromBtn(event,'new')">💾 Guardar y añadir otra</button>`:''}
-      ${!editingId?`<button type="button" class="btn alt" onclick="saveFormFromBtn(event,'family')">👨‍👩‍👧 Guardar y añadir familiar</button>`:''}
-      ${editingId?`<button type="button" class="btn alt" onclick="editingId=null;go('ficha')">Cancelar</button>`:''}
+      ${!editingId?`<button type="button" class="btn alt" onclick="saveForm(this.form,'new')">💾 Guardar y añadir otra</button>`:''}
+      ${!editingId?`<button type="button" class="btn alt" onclick="saveForm(this.form,'family')">👨‍👩‍👧 Guardar y añadir familiar</button>`:''}
+      ${editingId?`<button type="button" class="btn alt" onclick="const i=editingId;editingId=null;openFicha(i)">Cancelar</button>`:''}
     </div>
-    <input type="hidden" name="__action" value="stay">
   </form>`;
-}
-function saveFormFromBtn(ev,action){
-  ev.preventDefault();
-  const f=document.getElementById('pform');
-  const hidden=f.querySelector('input[name="__action"]');
-  if(hidden)hidden.value=action;
-  f.requestSubmit();
 }
 async function handlePhoto(input){
   const file=input.files[0];if(!file)return;
@@ -803,54 +761,43 @@ function findDuplicates(nombre,excludeId){
   const key=norm(nombre);
   return S.personas.filter(p=>p.id!==excludeId&&norm(p.nombre)===key);
 }
-function saveForm(e,action){
-  e.preventDefault();
-  const f=e.target;
-  const zone=$('.photo-zone');
-  let foto;
-  if(zone.dataset.foto!==undefined)foto=zone.dataset.foto||null;
-  else foto=editingId?getP(editingId).foto:null;
+function saveForm(f,acc){acc=acc||'stay';if(!f||!S)return;
+  const zone=$('.photo-zone');const old=editingId?getP(editingId):null;
+  let foto;if(zone&&zone.dataset.foto!==undefined)foto=zone.dataset.foto||null;else foto=old?old.foto:null;
+  const cd=f.cumD.value,cm=f.cumM.value,cy=f.cumY.value.trim();let cumple;
+  if(cd||cm){if(!cd||!cm){toast('Para el cumpleaños elige día y mes');return}if(cy&&!/^\d{4}$/.test(cy)){toast('El año debe tener 4 cifras');return}
+    const d0=new Date(cy?+cy:2000,+cm-1,+cd);if(d0.getMonth()!==+cm-1){toast('Esa fecha no existe');return}if(cy&&(+cy<1900||d0>new Date())){toast('Revisa el año del cumpleaños');return}
+    cumple=cy?`${cy}-${p2(cm)}-${p2(cd)}`:`${p2(cm)}-${p2(cd)}`}
+  else{if(cy){toast('Para el cumpleaños elige también día y mes');return}cumple=old&&old.cumple&&!parseCumple(old.cumple)?old.cumple:''}
   const datos={
     nombre:f.nombre.value.trim(),apodo:f.apodo.value.trim(),comoLlamar:f.comoLlamar.value.trim(),
     sexo:f.sexo.value,grupo:f.grupo.value,relacionConmigo:f.relacionConmigo.value.trim(),
-    relacionMujer:f.relacionMujer?f.relacionMujer.value.trim():'',contexto:f.contexto.value.trim(),
-    telefono:f.telefono.value.trim(),ciudad:f.ciudad.value.trim(),cumple:f.cumple.value.trim(),
+    relacionMujer:f.relacionMujer?f.relacionMujer.value.trim():(old?old.relacionMujer||'':''),contexto:f.contexto.value.trim(),
+    telefono:f.telefono.value.trim(),ciudad:f.ciudad.value.trim(),cumple,
     etiquetas:f.etiquetas.value.split(',').map(t=>t.trim()).filter(Boolean),notas:f.notas.value.trim(),
     ultimaVez:f.ultimaVez.value,fallecido:f.fallecido.checked,foto
   };
   if(!datos.nombre){toast('El nombre es obligatorio');return;}
-  const dup=findDuplicates(datos.nombre,editingId);
-  if(dup.length&&!f.dataset.dupConfirmed){
-    const banner=document.getElementById('dupBanner');
-    if(banner){
-      banner.innerHTML=`<div class="banner-dup">Ya existe <b>${esc(dup[0].nombre)}</b>${dup.length>1?' y otros '+dup.length:''}. ¿Es la misma persona?</div>
-      <div style="margin-top:6px">
-        <button type="button" class="btn small alt" onclick="window.openFicha('${dup[0].id}')">Abrir la existente</button>
-        <button type="button" class="btn small" onclick="document.getElementById('pform').dataset.dupConfirmed='1';document.getElementById('pform').requestSubmit()">Es otra persona, guardar igual</button>
-      </div>`;
-      banner.scrollIntoView({behavior:'smooth',block:'center'});
-    }
-    return;
-  }
-  const acc=f.__action||action||'stay';
-  let savedId=null;
-  if(editingId){
-    const id=editingId;const old=getP(id);
-    Object.assign(old,datos);recomputeAllInverses();savedId=id;editingId=null;upd();
-    if(acc==='stay'){openFicha(savedId);toast('Guardado');}
-  }else{
-    const np={id:uid(),...datos,vinculos:[]};
-    S.personas.push(np);savedId=np.id;upd();
-  }
-  if(acc==='new'){
-    const g=datos.grupo;editingId=null;tab='anadir';sub='';render();
-    setTimeout(()=>{const sel=document.querySelector('#pform select[name=grupo]');if(sel)sel.value=g;},0);
-    toast('Guardado. Añade otra persona');window.scrollTo(0,0);
-  }else if(acc==='family'){
-    editingId=null;openFicha(savedId);toast('Guardado. Añade familiares desde Vínculos');
-    setTimeout(()=>{addVinculoUI(savedId);},200);
-  }else if(acc==='stay'&&!editingId){openFicha(savedId);toast('Añadido');}
+  // nombres repetidos: solo se avisa al crear o al CAMBIAR el nombre (no al editar otros datos)
+  const key=norm(datos.nombre),changed=!old||norm(old.nombre)!==key;
+  const dup=changed?findDuplicates(datos.nombre,editingId):[];
+  if(dup.length&&DUPOK!==key){dupBanner(dup,datos.nombre,acc);return}
+  DUPOK=null;PENDUP=null;
+  if(old){Object.assign(old,datos);recomputeAllInverses();editingId=null;save(1);openFicha(old.id);toast('Guardado');return}
+  const np={id:uid(),...datos,vinculos:[]};S.personas.push(np);save(1);
+  if(acc==='new'){const g=datos.grupo;editingId=null;tab='anadir';sub='';render();const sel=document.querySelector('#pform select[name=grupo]');if(sel)sel.value=g;window.scrollTo(0,0);toast('Guardada. Añade otra persona')}
+  else if(acc==='family'){openFicha(np.id);toast('Guardada. Ahora elige a su familiar');setTimeout(()=>addVinculoUI(np.id),200)}
+  else{openFicha(np.id);toast('Añadida')}
 }
+function dupBanner(dup,nombre,acc){PENDUP={key:norm(nombre),acc};const b=document.getElementById('dupBanner');if(!b)return;const n=dup.length,ed=!!editingId;
+  b.innerHTML=`<div class="banner-dup"><b>${n===1?'Ya tienes otra persona que se llama':'Ya tienes '+n+' personas que se llaman'} «${esc(nombre)}»:</b>
+  ${dup.map(x=>`<div class="dup-row">${avatar(x,'tiny')}<div style="flex:1;min-width:0"><b>${esc(x.nombre)}</b>${x.apodo?` <span class="mut s">«${esc(x.apodo)}»</span>`:''}<div class="pmeta" style="white-space:normal">${esc([metaP(x),x.contexto].filter(Boolean).join(' · ')||'sin más datos')}</div></div>${ed?'':`<button type="button" class="btn small alt" onclick="dupPick('${x.id}')">Es esta</button>`}</div>`).join('')}
+  <p class="s" style="margin:8px 0">${ed?'Al cambiarle el nombre coincidirá con '+(n===1?'esa persona':'esas personas')+'. Seguirán siendo personas distintas: no se mezcla ni se borra nada.':'¿La que estás añadiendo es '+(n===1?'esa misma persona':'una de ellas')+' o es otra distinta? No se mezcla ni se borra nada.'}<br>💡 Para distinguirlas, rellena el <b>apodo</b> o «el clic».</p>
+  <div class="form-actions" style="margin-top:6px"><button type="button" class="btn" onclick="dupOk()">${ed?'Sí, guardar los cambios':'Es otra persona: añadirla'}</button><button type="button" class="btn alt" onclick="dupBack()">Volver al formulario</button></div></div>`;
+  b.scrollIntoView({behavior:'smooth',block:'center'})}
+function dupOk(){if(!PENDUP)return;DUPOK=PENDUP.key;saveForm(document.getElementById('pform'),PENDUP.acc)}
+function dupPick(id){PENDUP=null;DUPOK=null;editingId=null;openFicha(id);toast('No se ha añadido nada: esta es la ficha que ya tenías',3500)}
+function dupBack(){PENDUP=null;const b=document.getElementById('dupBanner');if(b)b.innerHTML='';const n=document.querySelector('#pform [name=apodo]');if(n)n.focus()}
 
 /* ============ REPASO ============ */
 function vFlash(){
@@ -886,56 +833,21 @@ function vMas(){
   const fallecidos=S.personas.filter(p=>p.fallecido).length;
   let html=`<h2>Más</h2>`;
   html+=`<div class="card"><div class="mut s">Tu lista</div><div style="font-size:20px;font-weight:600;margin:4px 0">${total} ${total===1?'persona':'personas'}</div><div class="mut s">${conFoto} con foto · ${fallecidos} fallecido${fallecidos===1?'':'s'} · ${S.grupos.length} grupos</div></div>`;
-  html+=`<div class="card"><button class="btn alt block" onclick="go('mas','flash')">🎯 Repaso (flashcards)</button><button class="btn alt block" onclick="go('mas','etiquetas')">🏷️ Etiquetas</button><button class="btn alt block" onclick="go('mas','grupos')">📁 Grupos</button><button class="btn alt block" onclick="go('mas','ideas')">💡 Ideas de mejora</button><button class="btn alt block" onclick="go('mas','print')">🖨️ Hoja de contactos imprimible</button><button class="btn alt block" onclick="go('mas','ajustes')">⚙️ Ajustes</button></div>`;
-  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.lastBackup?fd(S.lastBackup):'nunca'}</p><button class="btn block" onclick="openExportModal()">💾 Exportar copia</button><button class="btn alt block" onclick="exportCSV()">📊 Exportar a CSV</button><label class="btn alt block" style="text-align:center;margin:8px 0 0;cursor:pointer">📂 Cargar copia<input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(this)"></label></div>`;
-  html+=`<div class="card"><div class="sec" style="margin-top:0">Información</div><p class="mut s">Mi gente v${APP_VERSION} · datos solo en este dispositivo, sin nube.</p>${S.set.usarBloqueo&&webauthnAvailable?`<button class="btn alt block" onclick="lockNow()">🔒 Bloquear ahora</button>`:''}</div>`;
+  html+=`<div class="card"><button class="btn alt block" onclick="go('mas','flash')">🎯 Repaso (flashcards)</button><button class="btn alt block" onclick="go('mas','etiquetas')">🏷️ Etiquetas</button><button class="btn alt block" onclick="go('mas','grupos')">📁 Grupos</button><button class="btn alt block" onclick="go('mas','ideas')">💡 Ideas de mejora</button><button class="btn alt block" onclick="go('mas','print')">🖨️ Hoja de contactos imprimible</button><button class="btn alt block" onclick="go('mas','ajustes')">⚙️ Ajustes (seguridad, Drive, copias)</button></div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Copia de seguridad</div><p class="mut s">Última copia: ${S.bk?new Date(S.bk).toLocaleString('es-ES'):'nunca'}${pteOn()?' · Drive conectado':''}</p><button class="btn block" onclick="bkNow()">💾 ${pteOn()?'Subir copia a Drive ahora':'Descargar copia cifrada'}</button><button class="btn alt block" onclick="OPN.add('bk');go('mas','ajustes')">Más opciones y restaurar</button></div>`;
+  html+=`<div class="card"><div class="sec" style="margin-top:0">Información</div><p class="mut s">Mi gente v${VER} · los datos están en este móvil${SEG&&SEG.enc?' (cifrados)':''}${pteOn()?' y las copias, cifradas en tu Drive':''}.</p>${SEG&&SEG.vf&&SEG.mode!=='none'?`<button class="btn alt block" onclick="lockNow()">🔒 Bloquear ahora</button>`:''}</div>`;
   return html;
 }
-
+function setS(k,v){S.set[k]=v;save();toast('Guardado')}
 function vAjustes(){
-  const lockAvailable=webauthnAvailable;
   return `<button class="lnk" onclick="go('mas')">‹ Volver</button><h2>Ajustes</h2>
-  <form onsubmit="saveAjustes(event)">
-    <div class="card">
-      <label>Tu nombre<input name="miNombre" value="${esc(S.set.miNombre||'')}" placeholder="Cómo quieres que te salude la app"></label>
-      <label>Nombre de tu mujer (opcional)<input name="miMujer" value="${esc(S.set.miMujer||'')}" placeholder="Ej.: María"></label>
-      <label>Avisar de cumpleaños con X días de antelación<input name="diasCumple" type="number" min="1" max="60" value="${S.set.diasCumple}"></label>
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="mostrarRecientes" ${S.set.mostrarRecientes?'checked':''} style="width:auto;margin:0"> Mostrar bloque "Vistos recientemente" en Inicio</label>
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="avisarCopia" ${S.set.avisarCopia?'checked':''} style="width:auto;margin:0"> Avisar si la copia de seguridad tiene más de 30 días</label>
-    </div>
-    <button type="submit" class="btn">Guardar</button>
-  </form>
-
-  <div class="card" style="margin-top:20px">
-    <div class="sec" style="margin-top:0">🔒 Bloqueo de la app</div>
-    ${!lockAvailable?`<div class="warn-box">Este navegador o contexto no permite usar el desbloqueo del móvil. Asegúrate de abrir la app desde GitHub Pages (HTTPS), no como archivo local.</div>`:`
-    <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="lockToggle" ${S.set.usarBloqueo?'checked':''} onchange="toggleLock(this.checked)" style="width:auto;margin:0"> Pedir desbloqueo del móvil al abrir la app</label>
-    <p class="mut s" style="margin:6px 0 0">Usa la huella, el rostro, el patrón o el PIN que tengas configurado en el móvil.</p>
-    ${S.set.usarBloqueo?`<button type="button" class="btn alt block" onclick="lockNow()" style="margin-top:10px">🔒 Bloquear ahora</button>`:''}
-    <div class="info-box" style="margin-top:12px"><b>Modelo de seguridad:</b> el bloqueo biométrico impide el acceso casual a la app, pero los datos se guardan sin cifrar en el navegador (IndexedDB y localStorage). Para proteger las copias de seguridad, usa la exportación cifrada con contraseña.</div>
-    `}
-  </div>
-
-  <div class="card" style="margin-top:20px"><div class="sec" style="margin-top:0">Borrar todos los datos</div><p class="mut s">Elimina todas las personas, grupos e ideas. Haz copia antes.</p><button class="btn danger block" onclick="if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){S=DEF();idbDel('lockCredId');save();upd();go('inicio');toast('Todo borrado')}">Borrar todo</button></div>`;
-}
-async function toggleLock(on){
-  if(on){
-    const ok=await registerLock();
-    if(ok){S.set.usarBloqueo=true;save();toast('Bloqueo activado');}
-    else{S.set.usarBloqueo=false;save();const t=$('#lockToggle');if(t)t.checked=false;}
-  }else{
-    S.set.usarBloqueo=false;await idbDel('lockCredId');save();toast('Bloqueo desactivado');
-  }
-  render();
-}
-function saveAjustes(e){
-  e.preventDefault();const f=e.target;
-  S.set.miNombre=f.miNombre.value.trim();
-  S.set.miMujer=f.miMujer.value.trim();
-  S.set.diasCumple=Math.max(1,Math.min(60,parseInt(f.diasCumple.value)||15));
-  S.set.mostrarRecientes=f.mostrarRecientes.checked;
-  S.set.avisarCopia=f.avisarCopia.checked;
-  upd();go('mas');toast('Ajustes guardados');
+  ${dt('per','👤 Personalización',`<label>Tu nombre<input value="${esc(S.set.miNombre||'')}" placeholder="Cómo quieres que te salude la app" onchange="setS('miNombre',this.value.trim())"></label><label>Nombre de tu mujer (opcional)<input value="${esc(S.set.miMujer||'')}" placeholder="Ej.: María" onchange="setS('miMujer',this.value.trim())"></label><label>Avisar de cumpleaños con X días de antelación<input type="number" min="1" max="60" inputmode="numeric" value="${S.set.diasCumple}" onchange="setS('diasCumple',Math.max(1,Math.min(60,parseInt(this.value)||15)));this.value=S.set.diasCumple"></label><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" ${S.set.mostrarRecientes?'checked':''} onchange="setS('mostrarRecientes',this.checked)" style="width:auto;margin:0"> Mostrar «Vistos recientemente» en Inicio</label>`)}
+  ${segUI()}
+  ${drvUI()}
+  ${dt('bk','💾 Copia de seguridad (archivo)',`<small>Última copia: ${S.bk?new Date(S.bk).toLocaleString('es-ES'):'nunca'} · cambios sin copia: ${S.ch}. Incluye personas, vínculos, fotos, grupos, ideas y ajustes.</small><div class="bt"><button onclick="exp(1,0,'enc')">⬇️ Descargar copia cifrada</button><button class="alt" onclick="expOpen(1)">Copia en abierto…</button></div><div class="bt"><button class="alt" onclick="exportCSV()">📊 Exportar a CSV (sin cifrar)</button></div><label class="btn alt block" style="text-align:center;cursor:pointer;color:var(--primary);margin:8px 0">📂 Restaurar desde un archivo (.gdc o .json)<input type="file" onchange="imp(event)"></label><div class="sec" style="font-size:15px">Aviso de copia al entrar</div><label>Si han pasado (días)<input type="number" min="1" inputmode="numeric" value="${S.bkD}" onchange="S.bkD=Math.max(1,Math.floor(+this.value)||30);save();render();toast('Guardado')"></label><label>o si hay (cambios sin copia)<input type="number" min="1" inputmode="numeric" value="${S.bkN}" onchange="S.bkN=Math.max(1,Math.floor(+this.value)||1);save();render();toast('Guardado')"></label>`)}
+  ${dt('sn','⏪ Puntos de restauración',`<small>La app guarda sola, en este móvil, una foto de tus datos cada día que la usas y antes de cada operación delicada (restaurar, cifrar…). Se conservan los ${SNK} últimos. Sirve para volver atrás si algo sale mal, pero no sustituye a la copia fuera del móvil.</small><div class="bt"><button onclick="snShow()">Ver puntos de restauración</button></div>`)}
+  ${dt('ver',`ℹ️ Versión ${VER}`,`<small>La app se actualiza sola al abrirla (si estás rellenando una ficha, espera a que salgas).</small><div class="bt"><button onclick="chkUpd()">🔄 Buscar actualización</button></div>`)}
+  <p style="margin-top:14px"><button class="lnk" onclick="go('mas','ideas')">💡 Ideas de mejora</button></p>`;
 }
 
 /* ============ v1.3: ETIQUETAS ============ */
@@ -951,8 +863,8 @@ function vEtiquetas(){
     html+=tags.map(([key,v])=>`<div class="tag-edit-row">
       <span class="t-name">${esc(v.label)}</span>
       <span class="t-count">${v.count}</span>
-      <button class="btn small alt" onclick="renameTag('${esc(v.label).replace(/'/g,"\\'")}')">✏️</button>
-      <button class="btn small danger" onclick="deleteTag('${esc(v.label).replace(/'/g,"\\'")}')">🗑️</button>
+      <button class="btn small alt" data-t="${esc(v.label)}" onclick="renameTag(this.dataset.t)">✏️</button>
+      <button class="btn small danger" data-t="${esc(v.label)}" onclick="deleteTag(this.dataset.t)">🗑️</button>
     </div>`).join('');
   }
   html+=`</div>`;
@@ -999,6 +911,7 @@ function deleteTag(label){
 function openNewTagPicker(){
   const nombre=$('#newTagName').value.trim();
   if(!nombre){toast('Escribe un nombre para la etiqueta');return;}
+  NEWTAG=nombre;
   const key=norm(nombre);
   const yaExiste=S.personas.some(p=>(p.etiquetas||[]).some(t=>norm(t)===key));
   if(yaExiste){
@@ -1009,7 +922,7 @@ function openNewTagPicker(){
   $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Asignar "${esc(nombre)}" a…</h3>
     <div class="pick-list" style="max-height:50vh">${listHtml||'<div class="pick-empty">No hay personas.</div>'}</div>
-    <div style="margin-top:12px"><button class="btn" onclick="confirmNewTag('${esc(nombre).replace(/'/g,"\\'")}')">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
+    <div style="margin-top:12px"><button class="btn" onclick="confirmNewTag(NEWTAG)">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
   </div></div>`;
 }
 function confirmNewTag(nombre){
@@ -1069,11 +982,13 @@ function vIdeas(){
   return html;
 }
 function renderIdea(i){
-  return`<div class="idea ${i.estado==='implementada'?'impl':''}"><div class="meta">${fd(i.fecha)}${i.fechaImplementada?' · implementada '+fd(i.fechaImplementada):''}</div><div class="texto">${esc(i.texto)}</div><div class="actions"><button class="btn small alt" onclick="toggleIdea('${i.id}')">${i.estado==='implementada'?'↺ Volver a pendiente':'✓ Implementada'}</button><button class="btn small alt" onclick="copyIdea('${i.id}')">📋 Copiar</button><button class="btn small danger" onclick="delIdea('${i.id}')">🗑️</button></div></div>`;
+  return`<div class="idea ${i.estado==='implementada'?'impl':''}"><div class="meta">${fd(i.fecha)}${i.fechaImplementada?' · implementada '+fd(i.fechaImplementada):''}</div><div class="texto">${esc(i.texto)}</div><div class="actions"><button class="btn small alt" onclick="toggleIdea('${i.id}')">${i.estado==='implementada'?'↺ Volver a pendiente':'✓ Implementada'}</button><button class="btn small alt" onclick="editIdea('${i.id}')">✏️ Editar</button><button class="btn small alt" onclick="copyIdea('${i.id}')">📋 Copiar</button><button class="btn small danger" onclick="delIdea('${i.id}')">🗑️</button></div></div>`;
 }
 function addIdea(){const t=$('#ideaText').value.trim();if(!t)return;S.ideas.push({id:uid(),texto:t,fecha:today(),estado:'pendiente'});upd();toast('Idea añadida');}
 function toggleIdea(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;if(i.estado==='pendiente'){i.estado='implementada';i.fechaImplementada=today();}else{i.estado='pendiente';delete i.fechaImplementada;}upd();}
-function delIdea(id){if(!confirm('¿Borrar esta idea?'))return;S.ideas=S.ideas.filter(x=>x.id!==id);upd();toast('Idea borrada');}
+function delIdea(id){const prev=JSON.stringify(S);S.ideas=S.ideas.filter(x=>x.id!==id);upd();toastU('Idea borrada',prev);}
+function editIdea(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;$('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>Editar idea</h3><textarea id="ideaEd" rows="7" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit">${esc(i.texto)}</textarea><div style="margin-top:12px"><button class="btn" onclick="saveIdea('${id}')">Guardar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div></div></div>`}
+function saveIdea(id){const i=S.ideas.find(x=>x.id===id),t=($('#ideaEd')||{}).value;if(!i)return;if(!t||!t.trim()){toast('Escribe la idea');return}i.texto=t.trim();closeModal();upd();toast('Idea guardada')}
 function copyIdea(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;copyText(i.texto,'Idea copiada');}
 function copyIdeas(){const pend=S.ideas.filter(i=>i.estado==='pendiente');if(!pend.length){toast('No hay ideas pendientes');return;}const txt='Ideas pendientes para Mi gente v'+APP_VERSION+':\n\n'+pend.map((i,n)=>`${n+1}. (${fd(i.fecha)}) ${i.texto}`).join('\n\n');copyText(txt,'Copiadas '+pend.length+' ideas');}
 function copyText(txt,msg){if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast(msg)).catch(()=>prompt('Copia este texto:',txt));}else{prompt('Copia este texto:',txt);}}
@@ -1091,90 +1006,9 @@ function vPrint(){
   }).join('')}</div>`;
 }
 
-/* ============ BACKUP + CIFRADO ============ */
-function openExportModal(){
-  $('#modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Exportar copia</h3>
-    <div class="enc-opt"><input type="radio" name="encMode" id="encOn" value="on" checked><label for="encOn" style="margin:0;color:var(--ink);font-weight:500">Cifrada con contraseña <span class="mut s">(recomendado)</span></label></div>
-    <div class="enc-opt"><input type="radio" name="encMode" id="encOff" value="off"><label for="encOff" style="margin:0;color:var(--ink);font-weight:500">Sin cifrar <span class="mut s">(red de seguridad si olvidas la contraseña)</span></label></div>
-    <div id="encPwdBox">
-      <label>Contraseña (mínimo 6 caracteres)<input type="password" id="expPwd" autocomplete="new-password"></label>
-      <label>Repite la contraseña<input type="password" id="expPwd2" autocomplete="new-password"></label>
-      <div class="warn-box">⚠️ Si olvidas esta contraseña, no podrás recuperar la copia. Guárdala en un lugar seguro.</div>
-    </div>
-    <div style="margin-top:12px"><button class="btn" onclick="doExport()">Exportar</button><button class="btn alt" onclick="closeModal()">Cancelar</button></div>
-  </div></div>`;
-  document.querySelectorAll('input[name=encMode]').forEach(r=>r.addEventListener('change',()=>{
-    const on=document.getElementById('encOn').checked;
-    document.getElementById('encPwdBox').style.display=on?'':'none';
-  }));
-}
-async function deriveKey(password,salt,iter){
-  const enc=new TextEncoder();
-  const base=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
-  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
-}
-async function doExport(){
-  const cifrado=document.getElementById('encOn').checked;
-  S.lastBackup=today();await save();
-  const payload=JSON.stringify({app:'migente',...S,exportado:new Date().toISOString()});
-  let blob,filename;
-  if(cifrado){
-    const pwd=document.getElementById('expPwd').value;
-    const pwd2=document.getElementById('expPwd2').value;
-    if(pwd.length<6){toast('La contraseña debe tener al menos 6 caracteres');return;}
-    if(pwd!==pwd2){toast('Las contraseñas no coinciden');return;}
-    const salt=crypto.getRandomValues(new Uint8Array(16));
-    const iv=crypto.getRandomValues(new Uint8Array(12));
-    const iter=310000;
-    const key=await deriveKey(pwd,salt,iter);
-    const enc=new TextEncoder();
-    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(payload));
-    const out={app:'migente',encrypted:true,v:1,alg:'AES-256-GCM',kdf:'PBKDF2-SHA256',iter,salt:bufToB64url(salt),iv:bufToB64url(iv),data:bufToB64url(ct)};
-    blob=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
-    filename=`mi-gente-cifrada-${today()}.json`;
-  }else{
-    blob=new Blob([JSON.stringify({app:'migente',...S,exportado:new Date().toISOString()},null,1)],{type:'application/json'});
-    filename=`mi-gente-${today()}.json`;
-  }
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
-  URL.revokeObjectURL(a.href);
-  closeModal();
-  toast(cifrado?'Copia cifrada descargada':'Copia sin cifrar descargada');
-  setTimeout(render,100);
-}
-function importJSON(input){
-  const f=input.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=async()=>{
-    try{
-      const d=JSON.parse(r.result);
-      if(d.app!=='migente')throw 0;
-      if(d.encrypted===true){
-        const pwd=prompt('Esta copia está cifrada. Introduce la contraseña:');
-        if(pwd===null){input.value='';return;}
-        try{
-          const salt=b64urlToBuf(d.salt);const iv=b64urlToBuf(d.iv);const ct=b64urlToBuf(d.data);
-          const key=await deriveKey(pwd,salt,d.iter||310000);
-          const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
-          const txt=new TextDecoder().decode(dec);
-          const inner=JSON.parse(txt);
-          if(inner.app!=='migente'||!Array.isArray(inner.personas))throw 0;
-          if(!confirm('Se reemplazarán todos los datos actuales. ¿Continuar?')){input.value='';return;}
-          S=migrate(inner);S.set=Object.assign(DEF().set,S.set);
-          await save();upd();go('inicio');toast('Copia cifrada cargada');
-        }catch(e){alert('Contraseña incorrecta o archivo dañado.');}
-      }else{
-        if(!Array.isArray(d.personas))throw 0;
-        if(!confirm('Se reemplazarán todos los datos actuales. ¿Continuar?')){input.value='';return;}
-        S=migrate(d);S.set=Object.assign(DEF().set,S.set);
-        await save();upd();go('inicio');toast('Copia cargada');
-      }
-    }catch(e){alert('Archivo no válido. Debe ser una copia de Mi gente.');}
-    input.value='';
-  };r.readAsText(f);
-}
+/* ============ CSV ============ */
 function exportCSV(){
+  if(!confirm('El CSV va SIN cifrar: contiene nombres, teléfonos y notas de toda tu gente al descubierto. No lo subas a la nube. ¿Exportarlo?'))return;
   const headers=['nombre','apodo','comoLlamar','sexo','grupo','relacionConmigo','relacionMujer','contexto','telefono','ciudad','cumple','etiquetas','notas','ultimaVez','fallecido','vinculos'];
   const rows=S.personas.map(p=>{
     const grupo=getG(p.grupo);
@@ -1188,17 +1022,227 @@ function exportCSV(){
   toast('CSV descargado');
 }
 
-/* ============ ARRANQUE ============ */
-async function boot(){
-  await load();
-  if('serviceWorker' in navigator){
-    try{navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){}
-  }
-  render();
-  if(S.set.usarBloqueo&&webauthnAvailable&&await hasLockCredential()){
-    showLock();
-  }
-}
-boot();
+/* ================= seguridad S1: contraseña maestra, huella (PRF), bloqueo, copias cifradas ================= */
+const te=new TextEncoder(),td=new TextDecoder(),MG='MGENC1\n',CH=4194304,IT=250000,PS=te.encode('mi-gente/prf/clave/v1');
+const b64=u=>{let s='';u=new Uint8Array(u);for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s)},ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),rnd=n=>crypto.getRandomValues(new Uint8Array(n)),u32=n=>{const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,n);return a},rd32=u=>new DataView(u.buffer,u.byteOffset).getUint32(0);
+let SEG=(()=>{try{return JSON.parse(localStorage.getItem('mg_seg'))||null}catch{return null}})(),PW=null,LA=Date.now(),LOCK=0;
+const segSave=o=>{SEG={...SEG,...o};localStorage.setItem('mg_seg',JSON.stringify(SEG))};
+const kdf=async(p,s,it)=>crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:s,iterations:it},await crypto.subtle.importKey('raw',te.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+const enc=async(k,d,n)=>{const iv=rnd(12);return{iv,ct:new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,d))}},dcr=(k,iv,ct,n)=>crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,ct);
+const chkPw=async p=>{try{await dcr(await kdf(p,ub64(SEG.salt),SEG.it),ub64(SEG.vf.iv),ub64(SEG.vf.ct),0);return true}catch{return false}};
+const askPw=(t,two)=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:60;display:flex;align-items:center;padding:16px';d.innerHTML=`<div class="card pwbox" style="width:100%;max-width:480px;margin:0 auto"><b>${t}</b><input type=password autocomplete=off id=p1 placeholder="Contraseña">${two?'<input type=password autocomplete=off id=p2 placeholder="Repite la contraseña">':''}<div class=bt><button id=ok>Aceptar</button><button class=alt id=no>Cancelar</button></div></div>`;document.body.appendChild(d);const f=d.querySelector('#p1'),x=v=>{d.remove();r(v)};f.focus();d.querySelector('#no').onclick=()=>x(null);const go_=()=>{const v=f.value;if(!v)return;if(two&&v.length<8)return alert('Mínimo 8 caracteres.');if(two&&d.querySelector('#p2').value!==v)return alert('Las contraseñas no coinciden.');x(v)};d.querySelector('#ok').onclick=go_;d.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')go_()})});
+async function confirmPw(){const q=await askPw('Escribe la contraseña maestra');if(q==null)return null;if(!await chkPw(q)){alert('Contraseña incorrecta.');return null}return q}
+async function getPw(){if(PW)return PW;if(!SEG?.vf)return null;return confirmPw()}
+/* setupPw acepta contraseña externa (S2) y, si los datos van cifrados, re-envuelve la clave de datos EN LA MISMA escritura (S3) */
+async function setupPw(p0){const p=p0||await askPw('Crea tu contraseña maestra (mínimo 8 caracteres). Si la pierdes, las copias cifradas no se pueden recuperar: apúntala en papel o en un gestor de contraseñas.',1);if(!p)return null;if(SEG?.enc&&!DEK){alert('Desbloquea la app antes de cambiar la contraseña.');return null}const s=rnd(16),k=await kdf(p,s,IT),{iv,ct}=await enc(k,te.encode('GD-OK'),0);let dk=null;if(SEG?.enc){const raw=new Uint8Array(await crypto.subtle.exportKey('raw',DEK)),w=await enc(k,raw,2);raw.fill(0);dk={iv:b64(w.iv),ct:b64(w.ct)}}segSave({salt:b64(s),it:IT,vf:{iv:b64(iv),ct:b64(ct)},mode:SEG?.mode||'clave',mn:SEG?.mn||5,...(dk?{dek:dk}:{})});PW=SEG.mode=='none'?null:p;return p}
+const prfK=async create=>{let id=SEG?.cid;if(create){const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:APP,id:location.hostname},user:{id:rnd(16),name:'mi-gente',displayName:APP},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',userVerification:'required'},timeout:60000,extensions:{prf:{}}}});id=b64(c.rawId);segSave({cid:id})}
+const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:id?[{type:'public-key',id:ub64(id)}]:[],userVerification:'required',timeout:60000,extensions:{prf:{eval:{first:PS}}}}}),r=a.getClientExtensionResults().prf?.results?.first;if(!r)throw'noprf';if(!id)segSave({cid:b64(a.rawId)});
+return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(32),info:te.encode('gd-pw-v1')},await crypto.subtle.importKey('raw',r,'HKDF',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt'])};
+async function hwSet(p,create){const k=await prfK(create),{iv,ct}=await enc(k,te.encode(p),1);segSave({hw:{iv:b64(iv),ct:b64(ct)}})}
+const hwFail=e=>toast(e=='noprf'?'Este navegador no da clave con la huella: acceso con contraseña':'Huella no activada: acceso con contraseña',3500);
+async function segFrom(p){await setupPw(p);segSave({mode:'huella'});try{await hwSet(p,true)}catch(e){segSave({hw:null,mode:'clave'});hwFail(e)}render()}
+async function segPw(){const first=!SEG?.vf;let old=null;if(!first){old=await confirmPw();if(!old)return null}
+if(!first&&pteOn()&&!confirm('Si cambias la contraseña maestra, las copias que ya están en Drive (y las descargadas) seguirán necesitando la contraseña ANTERIOR. Después de cambiarla, sube una copia nueva. ¿Seguir?'))return null;
+const pc=!first&&pteOn()?await pteGet(old):null,p=await setupPw();if(!p)return null;if(pc)await pteSet(pc,p);if(first)segSave({mode:'huella'});
+if(first||SEG.hw){try{await hwSet(p,first)}catch(e){segSave({hw:null,...(first?{mode:'clave'}:{})});hwFail(e)}}render();if(!first)toast('Contraseña cambiada');return p}
+async function segHuella(){const p=await getPw();if(!p)return;try{await hwSet(p,true);if(SEG.mode!=='huella')segSave({mode:'huella'});render();toast('Huella activada')}catch(e){hwFail(e)}}
+async function segMode(v){const R={none:0,clave:1,huella:2},c=SEG.mode||'none';if(v=='none'&&SEG.enc){alert('Con los datos cifrados no se puede quitar el bloqueo: la clave no tendría dónde protegerse. Quita antes el cifrado de los datos.');render();return}let p=null;if(R[v]<R[c])p=await confirmPw();else if(v=='huella')p=await getPw();if((R[v]<R[c]||v=='huella')&&!p){render();return}
+if(v=='huella'&&!SEG.hw){try{await hwSet(p,true)}catch(e){hwFail(e);v='clave'}}segSave({mode:v});if(v=='none')PW=null;render()}
+const segMn=v=>{segSave({mn:Math.max(1,Math.floor(+v)||5)});toast('Guardado')};
+const segNudge=()=>SEG?.vf?'':`<div class="note ok" onclick="segPw()"><b>🔐 Activa la seguridad</b><br><span class="mut s">Contraseña maestra, huella, copias cifradas y copia en Drive</span></div>`;
+const segUI=()=>{const s=SEG||{},m=s.vf?s.mode:'';return dt('seg','🔐 Seguridad',`<small>${s.vf?'Contraseña maestra creada.':'Aún no hay contraseña maestra.'} ${s.enc?'Los datos de este móvil están <b>cifrados</b>: solo se descifran en memoria mientras la app está desbloqueada.':'Los datos de este móvil <b>aún no van cifrados</b> (las copias sí).'}</small>${s.vf?`<label>Acceso<select onchange="segMode(this.value)"><option value=huella ${m=='huella'?'selected':''}>Con huella (contraseña de respaldo)</option><option value=clave ${m=='clave'?'selected':''}>Solo con contraseña maestra</option><option value=none ${m=='none'?'selected':''} ${s.enc?'disabled':''}>Sin bloqueo${s.enc?' (no con datos cifrados)':''}</option></select></label><label>Bloquear tras (minutos sin usarla, también en segundo plano)<input type=number min=1 inputmode=numeric value="${s.mn||5}" onchange="segMn(this.value)"></label><small>Huella: ${s.hw?'activada':'sin configurar'}</small>`:''}<div class=bt><button onclick="segPw()">${s.vf?'Cambiar contraseña maestra':'Crear contraseña maestra'}</button>${s.vf?`<button class=alt onclick="segHuella()">${s.hw?'Volver a enrolar huella':'Activar huella'}</button>`:''}</div>${s.vf&&!EMERG?`<b style="display:block;margin-top:12px">Cifrado de los datos de este móvil</b><small>${s.enc?'Si olvidas la contraseña maestra y la huella falla, los datos de este móvil no se pueden recuperar: solo desde una copia.':'Recomendado. Antes de cifrar se hace una copia previa cifrada y se ofrece una en abierto como salvavidas.'}</small><div class=bt>${s.enc?'<button class=danger onclick="encOff()">Quitar cifrado de los datos</button>':'<button onclick="encOn()">🔒 Cifrar datos de este móvil</button>'}</div>`:''}`)};
+function lockUI(){if(!SEG?.vf||(SEG.mode=='none'&&!SEG.enc))return;PW=null;DX=null;LOCK=1;let d=$('#lk');if(!d){d=document.createElement('div');d.id='lk';d.style.cssText='position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px';document.body.appendChild(d)}const h=SEG.mode=='huella'&&SEG.hw;
+d.innerHTML=`<div class="pwbox" style="width:100%;max-width:360px;text-align:center"><h2>🔒 ${APP}</h2>${h?'<div class=bt style="justify-content:center"><button onclick="unH()">👆 Entrar con huella</button></div>':''}<input type=password id=lp placeholder="Contraseña maestra" autocomplete=off onkeydown="if(event.key==\'Enter\')unP()"><div class=bt style="justify-content:center"><button class="${h?'alt':''}" onclick="unP()">Entrar con contraseña</button></div><small id=lm></small></div>`;d.hidden=false;closeSh();UNDO=null;
+if(SEG.enc){const w=()=>{if(LOCK){DEK=null;wipeUI()}};flush().then(w,w)}
+if(h)setTimeout(()=>{if(LOCK&&!document.hidden)unH(1)},350)}
+async function unOk(p){if(DBP)await DBP;if(SEG.enc&&!DB){const m=$('#lm');if(m)m.textContent='No se puede abrir la base de datos. Cierra otras ventanas de la app y vuelve a abrirla.';return}if(SEG.enc&&!DEK){try{DEK=await dekOpen(p)}catch{const m=$('#lm');if(m)m.textContent='La contraseña es correcta pero no abre los datos de este móvil. Restaura una copia.';return}}
+PW=p;LA=Date.now();LOCK=0;$('#lk').hidden=true;try{if(!S)await bootData()}catch(e){alert('No se pudieron leer los datos: '+((e&&e.message)||e))}render();if(!POST&&S){POST=1;postStart()}}
+async function unP(){const p=$('#lp').value;if(p&&await chkPw(p))await unOk(p);else $('#lm').textContent='Contraseña incorrecta.'}
+let UNH=0;async function unH(q){if(UNH)return;UNH=1;try{const k=await prfK(0),p=td.decode(await dcr(k,ub64(SEG.hw.iv),ub64(SEG.hw.ct),1));if(await chkPw(p))await unOk(p);else throw'pw'}catch(e){const m=$('#lm');if(m&&!(q&&e&&e.name==='NotAllowedError'))m.textContent=e=='noprf'?'Este navegador no da clave con la huella: usa la contraseña.':'No se pudo con la huella: usa la contraseña.'}finally{UNH=0}}
+const idle=()=>{const l=$('#lk');if((!l||l.hidden)&&SEG?.vf&&SEG.mode&&(SEG.mode!='none'||SEG.enc)&&Date.now()-LA>(SEG.mn||5)*6e4)lockUI()};
+['pointerdown','keydown','scroll'].forEach(e=>addEventListener(e,()=>{const l=$('#lk');if(!l||l.hidden)LA=Date.now()},{passive:true}));setInterval(idle,15e3);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)idle();else{flush();try{if(S&&!LOCK&&bkDue()&&autoOk())drvUp(1)}catch(e){}}});
+addEventListener('pagehide',()=>{flush()});
+/* copias cifradas: trozos de 4 MB, AES-GCM, clave PBKDF2 con sal en la cabecera */
+async function encBlob(bl,p,meta){const s=rnd(16),k=await kdf(p,s,IT),h=te.encode(JSON.stringify({app:APP,ver:VER,salt:b64(s),it:IT,ch:CH,date:new Date().toISOString(),...meta})),parts=[te.encode(MG),u32(h.length),h];let n=0;const w=async d=>{const{iv,ct}=await enc(k,d,n++);parts.push(u32(ct.length),iv,ct)};for(let i=0;i<bl.size;i+=CH)await w(new Uint8Array(await bl.slice(i,i+CH).arrayBuffer()));await w(te.encode('GD-FIN'));return new Blob(parts)}
+async function decFile(f,ask){let o=MG.length;const rd=async n=>{const u=new Uint8Array(await f.slice(o,o+n).arrayBuffer());if(u.length<n)throw'trunc';o+=n;return u},h=JSON.parse(td.decode(await rd(rd32(await rd(4)))));const p=await ask();if(p==null)return null;const k=await kdf(p,ub64(h.salt),h.it),out=[];let n=0;for(;;){const l=rd32(await rd(4)),iv=await rd(12),ct=await rd(l);let d;try{d=new Uint8Array(await dcr(k,iv,ct,n++))}catch{throw'pw'}if(o>=f.size){if(td.decode(d)!='GD-FIN')throw'trunc';break}out.push(d)}return new Blob(out)}
+function expOpen(f){if(confirm('Esta copia NO va cifrada: contiene todos los datos de tu familia y amigos al descubierto. Guárdala en un sitio seguro (por ejemplo, un USB) y no la subas a la nube. ¿Crear copia en abierto?'))exp(f,0,'open')}
+/* --- copia: mkBk construye y cifra; exp descarga; drvUp (S2) sube --- */
+async function mkBk(full,pre,mode,pw){toast('Preparando copia…',6e4);await flush();const now=new Date().toISOString(),d=JSON.parse(JSON.stringify(S));if(!pre){d.bk=Date.now();d.ch=0}
+let bl=new Blob([JSON.stringify({app:APP,ver:VER,v:2,full:true,date:now,data:d})],{type:'application/json'}),ext='json';if(mode=='enc'){toast('Cifrando…',6e4);bl=await encBlob(bl,pw,{full:true});ext='gdc'}return{bl,now,name:`${FN}_v${VER}_${pre?'PREVIA_':''}completa_${mode=='enc'?'cifrada_':'abierta_'}${now.slice(0,10)}.${ext}`}}
+async function exp(full,pre,mode){let pw;if(mode=='enc'){pw=SEG?.vf?await getPw():await segPw();if(!pw)return false}try{const{bl,now,name}=await mkBk(full,pre,mode,pw),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),6e4);
+if(!pre){S.bk=Date.now();S.ch=0;if(mode=='open')S.lastOpen=now;save();await flush();legacyCleanup();render()}toast(pre?'Copia previa descargada':'Copia descargada');return true}catch(e){toast('');alert('No se pudo crear la copia: '+((e&&e.message)||e));return false}}
+/* --- restaurar: imp elige archivo; impFile hace el trabajo y devuelve {ok,pw} --- */
+async function imp(e){const f=e.target.files[0];e.target.value='';if(!f)return;await impFile(f)}
+function fromBk(b){if(!b||typeof b!=='object')return null;let s;if(b.data&&typeof b.data==='object'&&!Array.isArray(b.data)){if(b.app&&!APPS.includes(b.app))return null;s=b.data}else if(Array.isArray(b.personas)&&(!b.app||b.app==='migente')){s={...b};delete s.app;delete s.exportado;delete s.encrypted}else return null;s=normS(JSON.parse(JSON.stringify(s)));return valid(s)?s:null}
+/* copias cifradas de la v1.3 (formato propio, PBKDF2 310000): se siguen pudiendo abrir */
+async function oldDec(d){const pwd=await askPw('Esta copia antigua de Mi gente está cifrada. Escribe la contraseña con la que la hiciste');if(pwd==null)return null;try{const key=await kdf(pwd,new Uint8Array(b64urlToBuf(d.salt)),d.iter||310000),dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(b64urlToBuf(d.iv))},key,new Uint8Array(b64urlToBuf(d.data)));return JSON.parse(td.decode(dec))}catch(e){throw'pw'}}
+async function impFile(f,hint){let b,used=null;try{if(td.decode(new Uint8Array(await f.slice(0,MG.length).arrayBuffer()))==MG){const ask=async t=>{used=await askPw(t);return used};let bl;try{bl=await decFile(f,hint?async()=>{used=hint;return hint}:()=>ask('Contraseña de esta copia'))}catch(er){if(er=='pw'&&hint)bl=await decFile(f,()=>ask('La contraseña maestra no abre esta copia. Escribe la contraseña con la que se hizo'));else throw er}if(!bl)return;b=JSON.parse(await bl.text())}else{b=JSON.parse(await f.text());if(b&&b.app==='migente'&&b.encrypted===true){b=await oldDec(b);if(!b)return}}}catch(er){toast('');return alert(er=='pw'?'Contraseña incorrecta o copia dañada. No se ha tocado nada.':er=='trunc'?'La copia está incompleta. No se ha tocado nada.':'El archivo no es una copia válida (ni cifrada de esta app ni JSON). No se ha tocado nada.')}
+toast('');const nd=fromBk(b);if(!nd){alert('Este archivo no es una copia de Mi gente. No se ha tocado nada.');return}
+if(!confirm(`La copia${b.date?' del '+new Date(b.date).toLocaleString('es-ES'):''} tiene ${nd.personas.length} personas. Sustituirá TODOS los datos actuales de este móvil. ¿Continuar?`))return;
+try{if(hasData()&&!BADMAIN){if(!await exp(1,1,preMode()))return;if(!confirm('Se ha descargado una copia previa de tus datos actuales'+(SEG?.vf?' (cifrada con tu contraseña maestra)':'')+'. ¿Continuar con la restauración?'))return}
+if(!BADMAIN)await snapQ('antes de restaurar una copia');await replaceS(nd);toHome();alert('Copia restaurada.');return{ok:1,pw:used}}catch(err){alert('No se pudo restaurar: '+((err&&err.message)||err)+'\nTus datos no han cambiado.');return null}}
+/* aviso de copia al entrar */
+function bkDue(){if(!S||!hasData())return null;if(!S.bk)return'Aún no has hecho ninguna copia de seguridad.';const d=Math.floor((Date.now()-S.bk)/864e5);if(d>=S.bkD)return`Hace ${d} días de la última copia.`;if(S.ch>=S.bkN)return`Hay ${S.ch} cambio${S.ch>1?'s':''} sin copia.`;return null}
+function bkAsk(){const w=bkDue();if(!w)return;const dv=pteOn();show(`<h3>💾 Copia de seguridad</h3><p>${esc(w)}</p><small>${dv?'Se sube cifrada a tu Drive.':'Guárdala fuera del móvil (nube u ordenador).'}</small><div class=bt>${dv?`<button onclick="closeSh();drvUp()">Subir a Drive (cifrada)</button><button class=alt onclick="closeSh();exp(1,0,'enc')">Descargar cifrada</button>`:`<button onclick="closeSh();exp(1,0,'enc')">Descargar copia cifrada</button>`}<button class=alt onclick="closeSh()">Ahora no</button></div>`)}
+
+/* ================= S2: copia cifrada en Drive mediante un puente de Apps Script. Nada secreto viaja en la URL ni en claro ================= */
+const DAPP='migente',PART=3145728,PUV=/^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/;
+const hex=u=>[...new Uint8Array(u)].map(b=>b.toString(16).padStart(2,'0')).join(''),sleep=ms=>new Promise(r=>setTimeout(r,ms)),preMode=()=>SEG?.vf?'enc':'open';
+const sha=async s=>hex(await crypto.subtle.digest('SHA-256',te.encode(s)));
+let PTE=(()=>{try{return JSON.parse(localStorage.getItem('mg_pte'))||null}catch{return null}})(),DL=[],DX=null,DUP=0,DM='';
+const pteOn=()=>!!PTE?.ct,pteSave=o=>{PTE={...PTE,...o};localStorage.setItem('mg_pte',JSON.stringify(PTE))};
+const autoOn=()=>pteOn()&&S&&S.autoUp!==false&&SEG?.mode!=='none';
+const autoOk=()=>autoOn()&&!!PW&&!DUP&&navigator.onLine!==false&&Date.now()-(PTE.last?new Date(PTE.last).getTime():0)>36e5;
+/* la dirección y la clave del puente se guardan cifradas con la contraseña maestra (AES-GCM, sal propia, contador 2) */
+async function pteSet(o,p){const s=rnd(16),k=await kdf(p,s,IT),{iv,ct}=await enc(k,te.encode(JSON.stringify(o)),2);pteSave({s:b64(s),iv:b64(iv),ct:b64(ct)})}
+async function pteGet(p){if(!PTE?.ct)return null;try{const k=await kdf(p,ub64(PTE.s),IT);return JSON.parse(td.decode(await dcr(k,ub64(PTE.iv),ub64(PTE.ct),2)))}catch{return null}}
+async function drvCtx(){const p=await getPw();if(!p)return null;const c=await pteGet(p);if(!c){alert('No se pudo leer la conexión con Drive con esta contraseña. Vuelve a conectar.');return null}return{p,c}}
+/* protocolo: POST (cuerpo JSON, nunca en la URL) con firma HMAC-SHA256; la clave solo firma, no se envía */
+const hmac=async(k,m)=>hex(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',te.encode(k),{name:'HMAC',hash:'SHA-256'},false,['sign']),te.encode(m)));
+async function drvCall(c,a,pr,d){if(!PUV.test(c.u))throw'url';const ts=Date.now(),n=hex(rnd(16)),ps=JSON.stringify(pr||{}),dh=d?await sha(d):'',s=await hmac(c.k,['1',a,DAPP,ts,n,ps,dh].join('|'));let r,j;
+try{r=await fetch(c.u,{method:'POST',body:JSON.stringify({v:1,a,app:DAPP,ts,n,ps,d:d||'',s}),redirect:'follow',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'})}catch{throw'net'}
+try{j=await r.json()}catch{throw'resp'}if(!j||!j.ok){DM=(j&&j.m)||'';throw(j&&j.e)||'int'}return j}
+async function drvTry(c,a,pr,d){for(let t=0;;t++){try{return await drvCall(c,a,pr,d)}catch(e){if((e=='net'||e=='resp'||e=='busy')&&t<2){await sleep(1500*(t+1));continue}throw e}}}
+const drvErr=e=>typeof e!='string'?'Error: '+((e&&e.message)||e):({url:'La dirección del puente no es válida (debe ser https://script.google.com/…/exec).',net:'Sin conexión, o la dirección del puente no responde.',resp:'El puente no devolvió una respuesta válida. Revisa que la dirección termina en /exec y que la implementación es para «Cualquier usuario».',auth:'La clave del puente no coincide con la propiedad SECRET de Apps Script.',ts:'La hora del móvil no coincide con la de Google: activa la fecha y hora automáticas.',rep:'Petición repetida: inténtalo otra vez.',nosecret:'Al puente le falta la propiedad SECRET (o tiene menos de 16 caracteres).',busy:'El puente está ocupado: inténtalo en un minuto.',big:'Trozo demasiado grande para el puente.',app:'Nombre de carpeta no válido.',nf:'No se encontró esa copia en Drive.',sz:'Un trozo llegó incompleto: inténtalo otra vez.',miss:'La copia en Drive está incompleta: inténtalo otra vez.'}[e]||'Error del puente ('+e+(DM?': '+DM:'')+')');
+/* subir: la copia ya cifrada se corta en trozos de 3 MB; el puente la da por buena solo al recibir todos */
+async function drvPutBlob(c,bl,name,now,keep){const t=new Date(now),z=n=>String(n).padStart(2,'0'),id=`${t.getFullYear()}-${z(t.getMonth()+1)}-${z(t.getDate())}_${z(t.getHours())}-${z(t.getMinutes())}-${z(t.getSeconds())}_v${VER.replace(/[^0-9A-Za-z]/g,'_')}_completa`,tot=Math.max(1,Math.ceil(bl.size/PART));
+for(let i=0;i<tot;i++){LA=Date.now();toast(`Subiendo a Drive… ${i+1} de ${tot}`,6e4);const pt=bl.slice(i*PART,(i+1)*PART);await drvTry(c,'put',{id,i:i+1,sz:pt.size},b64(new Uint8Array(await pt.arrayBuffer())))}
+await drvTry(c,'fin',{id,total:tot,size:bl.size,name,keep:keep||PTE?.keep||30});return id}
+async function drvGetBlob(c,it){const ps=[];for(let i=1;i<=it.t;i++){LA=Date.now();toast(`Descargando de Drive… ${i} de ${it.t}`,6e4);ps.push(ub64((await drvTry(c,'get',{id:it.id,i})).d))}const bl=new Blob(ps);if(bl.size!==it.s)throw'miss';return bl}
+async function drvUp(auto){if(!pteOn())return auto?0:drvConn();if(DUP)return auto?0:toast('Ya hay una copia en curso');let x;if(auto){if(!PW)return;const c=await pteGet(PW);if(!c)return;x={p:PW,c}}else x=await drvCtx();if(!x)return;DUP=1;let wl=null;try{wl=await navigator.wakeLock?.request('screen')}catch{}
+try{const{bl,now,name}=await mkBk(1,0,'enc',x.p);await drvPutBlob(x.c,bl,name,now);pteSave({last:now});if(S){S.bk=Date.now();S.ch=0;save();await flush()}AUTOFAIL=0;legacyCleanup();if(S&&tab!=='anadir')render();toast(auto?'Copia automática subida a Drive ✓':'Copia subida a Drive ✓')}
+catch(e){toast('');if(auto){AUTOFAIL=1;toast('No se pudo subir la copia automática: '+drvErr(e),5000);if(S&&tab==='inicio')render()}else alert('No se pudo subir la copia. Tus datos no han cambiado.\n'+drvErr(e))}finally{DUP=0;try{wl&&wl.release()}catch{}}}
+/* conexión */
+const drvLast=()=>PTE?.last?new Date(PTE.last).toLocaleString('es-ES'):'nunca';
+const drvUI=()=>dt('drv','☁️ Copia en Drive (cifrada)',`${pteOn()?`<small>Conectado. Carpeta: Apps/Backups/${DAPP} · última subida desde este móvil: ${drvLast()}</small><div class=bt><button onclick="drvUp()">Subir copia ahora</button><button class=alt onclick="drvList()">Ver copias y restaurar</button></div><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" style="width:auto;margin:0" ${S.autoUp!==false?'checked':''} onchange="S.autoUp=this.checked;save();render()"> Subir sola cuando toque copia (al entrar o salir de la app, como mucho una vez por hora)</label>${SEG?.mode==='none'?'<small>Con «Sin bloqueo» la subida automática no funciona (la contraseña no se guarda en memoria).</small>':''}<label>Conservar en Drive las últimas (copias)<input type=number min=2 max=50 inputmode=numeric value="${PTE.keep||30}" onchange="drvKeep(this.value)"></label><div class=bt><button class=alt onclick="drvTest()">Probar conexión</button><button class=alt onclick="drvConn()">Cambiar datos</button><button class=danger onclick="drvOff()">Desconectar</button></div>`:`<small>Sube copias completas cifradas a tu Drive (Apps/Backups/${DAPP}) y restáuralas desde ahí. Se cifran en este móvil con tu contraseña maestra antes de salir: Drive solo ve datos ilegibles.</small><div class=bt><button onclick="drvConn()">Conectar con Drive</button><button class=alt onclick="drvList()">Restaurar desde Drive (móvil nuevo)</button></div>`}<div class=bt style="margin:0"><button class=alt onclick="drvHelp()">Cómo crear el puente</button></div>`);
+async function drvConn(){if(!SEG?.vf&&!await segPw())return;const p=await getPw();if(!p)return;const c=await pteGet(p)||{u:'',k:''};
+show(`<h3>Conectar con Drive</h3><small>Si ya tienes el puente de otra app, usa la misma dirección y la misma clave. Si no, créalo una sola vez (botón «Cómo crear el puente»).</small><label>Dirección del puente (termina en /exec)<input id=dr_u inputmode=url autocomplete=off value="${esc(c.u)}" placeholder="https://script.google.com/macros/s/…/exec"></label><label>Clave del puente<input id=dr_k type=password autocomplete=off value="${esc(c.k)}"></label><div class=bt><button class=alt onclick="drvGen()">Generar una clave nueva</button></div><small>La clave nunca se envía: solo firma las peticiones. Aquí se guarda cifrada con tu contraseña maestra.</small><div class=bt><button onclick="drvSave()">Probar y guardar</button><button class=alt onclick="closeSh()">Cancelar</button></div>`)}
+function drvGen(){if(!confirm('Solo necesitas una clave nueva si vas a crear el puente por primera vez. Si ya tienes el puente de otra app, usa su clave. ¿Generar una nueva?'))return;const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',k=[...rnd(32)].map(x=>A[x&31]).join(''),e=$('#dr_k');e.type='text';e.value=k;copy(k);alert('Clave generada y copiada al portapapeles.\n\nPégala en Apps Script: Configuración del proyecto › Propiedades de la secuencia de comandos › propiedad SECRET.\n\nTambién queda en la casilla para guardarla aquí.')}
+async function drvSave(){const u=$('#dr_u').value.trim(),k=$('#dr_k').value.trim();if(!PUV.test(u))return alert('La dirección debe ser la de la aplicación web: https://script.google.com/macros/s/…/exec');if(k.length<16)return alert('La clave debe tener al menos 16 caracteres (usa «Generar una clave nueva»).');
+const p=await getPw();if(!p)return;toast('Probando conexión…',6e4);try{const j=await drvTry({u,k},'ping');await pteSet({u,k},p);pteSave({keep:PTE?.keep||30});closeSh();render();toast('Conectado · '+j.folder,3500)}catch(e){toast('');alert(drvErr(e))}}
+async function drvTest(){const x=await drvCtx();if(!x)return;toast('Probando conexión…',6e4);try{const j=await drvTry(x.c,'ping');toast('');alert('Conexión correcta ✓\nCarpeta en Drive: '+j.folder+(j.v<1?'\nAviso: el puente es de una versión antigua.':''))}catch(e){toast('');alert(drvErr(e))}}
+const drvKeep=v=>{pteSave({keep:Math.max(2,Math.min(50,Math.floor(+v)||30))});toast('Guardado')};
+function drvOff(){if(!confirm('¿Desconectar Drive de este móvil? Las copias que ya están en Drive no se borran.'))return;localStorage.removeItem('mg_pte');PTE=null;render()}
+const BRIDGE="/**\n * PUENTE DRIVE PARA COPIAS CIFRADAS · versión 1\n *\n * Qué hace: recibe trozos de archivos YA CIFRADOS por la app y los guarda en\n *   Mi unidad / Apps / Backups / <carpeta de la app> / <copia> / 0001.part, 0002.part…\n * Seguridad:\n *   - Todo va por HTTPS (script.google.com no admite HTTP).\n *   - La clave del puente (SECRET) NO viaja nunca, ni en la URL ni en el cuerpo:\n *     cada petición lleva una firma HMAC-SHA256 que se calcula con ella.\n *   - Hora y número de un solo uso (nonce): una petición capturada no se puede repetir.\n *   - El contenido ya llega cifrado de extremo a extremo (AES-GCM con tu contraseña maestra):\n *     ni el puente ni Google pueden leerlo.\n * Clave SECRET: Configuración del proyecto (engranaje) > Propiedades de la secuencia de\n *   comandos > Añadir propiedad: nombre SECRET, valor = la clave que genera la app (mín. 16).\n * Implementación: Implementar > Nueva implementación > Aplicación web >\n *   Ejecutar como: Yo · Quién tiene acceso: Cualquier usuario.\n */\nconst VERSION = 1;\nconst ROOT = ['Apps', 'Backups'];\nconst SKEW = 600000;       // margen de hora: 10 min\nconst MAXD = 6000000;      // máx. caracteres base64 por petición (~4,5 MB)\nconst SUB = '_subiendo_';  // prefijo de copias a medio subir\nconst ID = /^[0-9A-Za-z_-]{6,80}$/;\n\nfunction doGet() { return out_({ ok: 0, e: 'post' }); }\n\nfunction out_(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction hex_(b) {\n  return b.map(function (x) { return ('0' + (x & 255).toString(16)).slice(-2); }).join('');\n}\nfunction sha_(s) {\n  return hex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8));\n}\nfunction same_(a, b) {\n  if (a.length !== b.length) return false;\n  var r = 0;\n  for (var i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return r === 0;\n}\nfunction nm_(i) { return ('0000' + i).slice(-4) + '.part'; }\nfunction int_(x, a, b) { return typeof x === 'number' && (x | 0) === x && x >= a && x <= b; }\n\nfunction rootF_() {\n  var f = DriveApp.getRootFolder();\n  ROOT.forEach(function (n) {\n    var it = f.getFoldersByName(n);\n    f = it.hasNext() ? it.next() : f.createFolder(n);\n  });\n  return f;\n}\nfunction appF_(app) {\n  var r = rootF_(), it = r.getFoldersByName(app);\n  return it.hasNext() ? it.next() : r.createFolder(app);\n}\nfunction sub_(af, name, create) {\n  var it = af.getFoldersByName(name);\n  if (it.hasNext()) return it.next();\n  return create ? af.createFolder(name) : null;\n}\nfunction desc_(f) {\n  try { var d = JSON.parse(f.getDescription() || ''); return d && d.t ? d : null; } catch (x) { return null; }\n}\n\nfunction doPost(e) {\n  try {\n    var q;\n    try { q = JSON.parse(e.postData.contents); } catch (x) { return out_({ ok: 0, e: 'bad' }); }\n    if (!q || q.v !== 1 || typeof q.a !== 'string' || typeof q.app !== 'string' || typeof q.ts !== 'number' ||\n        typeof q.n !== 'string' || typeof q.ps !== 'string' || typeof q.s !== 'string') return out_({ ok: 0, e: 'bad' });\n    var sec = PropertiesService.getScriptProperties().getProperty('SECRET');\n    if (!sec || sec.length < 16) return out_({ ok: 0, e: 'nosecret' });\n    var d = typeof q.d === 'string' ? q.d : '';\n    if (d.length > MAXD) return out_({ ok: 0, e: 'big' });\n    // 1) firma (todo lo firmado es ASCII)\n    var msg = ['1', q.a, q.app, q.ts, q.n, q.ps, d ? sha_(d) : ''].join('|');\n    var sig = hex_(Utilities.computeHmacSha256Signature(msg, sec));\n    if (!same_(sig, q.s)) { Utilities.sleep(1500); return out_({ ok: 0, e: 'auth' }); }\n    // 2) hora y repetición\n    if (Math.abs(Date.now() - q.ts) > SKEW) return out_({ ok: 0, e: 'ts' });\n    var cache = CacheService.getScriptCache();\n    if (!/^[0-9a-f]{32}$/.test(q.n) || cache.get('n' + q.n)) return out_({ ok: 0, e: 'rep' });\n    cache.put('n' + q.n, '1', 1500);\n    if (!/^[a-z0-9_-]{2,40}$/.test(q.app)) return out_({ ok: 0, e: 'app' });\n    var p;\n    try { p = JSON.parse(q.ps); } catch (x) { return out_({ ok: 0, e: 'bad' }); }\n    if (!p || typeof p !== 'object') p = {};\n    // 3) acción (de una en una)\n    var lock = LockService.getScriptLock();\n    if (!lock.tryLock(25000)) return out_({ ok: 0, e: 'busy' });\n    try { return act_(q.a, q.app, p, d); } finally { try { lock.releaseLock(); } catch (x) { } }\n  } catch (err) {\n    return out_({ ok: 0, e: 'int', m: String(err && err.message || err).slice(0, 120) });\n  }\n}\n\nfunction act_(a, app, p, d) {\n  var af, sf, it, f, i;\n  switch (a) {\n    case 'ping':\n      appF_(app);\n      return out_({ ok: 1, v: VERSION, folder: ROOT.join('/') + '/' + app });\n\n    case 'put':\n      if (!ID.test(p.id || '') || !int_(p.i, 1, 9999) || !d) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, SUB + p.id, true);\n      it = sf.getFilesByName(nm_(p.i));\n      while (it.hasNext()) it.next().setTrashed(true);\n      f = sf.createFile(Utilities.newBlob(Utilities.base64Decode(d), 'application/octet-stream', nm_(p.i)));\n      if (typeof p.sz === 'number' && f.getSize() !== p.sz) { f.setTrashed(true); return out_({ ok: 0, e: 'sz' }); }\n      return out_({ ok: 1, i: p.i });\n\n    case 'fin': {\n      if (!ID.test(p.id || '') || !int_(p.total, 1, 9999) || typeof p.size !== 'number') return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, SUB + p.id, false);\n      if (!sf) { // ¿ya estaba terminada? (respuesta perdida en un reintento)\n        var fin = sub_(af, p.id, false), ds = fin && desc_(fin);\n        return ds && ds.t === p.total && ds.s === p.size ? out_({ ok: 1, again: 1 }) : out_({ ok: 0, e: 'nf' });\n      }\n      var n = 0, sum = 0, seen = {};\n      it = sf.getFiles();\n      while (it.hasNext()) {\n        f = it.next();\n        var nm = f.getName();\n        if (/^\\d{4}\\.part$/.test(nm)) { seen[nm] = 1; n++; sum += f.getSize(); }\n      }\n      for (i = 1; i <= p.total; i++) if (!seen[nm_(i)]) return out_({ ok: 0, e: 'miss', m: 'falta ' + nm_(i) });\n      if (n !== p.total || sum !== p.size) return out_({ ok: 0, e: 'miss', m: n + '/' + p.total + ' trozos · ' + sum + '/' + p.size + ' bytes' });\n      sf.setDescription(JSON.stringify({ t: p.total, s: p.size, n: String(p.name || '').slice(0, 120), d: new Date().toISOString() }));\n      it = af.getFoldersByName(p.id);\n      while (it.hasNext()) { var old = it.next(); if (desc_(old)) old.setTrashed(true); }\n      sf.setName(p.id);\n      var tr = retain_(af, int_(p.keep, 2, 50) ? p.keep : 10);\n      clean_(af);\n      return out_({ ok: 1, trashed: tr });\n    }\n\n    case 'list': {\n      af = appF_(app);\n      var r = [];\n      it = af.getFolders();\n      while (it.hasNext()) {\n        f = it.next();\n        if (f.getName().indexOf(SUB) === 0) continue;\n        var dd = desc_(f);\n        if (dd) r.push({ id: f.getName(), t: dd.t, s: dd.s, n: dd.n, d: f.getDateCreated().toISOString() });\n      }\n      r.sort(function (x, y) { return x.d < y.d ? 1 : -1; });\n      return out_({ ok: 1, l: r });\n    }\n\n    case 'get':\n      if (!ID.test(p.id || '') || !int_(p.i, 1, 9999)) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, p.id, false);\n      if (!sf || !desc_(sf)) return out_({ ok: 0, e: 'nf' });\n      it = sf.getFilesByName(nm_(p.i));\n      if (!it.hasNext()) return out_({ ok: 0, e: 'nf' });\n      return out_({ ok: 1, i: p.i, d: Utilities.base64Encode(it.next().getBlob().getBytes()) });\n\n    case 'del':\n      if (!ID.test(p.id || '')) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, p.id, false);\n      if (!sf || !desc_(sf)) return out_({ ok: 0, e: 'nf' });\n      sf.setTrashed(true);\n      return out_({ ok: 1 });\n  }\n  return out_({ ok: 0, e: 'bad' });\n}\n\n// Solo toca copias creadas por este puente (las que llevan descripción propia).\nfunction retain_(af, keep) {\n  var a = [], it = af.getFolders(), f;\n  while (it.hasNext()) { f = it.next(); if (f.getName().indexOf(SUB) !== 0 && desc_(f)) a.push(f); }\n  a.sort(function (x, y) { return y.getDateCreated() - x.getDateCreated(); });\n  var k = 0;\n  for (var i = keep; i < a.length; i++) { a[i].setTrashed(true); k++; }\n  return k;\n}\n// Copias a medio subir de hace más de un día: a la papelera.\nfunction clean_(af) {\n  var it = af.getFolders(), f;\n  while (it.hasNext()) {\n    f = it.next();\n    if (f.getName().indexOf(SUB) === 0 && Date.now() - f.getDateCreated().getTime() > 864e5) f.setTrashed(true);\n  }\n}\n";
+function drvHelp(){show(`<h3>Cómo crear el puente (una sola vez)</h3><small>Si ya lo creaste para otra app, no hace falta: usa la misma dirección y la misma clave en «Conectar con Drive».</small><ol style="padding-left:18px;font-size:14px"><li>Entra en <b>script.google.com</b> con la cuenta de Google que usarás solo para las copias.</li><li><b>Nuevo proyecto</b>. Borra lo que haya y pega el código (botón de abajo).</li><li>Engranaje <b>Configuración del proyecto</b> › <b>Propiedades de la secuencia de comandos</b> › añade <b>SECRET</b> con la clave (en esta app: Conectar con Drive › Generar una clave nueva).</li><li><b>Implementar › Nueva implementación › Aplicación web</b>: ejecutar como <b>Yo</b>, acceso <b>Cualquier usuario</b>. Autoriza los permisos.</li><li>Copia la dirección que termina en <b>/exec</b> y pégala en Conectar con Drive.</li></ol><small>Si cambias el código más adelante: Implementar › Gestionar implementaciones › Editar › Nueva versión (la dirección no cambia). Los nombres exactos de los menús de Google pueden variar un poco.</small><div class=bt><button onclick="copy(BRIDGE)">Copiar código del puente</button><button class=alt onclick="closeSh()">Cerrar</button></div>`)}
+/* ver copias y restaurar (también en un móvil nuevo, sin conexión guardada) */
+const drvAsk=()=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:60;display:flex;align-items:center;padding:16px';d.innerHTML=`<div class="card pwbox" style="width:100%;max-width:480px;margin:0 auto"><b>Datos del puente de Drive</b><input id=a_u inputmode=url autocomplete=off placeholder="Dirección del puente (termina en /exec)"><input id=a_k type=password autocomplete=off placeholder="Clave del puente"><div class=bt><button id=ok>Continuar</button><button class=alt id=no>Cancelar</button></div></div>`;document.body.appendChild(d);const x=v=>{d.remove();r(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=()=>{const u=d.querySelector('#a_u').value.trim(),k=d.querySelector('#a_k').value.trim();if(!PUV.test(u))return alert('La dirección debe empezar por https://script.google.com/ y terminar en /exec.');if(k.length<16)return alert('La clave del puente tiene al menos 16 caracteres.');x({u,k})}});
+async function drvList(){let x;if(pteOn()){x=await drvCtx();if(!x)return}else{const c=await drvAsk();if(!c)return;x={c,p:null}}
+toast('Buscando copias…',6e4);try{const j=await drvTry(x.c,'list');DL=j.l||[];DX=x;toast('');drvShow()}catch(e){toast('');alert(drvErr(e))}}
+function drvShow(){const z=DL.map((it,i)=>`<div class="ev"><div class="sp"><span><b>${new Date(it.d).toLocaleString('es-ES')}</b><br><span class="mut s">${mb(it.s)} · ${it.t} trozo${it.t>1?'s':''}</span></span><span style="white-space:nowrap"><button class="btn small" onclick="drvPick(${i})">Restaurar</button> <button class="btn small danger" onclick="drvDel(${i})">🗑</button></span></div></div>`).join('');
+show(`<h3>Copias en Drive</h3><small>Apps/Backups/${DAPP} · las más recientes primero</small>${z||'<p class="mut s">No hay copias en Drive.</p>'}<div class=bt><button class=alt onclick="DX=null;closeSh()">Cerrar</button></div>`)}
+async function drvPick(i){const it=DL[i],x=DX;if(!it||!x||DUP)return;DUP=1;closeSh();
+try{const bl=await drvGetBlob(x.c,it);toast('Copia descargada: descifrando…',6e4);const r=await impFile(bl,x.p);toast('');
+if(r&&r.ok){if(r.pw&&!SEG?.vf){if(confirm('¿Usar la contraseña de esta copia como contraseña maestra de este móvil y guardar la conexión con Drive?')){await segFrom(r.pw);await pteSet(x.c,r.pw);pteSave({keep:PTE?.keep||30});render()}}
+else if(!pteOn()&&SEG?.vf&&confirm('¿Guardar la conexión con Drive en este móvil?')){const p=await getPw();if(p){await pteSet(x.c,p);pteSave({keep:PTE?.keep||30});render()}}}}
+catch(e){toast('');alert('No se pudo descargar la copia. No se ha tocado nada.\n'+drvErr(e))}finally{DUP=0;DX=null}}
+async function drvDel(i){const it=DL[i],x=DX;if(!it||!x||!confirm('¿Borrar esta copia de Drive? Va a la papelera de Drive (se puede recuperar unos 30 días).'))return;if(SEG?.vf&&!await confirmPw())return;try{await drvTry(x.c,'del',{id:it.id});DL.splice(i,1);drvShow()}catch(e){alert(drvErr(e))}}
+/* S2:fin */
+
+/* ================= S3: base local IndexedDB «mg_db» con cifrado opcional =================
+   Almacén d = en claro · almacén e = cifrado (AES-GCM con la clave de datos DEK, aad = 'qp|'+t+'|'+id).
+   Registros: state (todos los datos) y sn-<ms> (puntos de restauración). En claro solo id, t y rev.
+   Esta app SOLO toca la base mg_db, las claves mg_seg/mg_pte/mg_mig y sus datos antiguos «migente» (nunca clear() ni otras bases). */
+const DBN='mg_db',SNK=8;let DBP=null,DB=null,DEK=null,QP=Promise.resolve(),PEND=0,STO=0,SVERR=null,BC=null;
+const SN=()=>SEG?.enc?'e':'d';
+function opn(){return new Promise((res,rej)=>{let q;try{q=indexedDB.open(DBN,1)}catch(e){return rej(e)}q.onupgradeneeded=()=>{const d=q.result;['d','e'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};q.onsuccess=()=>{const d=q.result;d.onversionchange=()=>{try{d.close()}catch(e){}DB=null;alert('La base de datos se está actualizando desde otra ventana. Se recargará la app.');location.reload()};res(d)};q.onerror=()=>rej(q.error);q.onblocked=()=>toast('Cierra las otras ventanas de la app',5000)})}
+const rq=q=>new Promise((res,rej)=>{q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+const tdone=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error('abort'))});
+const AD=(t,id)=>te.encode('mg|'+t+'|'+id);
+async function seal(r,st,k=DEK){if(st==='d')return{id:r.id,t:r.t,rev:r.rev,j:r.j};if(!k)throw'locked';const iv=rnd(12),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:AD(r.t,r.id)},k,te.encode(r.j)));return{id:r.id,t:r.t,rev:r.rev,iv,ct}}
+async function unseal(x,st,k=DEK){if(st==='d'){if(typeof x.j!=='string')throw'bad';return{id:x.id,t:x.t,rev:x.rev,j:x.j}}if(!k)throw'locked';return{id:x.id,t:x.t,rev:x.rev,j:td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:x.iv,additionalData:AD(x.t,x.id)},k,x.ct))}}
+const allRaw=st=>rq(DB.transaction(st).objectStore(st).getAll());
+const rawGet=(st,id)=>rq(DB.transaction(st).objectStore(st).get(id));
+async function getState(){const st=SN(),x=await rawGet(st,'state');if(!x)return null;return{rev:x.rev,S:JSON.parse((await unseal(x,st)).j)}}
+async function dekOpen(p){const k=await kdf(p,ub64(SEG.salt),SEG.it),raw=await dcr(k,ub64(SEG.dek.iv),ub64(SEG.dek.ct),2);return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt'])}
+const inQ=fn=>{const p=QP.then(fn);QP=p.catch(()=>{});return p};
+/* guardar: inmediato (o diferido 400 ms al escribir texto), en cola, atómico y con control de versión entre ventanas */
+function save(c,lazy){if(!S)return;if(c)S.ch=(S.ch||0)+1;PEND=1;clearTimeout(STO);if(lazy)STO=setTimeout(flush,400);else flush()}
+function flush(){clearTimeout(STO);if(!PEND)return QP;PEND=0;QP=QP.then(wrSafe);return QP}
+async function wr(){if(!S)return;if(!valid(S))throw new Error('los datos no tienen el formato esperado');
+if(EMERG||!DB){localStorage.setItem('migente',JSON.stringify(S));return}
+if(BADMAIN)throw new Error('la base principal está dañada: restaura una copia o un punto de restauración');
+let live=null;try{live=JSON.parse(localStorage.getItem('mg_seg'))}catch(e){}if(!!(live&&live.enc)!==!!(SEG&&SEG.enc)){setTimeout(()=>location.reload(),50);throw'seg'}
+const st=SN(),rec=await seal({id:'state',t:'st',rev:REV+1,j:JSON.stringify(S)},st),t=DB.transaction(st,'readwrite'),os=t.objectStore(st),fin=tdone(t),cur=await rq(os.get('state'));
+if(cur&&cur.rev!==REV){try{t.abort()}catch(e){}fin.catch(()=>{});throw'conf'}
+os.put(rec);await fin;REV=rec.rev;try{BC&&BC.postMessage({rev:REV})}catch(e){}}
+async function wrSafe(){try{await wr();SVERR=null}catch(e){if(e==='seg'){SVERR=null;return}if(e==='conf'){SVERR=null;try{const s2=await getState();if(s2){S=normS(s2.S);REV=s2.rev}}catch(x){}if(tab!=='anadir')render();toast('Había cambios hechos en otra ventana: se han cargado. Repite tu último cambio si no aparece.',6000);return}
+SVERR=e;PEND=1;alert('⚠️ No se ha podido guardar el último cambio: '+((e&&e.message)||e)+'\n\nNo cierres la app. Haz una copia de seguridad desde Ajustes.')}}
+async function replaceS(nd){const bm=BADMAIN;BADMAIN=null;S=nd;PEND=1;await flush();if(SVERR){BADMAIN=bm;throw SVERR}}
+/* puntos de restauración */
+async function snapNow(why,data){data=data||S;if(!DB||EMERG||!data||BADMAIN)return;const st=SN(),id='sn-'+Date.now(),rec=await seal({id,t:'sn',rev:0,j:JSON.stringify({why,at:Date.now(),data})},st),t=DB.transaction(st,'readwrite'),os=t.objectStore(st),fin=tdone(t);os.put(rec);const ks=(await rq(os.getAllKeys())).filter(k=>String(k).startsWith('sn-')).sort((a,b)=>+a.slice(3)-+b.slice(3));ks.slice(0,Math.max(0,ks.length-SNK)).forEach(k=>os.delete(k));await fin}
+const snapQ=(why,data)=>inQ(()=>snapNow(why,data));
+async function snList(){const st=SN(),xs=(await allRaw(st)).filter(x=>x.t==='sn').sort((a,b)=>+b.id.slice(3)-+a.id.slice(3)),out=[];for(const x of xs){try{const o=JSON.parse((await unseal(x,st)).j);out.push({id:x.id,why:o.why,at:o.at,n:(o.data&&o.data.personas||[]).length,data:o.data})}catch(e){out.push({id:x.id,at:+x.id.slice(3),bad:1})}}return out}
+async function snShow(){if(!DB||EMERG)return alert('No disponible en este navegador.');try{SNL=await snList()}catch(e){return alert('No se pudieron leer los puntos de restauración.')}
+show(`<h3>⏪ Puntos de restauración</h3><small>Los más recientes primero. Volver a uno sustituye los datos actuales (antes se guarda un punto con lo actual).</small>${SNL.map((x,i)=>`<div class="ev"><div class="sp"><span><b>${new Date(x.at).toLocaleString('es-ES')}</b><br><span class="mut s">${x.bad?'No se puede leer':esc(x.why||'')+' · '+x.n+' personas'}</span></span>${x.bad?'':`<button class="btn small" onclick="snRest(${i})">Volver aquí</button>`}</div></div>`).join('')||'<p class="mut s">Aún no hay puntos.</p>'}<div class=bt><button class=alt onclick="closeSh()">Cerrar</button></div>`)}
+async function snRest(i){const x=SNL&&SNL[i];if(!x||x.bad)return;if(!confirm(`¿Volver a los datos del ${new Date(x.at).toLocaleString('es-ES')} (${x.n} personas)? Lo actual se guarda antes como punto de restauración.`))return;closeSh();try{if(!BADMAIN)await snapQ('antes de volver a un punto');const nd=normS(x.data);if(!valid(nd))throw new Error('punto no válido');await replaceS(nd);S.ch=(S.ch||0)+1;save();toHome();toast('Datos recuperados',3000)}catch(e){alert('No se pudo: '+((e&&e.message)||e)+'\nTus datos no han cambiado.')}}
+/* cifrar / descifrar la base (reanudable, nunca borra sin verificar) */
+async function encOn(){if(!SEG?.vf)return alert('Primero crea la contraseña maestra.');if(SEG.mode=='none')return alert('Con «Sin bloqueo» no se puede cifrar: elige antes acceso con huella o con contraseña.');if(!DB||EMERG||BADMAIN)return alert('No disponible ahora mismo.');
+if(!confirm('Vas a cifrar los datos de este móvil con tu contraseña maestra.\n\nSi la olvidas y la huella falla, los datos de este móvil NO se podrán recuperar: solo desde una copia.\n\nAntes se descargará una copia previa cifrada. ¿Seguir?'))return;
+const p=await getPw();if(!p)return;if(!await exp(1,1,'enc'))return;
+if(confirm('¿Quieres además una copia EN ABIERTO (sin cifrar) como salvavidas por si algún día olvidas la contraseña? Guárdala en un USB, no en la nube.'))await exp(1,1,'open');
+toast('Cifrando la base…',6e4);await flush();
+try{await inQ(async()=>{LA=Date.now();const k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']),raw=new Uint8Array(await crypto.subtle.exportKey('raw',k)),wk=await kdf(p,ub64(SEG.salt),SEG.it),w=await enc(wk,raw,2);raw.fill(0);
+segSave({dek:{iv:b64(w.iv),ct:b64(w.ct)}});
+const src=await allRaw('d'),recs=[];for(const x of src){const r=await unseal(x,'d');recs.push(await seal(r,'e',k))}
+let t=DB.transaction('e','readwrite'),os=t.objectStore('e'),fin=tdone(t);os.clear();recs.forEach(r=>os.put(r));await fin;
+const k2=await dekOpen(p),back=await allRaw('e'),m=new Map(src.map(x=>[x.id,x]));if(back.length!==src.length)throw new Error('faltan registros al verificar');
+for(const y of back){const o=m.get(y.id),r=await unseal(y,'e',k2);if(!o||o.j!==r.j||o.rev!==y.rev||o.t!==y.t)throw new Error('la verificación no coincide')}
+DEK=k2;segSave({enc:1});t=DB.transaction('d','readwrite');fin=tdone(t);t.objectStore('d').clear();await fin;await legacyCleanup()});
+toast('');render();alert('✅ Datos de este móvil cifrados y verificados.')}
+catch(e){toast('');if(!SEG.enc){DEK=null;segSave({dek:null});try{const t=DB.transaction('e','readwrite'),f=tdone(t);t.objectStore('e').clear();await f}catch(x){}}render();alert('No se pudo cifrar: '+((e&&e.message)||e)+'\nNo ha cambiado nada: tus datos siguen como estaban.')}}
+async function encOff(){if(!SEG?.enc||!DEK)return;if(!confirm('¿Quitar el cifrado? Los datos de este móvil quedarán sin cifrar (las copias siguen cifradas).'))return;const p=await confirmPw();if(!p)return;toast('Descifrando la base…',6e4);await flush();
+try{await inQ(async()=>{LA=Date.now();const src=await allRaw('e'),plain=[];for(const x of src)plain.push(await unseal(x,'e'));
+let t=DB.transaction('d','readwrite'),os=t.objectStore('d'),fin=tdone(t);os.clear();plain.forEach(r=>os.put({id:r.id,t:r.t,rev:r.rev,j:r.j}));await fin;
+const back=await allRaw('d'),m=new Map(plain.map(x=>[x.id,x]));if(back.length!==plain.length)throw new Error('faltan registros al verificar');for(const y of back){const o=m.get(y.id);if(!o||o.j!==y.j||o.rev!==y.rev)throw new Error('la verificación no coincide')}
+segSave({enc:0,dek:null});DEK=null;t=DB.transaction('e','readwrite');fin=tdone(t);t.objectStore('e').clear();await fin});toast('');render();alert('Cifrado quitado.')}
+catch(e){toast('');if(SEG.enc){try{const t=DB.transaction('d','readwrite'),f=tdone(t);t.objectStore('d').clear();await f}catch(x){}}render();alert('No se pudo quitar el cifrado: '+((e&&e.message)||e)+'\nTus datos siguen cifrados e intactos.')}}
+/* datos de la v1.3.1: IndexedDB «migente» (almacén kv, clave s) y copia duplicada en localStorage «migente» (en claro).
+   Se leen sin crear ni tocar nada; se borran SOLO cuando la base nueva está verificada y hay copia (o al cifrar). */
+function legacyLS(){try{const s=JSON.parse(localStorage.getItem('migente'));return s&&typeof s==='object'&&Array.isArray(s.personas)?s:null}catch(e){return null}}
+function oldDB(){return new Promise(res=>{let q;try{q=indexedDB.open('migente')}catch(e){return res(null)}q.onupgradeneeded=()=>{try{q.transaction.abort()}catch(e){}};q.onsuccess=()=>{const d=q.result;if(!d.objectStoreNames.contains('kv')){d.close();return res(null)}res(d)};q.onerror=()=>res(null);q.onblocked=()=>res(null)})}
+async function legacyIDB(){const d=await oldDB();if(!d)return null;return new Promise(res=>{try{const r=d.transaction('kv').objectStore('kv').get('s');r.onsuccess=()=>{d.close();const v=r.result;res(v&&typeof v==='object'&&Array.isArray(v.personas)?v:null)};r.onerror=()=>{d.close();res(null)}}catch(e){d.close();res(null)}})}
+async function legacyCleanup(){try{if(EMERG||!DB)return;const st=await getState();if(!st||!st.S||!Array.isArray(st.S.personas))return}catch(e){return}
+try{if(legacyLS())localStorage.removeItem('migente')}catch(e){}
+const d=await oldDB();if(!d)return;await new Promise(res=>{try{const t=d.transaction('kv','readwrite'),o=t.objectStore('kv');o.delete('s');o.delete('lockCredId');t.oncomplete=t.onerror=t.onabort=()=>{d.close();res()}}catch(e){d.close();res()}})}
+/* carga de datos (al arrancar o al desbloquear) */
+async function bootData(){if(!DB){EMERG=true;const L=legacyLS();S=normS(L?JSON.parse(JSON.stringify(L)):{});return}
+try{if(SEG?.enc){const t=DB.transaction('d','readwrite'),f=tdone(t);t.objectStore('d').clear();await f}else if((await rq(DB.transaction('e').objectStore('e').count()))>0){const t=DB.transaction('e','readwrite'),f=tdone(t);t.objectStore('e').clear();await f}}catch(e){}
+let st=null,err=null;try{st=await getState()}catch(e){err=e}
+if(err){let raw=null;try{raw=await rawGet(SN(),'state')}catch(e){}REV=raw?raw.rev:0;let L=[];try{L=await snList()}catch(e){}const ok=L.find(x=>!x.bad);
+if(ok&&confirm(`No se ha podido leer la base principal.\n\n¿Cargar el punto de restauración del ${new Date(ok.at).toLocaleString('es-ES')} (${ok.n} personas)?`)){S=normS(ok.data);PEND=1;await flush();if(!SVERR)return}
+BADMAIN=String(err);S=normS({});return}
+if(st){S=normS(st.S);REV=st.rev;return}
+const LI=await legacyIDB(),LL=legacyLS();if(!LI&&!LL){S=normS({});REV=0;return}
+// migración desde la v1.3.1, verificada; lo antiguo no se borra todavía
+S=normS(JSON.parse(JSON.stringify(LI||LL)));REV=0;try{await inQ(wr);const v=await getState();if(!v||JSON.stringify(normS(v.S))!==JSON.stringify(S))throw new Error('verificación');MIGD={n:S.personas.length};try{localStorage.setItem('mg_mig',JSON.stringify(MIGD))}catch(x){}await snapQ('paso desde la versión 1.3.1');
+if(LI&&LL){const l2=normS(JSON.parse(JSON.stringify(LL)));if(JSON.stringify(l2)!==JSON.stringify(S))await snapQ('copia antigua de localStorage (era distinta)',l2)}}
+catch(e){try{const t=DB.transaction(SN(),'readwrite'),f=tdone(t);t.objectStore(SN()).delete('state');await f}catch(x){}EMERG=true;DB=null;S=normS(JSON.parse(JSON.stringify(LI||LL)));alert('No se pudo pasar a la base nueva ('+((e&&e.message)||e)+'). La app sigue con el almacenamiento anterior y tus datos están intactos.')}}
+function migMsg(){show(`<h3>✅ Versión ${VER}</h3><p>Tus datos (${MIGD.n} personas) se han pasado a la base nueva y se han comprobado uno a uno.</p><small>Ahora toca protegerlos: crea la contraseña maestra (huella), conecta Drive y cifra los datos de este móvil, todo desde Ajustes. Empieza haciendo una copia.</small><div class=bt><button onclick="migOk();bkNow()">${pteOn()?'Subir copia a Drive':'Descargar copia cifrada'}</button><button class=alt onclick="migOk();OPN.add('seg');go('mas','ajustes')">Ir a Seguridad</button><button class=alt onclick="migOk()">Más tarde</button></div>`)}
+function migOk(){closeSh();MIGD=null;try{localStorage.removeItem('mg_mig')}catch(x){}}
+async function postStart(){if(!MIGD){try{const m=JSON.parse(localStorage.getItem('mg_mig'));if(m&&typeof m.n==='number')MIGD=m}catch(e){}}try{if(DB&&!EMERG&&!BADMAIN&&S&&hasData()){const ks=(await rq(DB.transaction(SN()).objectStore(SN()).getAllKeys())).filter(k=>String(k).startsWith('sn-')).map(k=>+k.slice(3)),last=ks.length?Math.max(...ks):0;if(Date.now()-last>20*36e5)await snapQ('automático (diario)')}}catch(e){}
+if(MIGD)return migMsg();if(bkDue()){if(autoOk())drvUp(1);else if(!autoOn())bkAsk();else if(!PW)bkAsk()}}
+
+
+// ---- PWA, teclado, historial
+let UPD=false,chkUpd=()=>toast('Actualizaciones no disponibles aquí');
+if('serviceWorker' in navigator){let had=!!navigator.serviceWorker.controller;
+navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return}UPD=true;if(tab!=='anadir')flush().finally(()=>location.reload())});
+navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})});chkUpd=()=>r.update().then(()=>toast('Comprobado: si hay versión nueva se aplicará sola'),()=>toast('Sin conexión: no se ha podido comprobar'))}).catch(()=>{})}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+const vv=window.visualViewport;
+function kb(){document.documentElement.style.setProperty('--tmh',Math.max(110,(vv?vv.height:innerHeight)*.4)+'px');const a=document.activeElement;if(a&&a.tagName==='TEXTAREA')setTimeout(()=>a.scrollIntoView({block:'center'}),100)}
+kb();if(vv)vv.addEventListener('resize',kb);
+document.addEventListener('focusin',e=>{if(e.target.tagName==='TEXTAREA')setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),350)});
+addEventListener('storage',e=>{if(e.key==='mg_seg'){let n=null;try{n=JSON.parse(e.newValue)}catch(x){}if(!!(n&&n.enc)!==!!(SEG&&SEG.enc))flush().finally(()=>location.reload());else SEG=n}else if(e.key==='mg_pte'){try{PTE=JSON.parse(e.newValue)}catch(x){PTE=null}}});
+try{BC=new BroadcastChannel('mg_db');BC.onmessage=m=>{if(!S||!DB||EMERG||!m.data||m.data.rev===REV)return;inQ(async()=>{if(PEND||!S)return;const st=await getState();if(st&&st.rev!==REV){S=norm(st.S);REV=st.rev;if(tab!=='anadir')render()}}).catch(()=>{})}}catch(e){}
+history.replaceState({t:'inicio'},'');
+window.addEventListener('popstate',e=>{if(!S)return;if($('#modal').innerHTML)closeModal();const h=e.state||{t:'inicio'};POPPING=true;try{tab=h.t||'inicio';sub=h.s||'';currentId=h.c||null;if(tab==='anadir'){editingId=null;tab=currentId?'ficha':'personas'}render();window.scrollTo(0,0)}finally{POPPING=false}});
+/* arranque: primero el bloqueo; con datos cifrados no se lee ni escribe nada hasta desbloquear */
+(async()=>{DBP=(async()=>{try{DB=await opn()}catch(e){DB=null}})();lockUI();await DBP;
+if(SEG?.enc&&!DB){$('#main').innerHTML='<div class="card">No se puede abrir la base de datos de este navegador. Cierra otras ventanas de la app y vuelve a abrirla.</div>';return}
+if(!SEG?.enc){try{await bootData()}catch(e){alert('No se pudieron leer los datos: '+((e&&e.message)||e))}render()}
+if(!LOCK&&S){POST=1;postStart()}})();
 </script>
 </body></html>
