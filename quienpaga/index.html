@@ -1,1 +1,562 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob: https://script.google.com https://*.googleusercontent.com; object-src 'none'; base-uri 'none'; frame-src 'none'">
+<title>Quién paga</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#24456b"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Quién paga">
+<style>
+:root{--bg:#eaf0f3;--card:#fff;--tx:#14212b;--mu:#62727e;--ln:#d5dee4;--g:#0c7a6b;--o:#c2610a;--ac:#24456b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f161c;--card:#19232b;--tx:#e8eef2;--mu:#8fa1ad;--ln:#2a3a46;--g:#3fc9b0;--o:#f0a050;--ac:#8db5e6}}
+:root[data-theme="dark"]{--bg:#0f161c;--card:#19232b;--tx:#e8eef2;--mu:#8fa1ad;--ln:#2a3a46;--g:#3fc9b0;--o:#f0a050;--ac:#8db5e6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 "Avenir Next","Segoe UI",system-ui,sans-serif}
+#app{max-width:520px;margin:0 auto;padding:16px 14px 120px}
+h1{font-size:26px;margin:6px 0 12px;font-weight:800;letter-spacing:-.5px}
+h3{margin:16px 0 8px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:0 0 12px}
+.big{font-size:23px;font-weight:800;margin:6px 0;line-height:1.2}
+.g{color:var(--g)}.o{color:var(--o)}.n{color:var(--ac)}
+.mu{color:var(--mu);font-size:14px}.c{text-align:center}
+small{display:block;color:var(--mu);font-size:13px;margin:6px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:16px;font-weight:700;padding:6px 14px;border-radius:20px;margin:6px 0;background:color-mix(in srgb,currentColor 12%,transparent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-bottom:12px}
+.tile{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0;padding:4px;text-align:center;cursor:pointer;word-break:break-word;border-radius:12px}
+.tile s{text-decoration:none;font-size:17px;font-weight:800;width:32px;height:32px;border-radius:50%;background:var(--ln);display:flex;align-items:center;justify-content:center}
+.tile span{font-size:11px;font-weight:600;color:var(--mu);line-height:1.1}
+.mid{font-size:19px;font-weight:800;margin:6px 0}
+.cc .mid{font-size:14px;font-weight:700}.cc .mu{font-size:12px}
+.chk{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--tx);margin:10px 0}.chk input{width:auto;margin:0}
+.hit{cursor:pointer}.mv{padding:4px 12px;font-size:16px}button:disabled{opacity:.3}
+.gauge{position:relative;height:18px;background:var(--ln);border-radius:9px;overflow:hidden;margin-top:10px}
+.gauge i{position:absolute;top:0;bottom:0}.gauge i.g{background:var(--g)}.gauge i.o{background:var(--o)}
+.gauge u{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--tx)}
+.lab{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-top:4px}
+button{font:inherit;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px;cursor:pointer}
+button.sec{background:transparent}
+button.dg{color:var(--o);border-color:var(--o);background:transparent}
+.fab{position:sticky;bottom:12px;width:100%;background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:700;padding:14px;margin:6px 0}
+.fab.st{position:static}
+.seg{display:flex;gap:6px;margin:8px 0}.seg button{flex:1;padding:9px 2px;font-size:14px}
+.seg .on{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:700}
+input,select,textarea{width:100%;font:inherit;padding:10px;margin:6px 0;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--tx)}
+select{width:auto;max-width:100%;padding:5px 8px;margin:4px 0;border-radius:8px}
+.row{display:flex;gap:8px;margin-bottom:12px}.row input{margin:0;flex:1;min-width:0}
+.bt{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.bt button{flex:1 1 140px}
+.am{display:flex;gap:6px;align-items:center}.am input{flex:1;min-width:0}.am button{padding:8px 14px;font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chips button{padding:7px 10px;font-size:14px}
+.top,.sp{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.top{margin-bottom:6px}
+a{color:var(--ac);cursor:pointer;text-decoration:none;font-weight:600}.del{color:var(--o)}
+.ev{border-left:3px solid var(--ln);padding:6px 10px;margin:8px 0;background:var(--card);border-radius:0 10px 10px 0}
+.ev.peace{border-color:var(--g)}
+.acts{display:flex;gap:16px;font-size:14px;margin-top:4px;flex-wrap:wrap}
+label{font-size:13px;color:var(--mu);display:block;margin-top:8px}
+.note{background:var(--card);border:1px dashed var(--o);border-radius:12px;padding:10px;margin-bottom:12px;font-size:14px;cursor:pointer}
+.note.ok{border-color:var(--ac)}
+.hb{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:28px 0 10px}
+.hb button{padding:14px 8px;border-radius:14px;font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:4px;background:linear-gradient(160deg,var(--card),color-mix(in srgb,var(--ac) 12%,var(--card)))}
+.hb i{font-style:normal;font-size:24px}
+.lk{display:flex;justify-content:space-around;margin:14px 0;font-size:15px}
+.dn{text-decoration:line-through;color:var(--mu)}
+#t{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:20px;display:none;z-index:80;max-width:92vw;text-align:center}
+#t .ub{margin-left:8px;padding:4px 10px;font-size:14px;border-radius:14px;background:var(--bg);color:var(--tx)}
+textarea{min-height:70px;resize:vertical}
+textarea.ta{min-height:44px;max-height:var(--tmh,40vh);overflow-y:auto;resize:none;line-height:1.35}
+.nl{white-space:pre-wrap}
+.idea{padding:10px 12px}.idea textarea{margin:0 0 4px}
+details.dt{background:var(--card);border:1px solid var(--ln);border-radius:16px;margin:0 0 10px}
+details.dt>summary{padding:14px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.dt>summary::-webkit-details-marker{display:none}
+details.dt>summary::after{content:'▸';color:var(--mu)}
+details.dt[open]>summary::after{content:'▾'}
+details.dt>.dc{padding:0 14px 14px}
+#sh{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:12px}
+#sh .shc{width:100%;max-width:520px;max-height:85vh;overflow:auto;margin:0}
+.ar{opacity:.65}
+@media print{.top,.fab,button{display:none}}
+</style></head><body><div id="app"></div><div id="t"></div>
+<script>
+// ---- constantes y utilidades
+const APP='Quién paga',VER='7.0.0',APP_VER=VER,FN='QuienPaga',APPS=['Quién paga','¿Quién paga?'];
+const CATS=[['desa','🥐','Desayuno'],['cena','🍽️','Comida/Cena'],['copas','🍸','Copas'],['helado','🍦','Helados/cafés'],['cult','🎟️','Entradas/cultura'],['comp','🛍️','Compras'],['parking','🅿️','Parking'],['gasolina','⛽','Gasolina'],['viaje','🧳','Viajes'],['otro','✨','Otros']];
+const PL={u:'Nosotros',t:'Ellos',h:'A medias',p:'Privado'};
+const NOS={id:'nos',name:'Nosotros'};
+const DEF_TITLE='Quién paga',OLD_TITLE='Això ho pague jo';
+const cn=k=>{const c=CATS.find(x=>x[0]===k)||CATS[CATS.length-1];return c[1]+' '+c[2]};
+const ci=k=>(CATS.find(x=>x[0]===k)||CATS[CATS.length-1])[1];
+const $=s=>document.querySelector(s);
+const uid=()=>[...crypto.getRandomValues(new Uint8Array(9))].map(b=>(b%36).toString(36)).join('');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>(Math.round(n*100)/100).toLocaleString('es-ES')+' €';
+const fd=d=>{const x=new Date(d+'T12:00');return isNaN(x)?'—':x.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})};
+const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>fmt(new Date());
+const okD=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d);
+const fr=id=>id==='nos'?NOS:S.friends.find(f=>f.id===id);
+const AF=()=>S.friends.filter(f=>!f.arch);
+const hasData=()=>!!S&&!!(S.outings.length||S.friends.length||S.peace.length||S.ideas.length);
+let TT=0;
+function toast(m,ms=2200){const t=$('#t');clearTimeout(TT);if(!m){t.style.display='none';return}t.textContent=m;t.style.display='block';TT=setTimeout(()=>t.style.display='none',ms)}
+function toastU(m,prev){UNDO=prev;const t=$('#t');clearTimeout(TT);t.innerHTML=esc(m)+'<button class="ub" onclick="undo()">Deshacer</button>';t.style.display='block';TT=setTimeout(()=>{t.style.display='none';UNDO=null},7000)}
+function undo(){if(!UNDO||!S)return;S=norm(JSON.parse(UNDO));UNDO=null;save(1);render();toast('Deshecho')}
+function show(h){let d=$('#sh');if(!d){d=document.createElement('div');d.id='sh';d.onclick=e=>{if(e.target===d)closeSh()};document.body.appendChild(d)}d.innerHTML=`<div class="card shc">${h}</div>`;d.hidden=false}
+function closeSh(){const d=$('#sh');if(d){d.hidden=true;d.innerHTML=''}}
+const OPN=new Set();
+const dt=(id,t,h)=>`<details class="dt" ${OPN.has(id)?'open':''} ontoggle="this.open?OPN.add('${id}'):OPN.delete('${id}')"><summary>${t}</summary><div class="dc">${h}</div></details>`;
+const mb=n=>n<1048576?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixed(2).replace('.',',')+' MB';
+// importes: admite sumas y operaciones sencillas (45+12,5), sin eval
+function calc(s){s=String(s==null?'':s).replace(/\s/g,'').replace(/,/g,'.');if(!s||!/^[\d.+\-*/()]+$/.test(s))return null;let i=0;
+const P=()=>{let v=T();while(s[i]==='+'||s[i]==='-'){const o=s[i++],w=T();v=o==='+'?v+w:v-w}return v};
+const T=()=>{let v=F();while(s[i]==='*'||s[i]==='/'){const o=s[i++],w=F();v=o==='*'?v*w:v/w}return v};
+const F=()=>{if(s[i]==='('){i++;const v=P();if(s[i++]!==')')throw 0;return v}if(s[i]==='-'){i++;return -F()}const m=/^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));if(!m)throw 0;i+=m[0].length;return parseFloat(m[0])};
+try{const v=P();if(i!==s.length||!isFinite(v))return null;return Math.round(v*100)/100}catch(e){return null}}
 
+// ---- estado (solo en memoria; en disco va en IndexedDB qp_db)
+let S=null,REV=0,V={n:'home'},D=null,arm=null,peaceOpen=false,Q='',repMode='f',E={sc:'all',per:'0',from:'',to:''},UNDO=null,MIGD=null,EMERG=false,POST=0,BADMAIN=null,AUTOFAIL=0,SNL=null;
+function legacyGet(){try{const s=JSON.parse(localStorage.getItem('qp'));return s&&typeof s==='object'&&Array.isArray(s.friends)?s:null}catch(e){return null}}
+// normaliza y repara sin descartar datos
+function norm(s,legacy){s=s&&typeof s==='object'?s:{};const A=x=>Array.isArray(x)?x:[],ob=x=>x&&typeof x==='object';
+const o={...s};
+o.friends=A(s.friends).filter(ob).map(f=>({...f,id:typeof f.id==='string'&&f.id?f.id:uid(),name:String(f.name==null?'':f.name)}));
+o.outings=A(s.outings).filter(ob).map(x=>({...x,id:typeof x.id==='string'&&x.id?x.id:uid(),f:String(x.f==null?'nos':x.f),date:okD(x.date)?x.date:fmt(new Date(+x.c||Date.now())),c:+x.c||0,car:['n','u','t'].includes(x.car)?x.car:'n',note:String(x.note==null?'':x.note),exps:A(x.exps).filter(ob).map(e=>({...e,k:String(e.k||'otro'),p:['u','t','h','p'].includes(e.p)?e.p:'h',a:isFinite(+e.a)?+e.a:0,n:String(e.n==null?'':e.n)}))}));
+o.peace=A(s.peace).filter(ob).map(p=>({...p,id:typeof p.id==='string'&&p.id?p.id:uid(),f:String(p.f==null?'':p.f),date:okD(p.date)?p.date:fmt(new Date(+p.c||Date.now())),c:+p.c||0,note:String(p.note==null?'':p.note)}));
+o.ideas=A(s.ideas).filter(ob).map(i=>({...i,id:typeof i.id==='string'&&i.id?i.id:uid(),t:String(i.t==null?'':i.t),done:!!i.done}));
+o.tol=isFinite(+o.tol)&&o.tol!==null&&o.tol!==''&&+o.tol>=0?+o.tol:5;o.bk=+o.bk||0;o.ch=+o.ch||0;o.bkD=Math.max(1,Math.floor(+o.bkD)||30);o.bkN=Math.max(1,Math.floor(+o.bkN)||1);
+if(o.autoUp===undefined)o.autoUp=true;if(o.names===undefined)o.names=true;
+if(!o.title||(legacy&&o.title===OLD_TITLE))o.title=DEF_TITLE;
+return o}
+const valid=s=>!!s&&typeof s==='object'&&['friends','outings','peace','ideas'].every(k=>Array.isArray(s[k]))&&s.friends.every(f=>f&&typeof f.id==='string')&&s.outings.every(o=>o&&typeof o.id==='string'&&okD(o.date)&&Array.isArray(o.exps)&&o.exps.every(e=>e&&typeof e.a==='number'&&isFinite(e.a)))&&s.peace.every(p=>p&&typeof p.id==='string');
+
+// ---- lógica
+const eff=o=>o.exps.reduce((s,e)=>s+(e.p==='u'?e.a/2:e.p==='t'?-e.a/2:0),0);
+const mc=(o,e)=>o.f==='nos'||e.p!=='t'?e.a:0;
+function evs(f){return[...S.outings.filter(o=>o.f===f).map(o=>({t:'o',d:o.date,c:o.c,o})),...S.peace.filter(p=>p.f===f).map(p=>({t:'p',d:p.date,c:p.c,p}))].sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:a.c-b.c)}
+function segs(f){const r=[];let s={outs:[],end:null,st:null};for(const e of evs(f)){if(e.t==='o')s.outs.push(e.o);else if(e.p.m!==false){s.end=e.p;r.push(s);s={outs:[],end:null,st:e.p}}}r.push(s);return r}
+const bal=f=>segs(f).pop().outs.reduce((s,o)=>s+eff(o),0);
+const msg=b=>b>S.tol?['Les toca','g','➡️']:b<-S.tol?['Nos toca','o','⬅️']:['En paz','n','🤝'];
+const sg=n=>{n=Math.round(n*100)/100;return(n>0?'+':n<0?'−':'')+eur(Math.abs(n))};
+const CL={u:['Nos toca coche','o','⬅️'],t:['Les toca coche','g','➡️'],any:['Cualquiera','n','🎲']},CP={u:'Nos tocaba coche',t:'Les tocaba coche',any:'Cualquiera'};
+function car(f){const cmp=(a,b)=>a.date<b.date?-1:a.date>b.date?1:a.c-b.c;
+const zp=S.peace.filter(p=>p.f===f&&p.cz).sort(cmp).pop();
+const all=S.outings.filter(o=>o.f===f&&o.car!=='n').sort(cmp),os=zp?all.filter(o=>cmp(o,zp)>0):all;
+const lim=new Date(Date.now()-183*864e5).toISOString().slice(0,10),r=os.filter(o=>o.date>=lim),n=(l,k)=>l.filter(o=>o.car===k).length,last=all[all.length-1];
+let nx=null;if(os.length){const a=n(r,'u'),b=n(r,'t');nx=a>b?'t':b>a?'u':'any'}else if(all.length)nx='any';
+return{last,nx,z:zp,su:n(os,'u'),st:n(os,'t'),tu:n(all,'u'),tt:n(all,'t'),ru:n(r,'u'),rt:n(r,'t')}}
+const carCard=k=>`<div class="card cc"><b>🚗 Coche</b>${k.nx?`<div class="mid ${CL[k.nx][1]}">${CL[k.nx][2]} ${CL[k.nx][0]}</div>`:'<div class="mid mu">Sin datos todavía</div>'}<div class="mu">${k.last?`Último: ${PL[k.last.car].toLowerCase()} (${fd(k.last.date)})<br>`:''}${k.z?`Desde ${fd(k.z.date)}: nosotros ${k.su} · ellos ${k.st}<br>`:''}Total${k.z?' histórico':''}: nosotros ${k.tu} · ellos ${k.tt}<br>Últimos 6 meses: nosotros ${k.ru} · ellos ${k.rt}</div></div>`;
+
+// ---- navegación
+function go(n,id,pop){if(!S)return;if(UPD&&n!=='form'){flush().finally(()=>location.reload());return}const rp=V.n==='form';V={n,id};arm=null;peaceOpen=false;render();window.scrollTo(0,0);if(!pop){const h={n,id};rp?history.replaceState(h,''):history.pushState(h,'')}}
+const openF=id=>id==='nos'?go('nos'):go('friend',id);
+function render(){const a=$('#app');if(!S){a.innerHTML='';return}document.title=S.title||DEF_TITLE;if(V.n==='form'&&!D)V={n:'home'};(({home:vHome,am:vAm,friend:vFriend,nos:vNos,rep:vRep,eco:vEco,ideas:vIdeas,set:vSet,form:vForm})[V.n]||vHome)(a)}
+function dbtn(k,id){return k==='f'?`<a class="del" onclick="del('f','${id}')">${arm==='f'+id?'¿Seguro? Púlsalo otra vez':'Borrar'}</a>`:`<a class="del" onclick="del('${k}','${id}')">Borrar</a>`}
+function del(k,id){if(k==='f'){if(arm!==k+id){arm=k+id;return render()}arm=null;const f=fr(id),n=S.outings.filter(o=>o.f===id).length;if(!f||!confirm(`Se borrará a «${f.name}» y TODO su historial (${n} salidas). Si solo quieres quitarlo de la lista, usa «Archivar». ¿Borrar?`))return render()}
+const prev=JSON.stringify(S);
+if(k==='o')S.outings=S.outings.filter(o=>o.id!==id);
+if(k==='p')S.peace=S.peace.filter(o=>o.id!==id);
+if(k==='i')S.ideas=S.ideas.filter(o=>o.id!==id);
+if(k==='f'){S.friends=S.friends.filter(o=>o.id!==id);S.outings=S.outings.filter(o=>o.f!==id);S.peace=S.peace.filter(o=>o.f!==id)}
+save(1);render();toastU(k==='f'?'Amigo borrado':'Borrado',prev)}
+function addF(){const i=$('#nf'),v=i.value.trim();if(!v)return toast('Escribe un nombre');S.friends.push({id:uid(),name:v});save(1);render()}
+function ren(id){const f=fr(id),v=prompt('Nombre',f.name);if(v&&v.trim()){f.name=v.trim();save(1);render()}}
+function arcF(id,v){const f=fr(id);if(!f)return;f.arch=!!v;if(!v)delete f.arch;save(1);render();toast(v?'Archivado: ya no sale en la lista (su historial se conserva)':'Recuperado')}
+const selP=(oc,val)=>`<select onchange="${oc}">${[NOS,...S.friends].map(f=>`<option value="${f.id}" ${f.id===val?'selected':''}>${f.id==='nos'?'💑 ':''}${esc(f.name)}${f.arch?' (archivado)':''}</option>`).join('')}</select>`;
+// ---- búsqueda
+const nz=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function srch(){const q=nz(Q.trim());if(!q)return'';
+const fs=[NOS,...S.friends].filter(f=>nz(f.name).includes(q)),r=[];
+S.outings.forEach(o=>{const f=fr(o.f);if(!f)return;[o.note,...o.exps.map(e=>e.n)].filter(t=>t&&nz(t).includes(q)).forEach(t=>r.push({f,d:o.date,t}))});
+S.peace.forEach(p=>{const f=fr(p.f);if(f&&p.note&&nz(p.note).includes(q))r.push({f,d:p.date,t:p.note})});
+r.sort((a,b)=>a.d<b.d?1:-1);
+if(!fs.length&&!r.length)return'<p class="mu c">Sin resultados.</p>';
+return(fs.length?'<div class="mu">👤 Personas</div>'+fs.map(f=>`<div class="ev hit" onclick="openF('${f.id}')"><b>${esc(f.name)}</b>${f.arch?' <span class="mu">(archivado)</span>':''}</div>`).join(''):'')+(r.length?'<div class="mu">💬 Comentarios</div>'+r.slice(0,30).map(x=>`<div class="ev hit" onclick="openF('${x.f.id}')"><b>${esc(x.f.name)}</b> · ${fd(x.d)}<div class="mu nl">${esc(x.t)}</div></div>`).join(''):'')}
+const sBox=()=>`<input type="search" placeholder="🔍 Buscar persona o comentario…" value="${esc(Q)}" oninput="Q=this.value;$('#res').innerHTML=srch()"><div id="res">${srch()}</div>`;
+// ---- vistas
+function vHome(a){let h=`<h1 class="c">${esc(S.title)}</h1>`;
+if(EMERG)h+='<div class="note">⚠️ No se puede usar la base IndexedDB en este navegador: la app guarda en el almacenamiento antiguo. Haz copias a menudo.</div>';
+if(BADMAIN)h+='<div class="note" onclick="go(\'set\')">⚠️ La base principal no se pudo leer y no se modificará. Restaura una copia o un punto de restauración en Ajustes.</div>';
+h+=segNudge();
+const w=bkDue();if(w&&!(autoOn()&&!AUTOFAIL))h+=`<div class="note" onclick="bkNow()">💾 ${esc(w)} Toca para hacerla.</div>`;
+const lf=S.lastF&&S.lastF!=='nos'&&fr(S.lastF)&&!fr(S.lastF).arch?fr(S.lastF):S.lastF==='nos'?NOS:null;
+h+=`<div class="hb"><button onclick="go('nos')"><i>💑</i>Nosotros</button><button onclick="go('am')"><i>👥</i>Con amigos</button></div><button class="fab st" onclick="newO()">+ Nueva salida${lf?' · '+esc(lf.name):''}</button>${sBox()}<div class="lk"><a onclick="go('eco')">📊 Mis gastos</a><a onclick="go('ideas')">💡 Ideas</a><a onclick="go('set')">⚙️ Ajustes</a></div>`;a.innerHTML=h}
+function vAm(a){const L=AF(),n=L.length;let h=`<div class="top"><a onclick="go('home')">← Inicio</a>${n?`<a onclick="S.names=!S.names;save();render()">${S.names?'🙈 Ocultar nombres':'👁️ Ver nombres'}</a>`:''}</div><h1>Con amigos</h1>${sBox()}`;
+if(n){h+=`<div class="tiles">${L.map(f=>`<div class="card tile" onclick="go('friend','${f.id}')"><s>${esc((f.name.trim()[0]||'?').toUpperCase())}</s>${S.names?`<span>${esc(f.name)}</span>`:''}</div>`).join('')}</div><button class="fab" onclick="newO()">+ Nueva salida</button>`}
+else h+='<div class="card">Empieza añadiendo con quién salís habitualmente.</div><div class="row"><input id="nf" placeholder="Nuevo amigo o pareja"><button onclick="addF()">Añadir</button></div>';a.innerHTML=h}
+function tl(f,n){const nos=f==='nos';return evs(f).reverse().slice(0,n).map(x=>{if(x.t==='p'){const p=x.p,l=[];
+if(p.m!==false)l.push(p.mb==null?'💶 Dinero a cero':`💶 Dinero a cero (${Math.abs(p.mb)<.01?'sin diferencia':p.mb>0?'a nuestro favor':'a su favor'}): nosotros ${sg(p.mb)} · ellos ${sg(-p.mb)}`);
+if(p.cz)l.push('🚗 Coche a cero'+(p.cb&&p.cb.nx?` (${CP[p.cb.nx]})`:''));
+return `<div class="ev peace">🤝 <b>${p.m!==false&&p.cz?'Gastos y coches en paz':p.cz?'Coches en paz':'Gastos en paz'}</b> · ${fd(p.date)}${l.map(t=>`<div class="mu">${t}</div>`).join('')}${p.note?`<div class="mu nl">💬 ${esc(p.note)}</div>`:''}<div class="acts"><a onclick="edPn('${p.id}')">${p.note?'Editar nota':'Añadir nota'}</a>${dbtn('p',p.id)}</div></div>`}
+const o=x.o;return `<div class="ev"><b>${fd(o.date)}</b>${o.car!=='n'?' · 🚗 '+PL[o.car].toLowerCase():''}${o.exps.map(e=>`<div>${cn(e.k)} · ${eur(e.a)}${nos?'':' · '+PL[e.p]}${e.n?` <span class="mu nl">— ${esc(e.n)}</span>`:''}</div>`).join('')}${o.note?`<div class="mu nl">💬 ${esc(o.note)}</div>`:''}<div class="acts"><a onclick="editO('${o.id}')">Editar</a>${dbtn('o',o.id)}</div></div>`}).join('')||'<p class="mu c">Aún no hay salidas.</p>'}
+function tlS(f,wc){return S.outings.filter(o=>o.f===f).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.c-a.c).map(o=>`<div class="ev"><b>${fd(o.date)}</b>${wc&&o.car!=='n'?' · 🚗 '+PL[o.car].toLowerCase():''}${o.exps.map(e=>`<div>${cn(e.k)}${e.n?` <span class="mu nl">— ${esc(e.n)}</span>`:''}</div>`).join('')}${o.note?`<div class="mu nl">💬 ${esc(o.note)}</div>`:''}</div>`).join('')||'<p class="mu c">Aún no hay salidas.</p>'}
+function edPn(id){const p=S.peace.find(x=>x.id===id);if(!p)return;show(`<b>Nota del «en paz» del ${fd(p.date)}</b><textarea id="epn" class="ta" rows="3" oninput="rz(this)">${esc(p.note)}</textarea><div class="bt"><button onclick="svPn('${id}')">Guardar</button><button class="sec" onclick="closeSh()">Cancelar</button></div>`);rz($('#epn'))}
+function svPn(id){const p=S&&S.peace.find(x=>x.id===id),e=$('#epn');if(p&&e){p.note=e.value.trim();save(1)}closeSh();render()}
+function vNos(a){const mm=today().slice(0,7),L=S.outings.filter(o=>o.f==='nos'),tm=ag(L.filter(o=>o.date.slice(0,7)===mm)).tot,ta=ag(L).tot;
+a.innerHTML=`<div class="top"><a onclick="go('home')">← Inicio</a><a onclick="go('rep','nos')">📊 Informe</a></div><h1>💑 Nosotros</h1>
+<div class="card"><div class="sp"><span>Este mes</span><b>${eur(tm)}</b></div><div class="sp"><span class="mu">Total acumulado</span><span class="mu">${eur(ta)}</span></div></div>
+<button class="fab" onclick="newO('nos')">+ Nueva salida</button><h3>Últimos movimientos</h3>${tl('nos',10)}<p class="c"><a onclick="go('rep','nos')">Ver historial completo</a></p>`}
+function vFriend(a){const f=fr(V.id);if(!f)return go('home');const b=bal(f.id),[t,c,ic]=msg(b),k=car(f.id),mon=S.outings.some(o=>o.f===f.id&&o.exps.length)||!S.outings.some(o=>o.f===f.id),w=Math.min(Math.abs(b)/100,1)*50;
+a.innerHTML=`<div class="top"><a onclick="go('am')">← Amigos</a><a onclick="go('rep','${f.id}')">📊 Informe</a></div><h1>${esc(f.name)} <a onclick="ren('${f.id}')" style="font-size:16px">✏️</a></h1>
+${f.arch?`<div class="note ok" onclick="arcF('${f.id}',0)">📦 Archivado (no sale en la lista). Toca para recuperarlo.</div>`:''}
+${mon?`<div class="card"><div class="pill ${c}">${ic} ${t}</div><div class="gauge"><i class="${b>0?'g':'o'}" style="${b>0?'left':'right'}:50%;width:${w}%"></i><u></u></div><div class="lab"><span>← Nos toca</span><span>Les toca →</span></div><p class="c">${c==='n'?`Saldo: nosotros <b>${sg(b)}</b> · ellos <b>${sg(-b)}</b>`:`Diferencia orientativa: <b>${eur(Math.abs(b))}</b>`}</p></div>`:''}
+${carCard(k)}
+<button class="fab" onclick="newO('${f.id}')">+ Nueva salida</button>
+<div class="bt" style="margin:0 0 12px"><button onclick="carQ('${f.id}','u')">🚗 Hoy coche nuestro</button><button onclick="carQ('${f.id}','t')">🚗 Hoy coche suyo</button></div>
+<div class="card">${peaceOpen?`<b>${peaceOpen==='m'?'💶 Gastos en paz':'🚗 Coches en paz'}</b><div class="mu">${peaceOpen==='m'?`Saldo actual: nosotros ${sg(b)} · ellos ${sg(-b)}`:`${k.nx?CL[k.nx][2]+' '+CL[k.nx][0]:'Sin datos'}. Los contadores del coche volverán a cero.`}</div><label>Nota (opcional)</label><textarea id="pn" class="ta" rows="2" placeholder="${peaceOpen==='m'?'Ej: compensado con la cena de cumpleaños':'Ej: Pedro hizo muchos km una sola vez'}" oninput="rz(this)"></textarea><div class="row" style="margin:8px 0 0"><button style="flex:1" onclick="peaceOpen=false;render()">Cancelar</button><button style="flex:1" onclick="doPeace()">Confirmar</button></div>`:`<div class="row" style="margin:0"><button style="flex:1" onclick="peaceOpen='m';render()">💶 Gastos en paz</button><button style="flex:1" onclick="peaceOpen='c';render()">🚗 Coches en paz</button></div>`}</div>
+<h3>Últimos movimientos</h3>${tl(f.id,8)}<p class="c"><a onclick="go('rep','${f.id}')">Ver historial completo</a></p>`}
+function carQ(f,k){const prev=JSON.stringify(S);S.outings.push({id:uid(),f,date:today(),exps:[],car:k,note:'',c:Date.now()});S.lastF=f;save(1);render();toastU(`🚗 Anotado: hoy coche ${k==='u'?'nuestro':'suyo'}`,prev)}
+function doPeace(){const m=peaceOpen==='m',k=car(V.id);S.peace.push({id:uid(),f:V.id,date:today(),note:$('#pn').value.trim(),c:Date.now(),m,cz:!m,mb:m?bal(V.id):null,cb:{nx:k.nx}});save(1);peaceOpen=false;render();toast(m?'Gastos en paz':'Coches en paz')}
+// formulario
+function newO(f){const lf=S.lastF&&(S.lastF==='nos'||(fr(S.lastF)&&!fr(S.lastF).arch))?S.lastF:null;D={id:null,f:f||(V.n==='nos'?'nos':lf||(AF()[0]?AF()[0].id:'nos')),date:today(),exps:[],car:'n',note:''};go('form')}
+function editO(id){const o=S.outings.find(o=>o.id===id);if(!o)return;D=JSON.parse(JSON.stringify(o));D.exps.forEach(e=>e.x=e.a?String(e.a).replace('.',','):'');go('form')}
+function seg(path,val,opts){return `<div class="seg">${Object.entries(opts).map(([k,l])=>`<button class="${k===val?'on':''}" onclick="${path}='${k}';render()">${l}</button>`).join('')}</div>`}
+function addE(k){D.exps.push({k,p:D.f==='nos'?'u':'h',a:0,n:'',x:''});render();setTimeout(()=>{const e=$('#a'+(D.exps.length-1));if(e)e.focus()},50)}
+function amIn(i,el){const e=D.exps[i];if(!e)return;e.x=el.value;const v=calc(el.value),h=$('#h'+i);if(h)h.textContent=/[+*/]|.-/.test(el.value.trim())?(v==null?'…':'= '+eur(v)):''}
+function amPlus(i){const el=$('#a'+i);if(!el)return;if(el.value&&!/[+\-*/]$/.test(el.value))el.value+='+';amIn(i,el);el.focus()}
+function vForm(a){const nos=D.f==='nos',cur=fr(D.f),opts=D.id?[cur].filter(Boolean):[NOS,...AF(),...(cur&&cur.arch?[cur]:[])];
+a.innerHTML=`<div class="top"><a onclick="D.id?openF(D.f):history.length>1?history.back():go('home')">← Cancelar</a></div><h1>${D.id?'Editar':'Nueva'} salida</h1>
+<div class="card"><label>Con quién</label><select onchange="D.f=this.value;if(D.f==='nos'){D.car='n';D.exps.forEach(e=>{if(e.p==='t'||e.p==='h')e.p='u'})}render()">${opts.map(f=>`<option value="${f.id}" ${f.id===D.f?'selected':''}>${esc(f.name)}</option>`).join('')}</select><label>Fecha</label><input type="date" value="${D.date}" onchange="if(this.value)D.date=this.value;else this.value=D.date"></div>
+${D.exps.map((e,i)=>`<div class="card"><div class="sp"><b>${cn(e.k)}</b><a class="del" onclick="D.exps.splice(${i},1);render()">Quitar</a></div>${nos?'':`<label>¿Quién pagó?</label>${seg('D.exps['+i+'].p',e.p,PL)}`}<div class="am"><input id="a${i}" type="text" inputmode="decimal" autocomplete="off" placeholder="Importe${nos?'':' aproximado'} en €" value="${esc(e.x!=null?e.x:(e.a?String(e.a).replace('.',','):''))}" oninput="amIn(${i},this)"><button type="button" onclick="amPlus(${i})" title="Sumar otro importe">＋</button></div><div class="mu" id="h${i}"></div><textarea class="ta" rows="2" placeholder="Comentario (opcional)" oninput="D.exps[${i}].n=this.value;rz(this)">${esc(e.n)}</textarea></div>`).join('')}
+<div class="card"><label>Añadir gasto${nos?'':' (en una excursión solo de coche, no añadas ninguno)'}</label><div class="chips">${CATS.map(c=>`<button onclick="addE('${c[0]}')">${c[1]} ${c[2]}</button>`).join('')}</div></div>
+<div class="card">${nos?'':`<label>🚗 ¿Quién puso el coche?</label>${seg('D.car',D.car,{n:'Ninguno',u:'Nosotros',t:'Ellos'})}`}<label>Comentario de la salida</label><textarea oninput="D.note=this.value" placeholder="Opcional">${esc(D.note)}</textarea></div>
+<button class="fab" onclick="saveO()">Guardar salida</button>`;
+D.exps.forEach((e,i)=>{const el=$('#a'+i);if(el)amIn(i,el)});a.querySelectorAll('textarea.ta').forEach(rz)}
+function saveO(){if(!D)return;if(!D.exps.length&&D.car==='n')return toast('Añade algún gasto'+(D.f==='nos'?'':' o el coche'));
+if(!okD(D.date))return toast('Pon la fecha');
+for(const e of D.exps){const raw=String(e.x==null?(e.a||''):e.x).trim(),v=raw===''?0:calc(raw);if(v==null||v<0)return toast('Importe no válido en '+cn(e.k));e.a=v}
+if(D.exps.some(e=>!e.a)&&!confirm('Hay algún gasto con importe 0. ¿Guardar igualmente?'))return;
+const o=JSON.parse(JSON.stringify(D));o.exps.forEach(e=>delete e.x);if(o.f==='nos')o.car='n';
+if(o.id&&S.outings.some(x=>x.id===o.id))S.outings=S.outings.map(x=>x.id===o.id?o:x);else{o.id=uid();o.c=Date.now();S.outings.push(o)}
+S.lastF=o.f;save(1);const f=o.f;D=null;openF(f);toast('Salida guardada')}
+// informes
+function chart(f){let v=0,p=[0],m=[];for(const e of evs(f)){if(e.t==='o'){v+=eff(e.o);p.push(v)}else if(e.p.m!==false){v=0;p.push(0);m.push(p.length-1)}}
+if(p.length<2)return '<p class="mu">Sin datos todavía.</p>';
+const W=320,H=130,mx=Math.max(10,...p.map(Math.abs)),x=i=>10+i*(W-20)/(p.length-1),y=v=>H/2-v/mx*(H/2-14);
+return `<svg data-cap="Sobre la línea: les toca · bajo la línea: nos toca" viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><line x1="0" x2="${W}" y1="${H/2}" y2="${H/2}" stroke="var(--ln)"/>${m.map(i=>`<line x1="${x(i)}" x2="${x(i)}" y1="12" y2="${H}" stroke="var(--g)" stroke-dasharray="3 3"/><text x="${x(i)}" y="10" font-size="10" text-anchor="middle">🤝</text>`).join('')}<polyline fill="none" stroke="var(--ac)" stroke-width="2.5" points="${p.map((v,i)=>x(i)+','+y(v)).join(' ')}"/></svg><div class="lab"><span>↓ Nos toca</span><span>Les toca ↑</span></div>`}
+function bars(mo){const ks=Object.keys(mo).sort().slice(-12);if(ks.length<2)return'';const W=320,H=130,mx=Math.max(1,...ks.map(k=>mo[k].t)),bw=(W-20)/ks.length;
+return `<div class="card"><b>Gasto por meses${ks.length<Object.keys(mo).length?' (últimos 12)':''}</b><svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">${ks.map((k,i)=>{const h=Math.max(1,mo[k].t/mx*(H-30)),x=10+i*bw+bw*.15,y=H-16-h;return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.7).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--ac)"/><text x="${(x+bw*.35).toFixed(1)}" y="${H-4}" font-size="9" text-anchor="middle" fill="var(--mu)">${esc(new Date(k+'-15T12:00').toLocaleDateString('es-ES',{month:'short'}).replace('.',''))}</text>`}).join('')}</svg></div>`}
+function ag(L){const ct={},mo={},rows=[];let tot=0,pv=0;L.forEach(o=>{let c=0,p=0;o.exps.forEach(e=>{const v=mc(o,e);if(!v)return;c+=v;if(e.p==='p')p+=v;ct[e.k]=(ct[e.k]||0)+v;const m=o.date.slice(0,7);(mo[m]=mo[m]||{t:0,c:{}}).t+=v;mo[m].c[e.k]=(mo[m].c[e.k]||0)+v});tot+=c;pv+=p;rows.push({o,c,p})});rows.sort((a,b)=>a.o.date<b.o.date?1:-1);return{ct,mo,tot,pv,rows}}
+const cats=ct=>CATS.filter(c=>ct[c[0]]).map(c=>`<div class="sp"><span>${c[1]} ${c[2]}</span><b>${eur(ct[c[0]])}</b></div>`).join('')||'<span class="mu">Sin gastos.</span>';
+function aggH(g){return `<div class="card"><div class="sp"><b>Total</b><b class="big" style="margin:0">${eur(g.tot)}</b></div>${g.pv?`<div class="mu">De ello, gastos privados: ${eur(g.pv)}</div>`:''}<p class="mu" style="margin:6px 0 0">Lo que hemos pagado de nuestro bolsillo: todo lo que pagamos nosotros (completo, aunque luego compensen), lo «a medias» y lo privado, y todo en salidas de Nosotros. Lo que pagaron ellos no cuenta.</p></div>
+<h3>Por categoría</h3><div class="card">${cats(g.ct)}</div>
+<h3>Por meses</h3>${bars(g.mo)}${Object.keys(g.mo).sort().reverse().map(mm=>`<div class="card"><div class="sp"><b>${new Date(mm+'-15T12:00').toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</b><b>${eur(g.mo[mm].t)}</b></div><div class="mu">${Object.entries(g.mo[mm].c).map(([k,v])=>ci(k)+' '+eur(v)).join(' · ')}</div></div>`).join('')||'<p class="mu">Sin gastos.</p>'}
+<h3>Por salida</h3>${g.rows.map(({o,c,p})=>`<div class="ev"><div class="sp"><b>${fd(o.date)} · ${esc((fr(o.f)||{name:'?'}).name)}</b><b>${eur(c)}</b></div><div class="mu">${o.exps.filter(e=>mc(o,e)).map(e=>ci(e.k)+' '+eur(mc(o,e))+(e.p==='p'?' 🔒':'')).join(' · ')||'Sin gastos'}${p?` · privado ${eur(p)}`:''}</div></div>`).join('')||'<p class="mu">Sin salidas.</p>'}`}
+function vRep(a){const f=fr(V.id);if(!f)return go('home');const nos=f.id==='nos',os=S.outings.filter(o=>o.f===f.id);
+const hd=`<div class="top"><a onclick="openF('${f.id}')">← ${esc(f.name)}</a><a onclick="doPdf()">📄 PDF</a></div>${selP("go('rep',this.value)",f.id)}<h1>Informe · ${esc(f.name)}</h1>`;
+if(nos)return a.innerHTML=hd+aggH(ag(os))+'<h3>Todas las salidas</h3>'+tl('nos',999);
+const ss=segs(f.id),ct={},full=repMode==='f';
+os.forEach(o=>o.exps.forEach(e=>ct[e.k]=(ct[e.k]||0)+e.a));
+const sm=(L,p)=>L.reduce((x,o)=>x+o.exps.filter(e=>e.p===p).reduce((y,e)=>y+e.a,0),0);
+a.innerHTML=hd+`${seg('repMode',repMode,{s:'Solo salidas',c:'Salidas + 🚗',f:'Completo'})}
+${repMode==='c'?carCard(car(f.id)):''}
+${full?`<div class="card"><b>Saldo a lo largo del tiempo</b>${chart(f.id)}</div>
+<h3>Tramos entre «en paz»</h3>${ss.map(s=>{const d0=s.st?fd(s.st.date):(s.outs[0]?fd(s.outs[0].date):'—'),b=s.outs.reduce((x,o)=>x+eff(o),0);
+return `<div class="card"><b>${d0} → ${s.end?fd(s.end.date)+' 🤝':'hoy (tramo actual)'}</b><div class="mu">${s.outs.length} salidas<br>Pagamos nosotros: ${eur(sm(s.outs,'u'))} · Pagaron ellos: ${eur(sm(s.outs,'t'))} · A medias: ${eur(sm(s.outs,'h'))} · Privado: ${eur(sm(s.outs,'p'))}<br>Saldo del tramo: ${eur(Math.abs(b))} ${Math.abs(b)<.01?'':b>0?'a nuestro favor':'a su favor'}<br>Coche: nosotros ${s.outs.filter(o=>o.car==='u').length} · ellos ${s.outs.filter(o=>o.car==='t').length}${s.end&&s.end.note?`<br>🤝 ${esc(s.end.note)}`:''}</div></div>`}).reverse().join('')}
+<h3>Total gastado por categoría</h3><div class="card">${cats(ct)}</div>
+<h2 style="margin:18px 0 0">Mis gastos</h2>${aggH(ag(os))}`:''}
+<h3>Todas las salidas</h3>${full?tl(f.id,999):tlS(f.id,repMode==='c')}`}
+// informe económico
+function rng(){if(E.per==='c')return[E.from||'0000-00-00',E.to||'9999-99-99'];if(E.per==='o')return['0000-00-00','9999-99-99'];const n=new Date(),y=n.getFullYear(),m=n.getMonth();if(E.per==='0')return[fmt(new Date(y,m,1)),'9999-99-99'];return[fmt(new Date(y,m-+E.per,1)),fmt(new Date(y,m,0))]}
+const PER={0:'Mes actual',1:'1 mes (anterior)',2:'2 meses',3:'3 meses',6:'6 meses',12:'1 año',o:'Desde el origen'};
+function vEco(a){const[r0,r1]=rng(),L=S.outings.filter(o=>fr(o.f)&&o.date>=r0&&o.date<=r1&&(E.sc==='all'||(E.sc==='am'?o.f!=='nos':o.f===E.sc)));
+const sc=[['all','Todos (amigos + nosotros)'],['nos','💑 Nosotros'],['am','Todos los amigos'],...S.friends.map(f=>[f.id,f.name+(f.arch?' (archivado)':'')])];
+const dIn=(k,v)=>`<input type="date" value="${v}" onchange="E.${k}=this.value;E.per=(E.from||E.to)?'c':'0';render()">`;
+a.innerHTML=`<div class="top"><a onclick="go('home')">← Inicio</a><a onclick="doPdf()">📄 PDF</a></div><h1>📊 Mis gastos</h1>
+<div class="card"><label>Quién</label><select onchange="E.sc=this.value;render()">${sc.map(([k,n])=>`<option value="${k}" ${k===E.sc?'selected':''}>${esc(n)}</option>`).join('')}</select>
+<label>Periodo</label><select onchange="E.per=this.value;E.from=E.to='';render()">${E.per==='c'?'<option value="c" selected>Personalizado</option>':''}${Object.entries(PER).map(([k,n])=>`<option value="${k}" ${k===E.per?'selected':''}>${n}</option>`).join('')}</select>
+<label>O elige fechas</label><div class="row">${dIn('from',E.from)}${dIn('to',E.to)}${E.per==='c'?`<button onclick="E.from=E.to='';E.per='0';render()">✕</button>`:''}</div></div>
+${aggH(ag(L))}`}
+// ideas
+const rz=t=>{if(!t)return;t.style.height='auto';t.style.height=t.scrollHeight+'px'};
+function cpT(t){if(!t||!t.trim())return toast('Nada que copiar');
+const ok=()=>toast('Copiado'),fb=()=>{try{const x=document.createElement('textarea');x.value=t;x.style.cssText='position:fixed;opacity:0';document.body.appendChild(x);x.select();const r=document.execCommand('copy');x.remove();r?ok():toast('No se pudo copiar')}catch(e){toast('No se pudo copiar')}};
+try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}}
+const copy=cpT;
+function vIdeas(a){const p=S.ideas.filter(i=>!i.done),d=S.ideas.filter(i=>i.done),
+row=i=>`<div class="card idea"><textarea class="ta ${i.done?'dn':''}" rows="1" oninput="edI('${i.id}',this.value);rz(this)">${esc(i.t)}</textarea><div class="acts"><a onclick="cpI1('${i.id}')">📋 Copiar</a><a onclick="togI('${i.id}')">${i.done?'↩️ Reabrir':'✅ Implementada'}</a>${dbtn('i',i.id)}</div></div>`;
+a.innerHTML=`<div class="top"><a onclick="go('home')">← Inicio</a>${p.length?'<a onclick="cpI()">📋 Copiar pendientes</a>':''}</div><h1>💡 Ideas</h1>
+<div class="card"><textarea id="ni" class="ta" rows="2" placeholder="Anota una mejora…" oninput="rz(this)"></textarea><button style="width:100%;margin-top:4px" onclick="addI()">Añadir idea</button></div>
+<h3>Pendientes (${p.length})</h3>${p.map(row).join('')||'<p class="mu">Ninguna.</p>'}
+${d.length?`<h3>Implementadas (${d.length})</h3>${d.map(row).join('')}`:''}`;
+a.querySelectorAll('textarea.ta').forEach(rz)}
+function addI(){const v=$('#ni').value.trim();if(!v)return toast('Escribe la idea');S.ideas.unshift({id:uid(),t:v,done:false});save(1);render()}
+function edI(id,v){const i=S.ideas.find(x=>x.id===id);if(i){i.t=v;save(0,1)}}
+function togI(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;i.done=!i.done;save(1);render()}
+function cpI1(id){const i=S.ideas.find(x=>x.id===id);cpT(i&&i.t)}
+function cpI(){cpT(S.ideas.filter(i=>!i.done).map(i=>'- '+i.t).join('\n'))}
+// ajustes
+function mvF(id,d){const L=S.friends,i=L.findIndex(f=>f.id===id);if(i<0)return;let j=i+d;while(j>=0&&j<L.length&&L[j].arch)j+=d;if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];save(1);render()}
+function vSet(a){const ac=AF(),ar=S.friends.filter(f=>f.arch);
+a.innerHTML=`<div class="top"><a onclick="go('home')">← Inicio</a><a onclick="go('ideas')">💡 Ideas de mejora</a></div><h1>Ajustes</h1>
+${dt('tit','🏷️ Título de la pantalla principal',`<input type="text" value="${esc(S.title)}" onchange="S.title=this.value.trim()||DEF_TITLE;save();toast('Guardado');render()">`)}
+${dt('tol','⚖️ Margen «estamos en paz»',`<label style="margin-top:0">Margen de tolerancia (€)</label><input type="number" inputmode="decimal" value="${S.tol}" onchange="S.tol=Math.max(0,+String(this.value).replace(',','.')||0);save();toast('Guardado')">`)}
+${dt('ami',`👥 Amigos (${ac.length}${ar.length?' · '+ar.length+' archivados':''})`,`${ac.map((f,i)=>`<div class="sp" style="margin-top:8px"><span>${esc(f.name)} <a onclick="ren('${f.id}')">✏️</a></span><span><button class="mv" ${i?'':'disabled'} onclick="mvF('${f.id}',-1)">▲</button> <button class="mv" ${i<ac.length-1?'':'disabled'} onclick="mvF('${f.id}',1)">▼</button> <a onclick="arcF('${f.id}',1)">📦</a></span></div>`).join('')||'<p class="mu">Ninguno.</p>'}<div class="row" style="margin-top:10px"><input id="nf" placeholder="Nuevo amigo o pareja"><button onclick="addF()">Añadir</button></div><small>▲▼ ordenan · ✏️ corrige el nombre · 📦 archiva: deja de salir en la lista pero conserva todo su historial.</small>${ar.length?`<b style="display:block;margin-top:12px">📦 Archivados</b>${ar.map(f=>`<div class="sp ar" style="margin-top:8px"><span>${esc(f.name)}</span><span class="acts" style="margin:0"><a onclick="arcF('${f.id}',0)">Recuperar</a>${dbtn('f',f.id)}</span></div>`).join('')}<small>Borrar un amigo borra también todo su historial.</small>`:''}`)}
+${segUI()}
+${drvUI()}
+${dt('bk','💾 Copia de seguridad (archivo)',`<small>Última copia: ${S.bk?new Date(S.bk).toLocaleString('es-ES'):'nunca'} · cambios sin copia: ${S.ch}. Incluye salidas, ideas, título y preferencias.</small><div class="bt"><button onclick="exp(1,0,'enc')">⬇️ Descargar copia cifrada</button><button class="sec" onclick="expOpen(1)">Copia en abierto…</button></div><label>Restaurar desde un archivo (.gdc cifrado o .json)</label><input type="file" onchange="imp(event)"><b style="display:block;margin-top:12px">Aviso de copia al entrar</b><label>Si han pasado (días)</label><input type="number" min="1" inputmode="numeric" value="${S.bkD}" onchange="S.bkD=Math.max(1,Math.floor(+this.value)||30);save();render();toast('Guardado')"><label>o si hay (cambios sin copia)</label><input type="number" min="1" inputmode="numeric" value="${S.bkN}" onchange="S.bkN=Math.max(1,Math.floor(+this.value)||1);save();render();toast('Guardado')">`)}
+${dt('sn','⏪ Puntos de restauración',`<small>La app guarda sola, en este móvil, una foto de tus datos cada día que la usas y antes de cada operación delicada (restaurar, cifrar…). Se conservan los ${SNK} últimos. Sirve para volver atrás si algo sale mal, pero no sustituye a la copia fuera del móvil.</small><div class="bt"><button onclick="snShow()">Ver puntos de restauración</button></div>`)}
+${dt('ver',`ℹ️ Versión ${VER}`,`<small>La app se actualiza sola al abrirla (si estás rellenando una salida, espera a que salgas).</small><div class="bt"><button onclick="chkUpd()">🔄 Buscar actualización</button></div>`)}`}
+function bkNow(){if(pteOn())drvUp();else exp(1,0,'enc')}
+
+// ---- PDF
+const HW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const WA={'€':'\x80','—':'\x97','–':'-','−':'-','→':'>','←':'<','↑':'^','↓':'v','…':'...','“':'"','”':'"','‘':"'",'’':"'"},EM={'🚗':'Coche ','💬':'Nota: ','🔒':'(priv.) '};
+const cl=s=>{let r='';for(const h of s)r+=EM[h]??WA[h]??(h.charCodeAt(0)<256?h:'');return r};
+const pe=s=>s.replace(/[()\\]/g,'\\$&');
+const mw=(s,z,b)=>[...s].reduce((a,h)=>a+(HW[h.charCodeAt(0)-32]||556),0)*z/1000*(b?1.08:1);
+const wr_=(s,z,b,w)=>{const o=[];let l='';for(const t of s.split(' ')){const n=l?l+' '+t:t;if(l&&mw(n,z,b)>w){o.push(l);l=t}else l=n}o.push(l);return o};
+function ptxt(n){let o='';(function w(x){for(const c of x.childNodes){
+if(c.nodeType===3){o+=c.textContent;continue}
+if(c.nodeType!==1||c.matches('button,textarea,svg,.acts,.lab,script'))continue;
+if(c.tagName==='BR'){o+='\n';continue}
+if(c.tagName==='SELECT'){o+=c.options[c.selectedIndex]?c.options[c.selectedIndex].text:'';continue}
+if(c.tagName==='INPUT'){o+=c.value?c.value+'  ':'';continue}
+if(c.parentNode.classList.contains('sp')&&c.previousElementSibling)o+='\t';
+const b=/^(DIV|P|LABEL|H[1-3])$/.test(c.tagName);
+if(b&&o&&!o.endsWith('\n'))o+='\n';w(c);if(b&&!o.endsWith('\n'))o+='\n'}})(n);return o}
+function pdfOut(P){let b='%PDF-1.4\n',off=[];const ob=(i,t)=>{off[i]=b.length;b+=i+' 0 obj\n'+t+'\nendobj\n'};
+ob(1,'<</Type/Catalog/Pages 2 0 R>>');
+ob(2,`<</Type/Pages/Kids[${P.map((_,i)=>(5+i*2)+' 0 R').join(' ')}]/Count ${P.length}>>`);
+ob(3,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+ob(4,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
+P.forEach((p,i)=>{const t=p.join('\n');ob(5+i*2,`<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>/Contents ${6+i*2} 0 R>>`);ob(6+i*2,`<</Length ${t.length}>>\nstream\n${t}\nendstream`)});
+const x=b.length,N=5+P.length*2;
+b+=`xref\n0 ${N}\n0000000000 65535 f \n`+off.slice(1).map(v=>String(v).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${N}/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`;
+return new Blob([Uint8Array.from(b,ch=>ch.charCodeAt(0))],{type:'application/pdf'})}
+function mkPdf(){const M=40,R=555,P=[];let c=[],y=802;
+const np=()=>{P.push(c);c=[];y=802},nd=h=>{if(y-h<44)np()};
+const T=(s,x,z,b)=>c.push(`BT /F${b?2:1} ${z} Tf ${x.toFixed(1)} ${y.toFixed(1)} Td (${pe(s)}) Tj ET`);
+for(const e of $('#app').children){
+if(e.matches('.top,select,.seg,.fab,.note,input,button'))continue;
+const g=e.tagName;
+if(g==='H1'){nd(50);y-=20;T(cl(e.textContent.trim()),M,17,1);y-=14;T('Generado el '+fd(today()),M,8.5);y-=6;continue}
+if(g==='H2'||g==='H3'){nd(40);y-=16;T(cl(e.textContent.trim()),M,g==='H2'?14:12,1);y-=4;continue}
+const L=ptxt(e).split('\n').map(x=>cl(x.replace(/[  ]+/g,' ')).trim()).filter(Boolean),b1=e.matches('.ev,.card')&&e.firstElementChild&&e.firstElementChild.tagName==='B';
+L.forEach((ln,i)=>{const b=b1&&!i,z=9.5;
+if(ln.includes('\t')){const p=ln.split('\t'),r=p.slice(1).join(' ');nd(14);y-=13;T(p[0],M+6,z,b);T(r,R-6-mw(r,z,b),z,b)}
+else wr_(ln,z,b,R-M-12).forEach(w=>{nd(14);y-=12.5;T(w,M+6,z,b)})});
+const sv=e.querySelector('svg');
+if(sv){const s=1.3,h=130*s;nd(h+30);y-=6;const y0=y,X=v=>(M+6+v*s).toFixed(1),Y=v=>(y0-v*s).toFixed(1);
+sv.querySelectorAll('line').forEach(l=>{const d=l.getAttribute('stroke-dasharray');c.push(`q ${d?'0.05 0.48 0.42':'0.8 0.8 0.8'} RG 0.7 w ${d?'[3 3] 0 d ':''}${X(+l.getAttribute('x1'))} ${Y(+l.getAttribute('y1'))} m ${X(+l.getAttribute('x2'))} ${Y(+l.getAttribute('y2'))} l S Q`)});
+sv.querySelectorAll('rect').forEach(r=>{const rx=+r.getAttribute('x'),ry=+r.getAttribute('y'),rw=+r.getAttribute('width'),rh=+r.getAttribute('height');c.push(`q 0.14 0.27 0.42 rg ${X(rx)} ${Y(ry+rh)} ${(rw*s).toFixed(1)} ${(rh*s).toFixed(1)} re f Q`)});
+const pl=sv.querySelector('polyline');if(pl)c.push(`q 0.14 0.27 0.42 RG 1.5 w 1 j ${pl.getAttribute('points').split(' ').map((q,i)=>{const[a,b]=q.split(',').map(Number);return X(a)+' '+Y(b)+(i?' l':' m')}).join(' ')} S Q`);
+y=y0-h-12;if(sv.dataset.cap)T(cl(sv.dataset.cap),M+6,8)}
+if(e.matches('.ev,.card')){y-=5;c.push(`q 0.85 G 0.5 w ${M} ${y.toFixed(1)} m ${R} ${y.toFixed(1)} l S Q`);y-=4}}
+P.push(c);P.forEach((p,i)=>p.push(`BT /F1 8 Tf ${M} 24 Td (${pe(cl('Página '+(i+1)+' de '+P.length))}) Tj ET`));
+return pdfOut(P)}
+async function doPdf(){try{const bl=mkPdf(),nm=(V.n==='eco'?'mis-gastos':'informe-'+nz(fr(V.id).name).replace(/\W+/g,'-'))+'-'+today()+'.pdf',f=new File([bl],nm,{type:'application/pdf'});
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nm});return}catch(e){if(e.name==='AbortError')return}}
+const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1e4);toast('PDF descargado')}catch(e){toast('No se pudo crear el PDF')}}
+
+/* ================= seguridad S1: contraseña maestra, huella (PRF), bloqueo, copias cifradas ================= */
+const te=new TextEncoder(),td=new TextDecoder(),MG='QPENC1\n',CH=4194304,IT=250000,PS=te.encode('quien-paga/prf/clave/v1');
+const b64=u=>{let s='';u=new Uint8Array(u);for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s)},ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),rnd=n=>crypto.getRandomValues(new Uint8Array(n)),u32=n=>{const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,n);return a},rd32=u=>new DataView(u.buffer,u.byteOffset).getUint32(0);
+let SEG=(()=>{try{return JSON.parse(localStorage.getItem('qp_seg'))||null}catch{return null}})(),PW=null,LA=Date.now(),LOCK=0;
+const segSave=o=>{SEG={...SEG,...o};localStorage.setItem('qp_seg',JSON.stringify(SEG))};
+const kdf=async(p,s,it)=>crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:s,iterations:it},await crypto.subtle.importKey('raw',te.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+const enc=async(k,d,n)=>{const iv=rnd(12);return{iv,ct:new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,d))}},dcr=(k,iv,ct,n)=>crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:u32(n)},k,ct);
+const chkPw=async p=>{try{await dcr(await kdf(p,ub64(SEG.salt),SEG.it),ub64(SEG.vf.iv),ub64(SEG.vf.ct),0);return true}catch{return false}};
+const askPw=(t,two)=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:60;display:flex;align-items:center;padding:16px';d.innerHTML=`<div class="card" style="width:100%;max-width:480px;margin:0 auto"><b>${t}</b><input type=password autocomplete=off id=p1 placeholder="Contraseña">${two?'<input type=password autocomplete=off id=p2 placeholder="Repite la contraseña">':''}<div class=bt><button id=ok>Aceptar</button><button class=sec id=no>Cancelar</button></div></div>`;document.body.appendChild(d);const f=d.querySelector('#p1'),x=v=>{d.remove();r(v)};f.focus();d.querySelector('#no').onclick=()=>x(null);const go_=()=>{const v=f.value;if(!v)return;if(two&&v.length<8)return alert('Mínimo 8 caracteres.');if(two&&d.querySelector('#p2').value!==v)return alert('Las contraseñas no coinciden.');x(v)};d.querySelector('#ok').onclick=go_;d.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')go_()})});
+async function confirmPw(){const q=await askPw('Escribe la contraseña maestra');if(q==null)return null;if(!await chkPw(q)){alert('Contraseña incorrecta.');return null}return q}
+async function getPw(){if(PW)return PW;if(!SEG?.vf)return null;return confirmPw()}
+/* setupPw acepta contraseña externa (S2) y, si los datos van cifrados, re-envuelve la clave de datos EN LA MISMA escritura (S3) */
+async function setupPw(p0){const p=p0||await askPw('Crea tu contraseña maestra (mínimo 8 caracteres). Si la pierdes, las copias cifradas no se pueden recuperar: apúntala en papel o en un gestor de contraseñas.',1);if(!p)return null;if(SEG?.enc&&!DEK){alert('Desbloquea la app antes de cambiar la contraseña.');return null}const s=rnd(16),k=await kdf(p,s,IT),{iv,ct}=await enc(k,te.encode('GD-OK'),0);let dk=null;if(SEG?.enc){const raw=new Uint8Array(await crypto.subtle.exportKey('raw',DEK)),w=await enc(k,raw,2);raw.fill(0);dk={iv:b64(w.iv),ct:b64(w.ct)}}segSave({salt:b64(s),it:IT,vf:{iv:b64(iv),ct:b64(ct)},mode:SEG?.mode||'clave',mn:SEG?.mn||15,...(dk?{dek:dk}:{})});PW=SEG.mode=='none'?null:p;return p}
+const prfK=async create=>{let id=SEG?.cid;if(create){const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:APP,id:location.hostname},user:{id:rnd(16),name:'quien-paga',displayName:APP},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',userVerification:'required'},timeout:60000,extensions:{prf:{}}}});id=b64(c.rawId);segSave({cid:id})}
+const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:id?[{type:'public-key',id:ub64(id)}]:[],userVerification:'required',timeout:60000,extensions:{prf:{eval:{first:PS}}}}}),r=a.getClientExtensionResults().prf?.results?.first;if(!r)throw'noprf';if(!id)segSave({cid:b64(a.rawId)});
+return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(32),info:te.encode('gd-pw-v1')},await crypto.subtle.importKey('raw',r,'HKDF',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt'])};
+async function hwSet(p,create){const k=await prfK(create),{iv,ct}=await enc(k,te.encode(p),1);segSave({hw:{iv:b64(iv),ct:b64(ct)}})}
+const hwFail=e=>toast(e=='noprf'?'Este navegador no da clave con la huella: acceso con contraseña':'Huella no activada: acceso con contraseña',3500);
+async function segFrom(p){await setupPw(p);segSave({mode:'huella'});try{await hwSet(p,true)}catch(e){segSave({hw:null,mode:'clave'});hwFail(e)}render()}
+async function segPw(){const first=!SEG?.vf;let old=null;if(!first){old=await confirmPw();if(!old)return null}
+if(!first&&pteOn()&&!confirm('Si cambias la contraseña maestra, las copias que ya están en Drive (y las descargadas) seguirán necesitando la contraseña ANTERIOR. Después de cambiarla, sube una copia nueva. ¿Seguir?'))return null;
+const pc=!first&&pteOn()?await pteGet(old):null,p=await setupPw();if(!p)return null;if(pc)await pteSet(pc,p);if(first)segSave({mode:'huella'});
+if(first||SEG.hw){try{await hwSet(p,first)}catch(e){segSave({hw:null,...(first?{mode:'clave'}:{})});hwFail(e)}}render();if(!first)toast('Contraseña cambiada');return p}
+async function segHuella(){const p=await getPw();if(!p)return;try{await hwSet(p,true);if(SEG.mode!=='huella')segSave({mode:'huella'});render();toast('Huella activada')}catch(e){hwFail(e)}}
+async function segMode(v){const R={none:0,clave:1,huella:2},c=SEG.mode||'none';if(v=='none'&&SEG.enc){alert('Con los datos cifrados no se puede quitar el bloqueo: la clave no tendría dónde protegerse. Quita antes el cifrado de los datos.');render();return}let p=null;if(R[v]<R[c])p=await confirmPw();else if(v=='huella')p=await getPw();if((R[v]<R[c]||v=='huella')&&!p){render();return}
+if(v=='huella'&&!SEG.hw){try{await hwSet(p,true)}catch(e){hwFail(e);v='clave'}}segSave({mode:v});if(v=='none')PW=null;render()}
+const segMn=v=>{segSave({mn:Math.max(1,Math.floor(+v)||15)});toast('Guardado')};
+const segNudge=()=>SEG?.vf?'':`<div class="note ok" onclick="segPw()"><b>🔐 Activa la seguridad</b><br><span class="mu">Contraseña maestra, huella, copias cifradas y copia en Drive</span></div>`;
+const segUI=()=>{const s=SEG||{},m=s.vf?s.mode:'';return dt('seg','🔐 Seguridad',`<small>${s.vf?'Contraseña maestra creada.':'Aún no hay contraseña maestra.'} ${s.enc?'Los datos de este móvil están <b>cifrados</b>: solo se descifran en memoria mientras la app está desbloqueada.':'Los datos de este móvil <b>aún no van cifrados</b> (las copias sí).'}</small>${s.vf?`<label>Acceso<select onchange="segMode(this.value)"><option value=huella ${m=='huella'?'selected':''}>Con huella (contraseña de respaldo)</option><option value=clave ${m=='clave'?'selected':''}>Solo con contraseña maestra</option><option value=none ${m=='none'?'selected':''} ${s.enc?'disabled':''}>Sin bloqueo${s.enc?' (no con datos cifrados)':''}</option></select></label><label>Bloquear tras (minutos sin usarla, también en segundo plano)<input type=number min=1 inputmode=numeric value="${s.mn||15}" onchange="segMn(this.value)"></label><small>Huella: ${s.hw?'activada':'sin configurar'}</small>`:''}<div class=bt><button onclick="segPw()">${s.vf?'Cambiar contraseña maestra':'Crear contraseña maestra'}</button>${s.vf?`<button class=sec onclick="segHuella()">${s.hw?'Volver a enrolar huella':'Activar huella'}</button>`:''}</div>${s.vf&&!EMERG?`<b style="display:block;margin-top:12px">Cifrado de los datos de este móvil</b><small>${s.enc?'Si olvidas la contraseña maestra y la huella falla, los datos de este móvil no se pueden recuperar: solo desde una copia.':'Recomendado. Antes de cifrar se hace una copia previa cifrada y se ofrece una en abierto como salvavidas.'}</small><div class=bt>${s.enc?'<button class=dg onclick="encOff()">Quitar cifrado de los datos</button>':'<button onclick="encOn()">🔒 Cifrar datos de este móvil</button>'}</div>`:''}`)};
+function lockUI(){if(!SEG?.vf||(SEG.mode=='none'&&!SEG.enc))return;PW=null;DX=null;LOCK=1;let d=$('#lk');if(!d){d=document.createElement('div');d.id='lk';d.style.cssText='position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px';document.body.appendChild(d)}const h=SEG.mode=='huella'&&SEG.hw;
+d.innerHTML=`<div style="width:100%;max-width:360px;text-align:center"><h2>🔒 ${APP}</h2>${h?'<div class=bt style="justify-content:center"><button onclick="unH()">👆 Entrar con huella</button></div>':''}<input type=password id=lp placeholder="Contraseña maestra" autocomplete=off onkeydown="if(event.key==\'Enter\')unP()"><div class=bt style="justify-content:center"><button class="${h?'sec':''}" onclick="unP()">Entrar con contraseña</button></div><small id=lm></small></div>`;d.hidden=false;closeSh();UNDO=null;
+if(SEG.enc){const w=()=>{if(LOCK){DEK=null;S=null;D=null;SNL=null;DL=[];peaceOpen=false;Q='';$('#app').innerHTML='';toast('')}};flush().then(w,w)}
+if(h)setTimeout(()=>{if(LOCK&&!document.hidden)unH(1)},350)}
+async function unOk(p){if(DBP)await DBP;if(SEG.enc&&!DB){const m=$('#lm');if(m)m.textContent='No se puede abrir la base de datos. Cierra otras ventanas de la app y vuelve a abrirla.';return}if(SEG.enc&&!DEK){try{DEK=await dekOpen(p)}catch{const m=$('#lm');if(m)m.textContent='La contraseña es correcta pero no abre los datos de este móvil. Restaura una copia.';return}}
+PW=p;LA=Date.now();LOCK=0;$('#lk').hidden=true;try{if(!S)await bootData()}catch(e){alert('No se pudieron leer los datos: '+((e&&e.message)||e))}render();if(!POST&&S){POST=1;postStart()}}
+async function unP(){const p=$('#lp').value;if(p&&await chkPw(p))await unOk(p);else $('#lm').textContent='Contraseña incorrecta.'}
+let UNH=0;async function unH(q){if(UNH)return;UNH=1;try{const k=await prfK(0),p=td.decode(await dcr(k,ub64(SEG.hw.iv),ub64(SEG.hw.ct),1));if(await chkPw(p))await unOk(p);else throw'pw'}catch(e){const m=$('#lm');if(m&&!(q&&e&&e.name==='NotAllowedError'))m.textContent=e=='noprf'?'Este navegador no da clave con la huella: usa la contraseña.':'No se pudo con la huella: usa la contraseña.'}finally{UNH=0}}
+const idle=()=>{const l=$('#lk');if((!l||l.hidden)&&SEG?.vf&&SEG.mode&&(SEG.mode!='none'||SEG.enc)&&Date.now()-LA>(SEG.mn||15)*6e4)lockUI()};
+['pointerdown','keydown','scroll'].forEach(e=>addEventListener(e,()=>{const l=$('#lk');if(!l||l.hidden)LA=Date.now()},{passive:true}));setInterval(idle,15e3);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)idle();else{flush();try{if(S&&!LOCK&&bkDue()&&autoOk())drvUp(1)}catch(e){}}});
+addEventListener('pagehide',()=>{flush()});
+/* copias cifradas: trozos de 4 MB, AES-GCM, clave PBKDF2 con sal en la cabecera */
+async function encBlob(bl,p,meta){const s=rnd(16),k=await kdf(p,s,IT),h=te.encode(JSON.stringify({app:APP,ver:VER,salt:b64(s),it:IT,ch:CH,date:new Date().toISOString(),...meta})),parts=[te.encode(MG),u32(h.length),h];let n=0;const w=async d=>{const{iv,ct}=await enc(k,d,n++);parts.push(u32(ct.length),iv,ct)};for(let i=0;i<bl.size;i+=CH)await w(new Uint8Array(await bl.slice(i,i+CH).arrayBuffer()));await w(te.encode('GD-FIN'));return new Blob(parts)}
+async function decFile(f,ask){let o=MG.length;const rd=async n=>{const u=new Uint8Array(await f.slice(o,o+n).arrayBuffer());if(u.length<n)throw'trunc';o+=n;return u},h=JSON.parse(td.decode(await rd(rd32(await rd(4)))));const p=await ask();if(p==null)return null;const k=await kdf(p,ub64(h.salt),h.it),out=[];let n=0;for(;;){const l=rd32(await rd(4)),iv=await rd(12),ct=await rd(l);let d;try{d=new Uint8Array(await dcr(k,iv,ct,n++))}catch{throw'pw'}if(o>=f.size){if(td.decode(d)!='GD-FIN')throw'trunc';break}out.push(d)}return new Blob(out)}
+function expOpen(f){if(confirm('Esta copia NO va cifrada: contiene todos tus datos al descubierto. Guárdala en un sitio seguro (por ejemplo, un USB) y no la subas a la nube. ¿Crear copia en abierto?'))exp(f,0,'open')}
+/* --- copia: mkBk construye y cifra; exp descarga; drvUp (S2) sube --- */
+async function mkBk(full,pre,mode,pw){toast('Preparando copia…',6e4);await flush();const now=new Date().toISOString(),d=JSON.parse(JSON.stringify(S));if(!pre){d.bk=Date.now();d.ch=0}
+let bl=new Blob([JSON.stringify({app:APP,ver:VER,v:7,full:true,date:now,data:d})],{type:'application/json'}),ext='json';if(mode=='enc'){toast('Cifrando…',6e4);bl=await encBlob(bl,pw,{full:true});ext='gdc'}return{bl,now,name:`${FN}_v${VER}_${pre?'PREVIA_':''}completa_${mode=='enc'?'cifrada_':'abierta_'}${now.slice(0,10)}.${ext}`}}
+async function exp(full,pre,mode){let pw;if(mode=='enc'){pw=SEG?.vf?await getPw():await segPw();if(!pw)return false}try{const{bl,now,name}=await mkBk(full,pre,mode,pw),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),6e4);
+if(!pre){S.bk=Date.now();S.ch=0;if(mode=='open')S.lastOpen=now;save();await flush();legacyCleanup();render()}toast(pre?'Copia previa descargada':'Copia descargada');return true}catch(e){toast('');alert('No se pudo crear la copia: '+((e&&e.message)||e));return false}}
+/* --- restaurar: imp elige archivo; impFile hace el trabajo y devuelve {ok,pw} --- */
+async function imp(e){const f=e.target.files[0];e.target.value='';if(!f)return;await impFile(f)}
+function fromBk(b){if(!b||typeof b!=='object')return null;let s,lg=false;if(b.data&&typeof b.data==='object'){if(b.app&&!APPS.includes(b.app))return null;s=b.data}else if(Array.isArray(b.friends)&&Array.isArray(b.outings)){s=b;lg=true}else return null;s=norm(JSON.parse(JSON.stringify(s)),lg);return valid(s)?s:null}
+async function impFile(f,hint){let b,used=null;try{if(td.decode(new Uint8Array(await f.slice(0,MG.length).arrayBuffer()))==MG){const ask=async t=>{used=await askPw(t);return used};let bl;try{bl=await decFile(f,hint?async()=>{used=hint;return hint}:()=>ask('Contraseña de esta copia'))}catch(er){if(er=='pw'&&hint)bl=await decFile(f,()=>ask('La contraseña maestra no abre esta copia. Escribe la contraseña con la que se hizo'));else throw er}if(!bl)return;b=JSON.parse(await bl.text())}else b=JSON.parse(await f.text())}catch(er){toast('');return alert(er=='pw'?'Contraseña incorrecta o copia dañada. No se ha tocado nada.':er=='trunc'?'La copia está incompleta. No se ha tocado nada.':'El archivo no es una copia válida (ni cifrada de esta app ni JSON). No se ha tocado nada.')}
+toast('');const nd=fromBk(b);if(!nd){alert('Este archivo no es una copia de Quién paga. No se ha tocado nada.');return}
+if(!confirm(`La copia${b.date?' del '+new Date(b.date).toLocaleString('es-ES'):''} tiene ${nd.friends.length} amigos y ${nd.outings.length} salidas. Sustituirá TODOS los datos actuales de este móvil. ¿Continuar?`))return;
+try{if(hasData()&&!BADMAIN){if(!await exp(1,1,preMode()))return;if(!confirm('Se ha descargado una copia previa de tus datos actuales'+(SEG?.vf?' (cifrada con tu contraseña maestra)':'')+'. ¿Continuar con la restauración?'))return}
+if(!BADMAIN)await snapQ('antes de restaurar una copia');await replaceS(nd);D=null;V={n:'home'};render();alert('Copia restaurada.');return{ok:1,pw:used}}catch(err){alert('No se pudo restaurar: '+((err&&err.message)||err)+'\nTus datos no han cambiado.');return null}}
+/* aviso de copia al entrar */
+function bkDue(){if(!S||!hasData())return null;if(!S.bk)return'Aún no has hecho ninguna copia de seguridad.';const d=Math.floor((Date.now()-S.bk)/864e5);if(d>=S.bkD)return`Hace ${d} días de la última copia.`;if(S.ch>=S.bkN)return`Hay ${S.ch} cambio${S.ch>1?'s':''} sin copia.`;return null}
+function bkAsk(){const w=bkDue();if(!w)return;const dv=pteOn();show(`<h3>💾 Copia de seguridad</h3><p>${esc(w)}</p><small>${dv?'Se sube cifrada a tu Drive.':'Guárdala fuera del móvil (nube u ordenador).'}</small><div class=bt>${dv?`<button onclick="closeSh();drvUp()">Subir a Drive (cifrada)</button><button class=sec onclick="closeSh();exp(1,0,'enc')">Descargar cifrada</button>`:`<button onclick="closeSh();exp(1,0,'enc')">Descargar copia cifrada</button>`}<button class=sec onclick="closeSh()">Ahora no</button></div>`)}
+
+/* ================= S2: copia cifrada en Drive mediante un puente de Apps Script. Nada secreto viaja en la URL ni en claro ================= */
+const DAPP='quienpaga',PART=3145728,PUV=/^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/;
+const hex=u=>[...new Uint8Array(u)].map(b=>b.toString(16).padStart(2,'0')).join(''),sleep=ms=>new Promise(r=>setTimeout(r,ms)),preMode=()=>SEG?.vf?'enc':'open';
+const sha=async s=>hex(await crypto.subtle.digest('SHA-256',te.encode(s)));
+let PTE=(()=>{try{return JSON.parse(localStorage.getItem('qp_pte'))||null}catch{return null}})(),DL=[],DX=null,DUP=0,DM='';
+const pteOn=()=>!!PTE?.ct,pteSave=o=>{PTE={...PTE,...o};localStorage.setItem('qp_pte',JSON.stringify(PTE))};
+const autoOn=()=>pteOn()&&S&&S.autoUp!==false&&SEG?.mode!=='none';
+const autoOk=()=>autoOn()&&!!PW&&!DUP&&navigator.onLine!==false&&Date.now()-(PTE.last?new Date(PTE.last).getTime():0)>36e5;
+/* la dirección y la clave del puente se guardan cifradas con la contraseña maestra (AES-GCM, sal propia, contador 2) */
+async function pteSet(o,p){const s=rnd(16),k=await kdf(p,s,IT),{iv,ct}=await enc(k,te.encode(JSON.stringify(o)),2);pteSave({s:b64(s),iv:b64(iv),ct:b64(ct)})}
+async function pteGet(p){if(!PTE?.ct)return null;try{const k=await kdf(p,ub64(PTE.s),IT);return JSON.parse(td.decode(await dcr(k,ub64(PTE.iv),ub64(PTE.ct),2)))}catch{return null}}
+async function drvCtx(){const p=await getPw();if(!p)return null;const c=await pteGet(p);if(!c){alert('No se pudo leer la conexión con Drive con esta contraseña. Vuelve a conectar.');return null}return{p,c}}
+/* protocolo: POST (cuerpo JSON, nunca en la URL) con firma HMAC-SHA256; la clave solo firma, no se envía */
+const hmac=async(k,m)=>hex(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',te.encode(k),{name:'HMAC',hash:'SHA-256'},false,['sign']),te.encode(m)));
+async function drvCall(c,a,pr,d){if(!PUV.test(c.u))throw'url';const ts=Date.now(),n=hex(rnd(16)),ps=JSON.stringify(pr||{}),dh=d?await sha(d):'',s=await hmac(c.k,['1',a,DAPP,ts,n,ps,dh].join('|'));let r,j;
+try{r=await fetch(c.u,{method:'POST',body:JSON.stringify({v:1,a,app:DAPP,ts,n,ps,d:d||'',s}),redirect:'follow',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'})}catch{throw'net'}
+try{j=await r.json()}catch{throw'resp'}if(!j||!j.ok){DM=(j&&j.m)||'';throw(j&&j.e)||'int'}return j}
+async function drvTry(c,a,pr,d){for(let t=0;;t++){try{return await drvCall(c,a,pr,d)}catch(e){if((e=='net'||e=='resp'||e=='busy')&&t<2){await sleep(1500*(t+1));continue}throw e}}}
+const drvErr=e=>typeof e!='string'?'Error: '+((e&&e.message)||e):({url:'La dirección del puente no es válida (debe ser https://script.google.com/…/exec).',net:'Sin conexión, o la dirección del puente no responde.',resp:'El puente no devolvió una respuesta válida. Revisa que la dirección termina en /exec y que la implementación es para «Cualquier usuario».',auth:'La clave del puente no coincide con la propiedad SECRET de Apps Script.',ts:'La hora del móvil no coincide con la de Google: activa la fecha y hora automáticas.',rep:'Petición repetida: inténtalo otra vez.',nosecret:'Al puente le falta la propiedad SECRET (o tiene menos de 16 caracteres).',busy:'El puente está ocupado: inténtalo en un minuto.',big:'Trozo demasiado grande para el puente.',app:'Nombre de carpeta no válido.',nf:'No se encontró esa copia en Drive.',sz:'Un trozo llegó incompleto: inténtalo otra vez.',miss:'La copia en Drive está incompleta: inténtalo otra vez.'}[e]||'Error del puente ('+e+(DM?': '+DM:'')+')');
+/* subir: la copia ya cifrada se corta en trozos de 3 MB; el puente la da por buena solo al recibir todos */
+async function drvPutBlob(c,bl,name,now,keep){const t=new Date(now),z=n=>String(n).padStart(2,'0'),id=`${t.getFullYear()}-${z(t.getMonth()+1)}-${z(t.getDate())}_${z(t.getHours())}-${z(t.getMinutes())}-${z(t.getSeconds())}_v${VER.replace(/[^0-9A-Za-z]/g,'_')}_completa`,tot=Math.max(1,Math.ceil(bl.size/PART));
+for(let i=0;i<tot;i++){LA=Date.now();toast(`Subiendo a Drive… ${i+1} de ${tot}`,6e4);const pt=bl.slice(i*PART,(i+1)*PART);await drvTry(c,'put',{id,i:i+1,sz:pt.size},b64(new Uint8Array(await pt.arrayBuffer())))}
+await drvTry(c,'fin',{id,total:tot,size:bl.size,name,keep:keep||PTE?.keep||30});return id}
+async function drvGetBlob(c,it){const ps=[];for(let i=1;i<=it.t;i++){LA=Date.now();toast(`Descargando de Drive… ${i} de ${it.t}`,6e4);ps.push(ub64((await drvTry(c,'get',{id:it.id,i})).d))}const bl=new Blob(ps);if(bl.size!==it.s)throw'miss';return bl}
+async function drvUp(auto){if(!pteOn())return auto?0:drvConn();if(DUP)return auto?0:toast('Ya hay una copia en curso');let x;if(auto){if(!PW)return;const c=await pteGet(PW);if(!c)return;x={p:PW,c}}else x=await drvCtx();if(!x)return;DUP=1;let wl=null;try{wl=await navigator.wakeLock?.request('screen')}catch{}
+try{const{bl,now,name}=await mkBk(1,0,'enc',x.p);await drvPutBlob(x.c,bl,name,now);pteSave({last:now});if(S){S.bk=Date.now();S.ch=0;save();await flush()}AUTOFAIL=0;legacyCleanup();if(S&&V.n!=='form')render();toast(auto?'Copia automática subida a Drive ✓':'Copia subida a Drive ✓')}
+catch(e){toast('');if(auto){AUTOFAIL=1;toast('No se pudo subir la copia automática: '+drvErr(e),5000);if(S&&V.n==='home')render()}else alert('No se pudo subir la copia. Tus datos no han cambiado.\n'+drvErr(e))}finally{DUP=0;try{wl&&wl.release()}catch{}}}
+/* conexión */
+const drvLast=()=>PTE?.last?new Date(PTE.last).toLocaleString('es-ES'):'nunca';
+const drvUI=()=>dt('drv','☁️ Copia en Drive (cifrada)',`${pteOn()?`<small>Conectado. Carpeta: Apps/Backups/${DAPP} · última subida desde este móvil: ${drvLast()}</small><div class=bt><button onclick="drvUp()">Subir copia ahora</button><button class=sec onclick="drvList()">Ver copias y restaurar</button></div><label class="chk"><input type="checkbox" ${S.autoUp!==false?'checked':''} onchange="S.autoUp=this.checked;save();render()"> Subir sola cuando toque copia (al entrar o salir de la app, como mucho una vez por hora)</label>${SEG?.mode==='none'?'<small>Con «Sin bloqueo» la subida automática no funciona (la contraseña no se guarda en memoria).</small>':''}<label>Conservar en Drive las últimas (copias)<input type=number min=2 max=50 inputmode=numeric value="${PTE.keep||30}" onchange="drvKeep(this.value)"></label><div class=bt><button class=sec onclick="drvTest()">Probar conexión</button><button class=sec onclick="drvConn()">Cambiar datos</button><button class=dg onclick="drvOff()">Desconectar</button></div>`:`<small>Sube copias completas cifradas a tu Drive (Apps/Backups/${DAPP}) y restáuralas desde ahí. Se cifran en este móvil con tu contraseña maestra antes de salir: Drive solo ve datos ilegibles.</small><div class=bt><button onclick="drvConn()">Conectar con Drive</button><button class=sec onclick="drvList()">Restaurar desde Drive (móvil nuevo)</button></div>`}<div class=bt style="margin:0"><button class=sec onclick="drvHelp()">Cómo crear el puente</button></div>`);
+async function drvConn(){if(!SEG?.vf&&!await segPw())return;const p=await getPw();if(!p)return;const c=await pteGet(p)||{u:'',k:''};
+show(`<h3>Conectar con Drive</h3><small>Si ya tienes el puente de otra app, usa la misma dirección y la misma clave. Si no, créalo una sola vez (botón «Cómo crear el puente»).</small><label>Dirección del puente (termina en /exec)<input id=dr_u inputmode=url autocomplete=off value="${esc(c.u)}" placeholder="https://script.google.com/macros/s/…/exec"></label><label>Clave del puente<input id=dr_k type=password autocomplete=off value="${esc(c.k)}"></label><div class=bt><button class=sec onclick="drvGen()">Generar una clave nueva</button></div><small>La clave nunca se envía: solo firma las peticiones. Aquí se guarda cifrada con tu contraseña maestra.</small><div class=bt><button onclick="drvSave()">Probar y guardar</button><button class=sec onclick="closeSh()">Cancelar</button></div>`)}
+function drvGen(){if(!confirm('Solo necesitas una clave nueva si vas a crear el puente por primera vez. Si ya tienes el puente de otra app, usa su clave. ¿Generar una nueva?'))return;const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',k=[...rnd(32)].map(x=>A[x&31]).join(''),e=$('#dr_k');e.type='text';e.value=k;copy(k);alert('Clave generada y copiada al portapapeles.\n\nPégala en Apps Script: Configuración del proyecto › Propiedades de la secuencia de comandos › propiedad SECRET.\n\nTambién queda en la casilla para guardarla aquí.')}
+async function drvSave(){const u=$('#dr_u').value.trim(),k=$('#dr_k').value.trim();if(!PUV.test(u))return alert('La dirección debe ser la de la aplicación web: https://script.google.com/macros/s/…/exec');if(k.length<16)return alert('La clave debe tener al menos 16 caracteres (usa «Generar una clave nueva»).');
+const p=await getPw();if(!p)return;toast('Probando conexión…',6e4);try{const j=await drvTry({u,k},'ping');await pteSet({u,k},p);pteSave({keep:PTE?.keep||30});closeSh();render();toast('Conectado · '+j.folder,3500)}catch(e){toast('');alert(drvErr(e))}}
+async function drvTest(){const x=await drvCtx();if(!x)return;toast('Probando conexión…',6e4);try{const j=await drvTry(x.c,'ping');toast('');alert('Conexión correcta ✓\nCarpeta en Drive: '+j.folder+(j.v<1?'\nAviso: el puente es de una versión antigua.':''))}catch(e){toast('');alert(drvErr(e))}}
+const drvKeep=v=>{pteSave({keep:Math.max(2,Math.min(50,Math.floor(+v)||30))});toast('Guardado')};
+function drvOff(){if(!confirm('¿Desconectar Drive de este móvil? Las copias que ya están en Drive no se borran.'))return;localStorage.removeItem('qp_pte');PTE=null;render()}
+const BRIDGE="/**\n * PUENTE DRIVE PARA COPIAS CIFRADAS · versión 1\n *\n * Qué hace: recibe trozos de archivos YA CIFRADOS por la app y los guarda en\n *   Mi unidad / Apps / Backups / <carpeta de la app> / <copia> / 0001.part, 0002.part…\n * Seguridad:\n *   - Todo va por HTTPS (script.google.com no admite HTTP).\n *   - La clave del puente (SECRET) NO viaja nunca, ni en la URL ni en el cuerpo:\n *     cada petición lleva una firma HMAC-SHA256 que se calcula con ella.\n *   - Hora y número de un solo uso (nonce): una petición capturada no se puede repetir.\n *   - El contenido ya llega cifrado de extremo a extremo (AES-GCM con tu contraseña maestra):\n *     ni el puente ni Google pueden leerlo.\n * Clave SECRET: Configuración del proyecto (engranaje) > Propiedades de la secuencia de\n *   comandos > Añadir propiedad: nombre SECRET, valor = la clave que genera la app (mín. 16).\n * Implementación: Implementar > Nueva implementación > Aplicación web >\n *   Ejecutar como: Yo · Quién tiene acceso: Cualquier usuario.\n */\nconst VERSION = 1;\nconst ROOT = ['Apps', 'Backups'];\nconst SKEW = 600000;       // margen de hora: 10 min\nconst MAXD = 6000000;      // máx. caracteres base64 por petición (~4,5 MB)\nconst SUB = '_subiendo_';  // prefijo de copias a medio subir\nconst ID = /^[0-9A-Za-z_-]{6,80}$/;\n\nfunction doGet() { return out_({ ok: 0, e: 'post' }); }\n\nfunction out_(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction hex_(b) {\n  return b.map(function (x) { return ('0' + (x & 255).toString(16)).slice(-2); }).join('');\n}\nfunction sha_(s) {\n  return hex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8));\n}\nfunction same_(a, b) {\n  if (a.length !== b.length) return false;\n  var r = 0;\n  for (var i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return r === 0;\n}\nfunction nm_(i) { return ('0000' + i).slice(-4) + '.part'; }\nfunction int_(x, a, b) { return typeof x === 'number' && (x | 0) === x && x >= a && x <= b; }\n\nfunction rootF_() {\n  var f = DriveApp.getRootFolder();\n  ROOT.forEach(function (n) {\n    var it = f.getFoldersByName(n);\n    f = it.hasNext() ? it.next() : f.createFolder(n);\n  });\n  return f;\n}\nfunction appF_(app) {\n  var r = rootF_(), it = r.getFoldersByName(app);\n  return it.hasNext() ? it.next() : r.createFolder(app);\n}\nfunction sub_(af, name, create) {\n  var it = af.getFoldersByName(name);\n  if (it.hasNext()) return it.next();\n  return create ? af.createFolder(name) : null;\n}\nfunction desc_(f) {\n  try { var d = JSON.parse(f.getDescription() || ''); return d && d.t ? d : null; } catch (x) { return null; }\n}\n\nfunction doPost(e) {\n  try {\n    var q;\n    try { q = JSON.parse(e.postData.contents); } catch (x) { return out_({ ok: 0, e: 'bad' }); }\n    if (!q || q.v !== 1 || typeof q.a !== 'string' || typeof q.app !== 'string' || typeof q.ts !== 'number' ||\n        typeof q.n !== 'string' || typeof q.ps !== 'string' || typeof q.s !== 'string') return out_({ ok: 0, e: 'bad' });\n    var sec = PropertiesService.getScriptProperties().getProperty('SECRET');\n    if (!sec || sec.length < 16) return out_({ ok: 0, e: 'nosecret' });\n    var d = typeof q.d === 'string' ? q.d : '';\n    if (d.length > MAXD) return out_({ ok: 0, e: 'big' });\n    // 1) firma (todo lo firmado es ASCII)\n    var msg = ['1', q.a, q.app, q.ts, q.n, q.ps, d ? sha_(d) : ''].join('|');\n    var sig = hex_(Utilities.computeHmacSha256Signature(msg, sec));\n    if (!same_(sig, q.s)) { Utilities.sleep(1500); return out_({ ok: 0, e: 'auth' }); }\n    // 2) hora y repetición\n    if (Math.abs(Date.now() - q.ts) > SKEW) return out_({ ok: 0, e: 'ts' });\n    var cache = CacheService.getScriptCache();\n    if (!/^[0-9a-f]{32}$/.test(q.n) || cache.get('n' + q.n)) return out_({ ok: 0, e: 'rep' });\n    cache.put('n' + q.n, '1', 1500);\n    if (!/^[a-z0-9_-]{2,40}$/.test(q.app)) return out_({ ok: 0, e: 'app' });\n    var p;\n    try { p = JSON.parse(q.ps); } catch (x) { return out_({ ok: 0, e: 'bad' }); }\n    if (!p || typeof p !== 'object') p = {};\n    // 3) acción (de una en una)\n    var lock = LockService.getScriptLock();\n    if (!lock.tryLock(25000)) return out_({ ok: 0, e: 'busy' });\n    try { return act_(q.a, q.app, p, d); } finally { try { lock.releaseLock(); } catch (x) { } }\n  } catch (err) {\n    return out_({ ok: 0, e: 'int', m: String(err && err.message || err).slice(0, 120) });\n  }\n}\n\nfunction act_(a, app, p, d) {\n  var af, sf, it, f, i;\n  switch (a) {\n    case 'ping':\n      appF_(app);\n      return out_({ ok: 1, v: VERSION, folder: ROOT.join('/') + '/' + app });\n\n    case 'put':\n      if (!ID.test(p.id || '') || !int_(p.i, 1, 9999) || !d) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, SUB + p.id, true);\n      it = sf.getFilesByName(nm_(p.i));\n      while (it.hasNext()) it.next().setTrashed(true);\n      f = sf.createFile(Utilities.newBlob(Utilities.base64Decode(d), 'application/octet-stream', nm_(p.i)));\n      if (typeof p.sz === 'number' && f.getSize() !== p.sz) { f.setTrashed(true); return out_({ ok: 0, e: 'sz' }); }\n      return out_({ ok: 1, i: p.i });\n\n    case 'fin': {\n      if (!ID.test(p.id || '') || !int_(p.total, 1, 9999) || typeof p.size !== 'number') return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, SUB + p.id, false);\n      if (!sf) { // ¿ya estaba terminada? (respuesta perdida en un reintento)\n        var fin = sub_(af, p.id, false), ds = fin && desc_(fin);\n        return ds && ds.t === p.total && ds.s === p.size ? out_({ ok: 1, again: 1 }) : out_({ ok: 0, e: 'nf' });\n      }\n      var n = 0, sum = 0, seen = {};\n      it = sf.getFiles();\n      while (it.hasNext()) {\n        f = it.next();\n        var nm = f.getName();\n        if (/^\\d{4}\\.part$/.test(nm)) { seen[nm] = 1; n++; sum += f.getSize(); }\n      }\n      for (i = 1; i <= p.total; i++) if (!seen[nm_(i)]) return out_({ ok: 0, e: 'miss', m: 'falta ' + nm_(i) });\n      if (n !== p.total || sum !== p.size) return out_({ ok: 0, e: 'miss', m: n + '/' + p.total + ' trozos · ' + sum + '/' + p.size + ' bytes' });\n      sf.setDescription(JSON.stringify({ t: p.total, s: p.size, n: String(p.name || '').slice(0, 120), d: new Date().toISOString() }));\n      it = af.getFoldersByName(p.id);\n      while (it.hasNext()) { var old = it.next(); if (desc_(old)) old.setTrashed(true); }\n      sf.setName(p.id);\n      var tr = retain_(af, int_(p.keep, 2, 50) ? p.keep : 10);\n      clean_(af);\n      return out_({ ok: 1, trashed: tr });\n    }\n\n    case 'list': {\n      af = appF_(app);\n      var r = [];\n      it = af.getFolders();\n      while (it.hasNext()) {\n        f = it.next();\n        if (f.getName().indexOf(SUB) === 0) continue;\n        var dd = desc_(f);\n        if (dd) r.push({ id: f.getName(), t: dd.t, s: dd.s, n: dd.n, d: f.getDateCreated().toISOString() });\n      }\n      r.sort(function (x, y) { return x.d < y.d ? 1 : -1; });\n      return out_({ ok: 1, l: r });\n    }\n\n    case 'get':\n      if (!ID.test(p.id || '') || !int_(p.i, 1, 9999)) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, p.id, false);\n      if (!sf || !desc_(sf)) return out_({ ok: 0, e: 'nf' });\n      it = sf.getFilesByName(nm_(p.i));\n      if (!it.hasNext()) return out_({ ok: 0, e: 'nf' });\n      return out_({ ok: 1, i: p.i, d: Utilities.base64Encode(it.next().getBlob().getBytes()) });\n\n    case 'del':\n      if (!ID.test(p.id || '')) return out_({ ok: 0, e: 'bad' });\n      af = appF_(app);\n      sf = sub_(af, p.id, false);\n      if (!sf || !desc_(sf)) return out_({ ok: 0, e: 'nf' });\n      sf.setTrashed(true);\n      return out_({ ok: 1 });\n  }\n  return out_({ ok: 0, e: 'bad' });\n}\n\n// Solo toca copias creadas por este puente (las que llevan descripción propia).\nfunction retain_(af, keep) {\n  var a = [], it = af.getFolders(), f;\n  while (it.hasNext()) { f = it.next(); if (f.getName().indexOf(SUB) !== 0 && desc_(f)) a.push(f); }\n  a.sort(function (x, y) { return y.getDateCreated() - x.getDateCreated(); });\n  var k = 0;\n  for (var i = keep; i < a.length; i++) { a[i].setTrashed(true); k++; }\n  return k;\n}\n// Copias a medio subir de hace más de un día: a la papelera.\nfunction clean_(af) {\n  var it = af.getFolders(), f;\n  while (it.hasNext()) {\n    f = it.next();\n    if (f.getName().indexOf(SUB) === 0 && Date.now() - f.getDateCreated().getTime() > 864e5) f.setTrashed(true);\n  }\n}\n";
+function drvHelp(){show(`<h3>Cómo crear el puente (una sola vez)</h3><small>Si ya lo creaste para otra app, no hace falta: usa la misma dirección y la misma clave en «Conectar con Drive».</small><ol style="padding-left:18px;font-size:14px"><li>Entra en <b>script.google.com</b> con la cuenta de Google que usarás solo para las copias.</li><li><b>Nuevo proyecto</b>. Borra lo que haya y pega el código (botón de abajo).</li><li>Engranaje <b>Configuración del proyecto</b> › <b>Propiedades de la secuencia de comandos</b> › añade <b>SECRET</b> con la clave (en esta app: Conectar con Drive › Generar una clave nueva).</li><li><b>Implementar › Nueva implementación › Aplicación web</b>: ejecutar como <b>Yo</b>, acceso <b>Cualquier usuario</b>. Autoriza los permisos.</li><li>Copia la dirección que termina en <b>/exec</b> y pégala en Conectar con Drive.</li></ol><small>Si cambias el código más adelante: Implementar › Gestionar implementaciones › Editar › Nueva versión (la dirección no cambia). Los nombres exactos de los menús de Google pueden variar un poco.</small><div class=bt><button onclick="copy(BRIDGE)">Copiar código del puente</button><button class=sec onclick="closeSh()">Cerrar</button></div>`)}
+/* ver copias y restaurar (también en un móvil nuevo, sin conexión guardada) */
+const drvAsk=()=>new Promise(r=>{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000a;z-index:60;display:flex;align-items:center;padding:16px';d.innerHTML=`<div class="card" style="width:100%;max-width:480px;margin:0 auto"><b>Datos del puente de Drive</b><input id=a_u inputmode=url autocomplete=off placeholder="Dirección del puente (termina en /exec)"><input id=a_k type=password autocomplete=off placeholder="Clave del puente"><div class=bt><button id=ok>Continuar</button><button class=sec id=no>Cancelar</button></div></div>`;document.body.appendChild(d);const x=v=>{d.remove();r(v)};d.querySelector('#no').onclick=()=>x(null);d.querySelector('#ok').onclick=()=>{const u=d.querySelector('#a_u').value.trim(),k=d.querySelector('#a_k').value.trim();if(!PUV.test(u))return alert('La dirección debe empezar por https://script.google.com/ y terminar en /exec.');if(k.length<16)return alert('La clave del puente tiene al menos 16 caracteres.');x({u,k})}});
+async function drvList(){let x;if(pteOn()){x=await drvCtx();if(!x)return}else{const c=await drvAsk();if(!c)return;x={c,p:null}}
+toast('Buscando copias…',6e4);try{const j=await drvTry(x.c,'list');DL=j.l||[];DX=x;toast('');drvShow()}catch(e){toast('');alert(drvErr(e))}}
+function drvShow(){const z=DL.map((it,i)=>`<div class="ev"><div class="sp"><span><b>${new Date(it.d).toLocaleString('es-ES')}</b><br><span class="mu">${mb(it.s)} · ${it.t} trozo${it.t>1?'s':''}</span></span><span style="white-space:nowrap"><button onclick="drvPick(${i})">Restaurar</button> <button class=dg onclick="drvDel(${i})">🗑</button></span></div></div>`).join('');
+show(`<h3>Copias en Drive</h3><small>Apps/Backups/${DAPP} · las más recientes primero</small>${z||'<p class=mu>No hay copias en Drive.</p>'}<div class=bt><button class=sec onclick="DX=null;closeSh()">Cerrar</button></div>`)}
+async function drvPick(i){const it=DL[i],x=DX;if(!it||!x||DUP)return;DUP=1;closeSh();
+try{const bl=await drvGetBlob(x.c,it);toast('Copia descargada: descifrando…',6e4);const r=await impFile(bl,x.p);toast('');
+if(r&&r.ok){if(r.pw&&!SEG?.vf){if(confirm('¿Usar la contraseña de esta copia como contraseña maestra de este móvil y guardar la conexión con Drive?')){await segFrom(r.pw);await pteSet(x.c,r.pw);pteSave({keep:PTE?.keep||30});render()}}
+else if(!pteOn()&&SEG?.vf&&confirm('¿Guardar la conexión con Drive en este móvil?')){const p=await getPw();if(p){await pteSet(x.c,p);pteSave({keep:PTE?.keep||30});render()}}}}
+catch(e){toast('');alert('No se pudo descargar la copia. No se ha tocado nada.\n'+drvErr(e))}finally{DUP=0;DX=null}}
+async function drvDel(i){const it=DL[i],x=DX;if(!it||!x||!confirm('¿Borrar esta copia de Drive? Va a la papelera de Drive (se puede recuperar unos 30 días).'))return;if(SEG?.vf&&!await confirmPw())return;try{await drvTry(x.c,'del',{id:it.id});DL.splice(i,1);drvShow()}catch(e){alert(drvErr(e))}}
+/* S2:fin */
+
+/* ================= S3: base local IndexedDB «qp_db» con cifrado opcional =================
+   Almacén d = en claro · almacén e = cifrado (AES-GCM con la clave de datos DEK, aad = 'qp|'+t+'|'+id).
+   Registros: state (todos los datos) y sn-<ms> (puntos de restauración). En claro solo id, t y rev.
+   Esta app SOLO toca la base qp_db, las claves qp_seg/qp_pte y la clave antigua 'qp' (nunca clear() ni otras bases). */
+const DBN='qp_db',SNK=8;let DBP=null,DB=null,DEK=null,QP=Promise.resolve(),PEND=0,STO=0,SVERR=null,BC=null;
+const SN=()=>SEG?.enc?'e':'d';
+function opn(){return new Promise((res,rej)=>{let q;try{q=indexedDB.open(DBN,1)}catch(e){return rej(e)}q.onupgradeneeded=()=>{const d=q.result;['d','e'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};q.onsuccess=()=>{const d=q.result;d.onversionchange=()=>{try{d.close()}catch(e){}DB=null;alert('La base de datos se está actualizando desde otra ventana. Se recargará la app.');location.reload()};res(d)};q.onerror=()=>rej(q.error);q.onblocked=()=>toast('Cierra las otras ventanas de la app',5000)})}
+const rq=q=>new Promise((res,rej)=>{q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+const tdone=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error('abort'))});
+const AD=(t,id)=>te.encode('qp|'+t+'|'+id);
+async function seal(r,st,k=DEK){if(st==='d')return{id:r.id,t:r.t,rev:r.rev,j:r.j};if(!k)throw'locked';const iv=rnd(12),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:AD(r.t,r.id)},k,te.encode(r.j)));return{id:r.id,t:r.t,rev:r.rev,iv,ct}}
+async function unseal(x,st,k=DEK){if(st==='d'){if(typeof x.j!=='string')throw'bad';return{id:x.id,t:x.t,rev:x.rev,j:x.j}}if(!k)throw'locked';return{id:x.id,t:x.t,rev:x.rev,j:td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:x.iv,additionalData:AD(x.t,x.id)},k,x.ct))}}
+const allRaw=st=>rq(DB.transaction(st).objectStore(st).getAll());
+const rawGet=(st,id)=>rq(DB.transaction(st).objectStore(st).get(id));
+async function getState(){const st=SN(),x=await rawGet(st,'state');if(!x)return null;return{rev:x.rev,S:JSON.parse((await unseal(x,st)).j)}}
+async function dekOpen(p){const k=await kdf(p,ub64(SEG.salt),SEG.it),raw=await dcr(k,ub64(SEG.dek.iv),ub64(SEG.dek.ct),2);return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt'])}
+const inQ=fn=>{const p=QP.then(fn);QP=p.catch(()=>{});return p};
+/* guardar: inmediato (o diferido 400 ms al escribir texto), en cola, atómico y con control de versión entre ventanas */
+function save(c,lazy){if(!S)return;if(c)S.ch=(S.ch||0)+1;PEND=1;clearTimeout(STO);if(lazy)STO=setTimeout(flush,400);else flush()}
+function flush(){clearTimeout(STO);if(!PEND)return QP;PEND=0;QP=QP.then(wrSafe);return QP}
+async function wr(){if(!S)return;if(!valid(S))throw new Error('los datos no tienen el formato esperado');
+if(EMERG||!DB){localStorage.setItem('qp',JSON.stringify(S));return}
+if(BADMAIN)throw new Error('la base principal está dañada: restaura una copia o un punto de restauración');
+let live=null;try{live=JSON.parse(localStorage.getItem('qp_seg'))}catch(e){}if(!!(live&&live.enc)!==!!(SEG&&SEG.enc)){setTimeout(()=>location.reload(),50);throw'seg'}
+const st=SN(),rec=await seal({id:'state',t:'st',rev:REV+1,j:JSON.stringify(S)},st),t=DB.transaction(st,'readwrite'),os=t.objectStore(st),fin=tdone(t),cur=await rq(os.get('state'));
+if(cur&&cur.rev!==REV){try{t.abort()}catch(e){}fin.catch(()=>{});throw'conf'}
+os.put(rec);await fin;REV=rec.rev;try{BC&&BC.postMessage({rev:REV})}catch(e){}}
+async function wrSafe(){try{await wr();SVERR=null}catch(e){if(e==='seg'){SVERR=null;return}if(e==='conf'){SVERR=null;try{const s2=await getState();if(s2){S=norm(s2.S);REV=s2.rev}}catch(x){}render();toast('Había cambios hechos en otra ventana: se han cargado. Repite tu último cambio si no aparece.',6000);return}
+SVERR=e;PEND=1;alert('⚠️ No se ha podido guardar el último cambio: '+((e&&e.message)||e)+'\n\nNo cierres la app. Haz una copia de seguridad desde Ajustes.')}}
+async function replaceS(nd){const bm=BADMAIN;BADMAIN=null;S=nd;PEND=1;await flush();if(SVERR){BADMAIN=bm;throw SVERR}}
+/* puntos de restauración */
+async function snapNow(why){if(!DB||EMERG||!S||BADMAIN)return;const st=SN(),id='sn-'+Date.now(),rec=await seal({id,t:'sn',rev:0,j:JSON.stringify({why,at:Date.now(),data:S})},st),t=DB.transaction(st,'readwrite'),os=t.objectStore(st),fin=tdone(t);os.put(rec);const ks=(await rq(os.getAllKeys())).filter(k=>String(k).startsWith('sn-')).sort((a,b)=>+a.slice(3)-+b.slice(3));ks.slice(0,Math.max(0,ks.length-SNK)).forEach(k=>os.delete(k));await fin}
+const snapQ=why=>inQ(()=>snapNow(why));
+async function snList(){const st=SN(),xs=(await allRaw(st)).filter(x=>x.t==='sn').sort((a,b)=>+b.id.slice(3)-+a.id.slice(3)),out=[];for(const x of xs){try{const o=JSON.parse((await unseal(x,st)).j);out.push({id:x.id,why:o.why,at:o.at,n:(o.data&&o.data.outings||[]).length,f:(o.data&&o.data.friends||[]).length,data:o.data})}catch(e){out.push({id:x.id,at:+x.id.slice(3),bad:1})}}return out}
+async function snShow(){if(!DB||EMERG)return alert('No disponible en este navegador.');try{SNL=await snList()}catch(e){return alert('No se pudieron leer los puntos de restauración.')}
+show(`<h3>⏪ Puntos de restauración</h3><small>Los más recientes primero. Volver a uno sustituye los datos actuales (antes se guarda un punto con lo actual).</small>${SNL.map((x,i)=>`<div class="ev"><div class="sp"><span><b>${new Date(x.at).toLocaleString('es-ES')}</b><br><span class="mu">${x.bad?'No se puede leer':esc(x.why||'')+' · '+x.f+' amigos · '+x.n+' salidas'}</span></span>${x.bad?'':`<button onclick="snRest(${i})">Volver aquí</button>`}</div></div>`).join('')||'<p class="mu">Aún no hay puntos.</p>'}<div class=bt><button class=sec onclick="closeSh()">Cerrar</button></div>`)}
+async function snRest(i){const x=SNL&&SNL[i];if(!x||x.bad)return;if(!confirm(`¿Volver a los datos del ${new Date(x.at).toLocaleString('es-ES')} (${x.n} salidas)? Lo actual se guarda antes como punto de restauración.`))return;closeSh();try{if(!BADMAIN)await snapQ('antes de volver a un punto');const nd=norm(x.data);if(!valid(nd))throw new Error('punto no válido');await replaceS(nd);S.ch=(S.ch||0)+1;save();D=null;V={n:'home'};render();toast('Datos recuperados',3000)}catch(e){alert('No se pudo: '+((e&&e.message)||e)+'\nTus datos no han cambiado.')}}
+/* cifrar / descifrar la base (reanudable, nunca borra sin verificar) */
+async function encOn(){if(!SEG?.vf)return alert('Primero crea la contraseña maestra.');if(SEG.mode=='none')return alert('Con «Sin bloqueo» no se puede cifrar: elige antes acceso con huella o con contraseña.');if(!DB||EMERG||BADMAIN)return alert('No disponible ahora mismo.');
+if(!confirm('Vas a cifrar los datos de este móvil con tu contraseña maestra.\n\nSi la olvidas y la huella falla, los datos de este móvil NO se podrán recuperar: solo desde una copia.\n\nAntes se descargará una copia previa cifrada. ¿Seguir?'))return;
+const p=await getPw();if(!p)return;if(!await exp(1,1,'enc'))return;
+if(confirm('¿Quieres además una copia EN ABIERTO (sin cifrar) como salvavidas por si algún día olvidas la contraseña? Guárdala en un USB, no en la nube.'))await exp(1,1,'open');
+toast('Cifrando la base…',6e4);await flush();
+try{await inQ(async()=>{LA=Date.now();const k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']),raw=new Uint8Array(await crypto.subtle.exportKey('raw',k)),wk=await kdf(p,ub64(SEG.salt),SEG.it),w=await enc(wk,raw,2);raw.fill(0);
+segSave({dek:{iv:b64(w.iv),ct:b64(w.ct)}});
+const src=await allRaw('d'),recs=[];for(const x of src){const r=await unseal(x,'d');recs.push(await seal(r,'e',k))}
+let t=DB.transaction('e','readwrite'),os=t.objectStore('e'),fin=tdone(t);os.clear();recs.forEach(r=>os.put(r));await fin;
+const k2=await dekOpen(p),back=await allRaw('e'),m=new Map(src.map(x=>[x.id,x]));if(back.length!==src.length)throw new Error('faltan registros al verificar');
+for(const y of back){const o=m.get(y.id),r=await unseal(y,'e',k2);if(!o||o.j!==r.j||o.rev!==y.rev||o.t!==y.t)throw new Error('la verificación no coincide')}
+DEK=k2;segSave({enc:1});t=DB.transaction('d','readwrite');fin=tdone(t);t.objectStore('d').clear();await fin;try{localStorage.removeItem('qp')}catch(e){}});
+toast('');render();alert('✅ Datos de este móvil cifrados y verificados.')}
+catch(e){toast('');if(!SEG.enc){DEK=null;segSave({dek:null});try{const t=DB.transaction('e','readwrite'),f=tdone(t);t.objectStore('e').clear();await f}catch(x){}}render();alert('No se pudo cifrar: '+((e&&e.message)||e)+'\nNo ha cambiado nada: tus datos siguen como estaban.')}}
+async function encOff(){if(!SEG?.enc||!DEK)return;if(!confirm('¿Quitar el cifrado? Los datos de este móvil quedarán sin cifrar (las copias siguen cifradas).'))return;const p=await confirmPw();if(!p)return;toast('Descifrando la base…',6e4);await flush();
+try{await inQ(async()=>{LA=Date.now();const src=await allRaw('e'),plain=[];for(const x of src)plain.push(await unseal(x,'e'));
+let t=DB.transaction('d','readwrite'),os=t.objectStore('d'),fin=tdone(t);os.clear();plain.forEach(r=>os.put({id:r.id,t:r.t,rev:r.rev,j:r.j}));await fin;
+const back=await allRaw('d'),m=new Map(plain.map(x=>[x.id,x]));if(back.length!==plain.length)throw new Error('faltan registros al verificar');for(const y of back){const o=m.get(y.id);if(!o||o.j!==y.j||o.rev!==y.rev)throw new Error('la verificación no coincide')}
+segSave({enc:0,dek:null});DEK=null;t=DB.transaction('e','readwrite');fin=tdone(t);t.objectStore('e').clear();await fin});toast('');render();alert('Cifrado quitado.')}
+catch(e){toast('');if(SEG.enc){try{const t=DB.transaction('d','readwrite'),f=tdone(t);t.objectStore('d').clear();await f}catch(x){}}render();alert('No se pudo quitar el cifrado: '+((e&&e.message)||e)+'\nTus datos siguen cifrados e intactos.')}}
+/* la clave antigua 'qp' (localStorage, en claro) se borra solo cuando la base nueva está verificada y hay copia */
+async function legacyCleanup(){try{if(EMERG||!DB||!legacyGet())return;const st=await getState();if(st&&st.S&&Array.isArray(st.S.outings))localStorage.removeItem('qp')}catch(e){}}
+/* carga de datos (al arrancar o al desbloquear) */
+async function bootData(){if(!DB){EMERG=true;const L=legacyGet();S=norm(L||{},!!L);return}
+try{if(SEG?.enc){const t=DB.transaction('d','readwrite'),f=tdone(t);t.objectStore('d').clear();await f}else if((await rq(DB.transaction('e').objectStore('e').count()))>0){const t=DB.transaction('e','readwrite'),f=tdone(t);t.objectStore('e').clear();await f}}catch(e){}
+let st=null,err=null;try{st=await getState()}catch(e){err=e}
+if(err){let raw=null;try{raw=await rawGet(SN(),'state')}catch(e){}REV=raw?raw.rev:0;let L=[];try{L=await snList()}catch(e){}const ok=L.find(x=>!x.bad);
+if(ok&&confirm(`No se ha podido leer la base principal.\n\n¿Cargar el punto de restauración del ${new Date(ok.at).toLocaleString('es-ES')} (${ok.n} salidas)?`)){S=norm(ok.data);PEND=1;await flush();if(!SVERR)return}
+BADMAIN=String(err);S=norm({});return}
+if(st){S=norm(st.S);REV=st.rev;return}
+const L=legacyGet();if(!L){S=norm({});REV=0;return}
+// migración desde la v6 (localStorage → IndexedDB), verificada; la clave antigua no se borra todavía
+S=norm(L,true);REV=0;try{await inQ(wr);const v=await getState();if(!v||JSON.stringify(norm(v.S))!==JSON.stringify(S))throw new Error('verificación');MIGD={f:S.friends.length,n:S.outings.length};try{localStorage.setItem('qp_mig',JSON.stringify(MIGD))}catch(x){}await snapQ('paso desde la versión 6')}
+catch(e){try{const t=DB.transaction(SN(),'readwrite'),f=tdone(t);t.objectStore(SN()).delete('state');await f}catch(x){}EMERG=true;DB=null;S=norm(L,true);alert('No se pudo pasar a la base nueva ('+((e&&e.message)||e)+'). La app sigue con el almacenamiento anterior y tus datos están intactos.')}}
+function migMsg(){show(`<h3>✅ Versión ${VER}</h3><p>Tus datos (${MIGD.f} amigos y ${MIGD.n} salidas) se han pasado a la base nueva y se han comprobado uno a uno.</p><small>Ahora toca protegerlos: crea la contraseña maestra (huella), conecta Drive y cifra los datos de este móvil, todo desde Ajustes. Empieza haciendo una copia.</small><div class=bt><button onclick="migOk();bkNow()">${pteOn()?'Subir copia a Drive':'Descargar copia cifrada'}</button><button class=sec onclick="migOk();OPN.add('seg');go('set')">Ir a Seguridad</button><button class=sec onclick="migOk()">Más tarde</button></div>`)}
+function migOk(){closeSh();MIGD=null;try{localStorage.removeItem('qp_mig')}catch(x){}}
+async function postStart(){if(!MIGD){try{const m=JSON.parse(localStorage.getItem('qp_mig'));if(m&&typeof m.n==='number')MIGD=m}catch(e){}}try{if(DB&&!EMERG&&!BADMAIN&&S&&hasData()){const ks=(await rq(DB.transaction(SN()).objectStore(SN()).getAllKeys())).filter(k=>String(k).startsWith('sn-')).map(k=>+k.slice(3)),last=ks.length?Math.max(...ks):0;if(Date.now()-last>20*36e5)await snapQ('automático (diario)')}}catch(e){}
+if(MIGD)return migMsg();if(bkDue()){if(autoOk())drvUp(1);else if(!autoOn())bkAsk();else if(!PW)bkAsk()}}
+
+// ---- PWA, teclado, historial
+let UPD=false,chkUpd=()=>toast('Actualizaciones no disponibles aquí');
+if('serviceWorker' in navigator){let had=!!navigator.serviceWorker.controller;
+navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return}UPD=true;if(V.n!=='form')flush().finally(()=>location.reload())});
+navigator.serviceWorker.register('sw.js').then(r=>{r.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})});chkUpd=()=>r.update().then(()=>toast('Comprobado: si hay versión nueva se aplicará sola'),()=>toast('Sin conexión: no se ha podido comprobar'))}).catch(()=>{})}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+const vv=window.visualViewport;
+function kb(){document.documentElement.style.setProperty('--tmh',Math.max(110,(vv?vv.height:innerHeight)*.4)+'px');const a=document.activeElement;if(a&&a.tagName==='TEXTAREA')setTimeout(()=>a.scrollIntoView({block:'center'}),100)}
+kb();if(vv)vv.addEventListener('resize',kb);
+document.addEventListener('focusin',e=>{if(e.target.tagName==='TEXTAREA')setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),350)});
+addEventListener('storage',e=>{if(e.key==='qp_seg'){let n=null;try{n=JSON.parse(e.newValue)}catch(x){}if(!!(n&&n.enc)!==!!(SEG&&SEG.enc))flush().finally(()=>location.reload());else SEG=n}else if(e.key==='qp_pte'){try{PTE=JSON.parse(e.newValue)}catch(x){PTE=null}}});
+try{BC=new BroadcastChannel('qp_db');BC.onmessage=m=>{if(!S||!DB||EMERG||!m.data||m.data.rev===REV)return;inQ(async()=>{if(PEND||!S)return;const st=await getState();if(st&&st.rev!==REV){S=norm(st.S);REV=st.rev;if(V.n!=='form')render()}}).catch(()=>{})}}catch(e){}
+history.replaceState({n:'home'},'');
+window.addEventListener('popstate',e=>{if(!S)return;let h=e.state||{n:'home'};if(h.n==='form'&&!D)h={n:'home'};go(h.n,h.id,true)});
+/* arranque: primero el bloqueo; con datos cifrados no se lee ni escribe nada hasta desbloquear */
+(async()=>{DBP=(async()=>{try{DB=await opn()}catch(e){DB=null}})();lockUI();await DBP;
+if(SEG?.enc&&!DB){$('#app').innerHTML='<div class="card">No se puede abrir la base de datos de este navegador. Cierra otras ventanas de la app y vuelve a abrirla.</div>';return}
+if(!SEG?.enc){try{await bootData()}catch(e){alert('No se pudieron leer los datos: '+((e&&e.message)||e))}render()}
+if(!LOCK&&S){POST=1;postStart()}})();
+</script></body></html>
